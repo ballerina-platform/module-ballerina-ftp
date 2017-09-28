@@ -16,13 +16,13 @@
  * under the License.
  */
 
-package org.ballerinalang.net.fs;
+package org.ballerinalang.net.fs.server;
 
 import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.transport.filesystem.connector.server.contract.FileSystemMessage;
+import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemMessage;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,17 +30,17 @@ import java.util.Map;
 /**
  * This services registry holds all the services of FileSystem.
  */
-public class FileSystemServiceRegistry {
+public class LocalFileSystemServiceRegistry {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileSystemServiceRegistry.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocalFileSystemServiceRegistry.class);
 
     private final Map<String, Service> serviceMap = new HashMap<>();
-    private static final FileSystemServiceRegistry INSTANCE = new FileSystemServiceRegistry();
+    private static final LocalFileSystemServiceRegistry INSTANCE = new LocalFileSystemServiceRegistry();
 
-    private FileSystemServiceRegistry() {
+    private LocalFileSystemServiceRegistry() {
     }
 
-    public static FileSystemServiceRegistry getInstance() {
+    public static LocalFileSystemServiceRegistry getInstance() {
         return INSTANCE;
     }
 
@@ -61,7 +61,7 @@ public class FileSystemServiceRegistry {
         return service.getPackage() != null ? (service.getPackage() + "_" + service.getName()) : service.getName();
     }
 
-    public Service findService(FileSystemMessage fileSystemMessage) {
+    public Service findService(LocalFileSystemMessage fileSystemMessage) {
         Object serviceNameProperty = fileSystemMessage.getProperty(Constants.TRANSPORT_PROPERTY_SERVICE_NAME);
         String serviceName = (serviceNameProperty != null) ? serviceNameProperty.toString() : null;
         if (serviceName == null) {

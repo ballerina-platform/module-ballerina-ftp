@@ -16,10 +16,10 @@
  * under the License.
  */
 
-package org.ballerinalang.net.fs;
+package org.ballerinalang.net.ftp.server;
 
 /**
- * Constants for File System Server connector.
+ * Constants for FTP Server connector.
  */
 public class Constants {
 
@@ -28,26 +28,34 @@ public class Constants {
     public static final String ANNOTATION_SORT = "Sort";
     public static final String ANNOTATION_POST_PROCESS = "PostProcess";
     public static final String ANNOTATION_CONCURRENCY = "Concurrency";
+    public static final String ANNOTATION_SFTP_SETTINGS = "SftpSettings";
+    public static final String PROTOCOL_FTP = "ftp";
+    public static final String TRANSPORT_PROPERTY_SERVICE_NAME = "TRANSPORT_FILE_SERVICE_NAME";
+    public static final String FTP_PACKAGE_NAME = "ballerina.net.ftp";
+    public static final String FTP_SERVER_EVENT = "FTPServerEvent";
+
     public static final String ANNOTATION_DIR_URI = "dirURI";
     public static final String ANNOTATION_FILE_PATTERN = "fileNamePattern";
     public static final String ANNOTATION_POLLING_INTERVAL = "pollingInterval";
     public static final String ANNOTATION_CRON_EXPRESSION = "cronExpression";
     public static final String ANNOTATION_ACK_TIMEOUT = "ackTimeOut";
     public static final String ANNOTATION_FILE_COUNT = "perPollFileCount";
+
     public static final String ANNOTATION_SORT_ATTRIBUTE = "fileSortAttribute";
     public static final String ANNOTATION_SORT_ASCENDING = "fileSortAscending";
+
     public static final String ANNOTATION_ACTION_AFTER_PROCESS = "actionAfterProcess";
     public static final String ANNOTATION_ACTION_AFTER_FAILURE = "actionAfterFailure";
+
     public static final String ANNOTATION_MOVE_AFTER_PROCESS = "moveAfterProcess";
     public static final String ANNOTATION_MOVE_AFTER_FAILURE = "moveAfterFailure";
     public static final String ANNOTATION_MOVE_TIMESTAMP_FORMAT = "moveTimestampFormat";
     public static final String ANNOTATION_CREATE_DIR = "createMoveDir";
+
     public static final String ANNOTATION_PARALLEL = "parallel";
     public static final String ANNOTATION_THREAD_POOL_SIZE = "threadPoolSize";
 
-    public static final String PROTOCOL_FILE_SYSTEM = "fs";
-    public static final String TRANSPORT_PROPERTY_SERVICE_NAME =
-            org.wso2.carbon.transport.filesystem.connector.server.util.Constants.FILE_TRANSPORT_PROPERTY_SERVICE_NAME;
-    public static final String FILE_SYSTEM_PACKAGE_NAME = "ballerina.net.fs";
-    public static final String FILE_SYSTEM_EVENT = "FileSystemEvent";
+    public static final String ANNOTATION_SFTP_IDENTITIES = "sftpIdentities";
+    public static final String ANNOTATION_SFTP_IDENTITY_PASS_PHRASE = "sftpIdentityPassPhrase";
+    public static final String ANNOTATION_SFTP_USER_DIR_IS_ROOT = "sftpUserDirIsRoot";
 }

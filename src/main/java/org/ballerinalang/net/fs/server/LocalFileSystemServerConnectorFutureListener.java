@@ -16,25 +16,26 @@
  * under the License.
  */
 
-package org.ballerinalang.net.fs;
+package org.ballerinalang.net.fs.server;
 
 import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.connector.api.ConnectorFutureListener;
 import org.ballerinalang.model.values.BValue;
+import org.ballerinalang.services.ErrorHandlerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.transport.filesystem.connector.server.contract.FileSystemMessage;
+import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemMessage;
 
 /**
- * {@code FileSystemConnectorConnectorFutureListener} is the responsible for acting on notifications
+ * {@code LocalFileSystemServerConnectorFutureListener} is the responsible for acting on notifications
  * received from Ballerina side.
  */
-public class FileSystemConnectorConnectorFutureListener implements ConnectorFutureListener {
+public class LocalFileSystemServerConnectorFutureListener implements ConnectorFutureListener {
 
-    private static final Logger log = LoggerFactory.getLogger(FileSystemConnectorConnectorFutureListener.class);
-    private FileSystemMessage fileSystemMessage;
+    private static final Logger log = LoggerFactory.getLogger(LocalFileSystemServerConnectorFutureListener.class);
+    private LocalFileSystemMessage fileSystemMessage;
 
-    public FileSystemConnectorConnectorFutureListener(FileSystemMessage fileSystemMessage) {
+    public LocalFileSystemServerConnectorFutureListener(LocalFileSystemMessage fileSystemMessage) {
         this.fileSystemMessage = fileSystemMessage;
     }
 
@@ -61,5 +62,6 @@ public class FileSystemConnectorConnectorFutureListener implements ConnectorFutu
         Object serviceNameProperty = fileSystemMessage.getProperty(Constants.TRANSPORT_PROPERTY_SERVICE_NAME);
         String serviceName = (serviceNameProperty != null) ? serviceNameProperty.toString() : null;
         log.error("Error occurred for FileSystemConnector service: " + serviceName, ex);
+        ErrorHandlerUtils.printError(ex);
     }
 }

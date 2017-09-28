@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.ballerinalang.net.fs;
+package org.ballerinalang.net.fs.server;
 
 import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.connector.api.Resource;
@@ -24,20 +24,23 @@ import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.transport.filesystem.connector.server.contract.FileSystemMessage;
+import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemMessage;
 
 /**
  * Resource level dispatchers handler for file protocol.
  */
-public class FileSystemDispatcher {
+public class LocalFileSystemResouceDispatcher {
 
-    private static final Logger log = LoggerFactory.getLogger(FileSystemDispatcher.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalFileSystemResouceDispatcher.class);
 
-    public static Resource findResource(FileSystemMessage fileSystemMessage)
+    public static Resource findResource(LocalFileSystemMessage localFileSystemMessage)
             throws BallerinaException {
-        Service service = FileSystemServiceRegistry.getInstance().findService(fileSystemMessage);
+        Service service = LocalFileSystemServiceRegistry.getInstance().findService(localFileSystemMessage);
         if (service == null) {
             throw new BallerinaConnectorException("No Service found to handle the service request.");
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("FileSystemMessage received for service: " + service.getName());
         }
         Resource[] resources = service.getResources();
         if (resources == null) {

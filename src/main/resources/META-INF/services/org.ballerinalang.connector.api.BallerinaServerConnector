@@ -16,4 +16,5 @@
 # under the License.
 #
 
-org.ballerinalang.net.fs.FileSystemServerConnector
+org.ballerinalang.net.fs.server.LocalFileSystemServerConnector
+org.ballerinalang.net.ftp.server.FTPServerConnector

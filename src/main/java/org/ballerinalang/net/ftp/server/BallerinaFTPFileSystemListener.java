@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.ballerinalang.net.fs;
+package org.ballerinalang.net.ftp.server;
 
 import org.ballerinalang.connector.api.ConnectorFuture;
 import org.ballerinalang.connector.api.ConnectorFutureListener;
@@ -25,30 +25,27 @@ import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
-import org.wso2.carbon.transport.filesystem.connector.server.contract.FileSystemListener;
-import org.wso2.carbon.transport.filesystem.connector.server.contract.FileSystemMessage;
-
-import java.util.HashMap;
+import org.wso2.carbon.transport.remotefilesystem.server.connector.contract.RemoteFileSystemListener;
+import org.wso2.carbon.transport.remotefilesystem.server.connector.contract.RemoteFileSystemMessage;
 
 /**
  * File System connector listener for Ballerina.
  */
-public class BallerinaFileSystemListener implements FileSystemListener {
+public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener {
 
     @Override
-    public void onMessage(FileSystemMessage fileSystemMessage) {
-        Resource resource = FileSystemDispatcher.findResource(fileSystemMessage);
+    public void onMessage(RemoteFileSystemMessage fileSystemMessage) {
+        Resource resource = FTPServerConnectorResourceDispatcher.findResource(fileSystemMessage);
         BValue[] parameters = getSignatureParameters(resource, fileSystemMessage);
-        ConnectorFuture future = Executor.submit(resource, new HashMap(), parameters);
-        ConnectorFutureListener futureListener = new FileSystemConnectorConnectorFutureListener(fileSystemMessage);
+        ConnectorFuture future = Executor.submit(resource, null, parameters);
+        ConnectorFutureListener futureListener = new FTPConnectorFutureListener(fileSystemMessage);
         future.setConnectorFutureListener(futureListener);
     }
 
-    private BValue[] getSignatureParameters(Resource resource, FileSystemMessage fileSystemMessage) {
-        BStruct request = ConnectorUtils.createStruct(resource, Constants.FILE_SYSTEM_PACKAGE_NAME,
-                Constants.FILE_SYSTEM_EVENT);
+    private BValue[] getSignatureParameters(Resource resource, RemoteFileSystemMessage fileSystemMessage) {
+        BStruct request = ConnectorUtils.createStruct(resource, Constants.FTP_PACKAGE_NAME,
+                Constants.FTP_SERVER_EVENT);
         request.setStringField(0, fileSystemMessage.getText());
-        request.setStringField(1, "CREATE");
         BValue[] bValues = new BValue[1];
         bValues[0] = request;
         return bValues;

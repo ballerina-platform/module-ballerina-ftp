@@ -16,26 +16,20 @@
  * under the License.
  */
 
-package org.ballerinalang.net.fs;
-
-import org.ballerinalang.bre.Context;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.AbstractNativeFunction;
-import org.ballerinalang.natives.annotations.BallerinaFunction;
+package org.ballerinalang.net.fs.server;
 
 /**
- * Native function to clone the message.
- * ballerina.model.messages:clone
+ * Constants for File System Server connector.
  */
-@BallerinaFunction(
-        packageName = "ballerina.net.fs",
-        functionName = "abc",
-        isPublic = true
-)
-public class Clone extends AbstractNativeFunction {
+public class Constants {
 
-    @Override
-    public BValue[] execute(Context context) {
-        return VOID_RETURN;
-    }
+    //Annotation
+    public static final String ANNOTATION_CONFIG = "configuration";
+    public static final String ANNOTATION_DIR_URI = "dirURI";
+    public static final String ANNOTATION_EVENTS = "events";
+    public static final String ANNOTATION_DIRECTORY_RECURSIVE = "recursive";
+
+    public static final String TRANSPORT_PROPERTY_SERVICE_NAME = "TRANSPORT_FILE_SERVICE_NAME";
+    public static final String FILE_SYSTEM_PACKAGE_NAME = "ballerina.net.fs";
+    public static final String FILE_SYSTEM_EVENT = "FileSystemEvent";
 }

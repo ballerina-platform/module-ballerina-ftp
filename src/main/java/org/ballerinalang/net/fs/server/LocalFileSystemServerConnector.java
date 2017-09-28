@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.ballerinalang.net.fs;
+package org.ballerinalang.net.fs.server;
 
 import org.ballerinalang.connector.api.AnnAttrValue;
 import org.ballerinalang.connector.api.Annotation;
@@ -27,23 +27,24 @@ import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.carbon.messaging.exceptions.ServerConnectorException;
-import org.wso2.carbon.transport.filesystem.connector.server.contract.FileSystemConnectorFactory;
-import org.wso2.carbon.transport.filesystem.connector.server.contractimpl.FileSystemConnectorFactoryImpl;
-import org.wso2.carbon.transport.filesystem.connector.server.exception.FileSystemServerConnectorException;
+import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemConnectorFactory;
+import org.wso2.carbon.transport.localfilesystem.server.connector.contractimpl.LocalFileSystemConnectorFactoryImpl;
+import org.wso2.carbon.transport.localfilesystem.server.connector.exception.LocalFileSystemServerConnectorException;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * {@code FileSystemServerConnector} This is the file system implementation for the
+ * {@code LocalFileSystemServerConnector} This is the file system implementation for the
  * {@code BallerinaServerConnector} API.
  *
  * @since 0.94
  */
-public class FileSystemServerConnector implements BallerinaServerConnector {
+public class LocalFileSystemServerConnector implements BallerinaServerConnector {
 
-    private org.wso2.carbon.transport.filesystem.connector.server.contract.FileSystemServerConnector serverConnector;
+    private org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector
+            serverConnector;
 
     @Override
     public String getProtocolPackage() {
@@ -63,23 +64,24 @@ public class FileSystemServerConnector implements BallerinaServerConnector {
             for (Resource resource : service.getResources()) {
                 validateResourceSignature(resource);
             }
-            String serviceName = FileSystemServiceRegistry.getServiceKey(service);
-            FileSystemConnectorFactory fileSystemConnectorFactory = new FileSystemConnectorFactoryImpl();
+            String serviceName = LocalFileSystemServiceRegistry.getServiceKey(service);
+            LocalFileSystemConnectorFactory fileSystemConnectorFactory = new LocalFileSystemConnectorFactoryImpl();
             try {
                 serverConnector = fileSystemConnectorFactory.createServerConnector(serviceName, paramMap,
-                        new BallerinaFileSystemListener());
-                FileSystemServiceRegistry.getInstance().addService(service);
-            } catch (FileSystemServerConnectorException e) {
-                throw new BallerinaConnectorException("Unable to initialize FileSystemServerConnector instance", e);
+                        new BallerinaLocalFileSystemListener());
+                LocalFileSystemServiceRegistry.getInstance().addService(service);
+            } catch (LocalFileSystemServerConnectorException e) {
+                throw new BallerinaConnectorException("Unable to initialize LocalFileSystemServerConnector instance",
+                        e);
             }
         }
     }
 
     @Override
     public void serviceUnregistered(Service service) throws BallerinaConnectorException {
-        String serviceKeyName = FileSystemServiceRegistry.getServiceKey(service);
-        if (FileSystemServiceRegistry.getInstance().getService(serviceKeyName) != null) {
-            FileSystemServiceRegistry.getInstance().removeService(serviceKeyName);
+        String serviceKeyName = LocalFileSystemServiceRegistry.getServiceKey(service);
+        if (LocalFileSystemServiceRegistry.getInstance().getService(serviceKeyName) != null) {
+            LocalFileSystemServiceRegistry.getInstance().removeService(serviceKeyName);
             try {
                 if (serverConnector != null) {
                     serverConnector.stop();
@@ -96,8 +98,8 @@ public class FileSystemServerConnector implements BallerinaServerConnector {
         if (serverConnector != null) {
             try {
                 serverConnector.start();
-            } catch (FileSystemServerConnectorException e) {
-                throw new BallerinaConnectorException("Unable to start FileSystemServerConnector task", e);
+            } catch (LocalFileSystemServerConnectorException e) {
+                throw new BallerinaConnectorException("Unable to start LocalFileSystemServerConnector task", e);
             }
         }
     }
@@ -106,21 +108,9 @@ public class FileSystemServerConnector implements BallerinaServerConnector {
     private Map<String, String> getServerConnectorParamMap(Annotation info) {
         Map<String, String> params = new HashMap<>();
         addAnnotationAttributeValue(info, Constants.ANNOTATION_DIR_URI, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_FILE_PATTERN, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_POLLING_INTERVAL, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_CRON_EXPRESSION, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_ACK_TIMEOUT, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_FILE_COUNT, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_SORT_ATTRIBUTE, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_SORT_ASCENDING, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_ACTION_AFTER_PROCESS, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_ACTION_AFTER_FAILURE, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_MOVE_AFTER_PROCESS, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_MOVE_AFTER_FAILURE, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_MOVE_TIMESTAMP_FORMAT, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_CREATE_DIR, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_PARALLEL, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_THREAD_POOL_SIZE, params);
+        addAnnotationAttributeValue(info, Constants.ANNOTATION_EVENTS, params);
+        params.put(Constants.ANNOTATION_DIRECTORY_RECURSIVE,
+                String.valueOf(info.getAnnAttrValue(Constants.ANNOTATION_DIRECTORY_RECURSIVE).getBooleanValue()));
         return params;
     }
 
