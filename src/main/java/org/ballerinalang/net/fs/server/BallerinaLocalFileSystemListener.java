@@ -25,8 +25,8 @@ import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
+import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemEvent;
 import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemListener;
-import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemMessage;
 
 /**
  * File System connector listener for Ballerina.
@@ -34,19 +34,19 @@ import org.wso2.carbon.transport.localfilesystem.server.connector.contract.Local
 public class BallerinaLocalFileSystemListener implements LocalFileSystemListener {
 
     @Override
-    public void onMessage(LocalFileSystemMessage fileSystemMessage) {
-        Resource resource = LocalFileSystemResouceDispatcher.findResource(fileSystemMessage);
-        BValue[] parameters = getSignatureParameters(resource, fileSystemMessage);
+    public void onMessage(LocalFileSystemEvent fileSystemEvent) {
+        Resource resource = LocalFileSystemResouceDispatcher.findResource(fileSystemEvent);
+        BValue[] parameters = getSignatureParameters(resource, fileSystemEvent);
         ConnectorFuture future = Executor.submit(resource, null, parameters);
-        ConnectorFutureListener futureListener = new LocalFileSystemServerConnectorFutureListener(fileSystemMessage);
+        ConnectorFutureListener futureListener = new LocalFileSystemServerConnectorFutureListener(fileSystemEvent);
         future.setConnectorFutureListener(futureListener);
     }
 
-    private BValue[] getSignatureParameters(Resource resource, LocalFileSystemMessage fileSystemMessage) {
+    private BValue[] getSignatureParameters(Resource resource, LocalFileSystemEvent fileSystemEvent) {
         BStruct request = ConnectorUtils.createStruct(resource, Constants.FILE_SYSTEM_PACKAGE_NAME,
                 Constants.FILE_SYSTEM_EVENT);
-        request.setStringField(0, fileSystemMessage.getFileName());
-        request.setStringField(1, fileSystemMessage.getEvent());
+        request.setStringField(0, fileSystemEvent.getFileName());
+        request.setStringField(1, fileSystemEvent.getEvent());
         BValue[] bValues = new BValue[1];
         bValues[0] = request;
         return bValues;

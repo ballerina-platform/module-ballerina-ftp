@@ -24,7 +24,7 @@ import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemMessage;
+import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemEvent;
 
 /**
  * Resource level dispatchers handler for file protocol.
@@ -33,9 +33,9 @@ public class LocalFileSystemResouceDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(LocalFileSystemResouceDispatcher.class);
 
-    public static Resource findResource(LocalFileSystemMessage localFileSystemMessage)
+    public static Resource findResource(LocalFileSystemEvent fileSystemEvent)
             throws BallerinaException {
-        Service service = LocalFileSystemServiceRegistry.getInstance().findService(localFileSystemMessage);
+        Service service = LocalFileSystemServiceRegistry.getInstance().findService(fileSystemEvent);
         if (service == null) {
             throw new BallerinaConnectorException("No Service found to handle the service request.");
         }

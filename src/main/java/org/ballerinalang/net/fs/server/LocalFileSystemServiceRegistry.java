@@ -22,7 +22,7 @@ import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemMessage;
+import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,8 +61,8 @@ public class LocalFileSystemServiceRegistry {
         return service.getPackage() != null ? (service.getPackage() + "_" + service.getName()) : service.getName();
     }
 
-    public Service findService(LocalFileSystemMessage fileSystemMessage) {
-        Object serviceNameProperty = fileSystemMessage.getProperty(Constants.TRANSPORT_PROPERTY_SERVICE_NAME);
+    public Service findService(LocalFileSystemEvent fileSystemEvent) {
+        Object serviceNameProperty = fileSystemEvent.getProperty(Constants.TRANSPORT_PROPERTY_SERVICE_NAME);
         String serviceName = (serviceNameProperty != null) ? serviceNameProperty.toString() : null;
         if (serviceName == null) {
             throw new BallerinaException(

@@ -27,10 +27,10 @@ import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.carbon.messaging.exceptions.ServerConnectorException;
-import org.wso2.carbon.transport.remotefilesystem.server.connector.contract.RemoteFileSystemConnectorFactory;
+import org.wso2.carbon.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
+import org.wso2.carbon.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
+import org.wso2.carbon.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
 import org.wso2.carbon.transport.remotefilesystem.server.connector.contract.RemoteFileSystemServerConnector;
-import org.wso2.carbon.transport.remotefilesystem.server.connector.contractimpl.RemoteFileSystemConnectorFactoryImpl;
-import org.wso2.carbon.transport.remotefilesystem.server.connector.exception.RemoteFileSystemServerConnectorException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +70,7 @@ public class FTPServerConnector implements BallerinaServerConnector {
                 serverConnector = fileSystemConnectorFactory.createServerConnector(serviceName, paramMap,
                         new BallerinaFTPFileSystemListener());
                 FTPServiceRegistry.getInstance().addService(service);
-            } catch (RemoteFileSystemServerConnectorException e) {
+            } catch (RemoteFileSystemConnectorException e) {
                 throw new BallerinaConnectorException("Unable to initialize FTPServerConnector instance", e);
             }
         }
@@ -97,7 +97,7 @@ public class FTPServerConnector implements BallerinaServerConnector {
         if (serverConnector != null) {
             try {
                 serverConnector.start();
-            } catch (RemoteFileSystemServerConnectorException e) {
+            } catch (RemoteFileSystemConnectorException e) {
                 throw new BallerinaConnectorException("Unable to start FTPServerConnector task", e);
             }
         }

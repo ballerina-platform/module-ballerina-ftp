@@ -25,8 +25,9 @@ import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
-import org.wso2.carbon.transport.remotefilesystem.server.connector.contract.RemoteFileSystemListener;
-import org.wso2.carbon.transport.remotefilesystem.server.connector.contract.RemoteFileSystemMessage;
+import org.wso2.carbon.transport.remotefilesystem.listener.RemoteFileSystemListener;
+import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
+import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
 /**
  * File System connector listener for Ballerina.
@@ -34,11 +35,12 @@ import org.wso2.carbon.transport.remotefilesystem.server.connector.contract.Remo
 public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener {
 
     @Override
-    public void onMessage(RemoteFileSystemMessage fileSystemMessage) {
-        Resource resource = FTPServerConnectorResourceDispatcher.findResource(fileSystemMessage);
-        BValue[] parameters = getSignatureParameters(resource, fileSystemMessage);
+    public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
+        RemoteFileSystemMessage remoteFileSystemMessage = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
+        Resource resource = FTPServerConnectorResourceDispatcher.findResource(remoteFileSystemMessage);
+        BValue[] parameters = getSignatureParameters(resource, remoteFileSystemMessage);
         ConnectorFuture future = Executor.submit(resource, null, parameters);
-        ConnectorFutureListener futureListener = new FTPConnectorFutureListener(fileSystemMessage);
+        ConnectorFutureListener futureListener = new FTPConnectorFutureListener(remoteFileSystemMessage);
         future.setConnectorFutureListener(futureListener);
     }
 
@@ -49,5 +51,10 @@ public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener 
         BValue[] bValues = new BValue[1];
         bValues[0] = request;
         return bValues;
+    }
+
+    @Override
+    public void onError(Throwable throwable) {
+
     }
 }
