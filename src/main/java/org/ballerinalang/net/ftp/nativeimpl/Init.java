@@ -20,12 +20,10 @@ package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.connector.api.ConnectorFuture;
-import org.ballerinalang.model.types.TypeEnum;
+import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
-import org.ballerinalang.natives.annotations.Attribute;
 import org.ballerinalang.natives.annotations.BallerinaAction;
-import org.ballerinalang.natives.annotations.BallerinaAnnotation;
 import org.ballerinalang.natives.connectors.AbstractNativeAction;
 import org.ballerinalang.natives.connectors.BallerinaConnectorManager;
 import org.ballerinalang.net.ftp.nativeimpl.util.FileConstants;
@@ -49,9 +47,7 @@ import java.util.ServiceLoader;
         packageName = "ballerina.net.ftp",
         actionName = "<init>",
         connectorName = FileConstants.CONNECTOR_NAME,
-        args = {@Argument(name = "ftpClientConnector", type = TypeEnum.CONNECTOR)})
-@BallerinaAnnotation(annotationName = "Description", attributes = { @Attribute(name = "value",
-        value = "The init action implementation for FTP connector.") })
+        args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR)})
 @Component(
         name = "action.net.ftp.init",
         immediate = true,

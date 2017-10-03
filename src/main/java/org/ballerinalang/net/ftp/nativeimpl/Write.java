@@ -19,19 +19,16 @@ package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.connector.api.ConnectorFuture;
-import org.ballerinalang.model.types.TypeEnum;
+import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
-import org.ballerinalang.natives.annotations.Attribute;
 import org.ballerinalang.natives.annotations.BallerinaAction;
-import org.ballerinalang.natives.annotations.BallerinaAnnotation;
-import org.ballerinalang.natives.connectors.BallerinaConnectorManager;
 import org.ballerinalang.net.ftp.nativeimpl.util.FileConstants;
 import org.ballerinalang.util.exceptions.BallerinaException;
-import org.wso2.carbon.messaging.BinaryCarbonMessage;
-import org.wso2.carbon.messaging.CarbonMessage;
-import org.wso2.carbon.messaging.exceptions.ClientConnectorException;
+import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
+import org.wso2.carbon.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
+import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -44,18 +41,10 @@ import java.util.Map;
         packageName = "ballerina.net.ftp",
         actionName = "write",
         connectorName = FileConstants.CONNECTOR_NAME,
-        args = { @Argument(name = "ftpClientConnector", type = TypeEnum.CONNECTOR),
-                 @Argument(name = "blob", type = TypeEnum.BLOB),
-                 @Argument(name = "file", type = TypeEnum.STRUCT, structType = "File",
+        args = { @Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
+                 @Argument(name = "blob", type = TypeKind.BLOB),
+                 @Argument(name = "file", type = TypeKind.STRUCT, structType = "File",
                          structPackage = "ballerina.lang.files") })
-@BallerinaAnnotation(annotationName = "Description", attributes = { @Attribute(name = "value",
-        value = "This function writes a file using the given byte data") })
-@BallerinaAnnotation(annotationName = "Param", attributes = { @Attribute(name = "connector",
-        value = "ftp client connector") })
-@BallerinaAnnotation(annotationName = "Param", attributes = { @Attribute(name = "content",
-        value = "Blob content to be written") })
-@BallerinaAnnotation(annotationName = "Param", attributes = { @Attribute(name = "file",
-        value = "The file which the blob should be written to") })
 public class Write extends AbstractFtpAction {
     @Override public ConnectorFuture execute(Context context) {
 
@@ -64,18 +53,13 @@ public class Write extends AbstractFtpAction {
         if (!validateProtocol(destination.getStringField(0))) {
             throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by this connector");
         }
-        CarbonMessage byteMessage = new BinaryCarbonMessage(ByteBuffer.wrap(content), true);
+        RemoteFileSystemMessage message = new RemoteFileSystemMessage(ByteBuffer.wrap(content));
         //Create property map to send to transport.
         Map<String, String> propertyMap = new HashMap<>();
         propertyMap.put(FileConstants.PROPERTY_URI, destination.getStringField(0));
         propertyMap.put(FileConstants.PROPERTY_ACTION, FileConstants.ACTION_WRITE);
-        try {
-            //Getting the sender instance and sending the message.
-            BallerinaConnectorManager.getInstance().getClientConnector(FileConstants.FTP_CONNECTOR_NAME)
-                                     .send(byteMessage, null, propertyMap);
-        } catch (ClientConnectorException e) {
-            throw new BallerinaException(e.getMessage(), e, context);
-        }
+        VFSClientConnector connector = new VFSClientConnectorImpl("", propertyMap, null);
+        connector.send(message);
         ClientConnectorFuture future = new ClientConnectorFuture();
         future.notifySuccess();
         return future;

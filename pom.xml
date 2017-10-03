@@ -57,7 +57,7 @@
         </dependency>
         <dependency>
             <groupId>org.ballerinalang</groupId>
-            <artifactId>ballerina-native</artifactId>
+            <artifactId>ballerina-builtin</artifactId>
         </dependency>
     </dependencies>
 
@@ -78,7 +78,7 @@
         </resources>
         <plugins>
             <!--For ballerina natives processing/validation-->
-            <plugin>
+            <!--<plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>${mvn.exec.plugin.version}</version>
@@ -97,11 +97,11 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
 
             <!-- For ballerina annotation processing -->
             <plugin>
-                <groupId>org.bsc.maven</groupId>
+                <!--<groupId>org.bsc.maven</groupId>
                 <artifactId>maven-processor-plugin</artifactId>
                 <version>${mvn.processor.plugin.version}</version>
                 <configuration>
@@ -116,6 +116,18 @@
                         <targetDir>${generated.ballerina.source.directory}</targetDir>
                         <pkgRepositoryClass>${package.repository.provider.class}</pkgRepositoryClass>
                         <isSystemPkgRepository>false</isSystemPkgRepository>
+                    </options>
+                </configuration>-->
+                <groupId>org.bsc.maven</groupId>
+                <artifactId>maven-processor-plugin</artifactId>
+                <version>${mvn.processor.plugin.version}</version>
+                <configuration>
+                    <processors>
+                        <processor>org.ballerinalang.codegen.BallerinaAnnotationProcessor</processor>
+                    </processors>
+                    <options>
+                        <nativeEntityProviderPackage>org.ballerinalang.generated.providers</nativeEntityProviderPackage>
+                        <nativeEntityProviderClass>StandardNativeElementProvider</nativeEntityProviderClass>
                     </options>
                 </configuration>
                 <executions>

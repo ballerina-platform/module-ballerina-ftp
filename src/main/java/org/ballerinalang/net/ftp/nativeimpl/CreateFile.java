@@ -20,17 +20,15 @@ package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.connector.api.ConnectorFuture;
-import org.ballerinalang.model.types.TypeEnum;
+import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
-import org.ballerinalang.natives.annotations.Attribute;
 import org.ballerinalang.natives.annotations.BallerinaAction;
-import org.ballerinalang.natives.annotations.BallerinaAnnotation;
-import org.ballerinalang.natives.connectors.BallerinaConnectorManager;
 import org.ballerinalang.net.ftp.nativeimpl.util.FileConstants;
 import org.ballerinalang.util.exceptions.BallerinaException;
-import org.wso2.carbon.messaging.exceptions.ClientConnectorException;
+import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
+import org.wso2.carbon.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,18 +40,10 @@ import java.util.Map;
         packageName = "ballerina.net.ftp",
         actionName = "createFile",
         connectorName = FileConstants.CONNECTOR_NAME,
-        args = { @Argument(name = "ftpClientConnector", type = TypeEnum.CONNECTOR),
-                 @Argument(name = "file", type = TypeEnum.STRUCT, structType = "File",
+        args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
+                @Argument(name = "file", type = TypeKind.STRUCT, structType = "File",
                          structPackage = "ballerina.lang.files"),
-                 @Argument(name = "isDir", type = TypeEnum.BOOLEAN)})
-@BallerinaAnnotation(annotationName = "Description", attributes = { @Attribute(name = "value",
-        value = "Create a file or folder") })
-@BallerinaAnnotation(annotationName = "Param", attributes = { @Attribute(name = "connector",
-        value = "ftp client connector") })
-@BallerinaAnnotation(annotationName = "Param", attributes = { @Attribute(name = "file",
-        value = "File struct containing path information") })
-@BallerinaAnnotation(annotationName = "Param", attributes = { @Attribute(name = "isDir",
-        value = "Specify whether it is a file or a folder") })
+                @Argument(name = "isDir", type = TypeKind.BOOLEAN)})
 public class CreateFile extends AbstractFtpAction {
     @Override
     public ConnectorFuture execute(Context context) {
@@ -70,14 +60,8 @@ public class CreateFile extends AbstractFtpAction {
         propertyMap.put(FileConstants.PROPERTY_URI, pathString);
         propertyMap.put(FileConstants.PROPERTY_ACTION, FileConstants.ACTION_CREATE);
         propertyMap.put(FileConstants.PROPERTY_FOLDER, Boolean.toString(isDir));
-
-        try {
-            //Getting the sender instance and sending the message.
-            BallerinaConnectorManager.getInstance().getClientConnector(FileConstants.FTP_CONNECTOR_NAME)
-                                     .send(null, null, propertyMap);
-        } catch (ClientConnectorException e) {
-            throw new BallerinaException(e.getMessage(), e, context);
-        }
+        VFSClientConnector connector = new VFSClientConnectorImpl("", propertyMap, null);
+        connector.send(null);
         ClientConnectorFuture future = new ClientConnectorFuture();
         future.notifySuccess();
         return future;

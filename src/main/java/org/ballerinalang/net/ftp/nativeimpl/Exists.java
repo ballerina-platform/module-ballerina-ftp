@@ -18,20 +18,23 @@
 package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
+import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.connector.api.ConnectorFuture;
-import org.ballerinalang.model.types.TypeEnum;
+import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
-import org.ballerinalang.natives.annotations.Attribute;
 import org.ballerinalang.natives.annotations.BallerinaAction;
-import org.ballerinalang.natives.annotations.BallerinaAnnotation;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.ftp.nativeimpl.util.FileConstants;
 import org.ballerinalang.util.exceptions.BallerinaException;
-import org.wso2.carbon.messaging.CarbonMessage;
-import org.wso2.carbon.messaging.TextCarbonMessage;
+import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
+import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnectorFuture;
+import org.wso2.carbon.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
+import org.wso2.carbon.transport.remotefilesystem.listener.RemoteFileSystemListener;
+import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
+import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,18 +46,10 @@ import java.util.Map;
         packageName = "ballerina.net.ftp",
         actionName = "exists",
         connectorName = FileConstants.CONNECTOR_NAME,
-        args = { @Argument(name = "ftpClientConnector", type = TypeEnum.CONNECTOR),
-                 @Argument(name = "file", type = TypeEnum.STRUCT, structType = "File",
+        args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
+                @Argument(name = "file", type = TypeKind.STRUCT, structType = "File",
                          structPackage = "ballerina.lang.files") },
-        returnType = {@ReturnType(type = TypeEnum.BOOLEAN)})
-@BallerinaAnnotation(annotationName = "Description", attributes = { @Attribute(name = "value",
-        value = "Checks the existence of a file") })
-@BallerinaAnnotation(annotationName = "Param", attributes = { @Attribute(name = "connector",
-        value = "ftp client connector") })
-@BallerinaAnnotation(annotationName = "Param", attributes = { @Attribute(name = "file",
-        value = "File struct containing path information") })
-@BallerinaAnnotation(annotationName = "Return", attributes = {@Attribute(name = "isExist",
-        value = "Boolean representing  whether the file exists") })
+        returnType = {@ReturnType(type = TypeKind.BOOLEAN)})
 public class Exists extends AbstractFtpAction {
     @Override
     public ConnectorFuture execute(Context context) {
@@ -69,11 +64,34 @@ public class Exists extends AbstractFtpAction {
         String pathString = file.getStringField(0);
         propertyMap.put(FileConstants.PROPERTY_URI, pathString);
         propertyMap.put(FileConstants.PROPERTY_ACTION, FileConstants.ACTION_EXISTS);
-        CarbonMessage responseMessage = executeCallbackAction(null, propertyMap, context);
-        boolean b = Boolean.parseBoolean(((TextCarbonMessage) responseMessage).getText());
-        context.getControlStackNew().currentFrame.returnValues[0] = new BBoolean(b);
-        ClientConnectorFuture future = new ClientConnectorFuture();
-        future.notifySuccess();
-        return future;
+
+        ClientConnectorFuture connectorFuture = new ClientConnectorFuture();
+        FTPExistsClientConnectorListener connectorListener = new FTPExistsClientConnectorListener(connectorFuture);
+        VFSClientConnector connector = new VFSClientConnectorImpl("", propertyMap, connectorListener);
+        VFSClientConnectorFuture future = connector.send(null);
+        future.setFileSystemListener(connectorListener);
+        return connectorFuture;
+    }
+
+    private static class FTPExistsClientConnectorListener implements RemoteFileSystemListener {
+
+        private ClientConnectorFuture ballerinaFuture;
+
+        FTPExistsClientConnectorListener(ClientConnectorFuture ballerinaFuture) {
+            this.ballerinaFuture = ballerinaFuture;
+        }
+
+        @Override
+        public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
+            BBoolean value = new BBoolean(Boolean.parseBoolean(
+                    ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getText()));
+            ballerinaFuture.notifyReply(value);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            BallerinaConnectorException ex = new BallerinaConnectorException(throwable);
+            ballerinaFuture.notifyFailure(ex);
+        }
     }
 }
