@@ -18,16 +18,12 @@
 package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.natives.connectors.AbstractNativeAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * {@code AbstractFtpAction} is the base class for all FTP Connector Actions.
  */
 
 public abstract class AbstractFtpAction extends AbstractNativeAction {
-    private static final Logger logger = LoggerFactory.getLogger(AbstractFtpAction.class);
-    private static final long SENDER_TIMEOUT = 180000;
 
     protected boolean validateProtocol(String url) {
         return url.startsWith("ftp://") || url.startsWith("sftp://") || url.startsWith("ftps://");

@@ -17,24 +17,29 @@
  */
 package org.ballerinalang.net.ftp.nativeimpl.util;
 
+import org.wso2.carbon.transport.remotefilesystem.Constants;
+
 /**
  * Constants for ftp client connector.
  */
-public class FileConstants {
+public class FTPConstants {
     public static final String FTP_CONNECTOR_NAME = "file";
     public static final String CONNECTOR_NAME = "ClientConnector";
-    public static final String PROPERTY_URI = "uri";
+    public static final String PROPERTY_URI = Constants.URI;
     public static final String PROPERTY_SOURCE = "source";
-    public static final String PROPERTY_DESTINATION = "destination";
-    public static final String PROPERTY_ACTION = "action";
-    public static final String PROPERTY_FOLDER = "create-folder";
-    public static final String ACTION_COPY = "copy";
-    public static final String ACTION_CREATE = "create";
-    public static final String ACTION_DELETE = "delete";
-    public static final String ACTION_EXISTS = "exists";
-    public static final String ACTION_MOVE = "move";
-    public static final String ACTION_READ = "read";
-    public static final String ACTION_WRITE = "write";
+    public static final String PROPERTY_DESTINATION = Constants.DESTINATION;
+    public static final String PROPERTY_ACTION = Constants.ACTION;
+    public static final String PROPERTY_FOLDER = Constants.CREATE_FOLDER;
+    public static final String ACTION_COPY = Constants.COPY;
+    public static final String ACTION_CREATE = Constants.CREATE;
+    public static final String ACTION_DELETE = Constants.DELETE;
+    public static final String ACTION_EXISTS = Constants.EXISTS;
+    public static final String ACTION_MOVE = Constants.MOVE;
+    public static final String ACTION_READ = Constants.READ;
+    public static final String ACTION_WRITE = Constants.WRITE;
     public static final String TYPE_FILE = "file";
     public static final String TYPE_FOLDER = "folder";
+    public static final String FTP_PASSIVE_MODE = Constants.FTP_PASSIVE_MODE;
+    public static final String PROTOCOL = Constants.PROTOCOL;
+    public static final String PROTOCOL_FTP = Constants.PROTOCOL_FTP;
 }

@@ -27,7 +27,7 @@ import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.natives.annotations.ReturnType;
-import org.ballerinalang.net.ftp.nativeimpl.util.FileConstants;
+import org.ballerinalang.net.ftp.nativeimpl.util.FTPConstants;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnectorFuture;
@@ -45,7 +45,7 @@ import java.util.Map;
 @BallerinaAction(
         packageName = "ballerina.net.ftp",
         actionName = "read",
-        connectorName = FileConstants.CONNECTOR_NAME,
+        connectorName = FTPConstants.CONNECTOR_NAME,
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "file", type = TypeKind.STRUCT, structType = "File",
                          structPackage = "ballerina.lang.files")},
@@ -63,13 +63,15 @@ public class Read extends AbstractFtpAction {
         //Create property map to send to transport.
         Map<String, String> propertyMap = new HashMap<>();
         String pathString = file.getStringField(0);
-        propertyMap.put(FileConstants.PROPERTY_URI, pathString);
-        propertyMap.put(FileConstants.PROPERTY_ACTION, FileConstants.ACTION_READ);
+        propertyMap.put(FTPConstants.PROPERTY_URI, pathString);
+        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_READ);
+        propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
+        propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 
         ClientConnectorFuture connectorFuture = new ClientConnectorFuture();
         FTPReadClientConnectorListener connectorListener = new FTPReadClientConnectorListener(connectorFuture);
 
-        VFSClientConnector connector = new VFSClientConnectorImpl("", propertyMap, connectorListener);
+        VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
         VFSClientConnectorFuture future = connector.send(null);
         future.setFileSystemListener(connectorListener);
         return connectorFuture;

@@ -20,14 +20,9 @@ package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.connector.api.ConnectorFuture;
-import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
-import org.ballerinalang.natives.annotations.Argument;
-import org.ballerinalang.natives.annotations.BallerinaAction;
-import org.ballerinalang.natives.connectors.AbstractNativeAction;
 import org.ballerinalang.natives.connectors.BallerinaConnectorManager;
-import org.ballerinalang.net.ftp.nativeimpl.util.FileConstants;
-import org.osgi.service.component.annotations.Component;
+import org.ballerinalang.net.ftp.nativeimpl.util.FTPConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.messaging.CarbonMessageProcessor;
@@ -43,22 +38,14 @@ import java.util.ServiceLoader;
  *
  * @since 0.9
  */
-@BallerinaAction(
-        packageName = "ballerina.net.ftp",
-        actionName = "<init>",
-        connectorName = FileConstants.CONNECTOR_NAME,
-        args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR)})
-@Component(
-        name = "action.net.ftp.init",
-        immediate = true,
-        service = AbstractNativeAction.class)
+
 public class Init extends AbstractFtpAction {
     private static final Logger log = LoggerFactory.getLogger(Init.class);
 
     @Override
     public ConnectorFuture execute(Context context) {
         ClientConnector ftpConnector = BallerinaConnectorManager.getInstance().getClientConnector(
-                FileConstants.FTP_CONNECTOR_NAME);
+                FTPConstants.FTP_CONNECTOR_NAME);
 
         Map<String, Object> fsOpts = new HashMap<>();
         fsOpts.put("PROTOCOL", "ftp");
