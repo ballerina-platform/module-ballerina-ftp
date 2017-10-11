@@ -18,7 +18,6 @@
 package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.connector.api.ConnectorFuture;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BBoolean;
@@ -32,7 +31,6 @@ import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnectorFuture;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
-import org.wso2.carbon.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
@@ -64,6 +62,8 @@ public class Exists extends AbstractFtpAction {
         String pathString = file.getStringField(0);
         propertyMap.put(FTPConstants.PROPERTY_URI, pathString);
         propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_EXISTS);
+        propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
+        propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 
         ClientConnectorFuture connectorFuture = new ClientConnectorFuture();
         FTPExistsClientConnectorListener connectorListener = new FTPExistsClientConnectorListener(connectorFuture);
@@ -73,25 +73,17 @@ public class Exists extends AbstractFtpAction {
         return connectorFuture;
     }
 
-    private static class FTPExistsClientConnectorListener implements RemoteFileSystemListener {
-
-        private ClientConnectorFuture ballerinaFuture;
+    private static class FTPExistsClientConnectorListener extends FTPClientConnectorListener {
 
         FTPExistsClientConnectorListener(ClientConnectorFuture ballerinaFuture) {
-            this.ballerinaFuture = ballerinaFuture;
+            super(ballerinaFuture);
         }
 
         @Override
         public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
             BBoolean value = new BBoolean(Boolean.parseBoolean(
                     ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getText()));
-            ballerinaFuture.notifyReply(value);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            BallerinaConnectorException ex = new BallerinaConnectorException(throwable);
-            ballerinaFuture.notifyFailure(ex);
+            getBallerinaFuture().notifyReply(value);
         }
     }
 }

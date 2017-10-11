@@ -1,6 +1,6 @@
 package ballerina.net.fs;
 
-struct FileSystemEvent {
+public struct FileSystemEvent {
     string name;
     string operation;
 }

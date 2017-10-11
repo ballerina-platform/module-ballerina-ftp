@@ -37,7 +37,7 @@
         </dependency>
         <dependency>
             <groupId>org.ballerinalang</groupId>
-            <artifactId>annotation-processor</artifactId>
+            <artifactId>ballerina-lang</artifactId>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>
@@ -126,7 +126,7 @@
                         <processor>org.ballerinalang.codegen.BallerinaAnnotationProcessor</processor>
                     </processors>
                     <options>
-                        <nativeEntityProviderPackage>org.ballerinalang.generated.providers</nativeEntityProviderPackage>
+                        <nativeEntityProviderPackage>org.ballerinalang.net.ftp.generated.providers</nativeEntityProviderPackage>
                         <nativeEntityProviderClass>StandardNativeElementProvider</nativeEntityProviderClass>
                     </options>
                 </configuration>
@@ -254,15 +254,19 @@
 
     <properties>
         <!-- Path to the ballerina source directory -->
-        <ballerina.source.directory>${project.build.directory}/../src/main/ballerina</ballerina.source.directory>
-        <package.repository.provider.class>org.ballerinalang.net.fs.repository.BallerinaBuiltinPackageRepository
+        <ballerina.source.directory>
+            ${project.build.directory}/../src/main/ballerina
+        </ballerina.source.directory>
+        <package.repository.provider.class>
+            org.ballerinalang.net.fs.repository.BallerinaBuiltinPackageRepository
         </package.repository.provider.class>
         <native.constructs.provider.package>org.ballerinalang.net.fs</native.constructs.provider.package>
         <native.constructs.provider.class>BallerinaFSConstructsProvider</native.constructs.provider.class>
 
         <!-- Path to the generated natives ballerina files temp directory -->
         <!--<generated.ballerina.source.directory>${project.build.directory}/natives</generated.ballerina.source.directory>-->
-        <generated.ballerina.source.directory>${project.build.directory}/../src/main/ballerina
+        <generated.ballerina.source.directory>
+            ${project.build.directory}/../src/main/ballerina
         </generated.ballerina.source.directory>
         <mavan.findbugsplugin.exclude.file>findbugs-exclude.xml</mavan.findbugsplugin.exclude.file>
     </properties>

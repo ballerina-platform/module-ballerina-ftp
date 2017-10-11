@@ -17,16 +17,51 @@
  */
 package org.ballerinalang.net.ftp.nativeimpl;
 
+import org.ballerinalang.connector.api.BallerinaConnectorException;
+import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.connectors.AbstractNativeAction;
+import org.wso2.carbon.transport.remotefilesystem.listener.RemoteFileSystemListener;
+import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 
 /**
  * {@code AbstractFtpAction} is the base class for all FTP Connector Actions.
  */
+abstract class AbstractFtpAction extends AbstractNativeAction {
 
-public abstract class AbstractFtpAction extends AbstractNativeAction {
-
-    protected boolean validateProtocol(String url) {
+    boolean validateProtocol(String url) {
         return url.startsWith("ftp://") || url.startsWith("sftp://") || url.startsWith("ftps://");
     }
 
+    /**
+     * {@link RemoteFileSystemListener} implementation for receive notification from transport.
+     */
+    protected static class FTPClientConnectorListener implements RemoteFileSystemListener {
+        private ClientConnectorFuture ballerinaFuture;
+
+        FTPClientConnectorListener(ClientConnectorFuture ballerinaFuture) {
+            this.ballerinaFuture = ballerinaFuture;
+        }
+
+        @Override
+        public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
+            // This default implementation handle situation where no response return from the transport side.
+            // If there are any response coming from transport then specifically need to handle from relevant action
+            // class by overriding this method.
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            BallerinaConnectorException ex = new BallerinaConnectorException(throwable);
+            ballerinaFuture.notifyFailure(ex);
+        }
+
+        @Override
+        public void done() {
+            ballerinaFuture.notifySuccess();
+        }
+
+        ClientConnectorFuture getBallerinaFuture() {
+            return ballerinaFuture;
+        }
+    }
 }

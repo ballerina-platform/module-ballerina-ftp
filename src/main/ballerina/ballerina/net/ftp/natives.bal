@@ -3,11 +3,11 @@ package ballerina.net.ftp;
 import ballerina.lang.files;
 import ballerina.doc;
 
-struct FTPServerEvent {
+public struct FTPServerEvent {
     string name;
 }
 
-connector ClientConnector () {
+public connector ClientConnector () {
 
     @doc:Description { value:"Retrieves blob value of a file"}
     @doc:Param { value:"file: The file to be read" }

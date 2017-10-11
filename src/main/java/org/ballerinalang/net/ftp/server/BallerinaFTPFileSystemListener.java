@@ -25,29 +25,34 @@ import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
+import org.ballerinalang.services.ErrorHandlerUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.carbon.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
-import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemMessage;
+import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemEvent;
 
 /**
  * File System connector listener for Ballerina.
  */
 public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener {
 
+    private static final Logger log = LoggerFactory.getLogger(BallerinaFTPFileSystemListener.class);
+
     @Override
     public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
-        RemoteFileSystemMessage remoteFileSystemMessage = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
-        Resource resource = FTPServerConnectorResourceDispatcher.findResource(remoteFileSystemMessage);
-        BValue[] parameters = getSignatureParameters(resource, remoteFileSystemMessage);
+        RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
+        Resource resource = FTPServerConnectorResourceDispatcher.findResource(event);
+        BValue[] parameters = getSignatureParameters(resource, event);
         ConnectorFuture future = Executor.submit(resource, null, parameters);
-        ConnectorFutureListener futureListener = new FTPConnectorFutureListener(remoteFileSystemMessage);
+        ConnectorFutureListener futureListener = new FTPConnectorFutureListener(event);
         future.setConnectorFutureListener(futureListener);
     }
 
-    private BValue[] getSignatureParameters(Resource resource, RemoteFileSystemMessage fileSystemMessage) {
+    private BValue[] getSignatureParameters(Resource resource, RemoteFileSystemEvent fileSystemEvent) {
         BStruct request = ConnectorUtils.createStruct(resource, Constants.FTP_PACKAGE_NAME,
                 Constants.FTP_SERVER_EVENT);
-        request.setStringField(0, fileSystemMessage.getText());
+        request.setStringField(0, fileSystemEvent.getText());
         BValue[] bValues = new BValue[1];
         bValues[0] = request;
         return bValues;
@@ -55,6 +60,11 @@ public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener 
 
     @Override
     public void onError(Throwable throwable) {
+        ErrorHandlerUtils.printError(throwable);
+    }
 
+    @Override
+    public void done() {
+        log.debug("Successfully finished the action.");
     }
 }

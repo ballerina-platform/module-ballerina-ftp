@@ -18,7 +18,6 @@
 package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.connector.api.ConnectorFuture;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BBlob;
@@ -32,7 +31,6 @@ import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnectorFuture;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
-import org.wso2.carbon.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
@@ -70,31 +68,22 @@ public class Read extends AbstractFtpAction {
 
         ClientConnectorFuture connectorFuture = new ClientConnectorFuture();
         FTPReadClientConnectorListener connectorListener = new FTPReadClientConnectorListener(connectorFuture);
-
         VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
         VFSClientConnectorFuture future = connector.send(null);
         future.setFileSystemListener(connectorListener);
         return connectorFuture;
     }
 
-    private static class FTPReadClientConnectorListener implements RemoteFileSystemListener {
-
-        private ClientConnectorFuture ballerinaFuture;
+    private static class FTPReadClientConnectorListener extends FTPClientConnectorListener {
 
         FTPReadClientConnectorListener(ClientConnectorFuture ballerinaFuture) {
-            this.ballerinaFuture = ballerinaFuture;
+            super(ballerinaFuture);
         }
 
         @Override
         public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
             BBlob blob = new BBlob(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getBytes().array());
-            ballerinaFuture.notifyReply(blob);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            BallerinaConnectorException ex = new BallerinaConnectorException(throwable);
-            ballerinaFuture.notifyFailure(ex);
+            getBallerinaFuture().notifyReply(blob);
         }
     }
 }

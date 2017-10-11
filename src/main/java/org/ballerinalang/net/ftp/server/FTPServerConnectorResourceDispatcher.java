@@ -24,7 +24,7 @@ import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemMessage;
+import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemEvent;
 
 /**
  * Resource level dispatchers handler for file protocol.
@@ -33,9 +33,9 @@ public class FTPServerConnectorResourceDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(FTPServerConnectorResourceDispatcher.class);
 
-    public static Resource findResource(RemoteFileSystemMessage fileSystemMessage)
+    public static Resource findResource(RemoteFileSystemEvent fileSystemEvent)
             throws BallerinaException {
-        Service service = FTPServiceRegistry.getInstance().findService(fileSystemMessage);
+        Service service = FTPServiceRegistry.getInstance().findService(fileSystemEvent);
         if (service == null) {
             throw new BallerinaConnectorException("No Service found to handle the service request.");
         }

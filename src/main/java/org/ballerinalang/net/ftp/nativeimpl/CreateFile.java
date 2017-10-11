@@ -28,6 +28,7 @@ import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.net.ftp.nativeimpl.util.FTPConstants;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
+import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnectorFuture;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
 
 import java.util.HashMap;
@@ -60,10 +61,14 @@ public class CreateFile extends AbstractFtpAction {
         propertyMap.put(FTPConstants.PROPERTY_URI, pathString);
         propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_CREATE);
         propertyMap.put(FTPConstants.PROPERTY_FOLDER, Boolean.toString(isDir));
-        VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, null);
-        connector.send(null);
+        propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
+        propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
+
         ClientConnectorFuture future = new ClientConnectorFuture();
-        future.notifySuccess();
+        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(future);
+        VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
+        VFSClientConnectorFuture send = connector.send(null);
+        send.setFileSystemListener(connectorListener);
         return future;
     }
 }
