@@ -126,7 +126,7 @@
                         <processor>org.ballerinalang.codegen.BallerinaAnnotationProcessor</processor>
                     </processors>
                     <options>
-                        <nativeEntityProviderPackage>org.ballerinalang.net.ftp.generated.providers</nativeEntityProviderPackage>
+                        <nativeEntityProviderPackage>org.ballerinalang.net.file.generated.providers</nativeEntityProviderPackage>
                         <nativeEntityProviderClass>StandardNativeElementProvider</nativeEntityProviderClass>
                     </options>
                 </configuration>
@@ -258,9 +258,9 @@
             ${project.build.directory}/../src/main/ballerina
         </ballerina.source.directory>
         <package.repository.provider.class>
-            org.ballerinalang.net.fs.repository.BallerinaBuiltinPackageRepository
+            org.ballerinalang.net.file.repository.BallerinaBuiltinPackageRepository
         </package.repository.provider.class>
-        <native.constructs.provider.package>org.ballerinalang.net.fs</native.constructs.provider.package>
+        <native.constructs.provider.package>org.ballerinalang.net.file</native.constructs.provider.package>
         <native.constructs.provider.class>BallerinaFSConstructsProvider</native.constructs.provider.class>
 
         <!-- Path to the generated natives ballerina files temp directory -->

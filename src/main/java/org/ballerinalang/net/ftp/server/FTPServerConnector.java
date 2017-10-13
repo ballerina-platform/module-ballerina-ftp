@@ -105,27 +105,23 @@ public class FTPServerConnector implements BallerinaServerConnector {
 
 
     private Map<String, String> getServerConnectorParamMap(Annotation info) {
-        Map<String, String> params = new HashMap<>();
+        Map<String, String> params = new HashMap<>(19);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_DIR_URI, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_FILE_PATTERN, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_POLLING_INTERVAL, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_CRON_EXPRESSION, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_ACK_TIMEOUT, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_FILE_COUNT, params);
-
         addAnnotationAttributeValue(info, Constants.ANNOTATION_SORT_ATTRIBUTE, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_SORT_ASCENDING, params);
-
         addAnnotationAttributeValue(info, Constants.ANNOTATION_ACTION_AFTER_PROCESS, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_ACTION_AFTER_FAILURE, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_MOVE_AFTER_PROCESS, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_MOVE_AFTER_FAILURE, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_MOVE_TIMESTAMP_FORMAT, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_CREATE_DIR, params);
-
         addAnnotationAttributeValue(info, Constants.ANNOTATION_PARALLEL, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_THREAD_POOL_SIZE, params);
-
         addAnnotationAttributeValue(info, Constants.ANNOTATION_SFTP_IDENTITIES, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_SFTP_IDENTITY_PASS_PHRASE, params);
         addAnnotationAttributeValue(info, Constants.ANNOTATION_SFTP_USER_DIR_IS_ROOT, params);

@@ -25,11 +25,6 @@ public class Constants {
 
     //Annotation
     public static final String ANNOTATION_CONFIG = "configuration";
-    public static final String ANNOTATION_SORT = "Sort";
-    public static final String ANNOTATION_POST_PROCESS = "PostProcess";
-    public static final String ANNOTATION_CONCURRENCY = "Concurrency";
-    public static final String ANNOTATION_SFTP_SETTINGS = "SftpSettings";
-    public static final String PROTOCOL_FTP = "ftp";
     public static final String TRANSPORT_PROPERTY_SERVICE_NAME = "TRANSPORT_FILE_SERVICE_NAME";
     public static final String FTP_PACKAGE_NAME = "ballerina.net.ftp";
     public static final String FTP_SERVER_EVENT = "FTPServerEvent";

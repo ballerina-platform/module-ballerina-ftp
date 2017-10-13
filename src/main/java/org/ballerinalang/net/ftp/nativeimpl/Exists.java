@@ -81,9 +81,11 @@ public class Exists extends AbstractFtpAction {
 
         @Override
         public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
-            BBoolean value = new BBoolean(Boolean.parseBoolean(
-                    ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getText()));
-            getBallerinaFuture().notifyReply(value);
+            if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
+                BBoolean value = new BBoolean(Boolean.parseBoolean(
+                        ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getText()));
+                getBallerinaFuture().notifyReply(value);
+            }
         }
     }
 }

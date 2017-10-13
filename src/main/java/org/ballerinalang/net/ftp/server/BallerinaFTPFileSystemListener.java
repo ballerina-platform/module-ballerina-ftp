@@ -41,12 +41,14 @@ public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener 
 
     @Override
     public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
-        RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
-        Resource resource = FTPServerConnectorResourceDispatcher.findResource(event);
-        BValue[] parameters = getSignatureParameters(resource, event);
-        ConnectorFuture future = Executor.submit(resource, null, parameters);
-        ConnectorFutureListener futureListener = new FTPConnectorFutureListener(event);
-        future.setConnectorFutureListener(futureListener);
+        if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
+            RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
+            Resource resource = FTPServerConnectorResourceDispatcher.findResource(event);
+            BValue[] parameters = getSignatureParameters(resource, event);
+            ConnectorFuture future = Executor.submit(resource, null, parameters);
+            ConnectorFutureListener futureListener = new FTPConnectorFutureListener(event);
+            future.setConnectorFutureListener(futureListener);
+        }
     }
 
     private BValue[] getSignatureParameters(Resource resource, RemoteFileSystemEvent fileSystemEvent) {

@@ -82,8 +82,10 @@ public class Read extends AbstractFtpAction {
 
         @Override
         public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
-            BBlob blob = new BBlob(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getBytes().array());
-            getBallerinaFuture().notifyReply(blob);
+            if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
+                BBlob blob = new BBlob(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getBytes().array());
+                getBallerinaFuture().notifyReply(blob);
+            }
         }
     }
 }
