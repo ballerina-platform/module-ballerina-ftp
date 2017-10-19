@@ -19,9 +19,13 @@ package org.ballerinalang.net.utils;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.compiler.CompilerPhase;
 import org.ballerinalang.model.elements.PackageID;
+import org.ballerinalang.model.types.BStructType;
+import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.util.codegen.FunctionInfo;
+import org.ballerinalang.util.codegen.PackageInfo;
 import org.ballerinalang.util.codegen.ProgramFile;
+import org.ballerinalang.util.codegen.StructInfo;
 import org.ballerinalang.util.diagnostic.DiagnosticListener;
 import org.ballerinalang.util.program.BLangFunctions;
 import org.wso2.ballerinalang.compiler.Compiler;
@@ -229,5 +233,11 @@ public class BTestUtils {
         BLangFunctions.invokeFunction(compileResult.getProgFile(), initFuncInfo, context);
     }
 
+    public static BStruct createAndGetStruct(ProgramFile programFile, String packagePath, String structName) {
+        PackageInfo structPackageInfo = programFile.getPackageInfo(packagePath);
+        StructInfo structInfo = structPackageInfo.getStructInfo(structName);
+        BStructType structType = structInfo.getType();
+        return new BStruct(structType);
+    }
 
 }
