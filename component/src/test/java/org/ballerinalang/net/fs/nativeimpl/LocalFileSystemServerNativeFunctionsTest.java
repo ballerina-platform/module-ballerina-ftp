@@ -147,7 +147,7 @@ public class LocalFileSystemServerNativeFunctionsTest {
         } catch (Exception e) {
             error = e.getMessage();
         }
-        Assert.assertEquals(error.substring(23, 54), "destination is not a directory:");
+        Assert.assertEquals(error.substring(23, 73), "unable to move file [/invalid-file] to destination");
     }
 
     private Path createFile(String directory, String fileName) throws IOException {

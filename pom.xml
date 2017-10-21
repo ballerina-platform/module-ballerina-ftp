@@ -77,6 +77,16 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>org.wso2.carbon.transport</groupId>
+                <artifactId>org.wso2.carbon.transport.remote-file-system</artifactId>
+                <version>${file.transport.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.transport</groupId>
+                <artifactId>org.wso2.carbon.transport.local-file-system</artifactId>
+                <version>${file.transport.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-builtin</artifactId>
                 <version>${ballerina.version}</version>
@@ -92,14 +102,25 @@
                 <version>${ballerina.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-logging</artifactId>
-                <version>${ballerina.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.mockftpserver</groupId>
                 <artifactId>MockFtpServer</artifactId>
                 <version>${mock.ftp.server.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testng</groupId>
+                <artifactId>testng</artifactId>
+                <version>${testng.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-jdk14</artifactId>
+                <version>${slf4j.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
@@ -217,6 +238,8 @@
     </build>
     <properties>
         <ballerina.version>0.93.1-SNAPSHOT</ballerina.version>
+        <file.transport.version>6.0.28-SNAPSHOT</file.transport.version>
+        <slf4j.version>1.7.22</slf4j.version>
         <maven.findbugsplugin.version.exclude>findbugs-exclude.xml</maven.findbugsplugin.version.exclude>
         <cobertura.version>2.7</cobertura.version>
         <mvn.processor.plugin.version>2.2.4</mvn.processor.plugin.version>

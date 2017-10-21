@@ -46,6 +46,9 @@ public class Move extends AbstractNativeFunction {
         String source = fileEventStruct.getStringField(0);
         Path sourcePath = Paths.get(source);
         Path fileName = sourcePath.getFileName();
+        if (fileName == null) {
+            throw new BallerinaException("Could not find the file name for triggered event: " + source);
+        }
         Path destinationPath = Paths.get(destination, fileName.toString());
         try {
             Files.move(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);

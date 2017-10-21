@@ -5,12 +5,8 @@ import org.ballerinalang.connector.api.BallerinaServerConnector;
 import org.ballerinalang.connector.api.ConnectorUtils;
 import org.ballerinalang.net.utils.CompileResult;
 import org.ballerinalang.net.utils.EnvironmentInitializer;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemEvent;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 
 /**
  * Test class for {@link LocalFileSystemServerConnector}.
@@ -20,10 +16,6 @@ public class LocalFileSystemServerConnectorTest {
 
     @Test
     public void testValidLocalFileSystemServerConnectorSyntax() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream ps = new PrintStream(baos);
-        PrintStream old = System.out;
-
         CompileResult compileResult = EnvironmentInitializer.setupProgramFile("test-src/fs/file-system.bal");
         BallerinaServerConnector ballerinaServerConnector =
                 ConnectorUtils.getBallerinaServerConnector(Constants.FILE_SYSTEM_PACKAGE_NAME);
@@ -31,14 +23,8 @@ public class LocalFileSystemServerConnectorTest {
         BallerinaLocalFileSystemListener systemListener = new BallerinaLocalFileSystemListener(connector);
         LocalFileSystemEvent event = new LocalFileSystemEvent("/home/ballerina/bal/file.txt", "create");
         event.setProperty(Constants.TRANSPORT_PROPERTY_SERVICE_NAME, "._fileSystem");
-        System.setOut(ps);
         systemListener.onMessage(event);
-        System.out.flush();
-        System.setOut(old);
         EnvironmentInitializer.cleanup(compileResult);
-        String msg = "[org.ballerinalang.net.fs.server.Dispatcher] : " +
-                "FileSystemMessage received for service: fileSystem\n";
-        Assert.assertEquals(baos.toString(), msg);
     }
 
     @Test(dependsOnMethods = "testValidLocalFileSystemServerConnectorSyntax",

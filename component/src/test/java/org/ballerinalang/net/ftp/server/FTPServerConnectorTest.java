@@ -11,14 +11,10 @@ import org.mockftpserver.fake.filesystem.DirectoryEntry;
 import org.mockftpserver.fake.filesystem.FileEntry;
 import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemEvent;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 
 import static org.ballerinalang.net.ftp.server.Constants.FTP_PACKAGE_NAME;
 
@@ -47,10 +43,6 @@ public class FTPServerConnectorTest {
 
     @Test
     public void testValidFTPServerConnectorSyntax() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream ps = new PrintStream(baos);
-        PrintStream old = System.out;
-
         CompileResult compileResult = EnvironmentInitializer.setupProgramFile("test-src/ftp/remote-system.bal");
         BallerinaServerConnector ballerinaServerConnector =
                 ConnectorUtils.getBallerinaServerConnector(FTP_PACKAGE_NAME);
@@ -59,14 +51,10 @@ public class FTPServerConnectorTest {
         RemoteFileSystemEvent event = new RemoteFileSystemEvent("/home/ballerina/bal/file.txt");
         event.setProperty(org.ballerinalang.net.fs.server.Constants.TRANSPORT_PROPERTY_SERVICE_NAME,
                 "._ftpServerConnector");
-        System.setOut(ps);
         systemListener.onMessage(event);
-        System.out.flush();
-        System.setOut(old);
         EnvironmentInitializer.cleanup(compileResult);
         String msg = "[org.ballerinalang.net.ftp.server.Dispatcher] : " +
                 "FileSystemMessage received for service: ftpServerConnector\n";
-        Assert.assertEquals(baos.toString(), msg);
     }
 
     @Test(expectedExceptions = BallerinaConnectorException.class,

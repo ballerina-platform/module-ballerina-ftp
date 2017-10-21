@@ -29,7 +29,6 @@ import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.messaging.exceptions.ServerConnectorException;
 import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemConnectorFactory;
 import org.wso2.carbon.transport.localfilesystem.server.connector.contractimpl.LocalFileSystemConnectorFactoryImpl;
 import org.wso2.carbon.transport.localfilesystem.server.exception.LocalFileSystemServerConnectorException;
@@ -104,7 +103,7 @@ public class LocalFileSystemServerConnector implements BallerinaServerConnector 
                 if (serverConnector != null) {
                     serverConnector.stop();
                 }
-            } catch (ServerConnectorException e) {
+            } catch (LocalFileSystemServerConnectorException e) {
                 throw new BallerinaException("Could not stop file server connector for " +
                         "service: " + serviceName, e);
             }

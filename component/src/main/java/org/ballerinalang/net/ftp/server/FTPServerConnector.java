@@ -29,7 +29,6 @@ import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.messaging.exceptions.ServerConnectorException;
 import org.wso2.carbon.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
 import org.wso2.carbon.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
 import org.wso2.carbon.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
@@ -105,7 +104,7 @@ public class FTPServerConnector implements BallerinaServerConnector {
                 if (serverConnector != null) {
                     serverConnector.stop();
                 }
-            } catch (ServerConnectorException e) {
+            } catch (RemoteFileSystemConnectorException e) {
                 throw new BallerinaException("Could not stop FTP server connector for " +
                         "service: " + serviceKeyName, e);
             }
