@@ -1,7 +1,7 @@
 import ballerina.net.fs;
 import ballerina.utils.logger;
 @fs:configuration {
-    dirURI:"/home/gihan/Desktop/temp",
+    dirURI:"target/fs",
     events:"create,delete,modify",
     recursive:false
 }

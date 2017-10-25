@@ -3,8 +3,8 @@ package org.ballerinalang.net.ftp.server;
 import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.connector.api.BallerinaServerConnector;
 import org.ballerinalang.connector.api.ConnectorUtils;
-import org.ballerinalang.net.utils.CompileResult;
-import org.ballerinalang.net.utils.EnvironmentInitializer;
+import org.ballerinalang.launcher.util.BServiceUtil;
+import org.ballerinalang.launcher.util.CompileResult;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
@@ -43,7 +43,7 @@ public class FTPServerConnectorTest {
 
     @Test
     public void testValidFTPServerConnectorSyntax() {
-        CompileResult compileResult = EnvironmentInitializer.setupProgramFile("test-src/ftp/remote-system.bal");
+        CompileResult compileResult = BServiceUtil.setupProgramFile(this, "test-src/ftp/remote-system.bal");
         BallerinaServerConnector ballerinaServerConnector =
                 ConnectorUtils.getBallerinaServerConnector(FTP_PACKAGE_NAME);
         FTPServerConnector connector = (FTPServerConnector) ballerinaServerConnector;
@@ -52,7 +52,7 @@ public class FTPServerConnectorTest {
         event.setProperty(org.ballerinalang.net.fs.server.Constants.TRANSPORT_PROPERTY_SERVICE_NAME,
                 "._ftpServerConnector");
         systemListener.onMessage(event);
-        EnvironmentInitializer.cleanup(compileResult);
+        BServiceUtil.cleanup(compileResult);
         String msg = "[org.ballerinalang.net.ftp.server.Dispatcher] : " +
                 "FileSystemMessage received for service: ftpServerConnector\n";
     }
@@ -72,8 +72,8 @@ public class FTPServerConnectorTest {
     }
 
     private void execute(String file) {
-        CompileResult compileResult = EnvironmentInitializer.setupProgramFile(file);
-        EnvironmentInitializer.cleanup(compileResult);
+        CompileResult compileResult = BServiceUtil.setupProgramFile(this, file);
+        BServiceUtil.cleanup(compileResult);
     }
 
     @AfterClass

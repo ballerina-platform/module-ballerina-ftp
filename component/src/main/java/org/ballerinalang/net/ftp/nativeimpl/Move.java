@@ -28,7 +28,6 @@ import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.net.ftp.nativeimpl.util.FTPConstants;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
-import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnectorFuture;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
 
 import java.util.HashMap;
@@ -67,8 +66,7 @@ public class Move extends AbstractFtpAction {
         ClientConnectorFuture future = new ClientConnectorFuture();
         FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(future);
         VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
-        VFSClientConnectorFuture send = connector.send(null);
-        send.setFileSystemListener(connectorListener);
+        connector.send(null);
         return future;
     }
 }

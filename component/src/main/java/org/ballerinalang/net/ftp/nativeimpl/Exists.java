@@ -29,7 +29,6 @@ import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.ftp.nativeimpl.util.FTPConstants;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
-import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnectorFuture;
 import org.wso2.carbon.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemMessage;
@@ -68,8 +67,7 @@ public class Exists extends AbstractFtpAction {
         ClientConnectorFuture connectorFuture = new ClientConnectorFuture();
         FTPExistsClientConnectorListener connectorListener = new FTPExistsClientConnectorListener(connectorFuture);
         VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
-        VFSClientConnectorFuture future = connector.send(null);
-        future.setFileSystemListener(connectorListener);
+        connector.send(null);
         return connectorFuture;
     }
 
