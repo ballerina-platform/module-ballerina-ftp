@@ -23,6 +23,7 @@ import org.ballerinalang.connector.api.ConnectorFutureListener;
 import org.ballerinalang.connector.api.ConnectorUtils;
 import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
+import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
 import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemEvent;
@@ -33,18 +34,18 @@ import org.wso2.carbon.transport.localfilesystem.server.connector.contract.Local
  */
 public class BallerinaLocalFileSystemListener implements LocalFileSystemListener {
 
-    private LocalFileSystemServerConnector serverConnector;
+    private Service service;
 
-    public BallerinaLocalFileSystemListener(LocalFileSystemServerConnector serverConnector) {
-        this.serverConnector = serverConnector;
+    public BallerinaLocalFileSystemListener(Service service) {
+        this.service = service;
     }
 
     @Override
     public void onMessage(LocalFileSystemEvent fileSystemEvent) {
-        Resource resource = Dispatcher.findResource(fileSystemEvent, serverConnector.getServiceMap());
+        Resource resource = service.getResources()[0];
         BValue[] parameters = getSignatureParameters(resource, fileSystemEvent);
         ConnectorFuture future = Executor.submit(resource, null, parameters);
-        ConnectorFutureListener futureListener = new LocalFileSystemServerConnectorFutureListener(fileSystemEvent);
+        ConnectorFutureListener futureListener = new LocalFileSystemServerConnectorFutureListener(service.getName());
         future.setConnectorFutureListener(futureListener);
     }
 

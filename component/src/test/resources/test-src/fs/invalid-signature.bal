@@ -1,5 +1,4 @@
 import ballerina.net.fs;
-import ballerina.lang.system;
 @fs:configuration {
     dirURI:"target/fs",
     events:"create,delete,modify",
@@ -7,7 +6,7 @@ import ballerina.lang.system;
 }
 service<fs> fileSystem {
     resource fileResource (fs:SystemEvent m) {
-        system:println(m.name);
-        system:println(m.operation);
+        println(m.name);
+        println(m.operation);
     }
 }

@@ -24,7 +24,6 @@ import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.services.ErrorHandlerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemEvent;
 
 /**
  * {@code FTPConnectorFutureListener} is the responsible for acting on notifications
@@ -33,17 +32,15 @@ import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemEvent;
 public class FTPConnectorFutureListener implements ConnectorFutureListener {
 
     private static final Logger log = LoggerFactory.getLogger(FTPConnectorFutureListener.class);
-    private RemoteFileSystemEvent fileSystemEvent;
+    private String serviceName;
 
-    public FTPConnectorFutureListener(RemoteFileSystemEvent fileSystemEvent) {
-        this.fileSystemEvent = fileSystemEvent;
+    public FTPConnectorFutureListener(String serviceName) {
+        this.serviceName = serviceName;
     }
 
     @Override
     public void notifySuccess() {
         if (log.isDebugEnabled()) {
-            Object serviceNameProperty = fileSystemEvent.getProperty(Constants.TRANSPORT_PROPERTY_SERVICE_NAME);
-            String serviceName = (serviceNameProperty != null) ? serviceNameProperty.toString() : null;
             log.debug("Received success notify for FileSystemConnector service: " + serviceName);
         }
     }
@@ -51,16 +48,12 @@ public class FTPConnectorFutureListener implements ConnectorFutureListener {
     @Override
     public void notifyReply(BValue response) {
         if (log.isDebugEnabled() && response != null) {
-            Object serviceNameProperty = fileSystemEvent.getProperty(Constants.TRANSPORT_PROPERTY_SERVICE_NAME);
-            String serviceName = (serviceNameProperty != null) ? serviceNameProperty.toString() : null;
             log.debug("Received reply for FileSystemConnector service: " + serviceName + "; " + response.stringValue());
         }
     }
 
     @Override
     public void notifyFailure(BallerinaConnectorException ex) {
-        Object serviceNameProperty = fileSystemEvent.getProperty(Constants.TRANSPORT_PROPERTY_SERVICE_NAME);
-        String serviceName = (serviceNameProperty != null) ? serviceNameProperty.toString() : null;
         log.error("Error occurred for FileSystemConnector service: " + serviceName, ex);
         ErrorHandlerUtils.printError(ex);
     }

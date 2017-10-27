@@ -49,8 +49,7 @@ public class FTPServerConnector implements BallerinaServerConnector {
 
     private static final Logger log = LoggerFactory.getLogger(FTPServerConnector.class);
 
-    private RemoteFileSystemServerConnector serverConnector;
-    private final Map<String, Service> serviceMap = new HashMap<>();
+    private final Map<String, ConnectorInfo> connectorMap = new HashMap<>();
 
     @Override
     public String getProtocolPackage() {
@@ -81,12 +80,12 @@ public class FTPServerConnector implements BallerinaServerConnector {
         for (Resource resource : service.getResources()) {
             validateResourceSignature(resource);
         }
-
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         try {
-            serverConnector = fileSystemConnectorFactory.createServerConnector(serviceName, paramMap,
-                    new BallerinaFTPFileSystemListener(this));
-            serviceMap.put(serviceName, service);
+            RemoteFileSystemServerConnector serverConnector =
+                    fileSystemConnectorFactory.createServerConnector(serviceName, paramMap,
+                    new BallerinaFTPFileSystemListener(service));
+            connectorMap.put(serviceName, new ConnectorInfo(service, serverConnector));
         } catch (RemoteFileSystemConnectorException e) {
             throw new BallerinaConnectorException("Unable to initialize FTPServerConnector instance", e);
         }
@@ -98,14 +97,13 @@ public class FTPServerConnector implements BallerinaServerConnector {
     @Override
     public void serviceUnregistered(Service service) throws BallerinaConnectorException {
         String serviceKeyName = getServiceName(service);
-        if (serviceMap.get(serviceKeyName) != null) {
-            serviceMap.remove(serviceKeyName);
+        ConnectorInfo connectorInfo;
+        if ((connectorInfo = connectorMap.get(serviceKeyName)) != null) {
             try {
-                if (serverConnector != null) {
-                    serverConnector.stop();
-                }
+                connectorInfo.getServerConnector().stop();
+                connectorMap.remove(serviceKeyName);
             } catch (RemoteFileSystemConnectorException e) {
-                throw new BallerinaException("Could not stop FTP server connector for " +
+                throw new BallerinaException("Could not stop file server connector for " +
                         "service: " + serviceKeyName, e);
             }
         }
@@ -116,22 +114,17 @@ public class FTPServerConnector implements BallerinaServerConnector {
 
     @Override
     public void deploymentComplete() throws BallerinaConnectorException {
-        if (serverConnector != null) {
-            try {
-                serverConnector.start();
-            } catch (RemoteFileSystemConnectorException e) {
-                throw new BallerinaConnectorException("Unable to start FTPServerConnector task", e);
+        try {
+            for (Map.Entry<String, ConnectorInfo> entry : connectorMap.entrySet()) {
+                if (!entry.getValue().isStart()) {
+                    entry.getValue().getServerConnector().start();
+                    connectorMap.get(entry.getKey()).setStart(true);
+                }
             }
+        } catch (RemoteFileSystemConnectorException e) {
+            throw new BallerinaConnectorException("Unable to start FTPServerConnector task", e);
         }
-    }
 
-    /**
-     * This will return all the deployed services that related to {@link FTPServerConnector}.
-     *
-     * @return Map that consists the service information.
-     */
-    Map<String, Service> getServiceMap() {
-        return serviceMap;
     }
 
     private Map<String, String> getServerConnectorParamMap(Annotation info) {

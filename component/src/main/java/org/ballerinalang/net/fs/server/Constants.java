@@ -29,7 +29,6 @@ public class Constants {
     public static final String ANNOTATION_EVENTS = "events";
     public static final String ANNOTATION_DIRECTORY_RECURSIVE = "recursive";
 
-    public static final String TRANSPORT_PROPERTY_SERVICE_NAME = "TRANSPORT_FILE_SERVICE_NAME";
     public static final String FILE_SYSTEM_PACKAGE_NAME = "ballerina.net.fs";
     public static final String FILE_SYSTEM_EVENT = "FileSystemEvent";
 }

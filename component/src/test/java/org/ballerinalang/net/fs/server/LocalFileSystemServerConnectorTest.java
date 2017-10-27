@@ -13,11 +13,13 @@ import org.wso2.carbon.transport.localfilesystem.server.connector.contract.Local
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.Map;
 
 /**
  * Test class for {@link LocalFileSystemServerConnector}.
@@ -58,14 +60,24 @@ public class LocalFileSystemServerConnectorTest {
         BallerinaServerConnector ballerinaServerConnector =
                 ConnectorUtils.getBallerinaServerConnector(Constants.FILE_SYSTEM_PACKAGE_NAME);
         LocalFileSystemServerConnector connector = (LocalFileSystemServerConnector) ballerinaServerConnector;
-        BallerinaLocalFileSystemListener systemListener = new BallerinaLocalFileSystemListener(connector);
-        LocalFileSystemEvent event = new LocalFileSystemEvent("/home/ballerina/bal/file.txt", "create");
-        event.setProperty(Constants.TRANSPORT_PROPERTY_SERVICE_NAME, "._fileSystem");
-        systemListener.onMessage(event);
+        try {
+            final Field connectorMapInstance =
+                    LocalFileSystemServerConnector.class.getDeclaredField("connectorMap");
+            connectorMapInstance.setAccessible(true);
+            Map<String, ConnectorInfo> connectorInfoMap =
+                    (Map<String, ConnectorInfo>) connectorMapInstance.get(connector);
+            BallerinaLocalFileSystemListener systemListener =
+                    new BallerinaLocalFileSystemListener(connectorInfoMap.get("._fileSystem").getService());
+            LocalFileSystemEvent event =
+                    new LocalFileSystemEvent("/home/ballerina/bal/file.txt", "create");
+            systemListener.onMessage(event);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            //Do nothing
+        }
         BServiceUtil.cleanup(compileResult);
     }
 
-    @Test(dependsOnMethods = "testValidLocalFileSystemServerConnectorSyntax",
+    @Test(
             expectedExceptions = BallerinaConnectorException.class,
             expectedExceptionsMessageRegExp = "Unable to find the associated configuration " +
                     "annotation for given service: .*")
@@ -79,44 +91,6 @@ public class LocalFileSystemServerConnectorTest {
     public void testMoreResources() {
         execute("test-src/fs/more-resources.bal");
     }
-
-    @Test(dependsOnMethods = "testMoreResources",
-            expectedExceptions = BallerinaConnectorException.class,
-            expectedExceptionsMessageRegExp = "No Service found to handle the service request.")
-    public void testDispatchToNonExistService() {
-        CompileResult compileResult = BServiceUtil.setupProgramFile(this, "test-src/fs/file-system.bal");
-        BallerinaServerConnector ballerinaServerConnector =
-                ConnectorUtils.getBallerinaServerConnector(Constants.FILE_SYSTEM_PACKAGE_NAME);
-        LocalFileSystemServerConnector connector = (LocalFileSystemServerConnector) ballerinaServerConnector;
-        BallerinaLocalFileSystemListener systemListener = new BallerinaLocalFileSystemListener(connector);
-        LocalFileSystemEvent event = new LocalFileSystemEvent("/home/ballerina/bal/file.txt", "create");
-        event.setProperty(Constants.TRANSPORT_PROPERTY_SERVICE_NAME, "._NonExistService");
-        systemListener.onMessage(event);
-        BServiceUtil.cleanup(compileResult);
-    }
-
-    @Test(dependsOnMethods = "testDispatchToNonExistService",
-            expectedExceptions = BallerinaConnectorException.class,
-            expectedExceptionsMessageRegExp = "Could not find a service to dispatch. " +
-                    "TRANSPORT_FILE_SERVICE_NAME property not set or empty.")
-    public void testServiceNameMissing() {
-        CompileResult compileResult = BServiceUtil.setupProgramFile(this, "test-src/fs/file-system.bal");
-        BallerinaServerConnector ballerinaServerConnector =
-                ConnectorUtils.getBallerinaServerConnector(Constants.FILE_SYSTEM_PACKAGE_NAME);
-        LocalFileSystemServerConnector connector = (LocalFileSystemServerConnector) ballerinaServerConnector;
-        BallerinaLocalFileSystemListener systemListener = new BallerinaLocalFileSystemListener(connector);
-        LocalFileSystemEvent event = new LocalFileSystemEvent("/home/ballerina/bal/file.txt", "create");
-        systemListener.onMessage(event);
-        BServiceUtil.cleanup(compileResult);
-    }
-
-    /*@Test(dependsOnMethods = "testServiceNameMissing",
-            expectedExceptions = BallerinaConnectorException.class,
-            expectedExceptionsMessageRegExp = "Could not find a service to dispatch. " +
-                    "TRANSPORT_FILE_SERVICE_NAME property not set or empty.")
-    public void testInvalidSignature() {
-        execute("test-src/fs/invalid-signature.bal");
-    }*/
 
     private void execute(String file) {
         CompileResult compileResult = BServiceUtil.setupProgramFile(this, file);

@@ -1,5 +1,4 @@
 import ballerina.net.ftp;
-import ballerina.lang.system;
 
 @ftp:configuration {
     dirURI:"ftp://baluser@localhost/folder",
@@ -10,12 +9,12 @@ import ballerina.lang.system;
 }
 service<ftp> ftpServerConnector {
     resource fileResource (ftp:FTPServerEvent m) {
-        system:println(m.name);
+        println(m.name);
     }
     resource fileResource2 (ftp:FTPServerEvent m) {
-        system:println(m.name);
+        println(m.name);
     }
     resource fileResource3 (ftp:FTPServerEvent m) {
-        system:println(m.name);
+        println(m.name);
     }
 }

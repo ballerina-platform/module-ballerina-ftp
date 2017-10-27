@@ -19,13 +19,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    <parent>
-        <groupId>org.ballerinalang</groupId>
-        <artifactId>ballerinalang</artifactId>
-        <version>0.94.0-SNAPSHOT</version>
-    </parent>
-
     <modelVersion>4.0.0</modelVersion>
+    <groupId>org.ballerinalang</groupId>
     <artifactId>file-connector-parent</artifactId>
     <packaging>pom</packaging>
     <version>0.93.1-SNAPSHOT</version>
@@ -116,6 +111,7 @@
                 <groupId>org.testng</groupId>
                 <artifactId>testng</artifactId>
                 <version>${testng.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -124,7 +120,7 @@
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-jdk14</artifactId>
+                <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
                 <scope>test</scope>
             </dependency>
@@ -135,14 +131,16 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${wso2.maven.compiler.source}</source>
+                    <target>${wso2.maven.compiler.target}</target>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
                 <configuration>
                     <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
                     <additionalClasspathElements>
@@ -187,6 +185,7 @@
             <plugin><!-- Overridden from parent pom to exclude generated sources -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${maven.checkstyle.plugin.version}</version>
                 <executions>
                     <execution>
                         <id>validate</id>
@@ -217,7 +216,7 @@
             <plugin>
                 <groupId>org.bsc.maven</groupId>
                 <artifactId>maven-processor-plugin</artifactId>
-                <version>${mvn.processor.plugin.version}</version>
+                <version>${maven.processor.plugin.version}</version>
                 <configuration>
                     <processors>
                         <processor>org.ballerinalang.codegen.BallerinaAnnotationProcessor</processor>
@@ -243,12 +242,29 @@
     </build>
     <properties>
         <ballerina.version>0.94.0-SNAPSHOT</ballerina.version>
-        <file.transport.version>6.0.33-SNAPSHOT</file.transport.version>
+        <file.transport.version>6.0.35-SNAPSHOT</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>
         <maven.findbugsplugin.version.exclude>findbugs-exclude.xml</maven.findbugsplugin.version.exclude>
         <cobertura.version>2.7</cobertura.version>
-        <mvn.processor.plugin.version>2.2.4</mvn.processor.plugin.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mock.ftp.server.version>2.7.1</mock.ftp.server.version>
+        <testng.version>6.9.4</testng.version>
+
+        <wso2.maven.compiler.source>1.8</wso2.maven.compiler.source>
+        <wso2.maven.compiler.target>1.8</wso2.maven.compiler.target>
+        <maven.findbugsplugin.version>3.0.3</maven.findbugsplugin.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.plugin.version>3.5.1</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>2.19.1</maven.surefire.plugin.version>
+        <maven.checkstyle.plugin.version>2.17</maven.checkstyle.plugin.version>
+        <maven.jacoco.plugin.version>0.7.8</maven.jacoco.plugin.version>
+        <maven.dependency.plugin.version>3.0.2</maven.dependency.plugin.version>
+        <maven.processor.plugin.version>2.2.4</maven.processor.plugin.version>
+
+        <!--Bundle dependency versions-->
+        <connector.framework.version>6.0.35-SNAPSHOT</connector.framework.version>
+        <commons-vfs2.wso2.version>2.0-wso2v15</commons-vfs2.wso2.version>
+        <quartz.version>2.3.0.wso2v2</quartz.version>
+        <jsch.version>0.1.51.wso2v1</jsch.version>
+        <carbon.messaging.version>2.3.7</carbon.messaging.version>
     </properties>
 </project>

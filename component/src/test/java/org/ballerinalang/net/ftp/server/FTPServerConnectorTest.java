@@ -16,6 +16,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemEvent;
 
+import java.lang.reflect.Field;
+import java.util.Map;
+
 import static org.ballerinalang.net.ftp.server.Constants.FTP_PACKAGE_NAME;
 
 /**
@@ -46,15 +49,22 @@ public class FTPServerConnectorTest {
         CompileResult compileResult = BServiceUtil.setupProgramFile(this, "test-src/ftp/remote-system.bal");
         BallerinaServerConnector ballerinaServerConnector =
                 ConnectorUtils.getBallerinaServerConnector(FTP_PACKAGE_NAME);
-        FTPServerConnector connector = (FTPServerConnector) ballerinaServerConnector;
-        BallerinaFTPFileSystemListener systemListener = new BallerinaFTPFileSystemListener(connector);
-        RemoteFileSystemEvent event = new RemoteFileSystemEvent("/home/ballerina/bal/file.txt");
-        event.setProperty(org.ballerinalang.net.fs.server.Constants.TRANSPORT_PROPERTY_SERVICE_NAME,
-                "._ftpServerConnector");
-        systemListener.onMessage(event);
-        BServiceUtil.cleanup(compileResult);
-        String msg = "[org.ballerinalang.net.ftp.server.Dispatcher] : " +
-                "FileSystemMessage received for service: ftpServerConnector\n";
+        final Field connectorMapInstance;
+        try {
+            connectorMapInstance = BallerinaServerConnector.class.getDeclaredField("connectorMap");
+            connectorMapInstance.setAccessible(true);
+            Map<String, ConnectorInfo> connectorInfoMap =
+                    (Map<String, ConnectorInfo>) connectorMapInstance.get(ballerinaServerConnector);
+
+            FTPServerConnector connector = (FTPServerConnector) ballerinaServerConnector;
+            BallerinaFTPFileSystemListener systemListener =
+                    new BallerinaFTPFileSystemListener(connectorInfoMap.get("._ftpServerConnector").getService());
+            RemoteFileSystemEvent event = new RemoteFileSystemEvent("/home/ballerina/bal/file.txt");
+            systemListener.onMessage(event);
+            BServiceUtil.cleanup(compileResult);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            //Ignore
+        }
     }
 
     @Test(expectedExceptions = BallerinaConnectorException.class,

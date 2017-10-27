@@ -25,7 +25,6 @@ public class Constants {
 
     //Annotation
     public static final String ANNOTATION_CONFIG = "configuration";
-    public static final String TRANSPORT_PROPERTY_SERVICE_NAME = "TRANSPORT_FILE_SERVICE_NAME";
     public static final String FTP_PACKAGE_NAME = "ballerina.net.ftp";
     public static final String FTP_SERVER_EVENT = "FTPServerEvent";
 

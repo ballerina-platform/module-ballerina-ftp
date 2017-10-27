@@ -23,6 +23,7 @@ import org.ballerinalang.connector.api.ConnectorFutureListener;
 import org.ballerinalang.connector.api.ConnectorUtils;
 import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
+import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.services.ErrorHandlerUtils;
@@ -38,20 +39,20 @@ import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemEvent;
 public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener {
 
     private static final Logger log = LoggerFactory.getLogger(BallerinaFTPFileSystemListener.class);
-    private FTPServerConnector serverConnector;
+    private Service service;
 
-    public BallerinaFTPFileSystemListener(FTPServerConnector serverConnector) {
-        this.serverConnector = serverConnector;
+    public BallerinaFTPFileSystemListener(Service service) {
+        this.service = service;
     }
 
     @Override
     public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
-            Resource resource = Dispatcher.findResource(event, serverConnector.getServiceMap());
+            Resource resource = service.getResources()[0];
             BValue[] parameters = getSignatureParameters(resource, event);
             ConnectorFuture future = Executor.submit(resource, null, parameters);
-            ConnectorFutureListener futureListener = new FTPConnectorFutureListener(event);
+            ConnectorFutureListener futureListener = new FTPConnectorFutureListener(service.getName());
             future.setConnectorFutureListener(futureListener);
         }
     }

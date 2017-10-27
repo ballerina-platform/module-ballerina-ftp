@@ -48,9 +48,7 @@ public class LocalFileSystemServerConnector implements BallerinaServerConnector 
 
     private static final Logger log = LoggerFactory.getLogger(LocalFileSystemServerConnector.class);
 
-    private final Map<String, Service> serviceMap = new HashMap<>();
-    private org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector
-            serverConnector;
+    private final Map<String, ConnectorInfo> connectorMap = new HashMap<>();
 
     @Override
     public String getProtocolPackage() {
@@ -82,9 +80,10 @@ public class LocalFileSystemServerConnector implements BallerinaServerConnector 
         }
         LocalFileSystemConnectorFactory fileSystemConnectorFactory = new LocalFileSystemConnectorFactoryImpl();
         try {
-            serverConnector = fileSystemConnectorFactory.createServerConnector(serviceName, paramMap,
-                    new BallerinaLocalFileSystemListener(this));
-            serviceMap.put(serviceName, service);
+            org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector
+                    serverConnector = fileSystemConnectorFactory.createServerConnector(serviceName, paramMap,
+                    new BallerinaLocalFileSystemListener(service));
+            connectorMap.put(serviceName, new ConnectorInfo(service, serverConnector));
         } catch (LocalFileSystemServerConnectorException e) {
             throw new BallerinaConnectorException("Unable to initialize LocalFileSystemServerConnector instance",
                     e);
@@ -97,12 +96,11 @@ public class LocalFileSystemServerConnector implements BallerinaServerConnector 
     @Override
     public void serviceUnregistered(Service service) throws BallerinaConnectorException {
         String serviceName = getServiceKey(service);
-        if (serviceMap.get(serviceName) != null) {
-            serviceMap.remove(serviceName);
+        ConnectorInfo connectorInfo;
+        if ((connectorInfo = connectorMap.get(serviceName)) != null) {
             try {
-                if (serverConnector != null) {
-                    serverConnector.stop();
-                }
+                connectorInfo.getServerConnector().stop();
+                connectorMap.remove(serviceName);
             } catch (LocalFileSystemServerConnectorException e) {
                 throw new BallerinaException("Could not stop file server connector for " +
                         "service: " + serviceName, e);
@@ -115,34 +113,28 @@ public class LocalFileSystemServerConnector implements BallerinaServerConnector 
 
     @Override
     public void deploymentComplete() throws BallerinaConnectorException {
-        if (serverConnector != null) {
-            try {
-                serverConnector.start();
-            } catch (LocalFileSystemServerConnectorException e) {
-                throw new BallerinaConnectorException("Unable to start LocalFileSystemServerConnector task", e);
+        try {
+            for (Map.Entry<String, ConnectorInfo> entry : connectorMap.entrySet()) {
+                if (!entry.getValue().isStart()) {
+                    entry.getValue().getServerConnector().start();
+                    connectorMap.get(entry.getKey()).setStart(true);
+                }
             }
+        } catch (LocalFileSystemServerConnectorException e) {
+            throw new BallerinaConnectorException("Unable to start LocalFileSystemServerConnector", e);
         }
-    }
-
-    /**
-     * This will return all the deployed services that related to {@link LocalFileSystemServerConnector}.
-     *
-     * @return Map that consists the service information.
-     */
-    Map<String, Service> getServiceMap() {
-        return serviceMap;
     }
 
     private Map<String, String> getServerConnectorParamMap(Annotation info) {
         Map<String, String> params = new HashMap<>();
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_DIR_URI, params);
-        addAnnotationAttributeValue(info, Constants.ANNOTATION_EVENTS, params);
+        copyAnnotationAttributeValue(info, Constants.ANNOTATION_DIR_URI, params);
+        copyAnnotationAttributeValue(info, Constants.ANNOTATION_EVENTS, params);
         params.put(Constants.ANNOTATION_DIRECTORY_RECURSIVE,
                 String.valueOf(info.getAnnAttrValue(Constants.ANNOTATION_DIRECTORY_RECURSIVE).getBooleanValue()));
         return params;
     }
 
-    private void addAnnotationAttributeValue(Annotation info, String attribute, Map<String, String> params) {
+    private void copyAnnotationAttributeValue(Annotation info, String attribute, Map<String, String> params) {
         AnnAttrValue attributeValue = info.getAnnAttrValue(attribute);
         if (attributeValue != null && !attributeValue.getStringValue().trim().isEmpty()) {
             params.put(attribute, attributeValue.getStringValue());
