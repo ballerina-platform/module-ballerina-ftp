@@ -43,10 +43,11 @@ abstract class AbstractFtpAction extends AbstractNativeAction {
         }
 
         @Override
-        public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
+        public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
             // This default implementation handle situation where no response return from the transport side.
             // If there are any response coming from transport then specifically need to handle from relevant action
             // class by overriding this method.
+            return true;
         }
 
         @Override

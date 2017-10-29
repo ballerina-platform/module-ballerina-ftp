@@ -25,6 +25,8 @@ import org.ballerinalang.services.ErrorHandlerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CountDownLatch;
+
 /**
  * {@code FTPConnectorFutureListener} is the responsible for acting on notifications
  * received from Ballerina side.
@@ -33,13 +35,18 @@ public class FTPConnectorFutureListener implements ConnectorFutureListener {
 
     private static final Logger log = LoggerFactory.getLogger(FTPConnectorFutureListener.class);
     private String serviceName;
+    private final CountDownLatch latch;
+    private boolean success;
 
-    public FTPConnectorFutureListener(String serviceName) {
+    public FTPConnectorFutureListener(String serviceName, CountDownLatch latch) {
         this.serviceName = serviceName;
+        this.latch = latch;
     }
 
     @Override
     public void notifySuccess() {
+        success = true;
+        latch.countDown();
         if (log.isDebugEnabled()) {
             log.debug("Received success notify for FileSystemConnector service: " + serviceName);
         }
@@ -47,6 +54,8 @@ public class FTPConnectorFutureListener implements ConnectorFutureListener {
 
     @Override
     public void notifyReply(BValue response) {
+        success = true;
+        latch.countDown();
         if (log.isDebugEnabled() && response != null) {
             log.debug("Received reply for FileSystemConnector service: " + serviceName + "; " + response.stringValue());
         }
@@ -54,7 +63,18 @@ public class FTPConnectorFutureListener implements ConnectorFutureListener {
 
     @Override
     public void notifyFailure(BallerinaConnectorException ex) {
+        success = false;
+        latch.countDown();
         log.error("Error occurred for FileSystemConnector service: " + serviceName, ex);
         ErrorHandlerUtils.printError(ex);
+    }
+
+    /**
+     * Status of the ballerina dispatch.
+     *
+     * @return true or false as a status of the action.
+     */
+    public boolean isSuccess() {
+        return success;
     }
 }

@@ -5,7 +5,6 @@ public annotation configuration attach service<> {
     string fileNamePattern;
     string pollingInterval;
     string cronExpression;
-    string ackTimeOut;
     string perPollFileCount;
     string fileSortAttribute;
     string fileSortAscending;

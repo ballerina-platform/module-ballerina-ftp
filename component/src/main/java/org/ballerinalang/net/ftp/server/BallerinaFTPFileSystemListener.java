@@ -19,7 +19,6 @@
 package org.ballerinalang.net.ftp.server;
 
 import org.ballerinalang.connector.api.ConnectorFuture;
-import org.ballerinalang.connector.api.ConnectorFutureListener;
 import org.ballerinalang.connector.api.ConnectorUtils;
 import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
@@ -32,6 +31,9 @@ import org.slf4j.LoggerFactory;
 import org.wso2.carbon.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemEvent;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * File System connector listener for Ballerina.
@@ -46,21 +48,33 @@ public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener 
     }
 
     @Override
-    public void onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
+    public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             Resource resource = service.getResources()[0];
             BValue[] parameters = getSignatureParameters(resource, event);
+            CountDownLatch latch = new CountDownLatch(1);
+            FTPConnectorFutureListener futureListener = new FTPConnectorFutureListener(service.getName(), latch);
             ConnectorFuture future = Executor.submit(resource, null, parameters);
-            ConnectorFutureListener futureListener = new FTPConnectorFutureListener(service.getName());
             future.setConnectorFutureListener(futureListener);
+            try {
+                final boolean await = latch.await(5, TimeUnit.MINUTES);
+                if (log.isDebugEnabled()) {
+                    log.debug((await ? "Result got within define time." : "Wait time elapsed before the result."));
+                }
+            } catch (InterruptedException e) {
+                log.error("[" + service.getName() + "] CountDownLatch interrupt while waiting for response.", e);
+                ErrorHandlerUtils.printError(e);
+            }
+            return futureListener.isSuccess();
         }
+        return false;
     }
 
     private BValue[] getSignatureParameters(Resource resource, RemoteFileSystemEvent fileSystemEvent) {
         BStruct request = ConnectorUtils.createStruct(resource, Constants.FTP_PACKAGE_NAME,
                 Constants.FTP_SERVER_EVENT);
-        request.setStringField(0, fileSystemEvent.getText());
+        request.setStringField(0, fileSystemEvent.getUri());
         BValue[] bValues = new BValue[1];
         bValues[0] = request;
         return bValues;

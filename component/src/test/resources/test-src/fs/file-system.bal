@@ -1,5 +1,5 @@
 import ballerina.net.fs;
-import ballerina.utils.logger;
+import ballerina.log;
 @fs:configuration {
     dirURI:"target/fs",
     events:"create,delete,modify",
@@ -7,7 +7,7 @@ import ballerina.utils.logger;
 }
 service<fs> fileSystem {
     resource fileResource (fs:FileSystemEvent m) {
-        logger:info(m.name);
-        logger:info(m.operation);
+        log:info(m.name);
+        log:info(m.operation);
     }
 }
