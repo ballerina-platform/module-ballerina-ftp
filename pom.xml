@@ -69,6 +69,40 @@
             </releases>
         </repository>
     </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>wso2.releases</id>
+            <name>WSO2 Releases Repository</name>
+            <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>ignore</checksumPolicy>
+            </releases>
+        </pluginRepository>
+        <pluginRepository>
+            <id>wso2.snapshots</id>
+            <name>WSO2 Snapshot Repository</name>
+            <url>http://maven.wso2.org/nexus/content/repositories/snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </pluginRepository>
+        <pluginRepository>
+            <id>wso2-nexus</id>
+            <name>WSO2 internal Repository</name>
+            <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>ignore</checksumPolicy>
+            </releases>
+        </pluginRepository>
+    </pluginRepositories>
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -100,6 +134,11 @@
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-launcher</artifactId>
                 <version>${ballerina.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ballerinalang</groupId>
+                <artifactId>docerina</artifactId>
+                <version>${docerina.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mockftpserver</groupId>
@@ -248,6 +287,7 @@
         <cobertura.version>2.7</cobertura.version>
         <mock.ftp.server.version>2.7.1</mock.ftp.server.version>
         <testng.version>6.9.4</testng.version>
+        <docerina.version>${ballerina.version}</docerina.version>
 
         <wso2.maven.compiler.source>1.8</wso2.maven.compiler.source>
         <wso2.maven.compiler.target>1.8</wso2.maven.compiler.target>
@@ -259,6 +299,7 @@
         <maven.jacoco.plugin.version>0.7.8</maven.jacoco.plugin.version>
         <maven.dependency.plugin.version>3.0.2</maven.dependency.plugin.version>
         <maven.processor.plugin.version>2.2.4</maven.processor.plugin.version>
+        <docerina.maven.plugin.version>${ballerina.version}</docerina.maven.plugin.version>
 
         <!--Bundle dependency versions-->
         <connector.framework.version>6.0.35-SNAPSHOT</connector.framework.version>
