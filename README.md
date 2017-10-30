@@ -18,8 +18,8 @@ service<fs> fileSystem {
     }
 }
 ```
-FileSystemEvent struct consists additional two functions to support to file move and file delete.
-move(string filePath) and delete()
+FileSystemEvent struct consists of additional two functions that support file move and file delete:
+move(string filePath) and delete().
 
 ## FTP Server Connector
 The FTP Server Connector can be used to listen to a remote directory. It will keep listening to the specified directory and process the files in the directory as they get added to the directory.
@@ -30,6 +30,7 @@ import ballerina.log;
     dirURI:"ftp://ballerina:ballerina123@localhost:48123/home/ballerina",
     pollingInterval:"2000",
     actionAfterProcess:"NONE",
+    moveAfterFailure:"NONE",
     parallel:"false",
     createMoveDir:"true"
 }
