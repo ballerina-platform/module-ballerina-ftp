@@ -230,6 +230,12 @@
                                     <version>${carbon.messaging.version}</version>
                                     <type>${project.packaging}</type>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>commons-net</groupId>
+                                    <artifactId>commons-net</artifactId>
+                                    <version>${commons-net.version}</version>
+                                    <type>${project.packaging}</type>
+                                </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.build.directory}/distribution</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
@@ -276,6 +282,22 @@
                         <goals>
                             <goal>single</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-remote-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                        <configuration>
+                            <resourceBundles>
+                                <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
+                            </resourceBundles>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
