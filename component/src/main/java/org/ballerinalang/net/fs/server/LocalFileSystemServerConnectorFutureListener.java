@@ -46,9 +46,12 @@ public class LocalFileSystemServerConnectorFutureListener implements ConnectorFu
     }
 
     @Override
-    public void notifyReply(BValue response) {
+    public void notifyReply(BValue... response) {
         if (log.isDebugEnabled() && response != null) {
-            log.debug("Received reply for FileSystemConnector service: " + serviceName + "; " + response.stringValue());
+            if (response.length > 0 && response[0] != null) {
+                log.debug("Received reply for FileSystemConnector service: "
+                        + serviceName + "; " + response[0].stringValue());
+            }
         }
     }
 

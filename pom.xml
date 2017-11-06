@@ -23,7 +23,7 @@
     <groupId>org.ballerinalang</groupId>
     <artifactId>file-connector-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.93.1-SNAPSHOT</version>
+    <version>0.95.0-SNAPSHOT</version>
     <name>Ballerina - File Connector ParentParent</name>
 
     <url>http://ballerinalang.org</url>
@@ -184,7 +184,7 @@
                     <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
                     <additionalClasspathElements>
                         <additionalClasspathElement>
-                            ${basedir}/target/classes/org/ballerinalang/net/StandardSystemPackageRepositoryProvider.class
+                            ${basedir}/target/classes/org/ballerinalang/net/StandardExtensionPackageRepositoryProvider.class
                         </additionalClasspathElement>
                         <additionalClasspathElement>
                             ${basedir}/target/classes/org/ballerinalang/net/ftp/generated/providers/StandardNativeElementProvider.class
@@ -277,17 +277,26 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.ballerinalang</groupId>
+                <artifactId>docerina-maven-plugin</artifactId>
+                <version>${docerina.maven.plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-remote-resources-plugin</artifactId>
+                <version>${maven.remote.resource.plugin.version}</version>
+            </plugin>
         </plugins>
     </build>
     <properties>
-        <ballerina.version>0.94.0-SNAPSHOT</ballerina.version>
-        <file.transport.version>6.0.36</file.transport.version>
+        <ballerina.version>0.95.0</ballerina.version>
+        <docerina.version>${ballerina.version}</docerina.version>
+        <file.transport.version>6.0.43</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>
         <maven.findbugsplugin.version.exclude>findbugs-exclude.xml</maven.findbugsplugin.version.exclude>
-        <cobertura.version>2.7</cobertura.version>
         <mock.ftp.server.version>2.7.1</mock.ftp.server.version>
         <testng.version>6.9.4</testng.version>
-        <docerina.version>${ballerina.version}</docerina.version>
 
         <wso2.maven.compiler.source>1.8</wso2.maven.compiler.source>
         <wso2.maven.compiler.target>1.8</wso2.maven.compiler.target>
@@ -299,10 +308,11 @@
         <maven.jacoco.plugin.version>0.7.8</maven.jacoco.plugin.version>
         <maven.dependency.plugin.version>3.0.2</maven.dependency.plugin.version>
         <maven.processor.plugin.version>2.2.4</maven.processor.plugin.version>
+        <maven.remote.resource.plugin.version>1.5</maven.remote.resource.plugin.version>
         <docerina.maven.plugin.version>${ballerina.version}</docerina.maven.plugin.version>
 
         <!--Bundle dependency versions-->
-        <connector.framework.version>6.0.35-SNAPSHOT</connector.framework.version>
+        <connector.framework.version>6.0.43</connector.framework.version>
         <commons-vfs2.wso2.version>2.0-wso2v15</commons-vfs2.wso2.version>
         <quartz.version>2.3.0.wso2v2</quartz.version>
         <jsch.version>0.1.51.wso2v1</jsch.version>

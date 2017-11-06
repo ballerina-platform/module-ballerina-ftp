@@ -48,7 +48,7 @@ import ballerina.net.ftp;
 import ballerina.file;
 
 function main (string[] args) {
-    ftp:ClientConnector c = create ftp:ClientConnector();
+    endpoint<ftp:FTPClient> c { create ftp:FTPClient();}
     file:File target = {path:"ftp://127.0.0.1/ballerina-user/aa.txt"};
     boolean filesExists = c.exists(target);
     println("File exists: " + filesExists);
@@ -75,7 +75,11 @@ function main (string[] args) {
     c.write(contentD, wrt);
 }
 ```
+## How to install File System Connectors
+1. Download correct distribution.zip from [releases](https://github.com/ballerinalang/connector-file/releases) that match with ballerina 
+  version.
+2. Unzip connector distribution and copy to all jars to <BALLERINA_HOME>/bre/lib folder.
 
 | Ballerina Version | File Connector Version |
 | ----------------- | ---------------------- |
-| 0.94.1 | 0.94 |
+| 0.95.0 | 0.95.0 |

@@ -1,5 +1,7 @@
 package ballerina.net.fs;
 
+@Field {value:"name: Absolute file URI for triggerd event"}
+@Field {value:"operation: Triggered event action. This can be create, delete or modify"}
 public struct FileSystemEvent {
     string name;
     string operation;

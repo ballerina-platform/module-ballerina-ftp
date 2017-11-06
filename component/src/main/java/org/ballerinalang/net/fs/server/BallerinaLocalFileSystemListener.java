@@ -54,8 +54,7 @@ public class BallerinaLocalFileSystemListener implements LocalFileSystemListener
                 Constants.FILE_SYSTEM_EVENT);
         request.setStringField(0, fileSystemEvent.getFileName());
         request.setStringField(1, fileSystemEvent.getEvent());
-        BValue[] bValues = new BValue[1];
-        bValues[0] = request;
+        BValue[] bValues = {request};
         return bValues;
     }
 }

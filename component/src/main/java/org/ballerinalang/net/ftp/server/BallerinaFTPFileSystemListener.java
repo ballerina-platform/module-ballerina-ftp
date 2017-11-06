@@ -75,8 +75,9 @@ public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener 
         BStruct request = ConnectorUtils.createStruct(resource, Constants.FTP_PACKAGE_NAME,
                 Constants.FTP_SERVER_EVENT);
         request.setStringField(0, fileSystemEvent.getUri());
-        BValue[] bValues = new BValue[1];
-        bValues[0] = request;
+        request.setIntField(1, fileSystemEvent.getFileSize());
+        request.setIntField(2, fileSystemEvent.getLastModifiedTime());
+        BValue[] bValues = {request};
         return bValues;
     }
 
