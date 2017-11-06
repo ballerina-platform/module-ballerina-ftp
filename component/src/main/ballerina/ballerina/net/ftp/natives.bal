@@ -2,16 +2,21 @@ package ballerina.net.ftp;
 
 import ballerina.file;
 
+@Field {value:"name: Absolute file URI for triggerd event"}
+@Field {value:"size: Size of the file"}
+@Field {value:"lastModifiedTimeStamp: Last modified timestamp of the file"}
 public struct FTPServerEvent {
     string name;
+    int size;
+    int lastModifiedTimeStamp;
 }
 
-public connector ClientConnector () {
+@Description {value:"FTP client connector for outbound FTP file requests"}
+public connector FTPClient () {
 
     @Description { value:"Retrieves blob value of a file"}
     @Param { value:"file: The file to be read" }
     @Return { value:"data: The blob containing file read" }
-    @Return { value:"numberRead: Number of bytes actually read" }
     native action read (file:File file) (blob);
 
     @Description { value:"Copies a file from a given location to another"}

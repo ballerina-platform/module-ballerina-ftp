@@ -24,7 +24,7 @@ import org.wso2.carbon.transport.remotefilesystem.Constants;
  */
 public class FTPConstants {
     public static final String FTP_CONNECTOR_NAME = "file";
-    public static final String CONNECTOR_NAME = "ClientConnector";
+    public static final String CONNECTOR_NAME = "FTPClient";
     public static final String PROPERTY_URI = Constants.URI;
     public static final String PROPERTY_SOURCE = "source";
     public static final String PROPERTY_DESTINATION = Constants.DESTINATION;

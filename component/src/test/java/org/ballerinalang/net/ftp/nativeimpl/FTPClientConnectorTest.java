@@ -23,8 +23,7 @@ import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
 /**
- * FTP Client connector createFile test class.
- * {@link CreateFile}
+ * FTP Client connector test class.
  */
 @Test(sequential = true)
 public class FTPClientConnectorTest {
