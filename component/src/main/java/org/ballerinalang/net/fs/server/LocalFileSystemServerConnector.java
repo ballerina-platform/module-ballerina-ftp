@@ -33,6 +33,7 @@ import org.wso2.carbon.transport.localfilesystem.server.connector.contract.Local
 import org.wso2.carbon.transport.localfilesystem.server.connector.contractimpl.LocalFileSystemConnectorFactoryImpl;
 import org.wso2.carbon.transport.localfilesystem.server.exception.LocalFileSystemServerConnectorException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +52,10 @@ public class LocalFileSystemServerConnector implements BallerinaServerConnector 
     private final Map<String, ConnectorInfo> connectorMap = new HashMap<>();
 
     @Override
-    public String getProtocolPackage() {
-        return Constants.FILE_SYSTEM_PACKAGE_NAME;
+    public List<String> getProtocolPackages() {
+        ArrayList<String> protocolPackageList = new ArrayList<>(1);
+        protocolPackageList.add(Constants.FILE_SYSTEM_PACKAGE_NAME);
+        return protocolPackageList;
     }
 
     @Override
@@ -93,23 +96,6 @@ public class LocalFileSystemServerConnector implements BallerinaServerConnector 
         }
     }
 
-    @Override
-    public void serviceUnregistered(Service service) throws BallerinaConnectorException {
-        String serviceName = getServiceKey(service);
-        ConnectorInfo connectorInfo;
-        if ((connectorInfo = connectorMap.get(serviceName)) != null) {
-            try {
-                connectorInfo.getServerConnector().stop();
-                connectorMap.remove(serviceName);
-            } catch (LocalFileSystemServerConnectorException e) {
-                throw new BallerinaException("Could not stop file server connector for " +
-                        "service: " + serviceName, e);
-            }
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("LocalFileSystemServerConnector unregistered successfully: " + serviceName);
-        }
-    }
 
     @Override
     public void deploymentComplete() throws BallerinaConnectorException {

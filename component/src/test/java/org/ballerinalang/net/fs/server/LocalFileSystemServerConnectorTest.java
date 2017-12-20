@@ -58,7 +58,8 @@ public class LocalFileSystemServerConnectorTest {
     public void testValidLocalFileSystemServerConnectorSyntax() {
         CompileResult compileResult = BServiceUtil.setupProgramFile(this, "test-src/fs/file-system.bal");
         BallerinaServerConnector ballerinaServerConnector =
-                ConnectorUtils.getBallerinaServerConnector(Constants.FILE_SYSTEM_PACKAGE_NAME);
+                ConnectorUtils.getBallerinaServerConnector(compileResult.getProgFile(), Constants
+                        .FILE_SYSTEM_PACKAGE_NAME);
         LocalFileSystemServerConnector connector = (LocalFileSystemServerConnector) ballerinaServerConnector;
         try {
             final Field connectorMapInstance =
@@ -74,7 +75,6 @@ public class LocalFileSystemServerConnectorTest {
         } catch (NoSuchFieldException | IllegalAccessException e) {
             //Do nothing
         }
-        BServiceUtil.cleanup(compileResult);
     }
 
     @Test(
@@ -82,18 +82,14 @@ public class LocalFileSystemServerConnectorTest {
             expectedExceptionsMessageRegExp = "Unable to find the associated configuration " +
                     "annotation for given service: .*")
     public void testMissingConfig() {
-        execute("test-src/fs/missing-config.bal");
+        BServiceUtil.setupProgramFile(this, "test-src/fs/missing-config.bal");
     }
 
     @Test(dependsOnMethods = "testMissingConfig",
             expectedExceptions = BallerinaConnectorException.class,
             expectedExceptionsMessageRegExp = "More than one resource define for given service: .*")
     public void testMoreResources() {
-        execute("test-src/fs/more-resources.bal");
+        BServiceUtil.setupProgramFile(this, "test-src/fs/more-resources.bal");
     }
 
-    private void execute(String file) {
-        CompileResult compileResult = BServiceUtil.setupProgramFile(this, file);
-        BServiceUtil.cleanup(compileResult);
-    }
 }
