@@ -22,7 +22,7 @@
     <groupId>org.ballerinalang</groupId>
     <artifactId>file-connector-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.95.1-SNAPSHOT</version>
+    <version>0.95.1</version>
     <name>Ballerina - File Connector ParentParent</name>
 
     <url>http://ballerinalang.org</url>
@@ -31,7 +31,7 @@
         <url>https://github.com/ballerinalang/connector-file.git</url>
         <developerConnection>scm:git:https://github.com/ballerinalang/connector-file.git</developerConnection>
         <connection>scm:git:https://github.com/ballerinalang/connector-file.git</connection>
-        <tag>HEAD</tag>
+        <tag>v0.95.1</tag>
     </scm>
     <modules>
         <module>component</module>
