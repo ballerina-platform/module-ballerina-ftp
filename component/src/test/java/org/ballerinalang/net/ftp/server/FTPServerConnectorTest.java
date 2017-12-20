@@ -48,7 +48,7 @@ public class FTPServerConnectorTest {
     public void testValidFTPServerConnectorSyntax() {
         CompileResult compileResult = BServiceUtil.setupProgramFile(this, "test-src/ftp/remote-system.bal");
         BallerinaServerConnector ballerinaServerConnector =
-                ConnectorUtils.getBallerinaServerConnector(FTP_PACKAGE_NAME);
+                ConnectorUtils.getBallerinaServerConnector(compileResult.getProgFile(), FTP_PACKAGE_NAME);
         final Field connectorMapInstance;
         try {
             connectorMapInstance = BallerinaServerConnector.class.getDeclaredField("connectorMap");
@@ -61,7 +61,6 @@ public class FTPServerConnectorTest {
                     new BallerinaFTPFileSystemListener(connectorInfoMap.get("._ftpServerConnector").getService());
             RemoteFileSystemEvent event = new RemoteFileSystemEvent("/home/ballerina/bal/file.txt");
             systemListener.onMessage(event);
-            BServiceUtil.cleanup(compileResult);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             //Ignore
         }
@@ -71,19 +70,14 @@ public class FTPServerConnectorTest {
             expectedExceptionsMessageRegExp = "Unable to find the associated configuration " +
                     "annotation for given service: .*")
     public void testMissingConfig() {
-        execute("test-src/ftp/missing-config.bal");
+        BServiceUtil.setupProgramFile(this, "test-src/ftp/missing-config.bal");
     }
 
     @Test(dependsOnMethods = "testMissingConfig",
             expectedExceptions = BallerinaConnectorException.class,
             expectedExceptionsMessageRegExp = "More than one resource define for given service: .*")
     public void testMoreResources() {
-        execute("test-src/ftp/more-resources.bal");
-    }
-
-    private void execute(String file) {
-        CompileResult compileResult = BServiceUtil.setupProgramFile(this, file);
-        BServiceUtil.cleanup(compileResult);
+        BServiceUtil.setupProgramFile(this, "test-src/ftp/more-resources.bal");
     }
 
     @AfterClass

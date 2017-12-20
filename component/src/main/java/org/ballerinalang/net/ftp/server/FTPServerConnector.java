@@ -34,6 +34,7 @@ import org.wso2.carbon.transport.remotefilesystem.exception.RemoteFileSystemConn
 import org.wso2.carbon.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
 import org.wso2.carbon.transport.remotefilesystem.server.connector.contract.RemoteFileSystemServerConnector;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +53,10 @@ public class FTPServerConnector implements BallerinaServerConnector {
     private final Map<String, ConnectorInfo> connectorMap = new HashMap<>();
 
     @Override
-    public String getProtocolPackage() {
-        return Constants.FTP_PACKAGE_NAME;
+    public List<String> getProtocolPackages() {
+        List<String> protocolPackageList = new ArrayList<>(1);
+        protocolPackageList.add(Constants.FTP_PACKAGE_NAME);
+        return protocolPackageList;
     }
 
     @Override
@@ -94,23 +97,6 @@ public class FTPServerConnector implements BallerinaServerConnector {
         }
     }
 
-    @Override
-    public void serviceUnregistered(Service service) throws BallerinaConnectorException {
-        String serviceKeyName = getServiceName(service);
-        ConnectorInfo connectorInfo;
-        if ((connectorInfo = connectorMap.get(serviceKeyName)) != null) {
-            try {
-                connectorInfo.getServerConnector().stop();
-                connectorMap.remove(serviceKeyName);
-            } catch (RemoteFileSystemConnectorException e) {
-                throw new BallerinaException("Could not stop file server connector for " +
-                        "service: " + serviceKeyName, e);
-            }
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("FTPServerConnector unregistered successfully: " + serviceKeyName);
-        }
-    }
 
     @Override
     public void deploymentComplete() throws BallerinaConnectorException {
