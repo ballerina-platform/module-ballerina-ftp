@@ -60,8 +60,18 @@ public class LocalFileSystemServerConnector implements BallerinaServerConnector 
 
     @Override
     public void serviceRegistered(Service service) throws BallerinaConnectorException {
-        Annotation configInfo = service.getAnnotation(Constants.FILE_SYSTEM_PACKAGE_NAME, Constants.ANNOTATION_CONFIG);
+        List<Annotation> annotationList = service.getAnnotationList(Constants.FILE_SYSTEM_PACKAGE_NAME,
+                Constants.ANNOTATION_CONFIG);
         String serviceName = getServiceKey(service);
+        if (annotationList == null) {
+            throw new BallerinaConnectorException("Unable to find the associated configuration " +
+                    "annotation for given service: " + serviceName);
+        }
+        if (annotationList.size() > 1) {
+            throw new BallerinaException(
+                    "multiple service configuration annotations found in service: " + service.getName());
+        }
+        Annotation configInfo = annotationList.get(0);
         if (configInfo == null) {
             throw new BallerinaConnectorException("Unable to find the associated configuration " +
                     "annotation for given service: " + serviceName);
