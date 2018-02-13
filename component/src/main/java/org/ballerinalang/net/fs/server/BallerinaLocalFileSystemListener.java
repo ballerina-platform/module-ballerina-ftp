@@ -26,8 +26,8 @@ import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
-import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemEvent;
-import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemListener;
+import org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemEvent;
+import org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemListener;
 
 /**
  * File System connector listener for Ballerina.

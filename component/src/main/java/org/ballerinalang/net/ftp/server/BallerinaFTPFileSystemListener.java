@@ -28,9 +28,9 @@ import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.services.ErrorHandlerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.transport.remotefilesystem.listener.RemoteFileSystemListener;
-import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
-import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemEvent;
+import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemEvent;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;

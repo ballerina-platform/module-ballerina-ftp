@@ -46,6 +46,7 @@ The FTP Client Connector can be used to connect to an FTP server and perform I/O
 ```ballerina
 import ballerina.net.ftp;
 import ballerina.file;
+import ballerina.io;
 
 function main (string[] args) {
     endpoint<ftp:FTPClient> c { create ftp:FTPClient();}
@@ -54,11 +55,14 @@ function main (string[] args) {
     println("File exists: " + filesExists);
     
     file:File newDir = {path:"ftp://127.0.0.1/ballerina-user/new-dir/"};
-    c.createFile(newDir, "folder");
+    c.createFile(newDir, true);
     
     file:File txtFile = {path:"ftp://127.0.0.1/ballerina-user/bb.txt"};
-    blob contentB = c.read(txtFile);
-    println(contentB.toString("UTF-8"));
+    io:ByteChannel channel = c.read(txtFile);
+    blob bytes;
+    int numberOfBytesRead;
+    bytes,numberOfBytesRead = channel.readAllBytes();
+    println(bytes.toString("UTF-8"));
     
     files:File copyOfTxt = {path:"ftp://127.0.0.1/ballerina-user/new-dir/copy-of-bb.txt"};
     c.copy(txtFile, copyOfTxt);
@@ -72,7 +76,7 @@ function main (string[] args) {
     
     file:File wrt = {path:"ftp://127.0.0.1/ballerina-user/dd.txt"};
     blob contentD = content.toBlob("Hello World!", "UTF-8");
-    c.write(contentD, wrt);
+    c.write(contentD, wrt, "a");
 }
 ```
 ## How to install File System Connectors

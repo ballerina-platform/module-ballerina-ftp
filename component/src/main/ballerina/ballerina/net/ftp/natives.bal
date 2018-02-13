@@ -1,6 +1,7 @@
 package ballerina.net.ftp;
 
 import ballerina.file;
+import ballerina.io;
 
 @Field {value:"name: Absolute file URI for triggerd event"}
 @Field {value:"size: Size of the file"}
@@ -16,8 +17,8 @@ public connector FTPClient () {
 
     @Description { value:"Retrieves blob value of a file"}
     @Param { value:"file: The file to be read" }
-    @Return { value:"data: The blob containing file read" }
-    native action read (file:File file) (blob);
+    @Return {value:"channel: A ByteChannel that represent the data source"}
+    native action read (file:File file) (io:ByteChannel);
 
     @Description { value:"Copies a file from a given location to another"}
     @Param { value:"target: File/Directory that should be copied" }
@@ -35,8 +36,9 @@ public connector FTPClient () {
 
     @Description { value:"Writes a file using the given blob"}
     @Param { value:"blob: Content to be written" }
-    @Param { value:"file: Path of the file" }
-    native action write (blob content, file:File file);
+    @Param { value:"file: Destination path of the file" }
+    @Param {value:"mode: Whether to append or overwrite the given content ['append' | 'a' or 'overwrite' | 'o']"}
+    native action write (blob content, file:File file, string mode);
 
     @Description { value:"Create a file or folder"}
     @Param { value:"file: Path of the file" }
@@ -48,4 +50,9 @@ public connector FTPClient () {
     @Return { value:"boolean: The availability of the file" }
     native action exists (file:File file) (boolean);
 
+    @Description {value:"Pipe the content to a file using the given ByteChannel"}
+    @Param {value:"channel: Content to be written"}
+    @Param {value:"file: Destination path of the file"}
+    @Param {value:"mode: Whether to append or overwrite the given content ['append' | 'a' or 'overwrite' | 'o']"}
+    native action pipe (io:ByteChannel channel, file:File file, string mode);
 }
