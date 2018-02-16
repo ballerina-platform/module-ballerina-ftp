@@ -63,6 +63,7 @@ function main (string[] args) {
     int numberOfBytesRead;
     bytes,numberOfBytesRead = channel.readAllBytes();
     println(bytes.toString("UTF-8"));
+    channel.close();
     
     files:File copyOfTxt = {path:"ftp://127.0.0.1/ballerina-user/new-dir/copy-of-bb.txt"};
     c.copy(txtFile, copyOfTxt);
@@ -77,6 +78,12 @@ function main (string[] args) {
     file:File wrt = {path:"ftp://127.0.0.1/ballerina-user/dd.txt"};
     blob contentD = content.toBlob("Hello World!", "UTF-8");
     c.write(contentD, wrt, "a");
+    
+    file:File sourceContent = {path:"ftp://127.0.0.1/ballerina-user/product.zip"};
+    io:ByteChannel channel = c.read(sourceContent);
+    file:File destinationFile = {path:"ftp://127.0.0.2/pipe-content/product.zip"};
+    c.pipe(channel, destinationFile, "o");
+    channel.close(); 
 }
 ```
 ## How to install File System Connectors
@@ -87,3 +94,4 @@ function main (string[] args) {
 | Ballerina Version | File Connector Version |
 | ----------------- | ---------------------- |
 | 0.95.0 | 0.95.0 |
+| 0.961.1| 0.95.3 |

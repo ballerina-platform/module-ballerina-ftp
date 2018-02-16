@@ -120,12 +120,12 @@ public class Read extends AbstractFtpAction {
     private static class FTPReadAbstractChannel extends Channel {
 
         FTPReadAbstractChannel(ByteChannel channel) throws BallerinaIOException {
-            super(channel, 1024);
+            super(channel, 4088);
         }
 
         @Override
         public void transfer(int i, int i1, WritableByteChannel writableByteChannel) throws BallerinaIOException {
-            // Do nothing.
+            throw new BallerinaIOException("Unsupported operation.");
         }
     }
 
