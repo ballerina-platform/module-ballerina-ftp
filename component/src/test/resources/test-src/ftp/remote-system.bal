@@ -1,4 +1,6 @@
 import ballerina.net.ftp;
+import ballerina.io;
+
 @ftp:configuration {
     dirURI:"ftp://wso2:wso2123@localhost:48123/home/wso2",
     pollingInterval:"2000",
@@ -8,6 +10,6 @@ import ballerina.net.ftp;
 }
 service<ftp> ftpServerConnector {
     resource fileResource (ftp:FTPServerEvent m) {
-        println(m.name);
+        io:println(m.name);
     }
 }

@@ -52,7 +52,7 @@ function main (string[] args) {
     endpoint<ftp:FTPClient> c { create ftp:FTPClient();}
     file:File target = {path:"ftp://127.0.0.1/ballerina-user/aa.txt"};
     boolean filesExists = c.exists(target);
-    println("File exists: " + filesExists);
+    io:println("File exists: " + filesExists);
     
     file:File newDir = {path:"ftp://127.0.0.1/ballerina-user/new-dir/"};
     c.createFile(newDir, true);
@@ -62,7 +62,7 @@ function main (string[] args) {
     blob bytes;
     int numberOfBytesRead;
     bytes,numberOfBytesRead = channel.readAllBytes();
-    println(bytes.toString("UTF-8"));
+    io:println(bytes.toString("UTF-8"));
     channel.close();
     
     files:File copyOfTxt = {path:"ftp://127.0.0.1/ballerina-user/new-dir/copy-of-bb.txt"};
@@ -94,4 +94,4 @@ function main (string[] args) {
 | Ballerina Version | File Connector Version |
 | ----------------- | ---------------------- |
 | 0.95.0 | 0.95.0 |
-| 0.961.1| 0.95.3 |
+| 0.963.0| 0.95.3 |

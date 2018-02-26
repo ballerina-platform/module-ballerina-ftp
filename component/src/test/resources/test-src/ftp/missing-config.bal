@@ -1,7 +1,8 @@
 import ballerina.net.ftp;
+import ballerina.io;
 
 service<ftp> ftpServerConnector {
     resource fileResource (ftp:FTPServerEvent m) {
-        println(m.name);
+        io:println(m.name);
     }
 }

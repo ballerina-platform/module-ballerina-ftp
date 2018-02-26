@@ -120,7 +120,7 @@ public class Read extends AbstractFtpAction {
     private static class FTPReadAbstractChannel extends Channel {
 
         FTPReadAbstractChannel(ByteChannel channel) throws BallerinaIOException {
-            super(channel, 4088);
+            super(channel, 0);
         }
 
         @Override

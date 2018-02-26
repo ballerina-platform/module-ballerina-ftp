@@ -74,10 +74,6 @@
             <artifactId>docerina</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-io.wso2</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
@@ -204,18 +200,6 @@
                                     <groupId>com.jcraft</groupId>
                                     <artifactId>jsch</artifactId>
                                     <version>${jsch.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.wso2.orbit.org.quartz-scheduler</groupId>
-                                    <artifactId>quartz</artifactId>
-                                    <version>${quartz.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>commons-io.wso2</groupId>
-                                    <artifactId>commons-io</artifactId>
-                                    <version>${commons-io.wso2.version}</version>
                                     <type>${project.packaging}</type>
                                 </artifactItem>
                                 <artifactItem>
