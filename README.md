@@ -94,4 +94,4 @@ function main (string[] args) {
 | Ballerina Version | File Connector Version |
 | ----------------- | ---------------------- |
 | 0.95.0 | 0.95.0 |
-| 0.963.0| 0.95.3 |
+| 0.963.0| 0.96.0 |
