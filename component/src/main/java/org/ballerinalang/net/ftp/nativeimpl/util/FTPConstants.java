@@ -17,7 +17,7 @@
  */
 package org.ballerinalang.net.ftp.nativeimpl.util;
 
-import org.wso2.carbon.transport.remotefilesystem.Constants;
+import org.wso2.transport.remotefilesystem.Constants;
 
 /**
  * Constants for ftp client connector.
@@ -42,4 +42,5 @@ public class FTPConstants {
     public static final String FTP_PASSIVE_MODE = Constants.FTP_PASSIVE_MODE;
     public static final String PROTOCOL = Constants.PROTOCOL;
     public static final String PROTOCOL_FTP = Constants.PROTOCOL_FTP;
+    public static final String PROPERTY_APPEND = Constants.APPEND;
 }

@@ -32,12 +32,12 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.wso2.carbon.transport</groupId>
-            <artifactId>org.wso2.carbon.transport.remote-file-system</artifactId>
+            <groupId>org.wso2.transport.file</groupId>
+            <artifactId>org.wso2.transport.remote-file-system</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon.transport</groupId>
-            <artifactId>org.wso2.carbon.transport.local-file-system</artifactId>
+            <groupId>org.wso2.transport.file</groupId>
+            <artifactId>org.wso2.transport.local-file-system</artifactId>
         </dependency>
         <dependency>
             <groupId>org.ballerinalang</groupId>
@@ -173,19 +173,19 @@
                                     <type>${project.packaging}</type>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.wso2.carbon.transport</groupId>
-                                    <artifactId>org.wso2.carbon.transport.remote-file-system</artifactId>
+                                    <groupId>org.wso2.transport.file</groupId>
+                                    <artifactId>org.wso2.transport.remote-file-system</artifactId>
                                     <version>${file.transport.version}</version>
                                     <type>${project.packaging}</type>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.wso2.carbon.transport</groupId>
-                                    <artifactId>org.wso2.carbon.transport.local-file-system</artifactId>
+                                    <groupId>org.wso2.transport.file</groupId>
+                                    <artifactId>org.wso2.transport.local-file-system</artifactId>
                                     <version>${file.transport.version}</version>
                                     <type>${project.packaging}</type>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.wso2.carbon.transport</groupId>
+                                    <groupId>org.wso2.carbon.polling.core</groupId>
                                     <artifactId>org.wso2.carbon.connector.framework</artifactId>
                                     <version>${connector.framework.version}</version>
                                     <type>${project.packaging}</type>
@@ -200,12 +200,6 @@
                                     <groupId>com.jcraft</groupId>
                                     <artifactId>jsch</artifactId>
                                     <version>${jsch.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.wso2.orbit.org.quartz-scheduler</groupId>
-                                    <artifactId>quartz</artifactId>
-                                    <version>${quartz.version}</version>
                                     <type>${project.packaging}</type>
                                 </artifactItem>
                                 <artifactItem>

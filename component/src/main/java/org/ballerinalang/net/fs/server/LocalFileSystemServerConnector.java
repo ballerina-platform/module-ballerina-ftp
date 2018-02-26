@@ -29,9 +29,9 @@ import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemConnectorFactory;
-import org.wso2.carbon.transport.localfilesystem.server.connector.contractimpl.LocalFileSystemConnectorFactoryImpl;
-import org.wso2.carbon.transport.localfilesystem.server.exception.LocalFileSystemServerConnectorException;
+import org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemConnectorFactory;
+import org.wso2.transport.localfilesystem.server.connector.contractimpl.LocalFileSystemConnectorFactoryImpl;
+import org.wso2.transport.localfilesystem.server.exception.LocalFileSystemServerConnectorException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,7 +93,7 @@ public class LocalFileSystemServerConnector implements BallerinaServerConnector 
         }
         LocalFileSystemConnectorFactory fileSystemConnectorFactory = new LocalFileSystemConnectorFactoryImpl();
         try {
-            org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector
+            org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector
                     serverConnector = fileSystemConnectorFactory.createServerConnector(serviceName, paramMap,
                     new BallerinaLocalFileSystemListener(service));
             connectorMap.put(serviceName, new ConnectorInfo(service, serverConnector));

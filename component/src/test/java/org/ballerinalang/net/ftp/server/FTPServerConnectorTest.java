@@ -14,7 +14,7 @@ import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemEvent;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemEvent;
 
 import java.lang.reflect.Field;
 import java.util.Map;

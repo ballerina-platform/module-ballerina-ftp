@@ -1,7 +1,7 @@
 package org.ballerinalang.net.fs.server;
 
 import org.ballerinalang.connector.api.Service;
-import org.wso2.carbon.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector;
+import org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector;
 
 /**
  * To hold service and server connection information.

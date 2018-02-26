@@ -20,8 +20,8 @@ package org.ballerinalang.net.ftp.nativeimpl;
 import org.ballerinalang.connector.api.AbstractNativeAction;
 import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
-import org.wso2.carbon.transport.remotefilesystem.listener.RemoteFileSystemListener;
-import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
+import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 
 /**
  * {@code AbstractFtpAction} is the base class for all FTP Connector Actions.

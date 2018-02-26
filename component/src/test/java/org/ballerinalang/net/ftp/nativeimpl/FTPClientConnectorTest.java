@@ -121,6 +121,20 @@ public class FTPClientConnectorTest {
     }
 
     @Test(dependsOnMethods = "testWriteFile")
+    public void testPipe() {
+        String source = buildConnectionURL() + "/write.txt";
+        String destination = buildConnectionURL() + "/pipeWrite.txt";
+        BValue[] inputArg = {new BString(source), new BString(destination)};
+        BRunUtil.invoke(result, "pipeContent", inputArg);
+        Assert.assertTrue(fileSystem.exists(rootFolder + "/pipeWrite.txt"), "file not created.");
+        final FileEntry entry = (FileEntry) fileSystem.getEntry(rootFolder + "/pipeWrite.txt");
+        InputStream inputStream = entry.createInputStream();
+        String fileContent = new BufferedReader(new InputStreamReader(inputStream)).lines().
+                collect(Collectors.joining("\n"));
+        Assert.assertEquals(fileContent, content, "File content not identical.");
+    }
+
+    @Test(dependsOnMethods = "testPipe")
     public void testDeleteFile() {
         String source = buildConnectionURL() + "/write.txt";
         BValue[] inputArg = {new BString(source)};

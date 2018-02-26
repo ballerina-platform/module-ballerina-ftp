@@ -29,10 +29,10 @@ import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
-import org.wso2.carbon.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
-import org.wso2.carbon.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
-import org.wso2.carbon.transport.remotefilesystem.server.connector.contract.RemoteFileSystemServerConnector;
+import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
+import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
+import org.wso2.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
+import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileSystemServerConnector;
 
 import java.util.ArrayList;
 import java.util.HashMap;

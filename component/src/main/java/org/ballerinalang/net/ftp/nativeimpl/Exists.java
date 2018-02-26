@@ -28,10 +28,10 @@ import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.ftp.nativeimpl.util.FTPConstants;
 import org.ballerinalang.util.exceptions.BallerinaException;
-import org.wso2.carbon.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
-import org.wso2.carbon.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
-import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
-import org.wso2.carbon.transport.remotefilesystem.message.RemoteFileSystemMessage;
+import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
+import org.wso2.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +57,7 @@ public class Exists extends AbstractFtpAction {
             throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by this connector");
         }
         //Create property map to send to transport.
-        Map<String, String> propertyMap = new HashMap<>();
+        Map<String, String> propertyMap = new HashMap<>(4);
         String pathString = file.getStringField(0);
         propertyMap.put(FTPConstants.PROPERTY_URI, pathString);
         propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_EXISTS);
