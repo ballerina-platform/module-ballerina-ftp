@@ -17,29 +17,39 @@
  */
 package org.ballerinalang.net.ftp.nativeimpl;
 
-import org.ballerinalang.connector.api.AbstractNativeAction;
-import org.ballerinalang.connector.api.BallerinaConnectorException;
-import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
+import org.ballerinalang.bre.Context;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
+import org.ballerinalang.model.NativeCallableUnit;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 
 /**
  * {@code AbstractFtpAction} is the base class for all FTP Connector Actions.
  */
-abstract class AbstractFtpAction extends AbstractNativeAction {
+abstract class AbstractFtpAction implements NativeCallableUnit {
 
-    boolean validateProtocol(String url) {
-        return url.startsWith("ftp://") || url.startsWith("sftp://") || url.startsWith("ftps://");
+    boolean notValidProtocol(String url) {
+        return !url.startsWith("ftp://") && !url.startsWith("sftp://") && !url.startsWith("ftps://");
     }
 
     /**
      * {@link RemoteFileSystemListener} implementation for receive notification from transport.
      */
     protected static class FTPClientConnectorListener implements RemoteFileSystemListener {
-        private ClientConnectorFuture ballerinaFuture;
+        private Context context;
+        private CallableUnitCallback callback;
 
-        FTPClientConnectorListener(ClientConnectorFuture ballerinaFuture) {
-            this.ballerinaFuture = ballerinaFuture;
+        FTPClientConnectorListener(Context context, CallableUnitCallback callback) {
+            this.context = context;
+            this.callback = callback;
+        }
+
+        public Context getContext() {
+            return context;
+        }
+
+        public CallableUnitCallback getCallback() {
+            return callback;
         }
 
         @Override
@@ -47,22 +57,20 @@ abstract class AbstractFtpAction extends AbstractNativeAction {
             // This default implementation handle situation where no response return from the transport side.
             // If there are any response coming from transport then specifically need to handle from relevant action
             // class by overriding this method.
+            context.setReturnValues(null);
+            callback.notifySuccess();
             return true;
         }
 
         @Override
         public void onError(Throwable throwable) {
-            BallerinaConnectorException ex = new BallerinaConnectorException(throwable);
-            ballerinaFuture.notifyFailure(ex);
+            context.setReturnValues(null);
+            callback.notifySuccess();
         }
 
         @Override
         public void done() {
-            ballerinaFuture.notifySuccess();
-        }
-
-        ClientConnectorFuture getBallerinaFuture() {
-            return ballerinaFuture;
+            callback.notifySuccess();
         }
     }
 }

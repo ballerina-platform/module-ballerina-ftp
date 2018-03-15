@@ -21,21 +21,21 @@ package org.ballerinalang.net;
 import org.ballerinalang.annotation.JavaSPIService;
 import org.ballerinalang.repository.PackageRepository;
 import org.ballerinalang.repository.fs.ClasspathPackageRepository;
-import org.ballerinalang.spi.ExtensionPackageRepositoryProvider;
+import org.ballerinalang.spi.SystemPackageRepositoryProvider;
 
 /**
  * This represents the standard Ballerina built-in system package repository provider.
  *
  * @since 0.94
  */
-@JavaSPIService("org.ballerinalang.spi.ExtensionPackageRepositoryProvider")
-public class StandardExtensionPackageRepositoryProvider implements ExtensionPackageRepositoryProvider {
+@JavaSPIService("org.ballerinalang.spi.SystemPackageRepositoryProvider")
+public class StandardSystemPackageRepositoryProvider implements SystemPackageRepositoryProvider {
 
-    private static final String JAR_SYSTEM_LIB_LOCATION = "/META-INF/natives/";
+    private static final String SYSTEM_ORG_NAME = "natives";
 
     @Override
     public PackageRepository loadRepository() {
-        return new ClasspathPackageRepository(this.getClass(), JAR_SYSTEM_LIB_LOCATION);
+        return new ClasspathPackageRepository(this.getClass(), SYSTEM_ORG_NAME);
     }
 
 }

@@ -3,6 +3,14 @@ package ballerina.net.ftp;
 import ballerina.file;
 import ballerina.io;
 
+@Description {value:"Represents an error which will occur while FTP client operations"}
+@Field {value:"message:  An error message explaining about the error"}
+@Field {value:"cause: The error(s) that caused FTPClientError to get thrown"}
+public struct FTPClientError {
+    string message;
+    error[] cause;
+}
+
 @Field {value:"name: Absolute file URI for triggerd event"}
 @Field {value:"size: Size of the file"}
 @Field {value:"lastModifiedTimeStamp: Last modified timestamp of the file"}

@@ -18,11 +18,10 @@
 package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.connector.api.ConnectorFuture;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.natives.annotations.ReturnType;
@@ -48,12 +47,11 @@ import java.util.Map;
                          structPackage = "ballerina.lang.files") },
         returnType = {@ReturnType(type = TypeKind.BOOLEAN)})
 public class Exists extends AbstractFtpAction {
-    @Override
-    public ConnectorFuture execute(Context context) {
 
-        // Extracting Argument values
-        BStruct file = (BStruct) getRefArgument(context, 1);
-        if (!validateProtocol(file.getStringField(0))) {
+    @Override
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
+        BStruct file = (BStruct) context.getRefArgument(1);
+        if (notValidProtocol(file.getStringField(0))) {
             throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by this connector");
         }
         //Create property map to send to transport.
@@ -64,25 +62,30 @@ public class Exists extends AbstractFtpAction {
         propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
         propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 
-        ClientConnectorFuture connectorFuture = new ClientConnectorFuture();
-        FTPExistsClientConnectorListener connectorListener = new FTPExistsClientConnectorListener(connectorFuture);
+        FTPExistsClientConnectorListener connectorListener = new FTPExistsClientConnectorListener(context,
+                callableUnitCallback);
         VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
         connector.send(null);
-        return connectorFuture;
+    }
+
+    @Override
+    public boolean isBlocking() {
+        return false;
     }
 
     private static class FTPExistsClientConnectorListener extends FTPClientConnectorListener {
 
-        FTPExistsClientConnectorListener(ClientConnectorFuture ballerinaFuture) {
-            super(ballerinaFuture);
+        FTPExistsClientConnectorListener(Context context, CallableUnitCallback callback) {
+            super(context, callback);
         }
 
         @Override
         public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
-                BBoolean value = new BBoolean(Boolean.parseBoolean(
-                        ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getText()));
-                getBallerinaFuture().notifyReply(value);
+                BBoolean value = new BBoolean(
+                        Boolean.parseBoolean(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getText()));
+                getContext().setReturnValues(value, null);
+                getCallback().notifySuccess();
             }
             return true;
         }

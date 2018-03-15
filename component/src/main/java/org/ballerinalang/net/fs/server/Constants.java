@@ -28,7 +28,10 @@ public class Constants {
     public static final String ANNOTATION_DIR_URI = "dirURI";
     public static final String ANNOTATION_EVENTS = "events";
     public static final String ANNOTATION_DIRECTORY_RECURSIVE = "recursive";
+    public static final String CONFIG_ANNOTATION_NAME = "serviceConfig";
 
     public static final String FILE_SYSTEM_PACKAGE_NAME = "ballerina.net.fs";
     public static final String FILE_SYSTEM_EVENT = "FileSystemEvent";
+    public static final String FILE_SYSTEM_ERROR = "FSError";
+    public static final String FS_SERVER_CONNECTOR = "serverConnector";
 }

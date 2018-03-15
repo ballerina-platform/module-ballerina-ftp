@@ -1,14 +1,18 @@
 import ballerina.net.fs;
-import ballerina.io;
+import ballerina.log;
 
-@fs:configuration {
+endpoint<fs:Service> localFolder {
     dirURI:"target/fs",
     events:"create,delete,modify",
     recursive:false
 }
-service<fs> fileSystem {
+
+@fs:serviceConfig {
+    endpoints:[localFolder]
+}
+service<fs:Service> fileSystem {
     resource fileResource (fs:FileSystemEvent m) {
-        io:println(m.name);
-        io:println(m.operation);
+        log:printInfo(m.name);
+        log:printInfo(m.operation);
     }
 }

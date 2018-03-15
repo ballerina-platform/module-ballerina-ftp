@@ -19,14 +19,14 @@ package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMStructs;
-import org.ballerinalang.connector.api.ConnectorFuture;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.nativeimpl.io.BallerinaIOException;
 import org.ballerinalang.nativeimpl.io.IOConstants;
-import org.ballerinalang.nativeimpl.io.channels.base.AbstractChannel;
 import org.ballerinalang.nativeimpl.io.channels.base.Channel;
+import org.ballerinalang.nativeimpl.io.channels.base.readers.BlockingReader;
+import org.ballerinalang.nativeimpl.io.channels.base.writers.BlockingWriter;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.natives.annotations.ReturnType;
@@ -62,12 +62,11 @@ import java.util.Map;
         returnType = {@ReturnType(type = TypeKind.STRUCT, structType = "ByteChannel", structPackage = "ballerina.io")}
 )
 public class Read extends AbstractFtpAction {
-    @Override
-    public ConnectorFuture execute(Context context) {
 
-        // Extracting Argument values
-        BStruct file = (BStruct) getRefArgument(context, 1);
-        if (!validateProtocol(file.getStringField(0))) {
+    @Override
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
+        BStruct file = (BStruct) context.getRefArgument(1);
+        if (notValidProtocol(file.getStringField(0))) {
             throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by this connector");
         }
         //Create property map to send to transport.
@@ -78,20 +77,22 @@ public class Read extends AbstractFtpAction {
         propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
         propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 
-        ClientConnectorFuture connectorFuture = new ClientConnectorFuture();
-        FTPReadClientConnectorListener connectorListener = new FTPReadClientConnectorListener(connectorFuture, context);
+        FTPReadClientConnectorListener connectorListener = new FTPReadClientConnectorListener(context,
+                callableUnitCallback);
         VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
         connector.send(null);
-        return connectorFuture;
+    }
+
+    @Override
+    public boolean isBlocking() {
+        return false;
     }
 
     private static class FTPReadClientConnectorListener extends FTPClientConnectorListener {
 
-        private Context context;
 
-        FTPReadClientConnectorListener(ClientConnectorFuture ballerinaFuture, Context context) {
-            super(ballerinaFuture);
-            this.context = context;
+        FTPReadClientConnectorListener(Context context, CallableUnitCallback callableUnitCallback) {
+            super(context, callableUnitCallback);
         }
 
         @Override
@@ -99,16 +100,17 @@ public class Read extends AbstractFtpAction {
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
                 final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
                 ByteChannel byteChannel = new ReadByteChannel(in);
-                AbstractChannel channel = new FTPReadAbstractChannel(byteChannel);
+                Channel channel = new FTPReadAbstractChannel(byteChannel);
                 BStruct channelStruct = getBStruct();
                 channelStruct.addNativeData(IOConstants.BYTE_CHANNEL_NAME, channel);
-                getBallerinaFuture().notifyReply(channelStruct);
+                getContext().setReturnValues(channelStruct);
             }
+            getCallback().notifySuccess();
             return true;
         }
 
         private BStruct getBStruct() {
-            PackageInfo timePackageInfo = context.getProgramFile().getPackageInfo("ballerina.io");
+            PackageInfo timePackageInfo = getContext().getProgramFile().getPackageInfo("ballerina.io");
             final StructInfo structInfo = timePackageInfo.getStructInfo("ByteChannel");
             return BLangVMStructs.createBStruct(structInfo);
         }
@@ -120,7 +122,7 @@ public class Read extends AbstractFtpAction {
     private static class FTPReadAbstractChannel extends Channel {
 
         FTPReadAbstractChannel(ByteChannel channel) throws BallerinaIOException {
-            super(channel, 0);
+            super(channel, new BlockingReader(), new BlockingWriter(), 0);
         }
 
         @Override

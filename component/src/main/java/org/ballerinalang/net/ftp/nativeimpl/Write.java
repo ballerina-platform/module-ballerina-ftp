@@ -18,10 +18,9 @@
 package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.connector.api.ConnectorFuture;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.net.ftp.nativeimpl.util.FTPConstants;
@@ -48,11 +47,12 @@ import java.util.Map;
                 @Argument(name = "mode", type = TypeKind.STRING)}
 )
 public class Write extends AbstractFtpAction {
-    @Override public ConnectorFuture execute(Context context) {
 
-        byte[] content = getBlobArgument(context, 0);
-        BStruct destination = (BStruct) getRefArgument(context, 1);
-        if (!validateProtocol(destination.getStringField(0))) {
+    @Override
+    public void execute(Context context, CallableUnitCallback callback) {
+        byte[] content = context.getBlobArgument(0);
+        BStruct destination = (BStruct) context.getRefArgument(1);
+        if (notValidProtocol(destination.getStringField(0))) {
             throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by this connector");
         }
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(ByteBuffer.wrap(content));
@@ -62,14 +62,17 @@ public class Write extends AbstractFtpAction {
         propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_WRITE);
         propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
         propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
-        String mode = getStringArgument(context, 0);
+        String mode = context.getStringArgument(0);
         if (mode.equalsIgnoreCase("append") || mode.equalsIgnoreCase("a")) {
             propertyMap.put(FTPConstants.PROPERTY_APPEND, Boolean.TRUE.toString());
         }
-        ClientConnectorFuture future = new ClientConnectorFuture();
-        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(future);
+        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context, callback);
         VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
         connector.send(message);
-        return future;
+    }
+
+    @Override
+    public boolean isBlocking() {
+        return false;
     }
 }

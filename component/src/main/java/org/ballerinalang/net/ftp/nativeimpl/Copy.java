@@ -19,10 +19,9 @@
 package org.ballerinalang.net.ftp.nativeimpl;
 
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.connector.api.ConnectorFuture;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.net.ftp.nativeimpl.util.FTPConstants;
@@ -48,13 +47,11 @@ import java.util.Map;
 public class Copy extends AbstractFtpAction {
 
     @Override
-    public ConnectorFuture execute(Context context) {
-
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
         // Extracting Argument values
-        BStruct source = (BStruct) getRefArgument(context, 1);
-        BStruct destination = (BStruct) getRefArgument(context, 2);
-        if (!validateProtocol(source.getStringField(0)) &&
-                !validateProtocol(destination.getStringField(0))) {
+        BStruct source = (BStruct) context.getRefArgument(1);
+        BStruct destination = (BStruct) context.getRefArgument(2);
+        if (notValidProtocol(source.getStringField(0)) && notValidProtocol(destination.getStringField(0))) {
             throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by this connector");
         }
         //Create property map to be sent to transport.
@@ -65,10 +62,13 @@ public class Copy extends AbstractFtpAction {
         propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
         propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 
-        ClientConnectorFuture future = new ClientConnectorFuture();
-        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(future);
+        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context, callableUnitCallback);
         VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
         connector.send(null);
-        return future;
+    }
+
+    @Override
+    public boolean isBlocking() {
+        return false;
     }
 }

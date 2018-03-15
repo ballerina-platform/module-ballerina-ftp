@@ -18,7 +18,6 @@
 
 package org.ballerinalang.net.ftp.server;
 
-import org.ballerinalang.connector.api.ConnectorFuture;
 import org.ballerinalang.connector.api.ConnectorUtils;
 import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
@@ -31,9 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemEvent;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * File System connector listener for Ballerina.
@@ -53,20 +49,7 @@ public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener 
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             Resource resource = service.getResources()[0];
             BValue[] parameters = getSignatureParameters(resource, event);
-            CountDownLatch latch = new CountDownLatch(1);
-            FTPConnectorFutureListener futureListener = new FTPConnectorFutureListener(service.getName(), latch);
-            ConnectorFuture future = Executor.submit(resource, null, parameters);
-            future.setConnectorFutureListener(futureListener);
-            try {
-                final boolean await = latch.await(5, TimeUnit.MINUTES);
-                if (log.isDebugEnabled()) {
-                    log.debug((await ? "Result got within define time." : "Wait time elapsed before the result."));
-                }
-            } catch (InterruptedException e) {
-                log.error("[" + service.getName() + "] CountDownLatch interrupt while waiting for response.", e);
-                ErrorHandlerUtils.printError(e);
-            }
-            return futureListener.isSuccess();
+            Executor.submit(resource, null, null, parameters);
         }
         return false;
     }
@@ -77,8 +60,7 @@ public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener 
         request.setStringField(0, fileSystemEvent.getUri());
         request.setIntField(1, fileSystemEvent.getFileSize());
         request.setIntField(2, fileSystemEvent.getLastModifiedTime());
-        BValue[] bValues = {request};
-        return bValues;
+        return new BValue[] { request};
     }
 
     @Override
