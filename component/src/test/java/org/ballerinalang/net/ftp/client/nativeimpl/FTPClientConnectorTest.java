@@ -1,4 +1,4 @@
-package org.ballerinalang.net.ftp.nativeimpl;
+package org.ballerinalang.net.ftp.client.nativeimpl;
 
 import org.ballerinalang.launcher.util.BCompileUtil;
 import org.ballerinalang.launcher.util.BRunUtil;

@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2018 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -16,16 +16,17 @@
  * under the License.
  */
 
-package org.ballerinalang.net.ftp.nativeimpl;
+package org.ballerinalang.net.ftp.client.nativeimpl.actions;
 
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.model.types.TypeKind;
+import org.ballerinalang.model.values.BConnector;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaAction;
-import org.ballerinalang.net.ftp.nativeimpl.util.FTPConstants;
-import org.ballerinalang.util.exceptions.BallerinaException;
+import org.ballerinalang.natives.annotations.ReturnType;
+import org.ballerinalang.net.ftp.client.nativeimpl.util.ClientUtil;
+import org.ballerinalang.net.ftp.client.nativeimpl.util.FTPConstants;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
 import org.wso2.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
 
@@ -33,41 +34,44 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Move a file or a folder from one place to another
+ * Copy a file from a given location to another
  */
 @BallerinaAction(
         packageName = "ballerina.net.ftp",
-        actionName = "move",
+        actionName = "copy",
         connectorName = FTPConstants.CONNECTOR_NAME,
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "source", type = TypeKind.STRUCT, structType = "File",
                         structPackage = "ballerina.lang.files"),
                 @Argument(name = "destination", type = TypeKind.STRUCT, structType = "File",
-                        structPackage = "ballerina.lang.files")})
-public class Move extends AbstractFtpAction {
+                        structPackage = "ballerina.lang.files")},
+        returnType = {@ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError",
+                                  structPackage = "ballerina.net.ftp")
+        }
+)
+public class Copy extends AbstractFtpAction {
 
     @Override
-    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
+    public void execute(Context context) {
+        BConnector clientConnector = (BConnector) context.getRefArgument(0);
+        String url = (String) clientConnector.getNativeData(FTPConstants.URL);
         BStruct source = (BStruct) context.getRefArgument(1);
         BStruct destination = (BStruct) context.getRefArgument(2);
-        if (notValidProtocol(source.getStringField(0)) && notValidProtocol(destination.getStringField(0))) {
-            throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by this connector");
-        }
-        //Create property map to send to transport.
+
+        //Create property map to be sent to transport.
         Map<String, String> propertyMap = new HashMap<>(5);
-        propertyMap.put(FTPConstants.PROPERTY_URI, source.getStringField(0));
-        propertyMap.put(FTPConstants.PROPERTY_DESTINATION, destination.getStringField(0));
-        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_MOVE);
+        propertyMap.put(FTPConstants.PROPERTY_URI, url + source.getStringField(0));
+        String destinationUrl = destination.getStringField(0);
+        if (!ClientUtil.validProtocol(destinationUrl)) {
+            destinationUrl = url + destinationUrl;
+        }
+        propertyMap.put(FTPConstants.PROPERTY_DESTINATION, destinationUrl);
+        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_COPY);
         propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
         propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 
-        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context, callableUnitCallback);
+        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context);
         VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
         connector.send(null);
-    }
-
-    @Override
-    public boolean isBlocking() {
-        return false;
     }
 }

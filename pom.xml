@@ -373,7 +373,7 @@
     <properties>
         <ballerina.version>0.964.1-SNAPSHOT</ballerina.version>
         <docerina.version>${ballerina.version}</docerina.version>
-        <file.transport.version>6.0.52</file.transport.version>
+        <file.transport.version>6.0.53-SNAPSHOT</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>
         <maven.findbugsplugin.version.exclude>findbugs-exclude.xml</maven.findbugsplugin.version.exclude>
         <mock.ftp.server.version>2.7.1</mock.ftp.server.version>
@@ -396,7 +396,7 @@
         <connector.framework.version>6.0.50</connector.framework.version>
         <commons-vfs2.wso2.version>2.2-wso2v1</commons-vfs2.wso2.version>
         <!--<quartz.version>2.3.0.wso2v2</quartz.version>-->
-        <jsch.version>0.1.51.wso2v1</jsch.version>
+        <jsch.version>0.1.54</jsch.version>
         <carbon.messaging.version>2.3.7</carbon.messaging.version>
         <commons-net.version>3.6</commons-net.version>
 
