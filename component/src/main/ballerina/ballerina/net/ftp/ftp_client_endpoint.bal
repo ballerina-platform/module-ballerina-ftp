@@ -13,7 +13,7 @@ public struct Client {
 }
 
 
-@Description {value:"ClientEndpointConfiguration struct represents options to be used for HTTP client invocation"}
+@Description {value:"ClientEndpointConfiguration struct represents options to be used for FTP client invocation"}
 @Field {value:"protocol: Either ftp or sftp"}
 @Field {value:"host: Target service url"}
 @Field {value:"port: Port number of the remote service"}

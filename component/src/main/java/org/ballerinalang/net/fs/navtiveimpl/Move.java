@@ -33,9 +33,7 @@ import java.nio.file.StandardCopyOption;
         args = {
                 @Argument(name = "destination", type = TypeKind.STRING)},
         returnType = {
-                @ReturnType(type = TypeKind.STRUCT,
-                            structType = "FSError",
-                            structPackage = "ballerina.net.fs")
+                @ReturnType(type = TypeKind.STRUCT, structType = "FSError", structPackage = "ballerina.net.fs")
         },
         isPublic = true
 )

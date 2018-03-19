@@ -16,43 +16,41 @@
  * under the License.
  */
 
-package org.ballerinalang.net.fs.navtiveimpl;
+package org.ballerinalang.net.ftp.server.nativeimpl.endpoint;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
-import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.connector.api.Struct;
 import org.ballerinalang.model.types.TypeKind;
+import org.ballerinalang.model.values.BValue;
+import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
-import org.ballerinalang.net.fs.server.Constants;
-import org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector;
-import org.wso2.transport.localfilesystem.server.exception.LocalFileSystemServerConnectorException;
 
 /**
- * Stop the server connector.
+ * Initialize endpoints.
  */
 
 @BallerinaFunction(
-        packageName = "ballerina.net.fs",
-        functionName = "stop",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
-                             structPackage = "ballerina.net.fs"),
+        packageName = "ballerina.net.ftp",
+        functionName = "initEndpoint",
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Service",
+                             structPackage = "ballerina.net.ftp"),
+        args = {@Argument(name = "epName", type = TypeKind.STRING),
+                @Argument(name = "config", type = TypeKind.STRUCT, structType = "ServiceEndpointConfiguration",
+                          structPackage = "ballerina.net.ftp")
+        },
         isPublic = true
 )
-public class Stop extends BlockingNativeCallableUnit {
+public class InitEndpoint extends BlockingNativeCallableUnit {
 
     @Override
     public void execute(Context context) {
         Struct serviceEndpoint = BLangConnectorSPIUtil.getConnectorEndpointStruct(context);
-        LocalFileSystemServerConnector serverConnector = (LocalFileSystemServerConnector) serviceEndpoint
-                .getNativeData(Constants.FS_SERVER_CONNECTOR);
-        try {
-            serverConnector.stop();
-        } catch (LocalFileSystemServerConnectorException e) {
-            throw new BallerinaConnectorException("Unable to stop server connector", e);
-        }
-        context.setReturnValues();
+        Struct serviceEndpointConfig = serviceEndpoint.getStructField("config");
+        serviceEndpointConfig.getFields();
+
+        context.setReturnValues((BValue) null);
     }
 }

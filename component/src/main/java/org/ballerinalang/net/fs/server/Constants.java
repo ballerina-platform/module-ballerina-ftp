@@ -24,7 +24,6 @@ package org.ballerinalang.net.fs.server;
 public class Constants {
 
     //Annotation
-    public static final String ANNOTATION_CONFIG = "configuration";
     public static final String ANNOTATION_DIR_URI = "dirURI";
     public static final String ANNOTATION_EVENTS = "events";
     public static final String ANNOTATION_DIRECTORY_RECURSIVE = "recursive";

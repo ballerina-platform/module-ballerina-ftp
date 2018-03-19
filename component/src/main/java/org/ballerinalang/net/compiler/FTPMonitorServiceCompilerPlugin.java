@@ -27,7 +27,7 @@ import org.ballerinalang.model.tree.NodeKind;
 import org.ballerinalang.model.tree.ServiceNode;
 import org.ballerinalang.model.tree.expressions.ExpressionNode;
 import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.net.fs.server.Constants;
+import org.ballerinalang.net.ftp.server.Constants;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BStructType;
@@ -44,13 +44,13 @@ import org.wso2.ballerinalang.compiler.tree.expressions.BLangSimpleVarRef;
 import java.util.List;
 
 /**
- * Compiler plugin for validating File System service.
+ * Compiler plugin for validating FTP server service.
  */
 @SupportEndpointTypes(
-        value = {@SupportEndpointTypes.EndpointType(packageName = "ballerina.net.fs", name = "Service")
+        value = {@SupportEndpointTypes.EndpointType(packageName = "ballerina.net.ftp", name = "Service")
         }
 )
-public class FileServiceCompilerPlugin extends AbstractCompilerPlugin {
+public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
     @Override
     public void init(DiagnosticLog diagnosticLog) {
     }
@@ -58,7 +58,7 @@ public class FileServiceCompilerPlugin extends AbstractCompilerPlugin {
     @Override
     public void process(ServiceNode serviceNode, List<AnnotationAttachmentNode> annotations) {
         for (AnnotationAttachmentNode annotation : annotations) {
-            if (!Constants.FILE_SYSTEM_PACKAGE_NAME
+            if (!Constants.FTP_PACKAGE_NAME
                     .equals(((BLangAnnotationAttachment) annotation).annotationSymbol.pkgID.name.value)) {
                 continue;
             }
@@ -77,17 +77,17 @@ public class FileServiceCompilerPlugin extends AbstractCompilerPlugin {
         final List<BLangVariable> parameters = resources.get(0).getParameters();
         if (parameters.size() != 1) {
             throw new BallerinaConnectorException("Invalid resource signature. "
-                    + "Only a single fs:FileSystemEvent parameter allow in the resource signature.");
+                    + "Only a single ftp:FTPServerEvent parameter allow in the resource signature.");
         }
         final BType type = parameters.get(0).getTypeNode().type;
         if (type.getKind().equals(TypeKind.STRUCT)) {
             if (type instanceof BStructType) {
                 BStructType event = (BStructType) type;
-                if (!Constants.FILE_SYSTEM_PACKAGE_NAME.equals(event.tsymbol.pkgID.name.value)
-                        || !Constants.FILE_SYSTEM_EVENT.equals(event.tsymbol.name.value)) {
+                if (!Constants.FTP_PACKAGE_NAME.equals(event.tsymbol.pkgID.name.value)
+                        || !Constants.FTP_SERVER_EVENT.equals(event.tsymbol.name.value)) {
                     throw new BallerinaConnectorException(
-                            "Parameter should be of type - " + Constants.FILE_SYSTEM_PACKAGE_NAME + ":"
-                                    + Constants.FILE_SYSTEM_EVENT);
+                            "Parameter should be of type - " + Constants.FTP_PACKAGE_NAME + ":"
+                                    + Constants.FTP_SERVER_EVENT);
                 }
             }
         }
@@ -112,7 +112,7 @@ public class FileServiceCompilerPlugin extends AbstractCompilerPlugin {
                 }
             }
             if (!valid) {
-                throw new BallerinaException("Cannot create file system server without dirURI");
+                throw new BallerinaException("Cannot create FTP server connector without dirURI");
             }
         }
     }

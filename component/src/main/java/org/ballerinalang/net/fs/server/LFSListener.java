@@ -42,8 +42,7 @@ public class LFSListener implements LocalFileSystemListener {
     @Override
     public void onMessage(LocalFileSystemEvent fileSystemEvent) {
         BValue[] parameters = getSignatureParameters(fileSystemEvent);
-        FSCallableUnitCallback callback = new FSCallableUnitCallback();
-        Executor.submit(resource, callback, null, parameters);
+        Executor.submit(resource, new FSCallableUnitCallback(), null, parameters);
     }
 
     private BValue[] getSignatureParameters(LocalFileSystemEvent fileSystemEvent) {

@@ -20,39 +20,32 @@ package org.ballerinalang.net.fs.navtiveimpl;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
-import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
-import org.ballerinalang.connector.api.BallerinaConnectorException;
-import org.ballerinalang.connector.api.Struct;
 import org.ballerinalang.model.types.TypeKind;
+import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
-import org.ballerinalang.net.fs.server.Constants;
-import org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector;
-import org.wso2.transport.localfilesystem.server.exception.LocalFileSystemServerConnectorException;
+import org.ballerinalang.natives.annotations.ReturnType;
 
 /**
- * Stop the server connector.
+ * Get the ID of the connection.
+ *
+ * @since 0.966
  */
 
 @BallerinaFunction(
         packageName = "ballerina.net.fs",
-        functionName = "stop",
+        functionName = "getClient",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
                              structPackage = "ballerina.net.fs"),
+        returnType = {@ReturnType(type = TypeKind.STRUCT)},
         isPublic = true
 )
-public class Stop extends BlockingNativeCallableUnit {
+public class GetClient extends BlockingNativeCallableUnit {
 
     @Override
     public void execute(Context context) {
-        Struct serviceEndpoint = BLangConnectorSPIUtil.getConnectorEndpointStruct(context);
-        LocalFileSystemServerConnector serverConnector = (LocalFileSystemServerConnector) serviceEndpoint
-                .getNativeData(Constants.FS_SERVER_CONNECTOR);
-        try {
-            serverConnector.stop();
-        } catch (LocalFileSystemServerConnectorException e) {
-            throw new BallerinaConnectorException("Unable to stop server connector", e);
-        }
-        context.setReturnValues();
+        BStruct endpoint = (BStruct) context.getRefArgument(0);
+        BStruct connection = (BStruct) endpoint.getRefField(0);
+        context.setReturnValues(connection);
     }
 }

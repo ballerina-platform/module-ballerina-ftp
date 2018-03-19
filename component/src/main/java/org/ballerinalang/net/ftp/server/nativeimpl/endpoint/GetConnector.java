@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.ballerinalang.net.fs.navtiveimpl;
+package org.ballerinalang.net.ftp.server.nativeimpl.endpoint;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
@@ -32,10 +32,10 @@ import org.ballerinalang.natives.annotations.ReturnType;
  */
 
 @BallerinaFunction(
-        packageName = "ballerina.net.fs",
+        packageName = "ballerina.net.ftp",
         functionName = "getConnector",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "Service",
-                             structPackage = "ballerina.net.fs"),
+                             structPackage = "ballerina.net.ftp"),
         returnType = {@ReturnType(type = TypeKind.CONNECTOR)},
         isPublic = true
 )

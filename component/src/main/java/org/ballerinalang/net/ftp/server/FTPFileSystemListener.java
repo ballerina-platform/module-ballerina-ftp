@@ -18,13 +18,12 @@
 
 package org.ballerinalang.net.ftp.server;
 
-import org.ballerinalang.connector.api.ConnectorUtils;
 import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
-import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.services.ErrorHandlerUtils;
+import org.ballerinalang.util.codegen.StructInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
@@ -32,35 +31,35 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemEvent;
 
 /**
- * File System connector listener for Ballerina.
+ * FTP File System connector listener for Ballerina.
  */
-public class BallerinaFTPFileSystemListener implements RemoteFileSystemListener {
+public class FTPFileSystemListener implements RemoteFileSystemListener {
 
-    private static final Logger log = LoggerFactory.getLogger(BallerinaFTPFileSystemListener.class);
-    private Service service;
+    private static final Logger log = LoggerFactory.getLogger(FTPFileSystemListener.class);
+    private Resource resource;
+    private StructInfo structInfo;
 
-    public BallerinaFTPFileSystemListener(Service service) {
-        this.service = service;
+    public FTPFileSystemListener(Resource resource, StructInfo structInfo) {
+        this.resource = resource;
+        this.structInfo = structInfo;
     }
 
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
-            Resource resource = service.getResources()[0];
-            BValue[] parameters = getSignatureParameters(resource, event);
-            Executor.submit(resource, null, null, parameters);
+            BValue[] parameters = getSignatureParameters(event);
+            Executor.submit(resource, new FTPCallableUnitCallback(), null, parameters);
         }
-        return false;
+        return true;
     }
 
-    private BValue[] getSignatureParameters(Resource resource, RemoteFileSystemEvent fileSystemEvent) {
-        BStruct request = ConnectorUtils.createStruct(resource, Constants.FTP_PACKAGE_NAME,
-                Constants.FTP_SERVER_EVENT);
-        request.setStringField(0, fileSystemEvent.getUri());
-        request.setIntField(1, fileSystemEvent.getFileSize());
-        request.setIntField(2, fileSystemEvent.getLastModifiedTime());
-        return new BValue[] { request};
+    private BValue[] getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
+        BStruct eventStruct = new BStruct(structInfo.getType());
+        eventStruct.setStringField(0, fileSystemEvent.getUri());
+        eventStruct.setIntField(0, fileSystemEvent.getFileSize());
+        eventStruct.setIntField(1, fileSystemEvent.getLastModifiedTime());
+        return new BValue[] { eventStruct };
     }
 
     @Override

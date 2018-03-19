@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.ballerinalang.net.fs.navtiveimpl;
+package org.ballerinalang.net.ftp.server.nativeimpl.endpoint;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
@@ -26,19 +26,18 @@ import org.ballerinalang.connector.api.Struct;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
-import org.ballerinalang.net.fs.server.Constants;
-import org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector;
-import org.wso2.transport.localfilesystem.server.exception.LocalFileSystemServerConnectorException;
+import org.ballerinalang.net.ftp.server.Constants;
+import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
+import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileSystemServerConnector;
 
 /**
  * Stop the server connector.
  */
 
 @BallerinaFunction(
-        packageName = "ballerina.net.fs",
+        packageName = "ballerina.net.ftp",
         functionName = "stop",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
-                             structPackage = "ballerina.net.fs"),
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Service", structPackage = "ballerina.net.ftp"),
         isPublic = true
 )
 public class Stop extends BlockingNativeCallableUnit {
@@ -46,11 +45,11 @@ public class Stop extends BlockingNativeCallableUnit {
     @Override
     public void execute(Context context) {
         Struct serviceEndpoint = BLangConnectorSPIUtil.getConnectorEndpointStruct(context);
-        LocalFileSystemServerConnector serverConnector = (LocalFileSystemServerConnector) serviceEndpoint
-                .getNativeData(Constants.FS_SERVER_CONNECTOR);
+        RemoteFileSystemServerConnector serverConnector = (RemoteFileSystemServerConnector) serviceEndpoint
+                .getNativeData(Constants.FTP_SERVER_CONNECTOR);
         try {
             serverConnector.stop();
-        } catch (LocalFileSystemServerConnectorException e) {
+        } catch (RemoteFileSystemConnectorException e) {
             throw new BallerinaConnectorException("Unable to stop server connector", e);
         }
         context.setReturnValues();

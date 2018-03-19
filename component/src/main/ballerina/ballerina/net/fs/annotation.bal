@@ -6,7 +6,7 @@ package ballerina.net.fs;
 @Description {value: "Configuration for File System service"}
 @Field {value: "endpoints: An array of endpoints the service would be attached to"}
 public struct FileSystemServiceConfiguration {
-    Service[] endpoints;
+    ServiceEndpoint[] endpoints;
 }
 
 @Description {value:"Configurations annotation for an File System service"}
