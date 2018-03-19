@@ -23,7 +23,6 @@ import org.wso2.transport.remotefilesystem.Constants;
  * Constants for ftp client connector.
  */
 public class FTPConstants {
-    public static final String CONNECTOR_NAME = "ClientConnector";
     public static final String PROPERTY_URI = Constants.URI;
     public static final String PROPERTY_DESTINATION = Constants.DESTINATION;
     public static final String PROPERTY_ACTION = Constants.ACTION;

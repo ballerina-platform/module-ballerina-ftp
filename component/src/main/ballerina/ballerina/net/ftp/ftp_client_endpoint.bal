@@ -5,10 +5,8 @@ package ballerina.net.ftp;
 ///////////////////////////
 
 @Description {value:"Represents an FTP client endpoint"}
-@Field {value:"epName: The name of the endpoint"}
 @Field {value:"config: The configurations associated with the endpoint"}
-public struct Client {
-    string epName;
+public struct ClientEndpoint {
     ClientEndpointConfiguration config;
 }
 
@@ -34,26 +32,24 @@ public function <ClientEndpointConfiguration config> ClientEndpointConfiguration
 
 @Description {value:"Gets called when the endpoint is being initialized during the package initialization."}
 @Param {value:"ep: The endpoint to be initialized"}
-@Param {value:"epName: The endpoint name"}
 @Param {value:"config: The ClientEndpointConfiguration of the endpoint"}
-public function <Client ep> init (string epName, ClientEndpointConfiguration config) {
-    ep.epName = epName;
+public function <ClientEndpoint ep> init (ClientEndpointConfiguration config) {
     ep.config = config;
     ep.initEndpoint();
 }
 
-public native function <Client ep> initEndpoint ();
+public native function <ClientEndpoint ep> initEndpoint ();
 
-public function <Client ep> register (type serviceType) {
+public function <ClientEndpoint ep> register (type serviceType) {
 }
 
-public function <Client ep> start () {
+public function <ClientEndpoint ep> start () {
 }
 
 @Description {value:"Returns the connector that client code uses"}
 @Return {value:"The connector that client code uses"}
-public native function <Client ep> getConnector () returns (ClientConnector conn);
+public native function <ClientEndpoint ep> getClient () (ClientConnector);
 
 @Description {value:"Stops the registered service"}
-public function <Client ep> stop () {
+public function <ClientEndpoint ep> stop () {
 }

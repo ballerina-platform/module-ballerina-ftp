@@ -37,7 +37,8 @@ import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileS
 @BallerinaFunction(
         packageName = "ballerina.net.ftp",
         functionName = "stop",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Service", structPackage = "ballerina.net.ftp"),
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
+                             structPackage = "ballerina.net.ftp"),
         isPublic = true
 )
 public class Stop extends BlockingNativeCallableUnit {

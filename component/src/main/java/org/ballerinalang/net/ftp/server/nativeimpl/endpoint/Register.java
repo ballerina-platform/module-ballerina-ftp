@@ -48,7 +48,7 @@ import java.util.Map;
 @BallerinaFunction(
         packageName = "ballerina.net.ftp",
         functionName = "register",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Service",
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
                              structPackage = "ballerina.net.ftp"),
         args = {@Argument(name = "serviceType", type = TypeKind.TYPE)},
         isPublic = true

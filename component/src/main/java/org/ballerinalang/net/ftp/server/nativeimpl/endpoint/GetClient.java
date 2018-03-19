@@ -21,6 +21,7 @@ package org.ballerinalang.net.ftp.server.nativeimpl.endpoint;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
+import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
@@ -33,16 +34,18 @@ import org.ballerinalang.natives.annotations.ReturnType;
 
 @BallerinaFunction(
         packageName = "ballerina.net.ftp",
-        functionName = "getConnector",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Service",
+        functionName = "getClient",
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
                              structPackage = "ballerina.net.ftp"),
-        returnType = {@ReturnType(type = TypeKind.CONNECTOR)},
+        returnType = {@ReturnType(type = TypeKind.STRUCT)},
         isPublic = true
 )
-public class GetConnector extends BlockingNativeCallableUnit {
+public class GetClient extends BlockingNativeCallableUnit {
 
     @Override
     public void execute(Context context) {
-        context.setReturnValues();
+        BStruct endpoint = (BStruct) context.getRefArgument(0);
+        BStruct connection = (BStruct) endpoint.getRefField(0);
+        context.setReturnValues(connection);
     }
 }

@@ -1,7 +1,6 @@
 package ballerina.net.ftp;
 
-public struct Service {
-    string epName;
+public struct ServiceEndpoint {
     ServiceEndpointConfiguration config;
 }
 
@@ -28,15 +27,14 @@ public struct ServiceEndpointConfiguration {
     string sftpIdentities;
     string sftpIdentityPassPhrase;
     string sftpUserDirIsRoot;
+    string sftpAvoidPermissionCheck;
     string passiveMode;
 }
 
 @Description {value:"Gets called when the endpoint is being initialized during the package initialization."}
-@Param {value:"epName: The endpoint name"}
 @Param {value:"config: The ServiceEndpointConfiguration of the endpoint"}
 @Return {value:"Error occured during initialization"}
-public function <Service ep> init (string epName, ServiceEndpointConfiguration config) {
-    ep.epName = epName;
+public function <ServiceEndpoint ep> init (ServiceEndpointConfiguration config) {
     ep.config = config;
     var err = ep.initEndpoint();
     if (err != null) {
@@ -44,19 +42,19 @@ public function <Service ep> init (string epName, ServiceEndpointConfiguration c
     }
 }
 
-public native function <Service ep> initEndpoint () returns (error);
+public native function <ServiceEndpoint ep> initEndpoint () returns (error);
 
 @Description {value:"Gets called every time a service attaches itself to this endpoint. Also happens at package initialization."}
 @Param {value:"ep: The endpoint to which the service should be registered to"}
 @Param {value:"serviceType: The type of the service to be registered"}
-public native function <Service ep> register (type serviceType);
+public native function <ServiceEndpoint ep> register (type serviceType);
 
 @Description {value:"Starts the registered service"}
-public native function <Service ep> start ();
+public native function <ServiceEndpoint ep> start ();
 
 @Description {value:"Returns the connector that client code uses"}
 @Return {value:"The connector that client code uses"}
-public native function <Service ep> getConnector () returns (ServerConnector server);
+public native function <ServiceEndpoint ep> getClient () returns (Connection);
 
 @Description {value:"Stops the registered service"}
-public native function <Service ep> stop ();
+public native function <ServiceEndpoint ep> stop ();

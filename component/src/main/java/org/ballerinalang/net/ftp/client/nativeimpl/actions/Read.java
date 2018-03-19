@@ -28,7 +28,8 @@ import org.ballerinalang.nativeimpl.io.channels.base.Channel;
 import org.ballerinalang.nativeimpl.io.channels.base.readers.BlockingReader;
 import org.ballerinalang.nativeimpl.io.channels.base.writers.BlockingWriter;
 import org.ballerinalang.natives.annotations.Argument;
-import org.ballerinalang.natives.annotations.BallerinaAction;
+import org.ballerinalang.natives.annotations.BallerinaFunction;
+import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.ftp.client.nativeimpl.util.FTPConstants;
 import org.ballerinalang.util.codegen.PackageInfo;
@@ -51,10 +52,11 @@ import java.util.Map;
 /**
 * Read.
 */
-@BallerinaAction(
+@BallerinaFunction(
         packageName = "ballerina.net.ftp",
-        actionName = "read",
-        connectorName = FTPConstants.CONNECTOR_NAME,
+        functionName = "read",
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector",
+                             structPackage = "ballerina.net.ftp"),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "file", type = TypeKind.STRUCT, structType = "File",
                          structPackage = "ballerina.lang.files")},

@@ -23,7 +23,8 @@ import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BConnector;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.natives.annotations.Argument;
-import org.ballerinalang.natives.annotations.BallerinaAction;
+import org.ballerinalang.natives.annotations.BallerinaFunction;
+import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.ftp.client.nativeimpl.util.FTPConstants;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
@@ -37,10 +38,11 @@ import java.util.Map;
 /**
  * Checks the existence of a file.
  */
-@BallerinaAction(
+@BallerinaFunction(
         packageName = "ballerina.net.ftp",
-        actionName = "exists",
-        connectorName = FTPConstants.CONNECTOR_NAME,
+        functionName = "exists",
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector",
+                             structPackage = "ballerina.net.ftp"),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "file", type = TypeKind.STRUCT, structType = "File",
                          structPackage = "ballerina.lang.files")

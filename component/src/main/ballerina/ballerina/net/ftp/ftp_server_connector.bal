@@ -9,4 +9,4 @@ public struct FTPServerEvent {
     int lastModifiedTimeStamp;
 }
 
-public connector ServerConnector () {}
+public struct Connection {}

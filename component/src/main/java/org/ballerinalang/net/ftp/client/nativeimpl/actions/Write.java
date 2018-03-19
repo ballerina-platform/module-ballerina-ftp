@@ -22,7 +22,8 @@ import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BConnector;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.natives.annotations.Argument;
-import org.ballerinalang.natives.annotations.BallerinaAction;
+import org.ballerinalang.natives.annotations.BallerinaFunction;
+import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.ftp.client.nativeimpl.util.FTPConstants;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
@@ -36,10 +37,11 @@ import java.util.Map;
 /**
  * Write
  */
-@BallerinaAction(
+@BallerinaFunction(
         packageName = "ballerina.net.ftp",
-        actionName = "write",
-        connectorName = FTPConstants.CONNECTOR_NAME,
+        functionName = "write",
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector",
+                             structPackage = "ballerina.net.ftp"),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "blob", type = TypeKind.BLOB),
                 @Argument(name = "file", type = TypeKind.STRUCT, structType = "File",

@@ -52,5 +52,5 @@ public class Constants {
     public static final String ANNOTATION_SFTP_IDENTITIES = "sftpIdentities";
     public static final String ANNOTATION_SFTP_IDENTITY_PASS_PHRASE = "sftpIdentityPassPhrase";
     public static final String ANNOTATION_SFTP_USER_DIR_IS_ROOT = "sftpUserDirIsRoot";
-    public static final String ANNOTATION_AVOID_PERMISSION_CHECK = "sftpAvoidpermissioncheck";
+    public static final String ANNOTATION_AVOID_PERMISSION_CHECK = "sftpAvoidPermissionCheck";
 }
