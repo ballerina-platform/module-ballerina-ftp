@@ -38,7 +38,8 @@ import java.nio.file.Paths;
  */
 
 @BallerinaFunction(
-        packageName = "ballerina.net.fs",
+        orgName = "ballerina",
+        packageName = "net.fs",
         functionName = "initEndpoint",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
                              structPackage = "ballerina.net.fs"),

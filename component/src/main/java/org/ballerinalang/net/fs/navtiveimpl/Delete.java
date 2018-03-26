@@ -22,7 +22,9 @@ import java.nio.file.Paths;
  * Delete triggered file from the file system.
  */
 @BallerinaFunction(
-        packageName = "ballerina.net.fs", functionName = "delete",
+        orgName = "ballerina",
+        packageName = "net.fs",
+        functionName = "delete",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "FileSystemEvent",
                                         structPackage = "ballerina.net.fs"),
         returnType = {

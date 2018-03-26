@@ -26,7 +26,8 @@ import java.nio.file.StandardCopyOption;
  * Move triggered file to a given location.
  */
 @BallerinaFunction(
-        packageName = "ballerina.net.fs",
+        orgName = "ballerina",
+        packageName = "net.fs",
         functionName = "move",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "FileSystemEvent",
                 structPackage = "ballerina.net.fs"),

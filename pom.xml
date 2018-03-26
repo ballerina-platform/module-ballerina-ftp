@@ -371,7 +371,7 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <ballerina.version>0.964.1-SNAPSHOT</ballerina.version>
+        <ballerina.version>0.970.0-alpha1-SNAPSHOT</ballerina.version>
         <docerina.version>${ballerina.version}</docerina.version>
         <file.transport.version>6.0.53-SNAPSHOT</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>
@@ -390,7 +390,7 @@
         <maven.dependency.plugin.version>3.0.2</maven.dependency.plugin.version>
         <maven.processor.plugin.version>2.2.4</maven.processor.plugin.version>
         <maven.remote.resource.plugin.version>1.5</maven.remote.resource.plugin.version>
-        <docerina.maven.plugin.version>0.96.0</docerina.maven.plugin.version>
+        <docerina.maven.plugin.version>0.970.0-alpha1-SNAPSHOT</docerina.maven.plugin.version>
 
         <!--Bundle dependency versions-->
         <connector.framework.version>6.0.50</connector.framework.version>

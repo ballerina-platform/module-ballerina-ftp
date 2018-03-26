@@ -33,7 +33,8 @@ import org.ballerinalang.natives.annotations.Receiver;
  */
 
 @BallerinaFunction(
-        packageName = "ballerina.net.ftp",
+        orgName = "ballerina",
+        packageName = "net.ftp",
         functionName = "initEndpoint",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
                              structPackage = "ballerina.net.ftp"),

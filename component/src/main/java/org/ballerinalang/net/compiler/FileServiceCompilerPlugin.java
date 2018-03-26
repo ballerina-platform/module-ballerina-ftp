@@ -47,7 +47,7 @@ import java.util.List;
  * Compiler plugin for validating File System service.
  */
 @SupportEndpointTypes(
-        value = {@SupportEndpointTypes.EndpointType(packageName = "ballerina.net.fs", name = "Service")
+        value = {@SupportEndpointTypes.EndpointType(packageName = "ballerina.net.fs", name = "ServiceEndpoint")
         }
 )
 public class FileServiceCompilerPlugin extends AbstractCompilerPlugin {

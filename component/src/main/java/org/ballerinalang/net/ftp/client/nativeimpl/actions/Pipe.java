@@ -19,7 +19,6 @@ package org.ballerinalang.net.ftp.client.nativeimpl.actions;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.model.values.BConnector;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.nativeimpl.io.IOConstants;
 import org.ballerinalang.nativeimpl.io.channels.base.Channel;
@@ -39,7 +38,8 @@ import java.util.Map;
  * Pipe the once input stream to another channel.
  */
 @BallerinaFunction(
-        packageName = "ballerina.net.ftp",
+        orgName = "ballerina",
+        packageName = "net.ftp",
         functionName = "pipe",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector",
                              structPackage = "ballerina.net.ftp"),
@@ -57,7 +57,7 @@ public class Pipe extends AbstractFtpAction {
 
     @Override
     public void execute(Context context) {
-        BConnector clientConnector = (BConnector) context.getRefArgument(0);
+        BStruct clientConnector = (BStruct) context.getRefArgument(0);
         String url = (String) clientConnector.getNativeData(FTPConstants.URL);
         BStruct destination = (BStruct) context.getRefArgument(2);
 

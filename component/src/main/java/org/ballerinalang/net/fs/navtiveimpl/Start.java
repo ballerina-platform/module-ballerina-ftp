@@ -35,7 +35,8 @@ import org.wso2.transport.localfilesystem.server.exception.LocalFileSystemServer
  */
 
 @BallerinaFunction(
-        packageName = "ballerina.net.fs",
+        orgName = "ballerina",
+        packageName = "net.fs",
         functionName = "start",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
                              structPackage = "ballerina.net.fs"),

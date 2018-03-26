@@ -46,11 +46,12 @@ import java.util.Map;
  */
 
 @BallerinaFunction(
-        packageName = "ballerina.net.ftp",
+        orgName = "ballerina",
+        packageName = "net.ftp",
         functionName = "register",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
                              structPackage = "ballerina.net.ftp"),
-        args = {@Argument(name = "serviceType", type = TypeKind.TYPE)},
+        args = {@Argument(name = "serviceType", type = TypeKind.TYPEDESC)},
         isPublic = true
 )
 public class Register extends BlockingNativeCallableUnit {

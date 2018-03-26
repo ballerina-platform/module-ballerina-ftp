@@ -35,7 +35,8 @@ import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileS
  */
 
 @BallerinaFunction(
-        packageName = "ballerina.net.ftp",
+        orgName = "ballerina",
+        packageName = "net.ftp",
         functionName = "stop",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
                              structPackage = "ballerina.net.ftp"),

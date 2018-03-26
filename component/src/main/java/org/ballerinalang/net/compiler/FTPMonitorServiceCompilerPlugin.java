@@ -47,7 +47,7 @@ import java.util.List;
  * Compiler plugin for validating FTP server service.
  */
 @SupportEndpointTypes(
-        value = {@SupportEndpointTypes.EndpointType(packageName = "ballerina.net.ftp", name = "Service")
+        value = {@SupportEndpointTypes.EndpointType(packageName = "ballerina.net.ftp", name = "ServiceEndpoint")
         }
 )
 public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {

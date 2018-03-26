@@ -20,7 +20,6 @@ package org.ballerinalang.net.ftp.client.nativeimpl.actions;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BBoolean;
-import org.ballerinalang.model.values.BConnector;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
@@ -39,7 +38,8 @@ import java.util.Map;
  * Checks the existence of a file.
  */
 @BallerinaFunction(
-        packageName = "ballerina.net.ftp",
+        orgName = "ballerina",
+        packageName = "net.ftp",
         functionName = "exists",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector",
                              structPackage = "ballerina.net.ftp"),
@@ -56,7 +56,7 @@ public class Exists extends AbstractFtpAction {
 
     @Override
     public void execute(Context context) {
-        BConnector clientConnector = (BConnector) context.getRefArgument(0);
+        BStruct clientConnector = (BStruct) context.getRefArgument(0);
         BStruct file = (BStruct) context.getRefArgument(1);
 
         String url = (String) clientConnector.getNativeData(FTPConstants.URL);
@@ -85,7 +85,7 @@ public class Exists extends AbstractFtpAction {
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
                 BBoolean value = new BBoolean(
                         Boolean.parseBoolean(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getText()));
-                getContext().setReturnValues(value, null);
+                getContext().setReturnValues(value);
             }
             return true;
         }
@@ -94,7 +94,7 @@ public class Exists extends AbstractFtpAction {
         public void onError(Throwable throwable) {
             BStruct error = getClientErrorStruct(getContext());
             error.setStringField(0, throwable.getMessage());
-            getContext().setReturnValues(null, error);
+            getContext().setReturnValues(error);
         }
     }
 }

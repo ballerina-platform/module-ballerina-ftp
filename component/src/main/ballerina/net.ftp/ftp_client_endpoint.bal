@@ -40,7 +40,7 @@ public function <ClientEndpoint ep> init (ClientEndpointConfiguration config) {
 
 public native function <ClientEndpoint ep> initEndpoint ();
 
-public function <ClientEndpoint ep> register (type serviceType) {
+public function <ClientEndpoint ep> register (typedesc serviceType) {
 }
 
 public function <ClientEndpoint ep> start () {
@@ -48,7 +48,7 @@ public function <ClientEndpoint ep> start () {
 
 @Description {value:"Returns the connector that client code uses"}
 @Return {value:"The connector that client code uses"}
-public native function <ClientEndpoint ep> getClient () (ClientConnector);
+public native function <ClientEndpoint ep> getClient () returns ClientConnector;
 
 @Description {value:"Stops the registered service"}
 public function <ClientEndpoint ep> stop () {

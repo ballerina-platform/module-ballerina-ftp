@@ -33,7 +33,8 @@ import org.ballerinalang.natives.annotations.ReturnType;
  */
 
 @BallerinaFunction(
-        packageName = "ballerina.net.fs",
+        orgName = "ballerina",
+        packageName = "net.fs",
         functionName = "getClient",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
                              structPackage = "ballerina.net.fs"),

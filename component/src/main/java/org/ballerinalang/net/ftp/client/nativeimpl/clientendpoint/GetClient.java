@@ -35,7 +35,8 @@ import org.ballerinalang.net.ftp.client.nativeimpl.util.FTPConstants;
  */
 
 @BallerinaFunction(
-        packageName = "ballerina.net.ftp",
+        orgName = "ballerina",
+        packageName = "net.ftp",
         functionName = "getClient",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientEndpoint",
                              structPackage = "ballerina.net.ftp"),
@@ -46,16 +47,11 @@ public class GetClient extends BlockingNativeCallableUnit {
 
     @Override
     public void execute(Context context) {
-        BStruct clientConnector;
         BStruct clientEndpoint = (BStruct) context.getRefArgument(0);
-        if (clientEndpoint.getNativeData("BConnector") != null) {
-            clientConnector = (BStruct) clientEndpoint.getNativeData("BConnector");
-        } else {
-            BStruct clientEndpointConfig = (BStruct) clientEndpoint.getRefField(0);
-            clientConnector = BLangConnectorSPIUtil
-                    .createBStruct(context.getProgramFile(), "ballerina.net.ftp", "ClientConnector",
-                            clientEndpointConfig);
-        }
+        BStruct clientEndpointConfig = (BStruct) clientEndpoint.getRefField(0);
+        BStruct clientConnector = BLangConnectorSPIUtil
+                .createBStruct(context.getProgramFile(), "ballerina.net.ftp",
+                        "ClientConnector", clientEndpointConfig);
         final String url = (String) clientEndpoint.getNativeData(FTPConstants.URL);
         clientConnector.addNativeData(FTPConstants.URL, url);
         context.setReturnValues(clientConnector);

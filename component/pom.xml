@@ -89,7 +89,7 @@
             </resource>
             <resource>
                 <directory>${generated.ballerina.source.directory}</directory>
-                <targetPath>META-INF/natives</targetPath>
+                <targetPath>META-INF/ballerina</targetPath>
             </resource>
         </resources>
         <plugins>
@@ -119,18 +119,6 @@
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
-                                    <!-- <limits>
-                                        <limit >
-                                            <counter>INSTRUCTION</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.76</minimum>
-                                        </limit>
-                                        <limit >
-                                            <counter>BRANCH</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.62</minimum>
-                                        </limit>
-                                    </limits> -->
                                     <excludes>
                                         <exclude>*Test</exclude>
                                         <exclude>**/generated/**</exclude>
@@ -235,7 +223,7 @@
                         <configuration>
                             <outputDir>${project.build.directory}/api-docs</outputDir>
                             <sourceDir>
-                                ${basedir}/target/classes/META-INF/natives
+                                ${basedir}/target/classes/META-INF/ballerina
                             </sourceDir>
                             <nativeCode>true</nativeCode>
                         </configuration>
@@ -288,8 +276,8 @@
         <package.repository.provider.class>
             org.ballerinalang.net.fs.repository.BallerinaBuiltinPackageRepository
         </package.repository.provider.class>
-        <native.constructs.provider.package>org.ballerinalang.net.fs</native.constructs.provider.package>
-        <native.constructs.provider.class>BallerinaFSConstructsProvider</native.constructs.provider.class>
+        <!--<native.constructs.provider.package>org.ballerinalang.net.fs</native.constructs.provider.package>-->
+        <!--<native.constructs.provider.class>BallerinaFSConstructsProvider</native.constructs.provider.class>-->
 
         <!-- Path to the generated natives ballerina files temp directory -->
         <generated.ballerina.source.directory>
