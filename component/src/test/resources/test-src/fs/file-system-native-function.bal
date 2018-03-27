@@ -1,9 +1,9 @@
-import ballerina.net.fs;
+import ballerina/net.fs;
 
 function testFileMove(fs:FileSystemEvent event, string path) {
-    event.move(path);
+    _ = event.move(path);
 }
 
 function testFileDelete(fs:FileSystemEvent event) {
-    event.delete();
+    _ = event.delete();
 }

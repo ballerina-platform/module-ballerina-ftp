@@ -19,9 +19,9 @@ public struct FSError {
 @Param {value:"fs: A file event"}
 @Param {value:"destination: A new local file system location to move the file"}
 @Return {value:"The Error occured during the file move"}
-public native function <FileSystemEvent fs> move (string destination) returns FSError;
+public native function <FileSystemEvent fs> move (string destination) returns (null | FSError);
 
 @Description {value:"Delete event triggered file"}
 @Param {value:"fs: A file event"}
 @Return {value:"The Error occured during file delete"}
-public native function <FileSystemEvent fs> delete () returns FSError;
+public native function <FileSystemEvent fs> delete () returns (null | FSError);

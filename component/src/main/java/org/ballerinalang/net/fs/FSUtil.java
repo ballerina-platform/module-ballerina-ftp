@@ -43,4 +43,19 @@ public class FSUtil {
         fsError.setStringField(0, throwable.getMessage());
         return fsError;
     }
+
+    /**
+     * Create FSError struct object.
+     *
+     * @param context Runtime context instance.
+     * @param message Error message.
+     * @return {@link BStruct} instance that represent FSERROR with necessary information.
+     */
+    public static BStruct getFSError(Context context, String message) {
+        PackageInfo httpPackageInfo = context.getProgramFile().getPackageInfo(Constants.FILE_SYSTEM_PACKAGE_NAME);
+        StructInfo errorStructInfo = httpPackageInfo.getStructInfo(Constants.FILE_SYSTEM_ERROR);
+        BStruct fsError = new BStruct(errorStructInfo.getType());
+        fsError.setStringField(0, message);
+        return fsError;
+    }
 }

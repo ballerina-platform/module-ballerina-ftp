@@ -211,25 +211,25 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>docerina-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>docerina</goal>
-                        </goals>
-                        <configuration>
-                            <outputDir>${project.build.directory}/api-docs</outputDir>
-                            <sourceDir>
-                                ${basedir}/target/classes/META-INF/ballerina
-                            </sourceDir>
-                            <nativeCode>true</nativeCode>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>docerina-maven-plugin</artifactId>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<phase>package</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>docerina</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<outputDir>${project.build.directory}/api-docs</outputDir>-->
+                            <!--<sourceDir>-->
+                                <!--${basedir}/target/classes/META-INF/ballerina-->
+                            <!--</sourceDir>-->
+                            <!--<nativeCode>true</nativeCode>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>

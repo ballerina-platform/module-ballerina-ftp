@@ -91,13 +91,13 @@ public class LocalFileSystemServerNativeFunctionsTest {
         event.setStringField(0, "/newfile");
         BValue[] inputArg = {event, new BString("")};
         String error = null;
-        try {
-            BRunUtil.invoke(resultNegative, "testFileMoveInvalidPath", inputArg);
-        } catch (Throwable e) {
-            error = e.getMessage();
-        }
-        Assert.assertEquals(error.substring(23, 87),
-                "please provide a local file system destination to move the file.");
+        final BValue[] values = BRunUtil.invoke(resultNegative, "testFileMoveInvalidPath", inputArg);
+        Assert.assertEquals(values.length, 1);
+        final BStruct value = (BStruct) values[0];
+        Assert.assertEquals(value.getType().getName(), "FSError", "Not getting expected error");
+        Assert.assertEquals(value.getStringField(0),
+                "Please provide a local file system destination to move the file." ,
+                "Not expected error message.");
     }
 
     @Test()
@@ -106,14 +106,13 @@ public class LocalFileSystemServerNativeFunctionsTest {
                 Constants.FILE_SYSTEM_EVENT);
         event.setStringField(0, "/newfile");
         BValue[] inputArg = {event, new BString(null)};
-        String error = null;
-        try {
-            BRunUtil.invoke(resultNegative, "testFileMoveInvalidPath", inputArg);
-        } catch (Throwable e) {
-            error = e.getMessage();
-        }
-        Assert.assertEquals(error.substring(23, 87),
-                "please provide a local file system destination to move the file.");
+        final BValue[] values = BRunUtil.invoke(resultNegative, "testFileMoveInvalidPath", inputArg);
+        Assert.assertEquals(values.length, 1);
+        final BStruct value = (BStruct) values[0];
+        Assert.assertEquals(value.getType().getName(), "FSError", "Not getting expected error");
+        Assert.assertEquals(value.getStringField(0),
+                "Please provide a local file system destination to move the file." ,
+                "Not expected error message.");
     }
 
     @Test(dependsOnMethods = "testFileMoveFunction")
@@ -125,14 +124,13 @@ public class LocalFileSystemServerNativeFunctionsTest {
                 Constants.FILE_SYSTEM_EVENT);
         event.setStringField(0, tempFile1.toFile().getAbsolutePath());
         BValue[] inputArg = {event, new BString(tempFile2.toFile().getAbsolutePath())};
-        String error = null;
-        try {
-            BRunUtil.invoke(resultNegative, "testFileMoveInvalidPath", inputArg);
-        } catch (Exception e) {
-            error = e.getMessage();
-        }
+        final BValue[] values = BRunUtil.invoke(resultNegative, "testFileMoveInvalidPath", inputArg);
+        Assert.assertEquals(values.length, 1);
         Assert.assertTrue(Files.exists(tempFile1), "File did move");
-        Assert.assertEquals(error.substring(23, 54), "destination is not a directory:");
+        final BStruct value = (BStruct) values[0];
+        Assert.assertEquals(value.getType().getName(), "FSError", "Not getting expected error");
+        Assert.assertEquals(value.getStringField(0), "Destination is not a directory: " + tempFile2.toString(),
+                "Not expected error message.");
     }
 
     @Test(dependsOnMethods = "testFileMoveFunction")
@@ -142,13 +140,12 @@ public class LocalFileSystemServerNativeFunctionsTest {
                 Constants.FILE_SYSTEM_EVENT);
         event.setStringField(0, "/invalid-file");
         BValue[] inputArg = {event, new BString(newDirectory.toFile().getAbsolutePath())};
-        String error = null;
-        try {
-            BRunUtil.invoke(resultNegative, "testFileMoveInvalidPath", inputArg);
-        } catch (Exception e) {
-            error = e.getMessage();
-        }
-        Assert.assertEquals(error.substring(23, 73), "unable to move file [/invalid-file] to destination");
+        final BValue[] values = BRunUtil.invoke(resultNegative, "testFileMoveInvalidPath", inputArg);
+        Assert.assertEquals(values.length, 1);
+        final BStruct value = (BStruct) values[0];
+        Assert.assertEquals(value.getType().getName(), "FSError", "Not getting expected error");
+        Assert.assertEquals(value.getStringField(0), "No such a file: invalid-file",
+                "Not expected error message.");
     }
 
     private Path createFile(String directory, String fileName) throws IOException {

@@ -10,12 +10,12 @@ import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.fs.FSUtil;
-import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -47,17 +47,22 @@ public class Move implements NativeCallableUnit {
         String destination = context.getNullableStringArgument(0);
         BStruct fsError = null;
         if (destination == null || destination.isEmpty()) {
-            throw new BallerinaException("Please provide a local file system destination to move the file.");
+            String msg = "Please provide a local file system destination to move the file.";
+            fsError = FSUtil.getFSError(context, msg);
         } else if (!Files.isDirectory(Paths.get(destination))) {
-            throw new BallerinaException("Destination is not a directory: " + destination);
+            String msg = "Destination is not a directory: " + destination;
+            fsError = FSUtil.getFSError(context, msg);
+        }
+        if (fsError != null) {
+            context.setReturnValues(fsError);
+            callableUnitCallback.notifySuccess();
+            return;
         }
         String source = fileEventStruct.getStringField(0);
         Path sourcePath = Paths.get(source);
         Path fileName = sourcePath.getFileName();
         if (fileName == null) {
-            fsError = FSUtil.getFSError(context,
-                    new BallerinaException("Could not find the file name for triggered event: " + source));
-
+            fsError = FSUtil.getFSError(context, "Could not find the file name for triggered event: " + source);
         } else {
             Path destinationPath = Paths.get(destination, fileName.toString());
             try {
@@ -65,6 +70,8 @@ public class Move implements NativeCallableUnit {
                 if (log.isDebugEnabled()) {
                     log.debug("File moved successfully to " + destination + " from " + source);
                 }
+            } catch (NoSuchFileException e) {
+                fsError = FSUtil.getFSError(context, "No such a file: " + fileName);
             } catch (IOException e) {
                 fsError = FSUtil.getFSError(context, e);
             }

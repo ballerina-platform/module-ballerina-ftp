@@ -1,7 +1,11 @@
 package org.ballerinalang.net.fs.server;
 
+import org.ballerinalang.launcher.util.BCompileUtil;
+import org.ballerinalang.launcher.util.BRunUtil;
 import org.ballerinalang.launcher.util.BServiceUtil;
 import org.ballerinalang.launcher.util.CompileResult;
+import org.ballerinalang.model.values.BBoolean;
+import org.ballerinalang.model.values.BValue;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -50,41 +54,20 @@ public class LocalFileSystemServerConnectorTest {
 
     @Test
     public void testValidLocalFileSystemServerConnectorSyntax() {
-        CompileResult compileResult = BServiceUtil.setupProgramFile(this, "test-src/fs/file-system.bal");
-        //        BallerinaServerConnector ballerinaServerConnector =
-        //                ConnectorUtils.getBallerinaServerConnector(compileResult.getProgFile(), Constants
-        //                        .FILE_SYSTEM_PACKAGE_NAME);
-        //        final PackageInfo entryPackage = compileResult.getProgFile().getEntryPackage();
-        //        final StructInfo structInfo = entryPackage.getStructInfo(Constants.FILE_SYSTEM_EVENT);
-        //        LocalFileSystemServerConnector connector = (LocalFileSystemServerConnector) ballerinaServerConnector;
-        //        try {
-        //            final Field connectorMapInstance =
-        //                    LocalFileSystemServerConnector.class.getDeclaredField("connectorMap");
-        //            connectorMapInstance.setAccessible(true);
-        //            Map<String, ConnectorInfo> connectorInfoMap =
-        //                    (Map<String, ConnectorInfo>) connectorMapInstance.get(connector);
-        //            LFSListener systemListener = new LFSListener(
-        //                    connectorInfoMap.get("._fileSystem").getService().getResources()[0], structInfo);
-        //            LocalFileSystemEvent event =
-        //                    new LocalFileSystemEvent("/home/ballerina/bal/file.txt", "create");
-        //            systemListener.onMessage(event);
-        //        } catch (NoSuchFieldException | IllegalAccessException e) {
-        //            //Do nothing
-        //        }
+        CompileResult compileResult = BCompileUtil.compileAndSetup("test-src/fs/file-system.bal");
+        BServiceUtil.runService(compileResult);
+        try {
+            Files.createFile(Paths.get("target", "fs", "temp.txt"));
+        } catch (IOException e) {
+            Assert.fail(e.getMessage());
+        }
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            // Ignore.
+        }
+        final BValue[] result = BRunUtil.invokeStateful(compileResult, "isInvoked");
+        BBoolean isInvoked = (BBoolean) result[0];
+        Assert.assertTrue(isInvoked.booleanValue(), "Resource didn't invoke for the file create.");
     }
-
-    //    @Test(expectedExceptions = BallerinaConnectorException.class,
-    //          expectedExceptionsMessageRegExp = "Unable to find the associated configuration "
-    //                  + "annotation for given service: .*")
-    //    public void testMissingConfig() {
-    //        BServiceUtil.setupProgramFile(this, "test-src/fs/missing-config.bal");
-    //    }
-    //
-    //    @Test(dependsOnMethods = "testMissingConfig",
-    //            expectedExceptions = BallerinaConnectorException.class,
-    //            expectedExceptionsMessageRegExp = "More than one resource define for given service: .*")
-    //    public void testMoreResources() {
-    //        BServiceUtil.setupProgramFile(this, "test-src/fs/more-resources.bal");
-    //    }
-
 }

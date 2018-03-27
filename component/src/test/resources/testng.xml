@@ -22,10 +22,10 @@
 <suite name="ballerina-file-test-suite" parallel="false">
     <test name="ballerina-lang-test-suite" preserve-order="true" parallel="false">
         <packages>
-            <!--<package name="org.ballerinalang.net.fs.server.*"/>-->
-            <!--<package name="org.ballerinalang.net.fs.nativeimpl.*"/>-->
-            <!--<package name="org.ballerinalang.net.ftp.server.*"/>-->
-            <!--<package name="org.ballerinalang.net.ftp.nativeimpl.*"/>-->
+            <package name="org.ballerinalang.net.fs.server.*"/>
+            <package name="org.ballerinalang.net.fs.nativeimpl.*"/>
+            <package name="org.ballerinalang.net.ftp.server.*"/>
+            <package name="org.ballerinalang.net.ftp.client.nativeimpl.*"/>
         </packages>
     </test>
 </suite>

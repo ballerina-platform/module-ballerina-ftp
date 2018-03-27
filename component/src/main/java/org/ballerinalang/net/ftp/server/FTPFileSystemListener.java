@@ -49,7 +49,7 @@ public class FTPFileSystemListener implements RemoteFileSystemListener {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             BValue[] parameters = getSignatureParameters(event);
-            Executor.submit(resource, new FTPCallableUnitCallback(), null, parameters);
+            Executor.submit(resource, new FTPCallableUnitCallback(), null, null, parameters);
         }
         return true;
     }
