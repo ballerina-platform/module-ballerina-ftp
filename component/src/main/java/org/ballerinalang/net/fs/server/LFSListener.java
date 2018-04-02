@@ -23,32 +23,48 @@ import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.util.codegen.StructInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemEvent;
 import org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemListener;
+
+import java.util.Map;
 
 /**
  * File System connector listener for Ballerina.
  */
 public class LFSListener implements LocalFileSystemListener {
 
-    private Resource resource;
+    private static final Logger log = LoggerFactory.getLogger(LFSListener.class);
+
+    private Map<String, Resource> resourceRegistry;
     private StructInfo structInfo;
 
-    public LFSListener(Resource resource, StructInfo structInfo) {
-        this.resource = resource;
+    public LFSListener(Map<String, Resource> resourceRegistry, StructInfo structInfo) {
+        this.resourceRegistry = resourceRegistry;
         this.structInfo = structInfo;
     }
 
     @Override
-    public void onMessage(LocalFileSystemEvent fileSystemEvent) {
-        BValue[] parameters = getSignatureParameters(fileSystemEvent);
-        Executor.submit(resource, new FSCallableUnitCallback(), null, null, parameters);
+    public void onMessage(LocalFileSystemEvent fileEvent) {
+        BValue[] parameters = getSignatureParameters(fileEvent);
+        Resource resource = getResource(fileEvent.getEvent());
+        if (resource != null) {
+            Executor.submit(resource, new DirectoryListenerCallback(), null, null, parameters);
+        } else {
+            log.warn("FileEvent received for unregistered resource: [" + fileEvent.getEvent() + "] " + fileEvent
+                    .getFileName());
+        }
     }
 
-    private BValue[] getSignatureParameters(LocalFileSystemEvent fileSystemEvent) {
+    private BValue[] getSignatureParameters(LocalFileSystemEvent fileEvent) {
         BStruct eventStruct = new BStruct(this.structInfo.getType());
-        eventStruct.setStringField(0, fileSystemEvent.getFileName());
-        eventStruct.setStringField(1, fileSystemEvent.getEvent());
+        eventStruct.setStringField(0, fileEvent.getFileName());
+        eventStruct.setStringField(1, fileEvent.getEvent());
         return new BValue[] { eventStruct };
+    }
+
+    private Resource getResource(String event) {
+        return resourceRegistry.get(event);
     }
 }

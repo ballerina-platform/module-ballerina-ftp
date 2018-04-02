@@ -1,17 +1,16 @@
 import ballerina/net.fs;
 
-endpoint fs:ServiceEndpoint localFolder {
-    dirURI:"target/fs",
-    events:"create,delete,modify",
+endpoint fs:DirectoryListener localFolder {
+    path:"target/fs",
     recursive:false
 };
 
 boolean invoked = false;
 
-@fs:serviceConfig {
+@fs:ServiceConfig {
 }
 service<fs:Service> fileSystem bind localFolder {
-    fileResource (fs:FileSystemEvent m) {
+    onCreate (fs:FileEvent m) {
         invoked = true;
     }
 }

@@ -28,6 +28,7 @@ import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
+import org.ballerinalang.net.fs.server.DirectoryListenerConstants;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,10 +42,9 @@ import java.nio.file.Paths;
         orgName = "ballerina",
         packageName = "net.fs",
         functionName = "initEndpoint",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "DirectoryListener",
                              structPackage = "ballerina.net.fs"),
-        args = {@Argument(name = "epName", type = TypeKind.STRING),
-                @Argument(name = "config", type = TypeKind.STRUCT, structType = "ServiceEndpointConfiguration",
+        args = {@Argument(name = "config", type = TypeKind.STRUCT, structType = "ListenerEndpointConfiguration",
                           structPackage = "ballerina.net.fs")
         },
         isPublic = true
@@ -54,14 +54,15 @@ public class InitEndpoint extends BlockingNativeCallableUnit {
     @Override
     public void execute(Context context) {
         Struct serviceEndpoint = BLangConnectorSPIUtil.getConnectorEndpointStruct(context);
-        Struct serviceEndpointConfig = serviceEndpoint.getStructField("config");
-        final String dirURI = serviceEndpointConfig.getStringField("dirURI");
-        final Path dirPath = Paths.get(dirURI);
+        Struct serviceEndpointConfig = serviceEndpoint
+                .getStructField(DirectoryListenerConstants.SERVICE_ENDPOINT_CONFIG);
+        final String path = serviceEndpointConfig.getStringField(DirectoryListenerConstants.ANNOTATION_PATH);
+        final Path dirPath = Paths.get(path);
         if (Files.notExists(dirPath)) {
-            throw new BallerinaConnectorException("Folder does not exist: " + dirURI);
+            throw new BallerinaConnectorException("Folder does not exist: " + path);
         }
         if (!Files.isDirectory(dirPath)) {
-            throw new BallerinaConnectorException("Unable to find a directory : " + dirURI);
+            throw new BallerinaConnectorException("Unable to find a directory : " + path);
         }
         context.setReturnValues((BValue) null);
     }

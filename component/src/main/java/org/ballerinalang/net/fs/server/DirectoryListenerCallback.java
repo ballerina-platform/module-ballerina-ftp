@@ -22,9 +22,9 @@ import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.model.values.BStruct;
 
 /**
- * {@code FSCallableUnitCallback} is the responsible for acting on notifications received from Ballerina side.
+ * {@code DirectoryListenerCallback} is the responsible for acting on notifications received from Ballerina side.
  */
-public class FSCallableUnitCallback implements CallableUnitCallback {
+public class DirectoryListenerCallback implements CallableUnitCallback {
     @Override
     public void notifySuccess() {
         //TODO:

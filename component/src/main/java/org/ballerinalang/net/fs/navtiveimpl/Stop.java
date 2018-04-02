@@ -26,7 +26,7 @@ import org.ballerinalang.connector.api.Struct;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
-import org.ballerinalang.net.fs.server.Constants;
+import org.ballerinalang.net.fs.server.DirectoryListenerConstants;
 import org.wso2.transport.localfilesystem.server.connector.contract.LocalFileSystemServerConnector;
 import org.wso2.transport.localfilesystem.server.exception.LocalFileSystemServerConnectorException;
 
@@ -38,7 +38,7 @@ import org.wso2.transport.localfilesystem.server.exception.LocalFileSystemServer
         orgName = "ballerina",
         packageName = "net.fs",
         functionName = "stop",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "DirectoryListener",
                              structPackage = "ballerina.net.fs"),
         isPublic = true
 )
@@ -48,7 +48,7 @@ public class Stop extends BlockingNativeCallableUnit {
     public void execute(Context context) {
         Struct serviceEndpoint = BLangConnectorSPIUtil.getConnectorEndpointStruct(context);
         LocalFileSystemServerConnector serverConnector = (LocalFileSystemServerConnector) serviceEndpoint
-                .getNativeData(Constants.FS_SERVER_CONNECTOR);
+                .getNativeData(DirectoryListenerConstants.FS_SERVER_CONNECTOR);
         try {
             serverConnector.stop();
         } catch (LocalFileSystemServerConnectorException e) {

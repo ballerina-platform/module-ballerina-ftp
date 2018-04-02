@@ -36,7 +36,7 @@ import org.ballerinalang.natives.annotations.ReturnType;
         orgName = "ballerina",
         packageName = "net.fs",
         functionName = "getClient",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint",
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "DirectoryListener",
                              structPackage = "ballerina.net.fs"),
         returnType = {@ReturnType(type = TypeKind.STRUCT)},
         isPublic = true

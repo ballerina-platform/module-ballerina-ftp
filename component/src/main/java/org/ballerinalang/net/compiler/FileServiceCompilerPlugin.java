@@ -27,7 +27,7 @@ import org.ballerinalang.model.tree.NodeKind;
 import org.ballerinalang.model.tree.ServiceNode;
 import org.ballerinalang.model.tree.expressions.ExpressionNode;
 import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.net.fs.server.Constants;
+import org.ballerinalang.net.fs.server.DirectoryListenerConstants;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BStructType;
@@ -47,7 +47,7 @@ import java.util.List;
  * Compiler plugin for validating File System service.
  */
 @SupportEndpointTypes(
-        value = {@SupportEndpointTypes.EndpointType(packageName = "ballerina.net.fs", name = "ServiceEndpoint")
+        value = {@SupportEndpointTypes.EndpointType(packageName = "ballerina.net.fs", name = "DirectoryListener")
         }
 )
 public class FileServiceCompilerPlugin extends AbstractCompilerPlugin {
@@ -58,11 +58,11 @@ public class FileServiceCompilerPlugin extends AbstractCompilerPlugin {
     @Override
     public void process(ServiceNode serviceNode, List<AnnotationAttachmentNode> annotations) {
         for (AnnotationAttachmentNode annotation : annotations) {
-            if (!Constants.FILE_SYSTEM_PACKAGE_NAME
+            if (!DirectoryListenerConstants.PACKAGE_NAME
                     .equals(((BLangAnnotationAttachment) annotation).annotationSymbol.pkgID.name.value)) {
                 continue;
             }
-            if (Constants.CONFIG_ANNOTATION_NAME.equals(annotation.getAnnotationName().getValue())) {
+            if (DirectoryListenerConstants.CONFIG_ANNOTATION_NAME.equals(annotation.getAnnotationName().getValue())) {
                 handleServiceConfigAnnotation(serviceNode, (BLangAnnotationAttachment) annotation);
             }
         }
@@ -77,17 +77,17 @@ public class FileServiceCompilerPlugin extends AbstractCompilerPlugin {
         final List<BLangVariable> parameters = resources.get(0).getParameters();
         if (parameters.size() != 1) {
             throw new BallerinaConnectorException("Invalid resource signature. "
-                    + "Only a single fs:FileSystemEvent parameter allow in the resource signature.");
+                    + "Only a single fs:FileEvent parameter allow in the resource signature.");
         }
         final BType type = parameters.get(0).getTypeNode().type;
         if (type.getKind().equals(TypeKind.STRUCT)) {
             if (type instanceof BStructType) {
                 BStructType event = (BStructType) type;
-                if (!Constants.FILE_SYSTEM_PACKAGE_NAME.equals(event.tsymbol.pkgID.name.value)
-                        || !Constants.FILE_SYSTEM_EVENT.equals(event.tsymbol.name.value)) {
+                if (!DirectoryListenerConstants.PACKAGE_NAME.equals(event.tsymbol.pkgID.name.value)
+                        || !DirectoryListenerConstants.FILE_SYSTEM_EVENT.equals(event.tsymbol.name.value)) {
                     throw new BallerinaConnectorException(
-                            "Parameter should be of type - " + Constants.FILE_SYSTEM_PACKAGE_NAME + ":"
-                                    + Constants.FILE_SYSTEM_EVENT);
+                            "Parameter should be of type - " + DirectoryListenerConstants.PACKAGE_NAME + ":"
+                                    + DirectoryListenerConstants.FILE_SYSTEM_EVENT);
                 }
             }
         }
@@ -101,7 +101,7 @@ public class FileServiceCompilerPlugin extends AbstractCompilerPlugin {
             boolean valid = false;
             for (BLangRecordLiteral.BLangRecordKeyValue config : recordLiteral.getKeyValuePairs()) {
                 final String key = ((BLangSimpleVarRef) config.getKey()).variableName.value;
-                if (Constants.ANNOTATION_DIR_URI.equals(key)) {
+                if (DirectoryListenerConstants.ANNOTATION_PATH.equals(key)) {
                     final Object value = ((BLangLiteral) config.getValue()).getValue();
                     if (value != null) {
                         if (!value.toString().isEmpty()) {

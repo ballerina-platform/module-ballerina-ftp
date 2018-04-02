@@ -18,19 +18,31 @@
 
 package org.ballerinalang.net.fs.server;
 
+import org.wso2.transport.localfilesystem.server.util.Constants;
+
 /**
- * Constants for File System Server connector.
+ * Constants for Directory Listener Server connector.
  */
-public class Constants {
+public class DirectoryListenerConstants {
 
     //Annotation
     public static final String ANNOTATION_DIR_URI = "dirURI";
+    public static final String ANNOTATION_PATH = "path";
     public static final String ANNOTATION_EVENTS = "events";
     public static final String ANNOTATION_DIRECTORY_RECURSIVE = "recursive";
-    public static final String CONFIG_ANNOTATION_NAME = "serviceConfig";
+    public static final String CONFIG_ANNOTATION_NAME = "ServiceConfig";
 
-    public static final String FILE_SYSTEM_PACKAGE_NAME = "ballerina.net.fs";
-    public static final String FILE_SYSTEM_EVENT = "FileSystemEvent";
+    public static final String PACKAGE_NAME = "ballerina.net.fs";
+    public static final String FILE_SYSTEM_EVENT = "FileEvent";
     public static final String FILE_SYSTEM_ERROR = "FSError";
     public static final String FS_SERVER_CONNECTOR = "serverConnector";
+    public static final String SERVICE_ENDPOINT_CONFIG = "config";
+
+    public static final String EVENT_CREATE = Constants.EVENT_CREATE;
+    public static final String EVENT_DELETE = Constants.EVENT_DELETE;
+    public static final String EVENT_MODIFY = Constants.EVENT_MODIFY;
+
+    public static final String RESOURCE_NAME_ON_CREATE = "onCreate";
+    public static final String RESOURCE_NAME_ON_DELETE = "onDelete";
+    public static final String RESOURCE_NAME_ON_MODIFY = "onModify";
 }

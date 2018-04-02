@@ -20,7 +20,7 @@ package org.ballerinalang.net.fs;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.net.fs.server.Constants;
+import org.ballerinalang.net.fs.server.DirectoryListenerConstants;
 import org.ballerinalang.util.codegen.PackageInfo;
 import org.ballerinalang.util.codegen.StructInfo;
 
@@ -37,8 +37,8 @@ public class FSUtil {
      * @return {@link BStruct} instance that represent FSERROR with necessary information.
      */
     public static BStruct getFSError(Context context, Throwable throwable) {
-        PackageInfo httpPackageInfo = context.getProgramFile().getPackageInfo(Constants.FILE_SYSTEM_PACKAGE_NAME);
-        StructInfo errorStructInfo = httpPackageInfo.getStructInfo(Constants.FILE_SYSTEM_ERROR);
+        PackageInfo httpPackageInfo = context.getProgramFile().getPackageInfo(DirectoryListenerConstants.PACKAGE_NAME);
+        StructInfo errorStructInfo = httpPackageInfo.getStructInfo(DirectoryListenerConstants.FILE_SYSTEM_ERROR);
         BStruct fsError = new BStruct(errorStructInfo.getType());
         fsError.setStringField(0, throwable.getMessage());
         return fsError;
@@ -52,8 +52,8 @@ public class FSUtil {
      * @return {@link BStruct} instance that represent FSERROR with necessary information.
      */
     public static BStruct getFSError(Context context, String message) {
-        PackageInfo httpPackageInfo = context.getProgramFile().getPackageInfo(Constants.FILE_SYSTEM_PACKAGE_NAME);
-        StructInfo errorStructInfo = httpPackageInfo.getStructInfo(Constants.FILE_SYSTEM_ERROR);
+        PackageInfo httpPackageInfo = context.getProgramFile().getPackageInfo(DirectoryListenerConstants.PACKAGE_NAME);
+        StructInfo errorStructInfo = httpPackageInfo.getStructInfo(DirectoryListenerConstants.FILE_SYSTEM_ERROR);
         BStruct fsError = new BStruct(errorStructInfo.getType());
         fsError.setStringField(0, message);
         return fsError;
