@@ -15,7 +15,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.ballerinalang.net.ftp.client.nativeimpl.actions;
 
 import org.ballerinalang.bre.Context;
@@ -28,47 +27,48 @@ import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.ftp.client.nativeimpl.util.FTPConstants;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
 import org.wso2.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Create a file or folder
+ * FTP Append operation.
  */
 @BallerinaFunction(
         orgName = "ballerina",
         packageName = "net.ftp",
-        functionName = "createFile",
+        functionName = "append",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector",
                              structPackage = "ballerina.net.ftp"),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
-                @Argument(name = "file", type = TypeKind.STRUCT, structType = "File",
-                         structPackage = "ballerina.lang.files"),
-                @Argument(name = "isDir", type = TypeKind.BOOLEAN)},
-        returnType = {@ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError",
-                                  structPackage = "ballerina.net.ftp")
+                @Argument(name = "blob", type = TypeKind.BLOB),
+                @Argument(name = "path", type = TypeKind.STRING)},
+        returnType = {
+                @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError", structPackage = "ballerina.net.ftp")
         }
 )
-public class CreateFile extends AbstractFtpAction {
+public class Append extends AbstractFtpAction {
 
     @Override
     public void execute(Context context) {
         BStruct clientConnector = (BStruct) context.getRefArgument(0);
         String url = (String) clientConnector.getNativeData(FTPConstants.URL);
-        BStruct file = (BStruct) context.getRefArgument(1);
-        boolean isDir = context.getBooleanArgument(0);
+        byte[] content = context.getBlobArgument(0);
+        String path = context.getStringArgument(0);
 
+        RemoteFileSystemMessage message = new RemoteFileSystemMessage(ByteBuffer.wrap(content));
         //Create property map to send to transport.
         Map<String, String> propertyMap = new HashMap<>(5);
-        String pathString = file.getStringField(0);
-        propertyMap.put(FTPConstants.PROPERTY_URI, url + pathString);
-        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_CREATE);
-        propertyMap.put(FTPConstants.PROPERTY_FOLDER, Boolean.toString(isDir));
+        propertyMap.put(FTPConstants.PROPERTY_URI, url + path);
+        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_APPEND);
         propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
         propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
+        propertyMap.put(FTPConstants.PROPERTY_APPEND, Boolean.TRUE.toString());
 
         FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context);
         VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
-        connector.send(null);
+        connector.send(message);
     }
 }

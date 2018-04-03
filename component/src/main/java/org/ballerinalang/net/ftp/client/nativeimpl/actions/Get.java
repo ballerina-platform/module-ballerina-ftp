@@ -49,35 +49,33 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
-* Read.
+* FTP Get operation.
 */
 @BallerinaFunction(
         orgName = "ballerina",
         packageName = "net.ftp",
-        functionName = "read",
+        functionName = "get",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector",
                              structPackage = "ballerina.net.ftp"),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
-                @Argument(name = "file", type = TypeKind.STRUCT, structType = "File",
-                         structPackage = "ballerina.lang.files")},
+                @Argument(name = "path", type = TypeKind.STRING)},
         returnType = {@ReturnType(type = TypeKind.STRUCT, structType = "ByteChannel", structPackage = "ballerina.io"),
                       @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError",
                                   structPackage = "ballerina.net.ftp")
         }
 )
-public class Read extends AbstractFtpAction {
+public class Get extends AbstractFtpAction {
 
     @Override
     public void execute(Context context) {
         BStruct clientConnector = (BStruct) context.getRefArgument(0);
-        BStruct file = (BStruct) context.getRefArgument(1);
+        String pathString = context.getStringArgument(0);
 
         String url = (String) clientConnector.getNativeData(FTPConstants.URL);
         //Create property map to send to transport.
         Map<String, String> propertyMap = new HashMap<>(4);
-        String pathString = file.getStringField(0);
         propertyMap.put(FTPConstants.PROPERTY_URI, url + pathString);
-        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_READ);
+        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_GET);
         propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
         propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 
@@ -97,7 +95,7 @@ public class Read extends AbstractFtpAction {
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
                 final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
                 ByteChannel byteChannel = new ReadByteChannel(in);
-                Channel channel = new FTPReadAbstractChannel(byteChannel);
+                Channel channel = new FTPGetAbstractChannel(byteChannel);
                 BStruct channelStruct = getBStruct();
                 channelStruct.addNativeData(IOConstants.BYTE_CHANNEL_NAME, channel);
                 getContext().setReturnValues(channelStruct);
@@ -122,9 +120,9 @@ public class Read extends AbstractFtpAction {
     /**
      * This class will use to concrete implementation of the {@link Channel}.
      */
-    private static class FTPReadAbstractChannel extends Channel {
+    private static class FTPGetAbstractChannel extends Channel {
 
-        FTPReadAbstractChannel(ByteChannel channel) throws BallerinaIOException {
+        FTPGetAbstractChannel(ByteChannel channel) throws BallerinaIOException {
             super(channel, new BlockingReader(), new BlockingWriter(), 1024);
         }
 

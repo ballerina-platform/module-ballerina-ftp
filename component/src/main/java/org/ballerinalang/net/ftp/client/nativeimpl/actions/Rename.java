@@ -25,7 +25,6 @@ import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
-import org.ballerinalang.net.ftp.client.nativeimpl.util.ClientUtil;
 import org.ballerinalang.net.ftp.client.nativeimpl.util.FTPConstants;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
 import org.wso2.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
@@ -34,41 +33,35 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Move a file or a folder from one place to another
+ * FTP Rename operation.
  */
 @BallerinaFunction(
         orgName = "ballerina",
         packageName = "net.ftp",
-        functionName = "move",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector",
-                             structPackage = "ballerina.net.ftp"),
+        functionName = "rename",
+        receiver = @Receiver(
+                type = TypeKind.STRUCT, structType = "ClientConnector", structPackage = "ballerina.net.ftp"),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
-                @Argument(name = "source", type = TypeKind.STRUCT, structType = "File",
-                        structPackage = "ballerina.lang.files"),
-                @Argument(name = "destination", type = TypeKind.STRUCT, structType = "File",
-                        structPackage = "ballerina.lang.files")},
-        returnType = {@ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError",
-                                  structPackage = "ballerina.net.ftp")
+                @Argument(name = "origin", type = TypeKind.STRING),
+                @Argument(name = "destination", type = TypeKind.STRING)},
+        returnType = {
+                @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError", structPackage = "ballerina.net.ftp")
         }
 )
-public class Move extends AbstractFtpAction {
+public class Rename extends AbstractFtpAction {
 
     @Override
     public void execute(Context context) {
         BStruct clientConnector = (BStruct) context.getRefArgument(0);
         String url = (String) clientConnector.getNativeData(FTPConstants.URL);
-        BStruct source = (BStruct) context.getRefArgument(1);
-        BStruct destination = (BStruct) context.getRefArgument(2);
+        String origin = context.getStringArgument(0);
+        String destination = context.getStringArgument(1);
 
         //Create property map to send to transport.
         Map<String, String> propertyMap = new HashMap<>(5);
-        propertyMap.put(FTPConstants.PROPERTY_URI, url + source.getStringField(0));
-        String destinationUrl = destination.getStringField(0);
-        if (!ClientUtil.validProtocol(destinationUrl)) {
-            destinationUrl = url + destinationUrl;
-        }
-        propertyMap.put(FTPConstants.PROPERTY_DESTINATION, destinationUrl);
-        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_MOVE);
+        propertyMap.put(FTPConstants.PROPERTY_URI, url + origin);
+        propertyMap.put(FTPConstants.PROPERTY_DESTINATION, url + destination);
+        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_RENAME);
         propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
         propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 

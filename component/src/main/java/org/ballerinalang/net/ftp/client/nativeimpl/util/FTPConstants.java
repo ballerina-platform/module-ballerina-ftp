@@ -26,14 +26,17 @@ public class FTPConstants {
     public static final String PROPERTY_URI = Constants.URI;
     public static final String PROPERTY_DESTINATION = Constants.DESTINATION;
     public static final String PROPERTY_ACTION = Constants.ACTION;
-    public static final String PROPERTY_FOLDER = Constants.CREATE_FOLDER;
-    public static final String ACTION_COPY = Constants.COPY;
-    public static final String ACTION_CREATE = Constants.CREATE;
+
+    public static final String ACTION_GET = Constants.GET;
+    public static final String ACTION_PUT = Constants.PUT;
+    public static final String ACTION_APPEND = Constants.PUT;
     public static final String ACTION_DELETE = Constants.DELETE;
-    public static final String ACTION_EXISTS = Constants.EXISTS;
-    public static final String ACTION_MOVE = Constants.MOVE;
-    public static final String ACTION_READ = Constants.READ;
-    public static final String ACTION_WRITE = Constants.WRITE;
+    public static final String ACTION_MKDIR = Constants.MKDIR;
+    public static final String ACTION_RMDIR = Constants.RMDIR;
+    public static final String ACTION_RENAME = Constants.RENAME;
+    public static final String ACTION_SIZE = Constants.SIZE;
+    public static final String ACTION_LIST = Constants.LIST;
+
     public static final String FTP_PASSIVE_MODE = Constants.FTP_PASSIVE_MODE;
     public static final String PROTOCOL = Constants.PROTOCOL;
     public static final String PROTOCOL_FTP = Constants.PROTOCOL_FTP;

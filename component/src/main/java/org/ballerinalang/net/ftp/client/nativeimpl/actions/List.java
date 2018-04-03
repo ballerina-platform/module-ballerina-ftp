@@ -19,9 +19,8 @@ package org.ballerinalang.net.ftp.client.nativeimpl.actions;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.model.types.TypeKind;
+import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.nativeimpl.io.IOConstants;
-import org.ballerinalang.nativeimpl.io.channels.base.Channel;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
@@ -29,53 +28,68 @@ import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.ftp.client.nativeimpl.util.FTPConstants;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
 import org.wso2.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Pipe the once input stream to another channel.
- */
+* FTP file names list operation.
+*/
 @BallerinaFunction(
         orgName = "ballerina",
         packageName = "net.ftp",
-        functionName = "pipe",
+        functionName = "list",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector",
                              structPackage = "ballerina.net.ftp"),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
-                @Argument(name = "source", type = TypeKind.STRUCT, structType = "ByteChannel",
-                        structPackage = "ballerina.io"),
-                @Argument(name = "file", type = TypeKind.STRUCT, structType = "File",
-                        structPackage = "ballerina.lang.files"),
-                @Argument(name = "mode", type = TypeKind.STRING)},
-        returnType = {@ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError",
-                                  structPackage = "ballerina.net.ftp")
+                @Argument(name = "path", type = TypeKind.STRING)},
+        returnType = {
+                @ReturnType(type = TypeKind.ARRAY, elementType = TypeKind.STRING),
+                @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError", structPackage = "ballerina.net.ftp")
         }
 )
-public class Pipe extends AbstractFtpAction {
+public class List extends AbstractFtpAction {
 
     @Override
     public void execute(Context context) {
         BStruct clientConnector = (BStruct) context.getRefArgument(0);
-        String url = (String) clientConnector.getNativeData(FTPConstants.URL);
-        BStruct destination = (BStruct) context.getRefArgument(2);
+        String pathString = context.getStringArgument(0);
 
-        BStruct sourceChannel = (BStruct) context.getRefArgument(1);
-        Channel byteChannel = (Channel) sourceChannel.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
-        RemoteFileSystemMessage message = new RemoteFileSystemMessage(byteChannel.getInputStream());
+        String url = (String) clientConnector.getNativeData(FTPConstants.URL);
         //Create property map to send to transport.
-        Map<String, String> propertyMap = new HashMap<>(5);
-        propertyMap.put(FTPConstants.PROPERTY_URI, url + destination.getStringField(0));
-        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_WRITE);
+        Map<String, String> propertyMap = new HashMap<>(4);
+        propertyMap.put(FTPConstants.PROPERTY_URI, url + pathString);
+        propertyMap.put(FTPConstants.PROPERTY_ACTION, FTPConstants.ACTION_LIST);
         propertyMap.put(FTPConstants.PROTOCOL, FTPConstants.PROTOCOL_FTP);
         propertyMap.put(FTPConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
-        String mode = context.getStringArgument(0);
-        if (mode.equalsIgnoreCase("append") || mode.equalsIgnoreCase("a")) {
-            propertyMap.put(FTPConstants.PROPERTY_APPEND, Boolean.TRUE.toString());
-        }
-        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context);
+
+        FTPFileListListener connectorListener = new FTPFileListListener(context);
         VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
-        connector.send(message);
+        connector.send(null);
+    }
+
+    private static class FTPFileListListener extends FTPClientConnectorListener {
+
+        FTPFileListListener(Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
+            if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
+                RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
+                getContext().setReturnValues(new BStringArray(message.getChildNames()));
+            }
+            return true;
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            BStruct error = getClientErrorStruct(getContext());
+            error.setStringField(0, throwable.getMessage());
+            getContext().setReturnValues(error);
+        }
     }
 }

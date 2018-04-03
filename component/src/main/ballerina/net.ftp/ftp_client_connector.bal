@@ -1,6 +1,5 @@
 package ballerina.net.ftp;
 
-import ballerina/file;
 import ballerina/io;
 
 @Description {value:"Represents an error which will occur while FTP client operations"}
@@ -20,50 +19,53 @@ public struct ClientConnector {
 public function <ClientConnector conn> ClientConnector() {
 }
 
-@Description {value:"Retrieves blob value of a file"}
-@Param {value:"file: The file to be read"}
+@Description {value:"Retrieves ByteChannel"}
+@Param {value:"path: The file path to be read"}
 @Return {value:"channel: A ByteChannel that represent the data source"}
 @Return {value:"Error occured during FTP client invocation"}
-public native function <ClientConnector client> read (file:File file) returns (io:ByteChannel| FTPClientError);
-
-@Description {value:"Copies a file from a given location to another"}
-@Param {value:"target: File/Directory that should be copied"}
-@Param {value:"destination: Location where the File/Directory should be pasted"}
-@Return {value:"Error occured during FTP client invocation"}
-public native function <ClientConnector client> copy (file:File source, file:File destination) returns FTPClientError;
-
-@Description {value:"Moves a file from a given location to another"}
-@Param {value:"target: File/Directory that should be moved"}
-@Param {value:"destination: Location where the File/Directory should be moved to"}
-public native function <ClientConnector client> move (file:File target, file:File destination) returns FTPClientError;
+public native function <ClientConnector client> get (string path) returns (io:ByteChannel|FTPClientError);
 
 @Description {value:"Deletes a file from a given location"}
-@Param {value:"target: File/Directory that should be deleted"}
+@Param {value:"path: File path that should be deleted"}
 @Return {value:"Error occured during FTP client invocation"}
-public native function <ClientConnector client> delete (file:File target) returns FTPClientError;
+public native function <ClientConnector client> delete (string path) returns null | FTPClientError;
 
-@Description {value:"Writes a file using the given blob"}
+@Description {value:"Put a file using the given blob"}
+@Param {value:"blob: Content to be written"}
+@Param {value:"path: Destination path of the file"}
+@Return {value:"Error occured during FTP client invocation"}
+public native function <ClientConnector client> put (blob content, string path) returns null | FTPClientError;
+
+@Description {value:"Append to a file using the given blob"}
 @Param {value:"blob: Content to be written"}
 @Param {value:"file: Destination path of the file"}
-@Param {value:"mode: Whether to append or overwrite the given content ['append' | 'a' or 'overwrite' | 'o']"}
 @Return {value:"Error occured during FTP client invocation"}
-public native function <ClientConnector client> write (blob content, file:File file, string mode) returns FTPClientError;
+public native function <ClientConnector client> append (blob content, string path) returns null| FTPClientError;
 
-@Description {value:"Create a file or folder"}
-@Param {value:"file: Path of the file"}
-@Param {value:"isDir: Specify whether it is a file or a folder"}
+@Description {value:"Create a directory in a given location"}
+@Param {value:"path: Path that directory need to create"}
 @Return {value:"Error occured during FTP client invocation"}
-public native function <ClientConnector client> createFile (file:File file, boolean isDir) returns FTPClientError;
+public native function <ClientConnector client> mkdir (string path) returns null | FTPClientError;
 
-@Description {value:"Checks the existence of a file"}
-@Param {value:"file: File struct containing path information"}
-@Return {value:"boolean: The availability of the file"}
-public native function <ClientConnector client> exists (file:File file) returns (boolean | FTPClientError);
-
-@Description {value:"Pipe the content to a file using the given ByteChannel"}
-@Param {value:"channel: Content to be written"}
-@Param {value:"file: Destination path of the file"}
-@Param {value:"mode: Whether to append or overwrite the given content ['append' | 'a' or 'overwrite' | 'o']"}
+@Description {value:"Remove directory in a given location"}
+@Param {value:"path: Path that directory need to remove"}
 @Return {value:"Error occured during FTP client invocation"}
-public native function <ClientConnector client> pipe (io:ByteChannel channel, file:File file, string mode) returns FTPClientError;
+public native function <ClientConnector client> rmdir (string path) returns null | FTPClientError;
 
+@Description {value:"Rename the existing file. This can also use to move file to a different location"}
+@Param {value:"origin: Origin file path"}
+@Param {value:"destination: Destination file path"}
+@Return {value:"Error occured during FTP client invocation"}
+public native function <ClientConnector client> rename (string origin, string destination) returns null| FTPClientError;
+
+@Description {value:"Get the size of the given file"}
+@Param {value:"path: File location"}
+@Return {value:"Returns size of the given file"}
+@Return {value:"Error occured during FTP client invocation"}
+public native function <ClientConnector client> size (string path) returns int | FTPClientError;
+
+@Description {value:"Get the list of folder/file names in the given location"}
+@Param {value:"path: Directory location"}
+@Return {value:"Returns size of the given file"}
+@Return {value:"Error occured during FTP client invocation"}
+public native function <ClientConnector client> list (string path) returns string[] | FTPClientError;

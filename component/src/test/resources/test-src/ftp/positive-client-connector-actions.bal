@@ -1,27 +1,22 @@
-import ballerina/net.ftp;
-import ballerina/file;
 import ballerina/io;
+import ballerina/net.ftp;
 
-function createFile (string host, string url, boolean createFolder) {
+function createDirectory (string host, string url) {
     endpoint ftp:ClientEndpoint clientEndpoint {
         protocol: "ftp",
         host:host
     };
 
-    file:File newDir = {path:url};
-    _ = clientEndpoint -> createFile(newDir, createFolder);
+    _ = clientEndpoint -> mkdir(url);
 }
 
-function isExist (string host, string url) returns boolean {
+function removeDirectory (string host, string url) {
     endpoint ftp:ClientEndpoint clientEndpoint {
         protocol: "ftp",
         host:host
     };
 
-    file:File existFile = {path:url};
-    boolean result;
-    result =? clientEndpoint -> exists(existFile);
-    return result;
+    _ = clientEndpoint -> rmdir(url);
 }
 
 function readContent (string host, string url) returns string {
@@ -30,8 +25,7 @@ function readContent (string host, string url) returns string {
         host:host
     };
 
-    file:File textFile = {path:url};
-    io:ByteChannel channel =? clientEndpoint -> read(textFile);
+    io:ByteChannel channel =? clientEndpoint -> get(url);
     blob contentB;
     var result = channel.read(15);
     match result {
@@ -47,58 +41,83 @@ function readContent (string host, string url) returns string {
     return contentB.toString("UTF-8");
 }
 
-function copyFiles (string host, string source, string destination) {
+//function copyFiles (string host, string source, string destination) {
+//    endpoint ftp:ClientEndpoint clientEndpoint {
+//        protocol: "ftp",
+//        host:host
+//    };
+//
+//    file:File txtFile = {path:source};
+//    file:File copyOfTxt = {path:destination};
+//    _ = clientEndpoint -> copy(txtFile, copyOfTxt);
+//}
+
+//function moveFile (string host, string source, string destination) {
+//    endpoint ftp:ClientEndpoint clientEndpoint {
+//        protocol: "ftp",
+//        host:host
+//    };
+//
+//    file:File txtFile = {path:source};
+//    file:File copyOfTxt = {path:destination};
+//    _ = clientEndpoint -> move(txtFile, copyOfTxt);
+//}
+
+function write (string host, string path, string content) {
     endpoint ftp:ClientEndpoint clientEndpoint {
         protocol: "ftp",
         host:host
     };
 
-    file:File txtFile = {path:source};
-    file:File copyOfTxt = {path:destination};
-    _ = clientEndpoint -> copy(txtFile, copyOfTxt);
-}
-
-function moveFile (string host, string source, string destination) {
-    endpoint ftp:ClientEndpoint clientEndpoint {
-        protocol: "ftp",
-        host:host
-    };
-
-    file:File txtFile = {path:source};
-    file:File copyOfTxt = {path:destination};
-    _ = clientEndpoint -> move(txtFile, copyOfTxt);
-}
-
-function write (string host, string source, string content) {
-    endpoint ftp:ClientEndpoint clientEndpoint {
-        protocol: "ftp",
-        host:host
-    };
-
-    file:File wrt = {path:source};
     blob contentD = content.toBlob("UTF-8");
-    _ = clientEndpoint -> write(contentD, wrt, "o");
+    _ = clientEndpoint -> put(contentD, path);
 }
 
-function fileDelete (string host, string source) {
+
+function append (string host, string path, string content) {
+    endpoint ftp:ClientEndpoint clientEndpoint {
+        protocol:"ftp",
+        host:host
+    };
+
+    blob contentD = content.toBlob("UTF-8");
+    _ = clientEndpoint -> append(contentD, path);
+}
+
+function fileDelete (string host, string path) {
     endpoint ftp:ClientEndpoint clientEndpoint {
         protocol: "ftp",
         host:host
     };
 
-    file:File del = {path:source};
-    _ = clientEndpoint -> delete(del);
+    _ = clientEndpoint -> delete(path);
 }
 
-function pipeContent (string host, string source, string destination) {
+function size (string host, string path) returns int {
     endpoint ftp:ClientEndpoint clientEndpoint {
         protocol: "ftp",
         host:host
     };
+    int size = 0;
+    size =? clientEndpoint -> size(path);
+    return size;
+}
 
-    file:File sourceFile = {path:source};
-    io:ByteChannel channel =? clientEndpoint -> read(sourceFile);
-    file:File destinationFile = {path:destination};
-    _ = clientEndpoint -> pipe(channel, destinationFile, "o");
-    _ = channel.close();
+function list (string host, string path) returns string[] {
+    endpoint ftp:ClientEndpoint clientEndpoint {
+        protocol:"ftp",
+        host:host
+    };
+    string[] list;
+    list =? clientEndpoint -> list(path);
+    return list;
+}
+
+function rename (string host, string source, string destination) {
+    endpoint ftp:ClientEndpoint clientEndpoint {
+        protocol:"ftp",
+        host:host
+    };
+
+    _ = clientEndpoint -> rename(source, destination);
 }

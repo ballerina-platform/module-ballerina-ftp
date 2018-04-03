@@ -3,8 +3,9 @@ package org.ballerinalang.net.ftp.client.nativeimpl;
 import org.ballerinalang.launcher.util.BCompileUtil;
 import org.ballerinalang.launcher.util.BRunUtil;
 import org.ballerinalang.launcher.util.CompileResult;
-import org.ballerinalang.model.values.BBoolean;
+import org.ballerinalang.model.values.BInteger;
 import org.ballerinalang.model.values.BString;
+import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BValue;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
@@ -47,6 +48,12 @@ public class FTPClientConnectorTest {
         fileSystem.add(new DirectoryEntry(rootFolder));
         fileSystem.add(new FileEntry("/home/wso2/file1.txt", content));
         fileSystem.add(new FileEntry("/home/wso2/file2.txt", content));
+        fileSystem.add(new FileEntry("/home/wso2/file3.txt", content));
+        fileSystem.add(new DirectoryEntry("/home/wso2/folder1"));
+        fileSystem.add(new DirectoryEntry("/home/wso2/folder1/subfolder1"));
+        fileSystem.add(new DirectoryEntry("/home/wso2/childDirectory"));
+        fileSystem.add(new FileEntry("/home/wso2/child_directory/content1.txt"));
+        fileSystem.add(new FileEntry("/home/wso2/child_directory/content2.txt"));
         ftpServer.setFileSystem(fileSystem);
         ftpServer.start();
         String filePath = "test-src/ftp/positive-client-connector-actions.bal";
@@ -54,19 +61,17 @@ public class FTPClientConnectorTest {
     }
 
     @Test
-    public void testCreateNewFolder() {
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(newFolder), new BBoolean(true) };
-        BRunUtil.invoke(result, "createFile", inputArg);
+    public void testCreateNewDirectory() {
+        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(newFolder) };
+        BRunUtil.invoke(result, "createDirectory", inputArg);
         Assert.assertTrue(fileSystem.exists(rootFolder + newFolder), "Folder not created.");
     }
 
-    @Test(dependsOnMethods = "testCreateNewFolder")
-    public void testIsExist() {
-        String url = newFolder;
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(url) };
-        final BValue[] isExists = BRunUtil.invoke(result, "isExist", inputArg);
-        Assert.assertTrue(((BBoolean) isExists[0]).booleanValue(), "Folder not exist");
-        Assert.assertTrue(fileSystem.exists(rootFolder + newFolder), "Folder not created.");
+    @Test(dependsOnMethods = "testCreateNewDirectory")
+    public void testRemoveDirectory() {
+        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(newFolder) };
+        BRunUtil.invoke(result, "removeDirectory", inputArg);
+        Assert.assertFalse(fileSystem.exists(rootFolder + newFolder), "Folder not deleted.");
     }
 
     @Test
@@ -78,26 +83,30 @@ public class FTPClientConnectorTest {
     }
 
     @Test
-    public void testCopyFiles() {
-        String source = "/file2.txt";
-        String destination = "/file3.txt";
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(destination) };
-        BRunUtil.invoke(result, "copyFiles", inputArg);
-        Assert.assertTrue(fileSystem.exists(rootFolder + "/file3.txt"), "file not created.");
-        final FileEntry entry = (FileEntry) fileSystem.getEntry(rootFolder + "/file3.txt");
-        InputStream inputStream = entry.createInputStream();
-        String fileContent = new BufferedReader(new InputStreamReader(inputStream)).lines().
-                collect(Collectors.joining("\n"));
-        Assert.assertEquals(fileContent, content, "File content not identical.");
+    public void testGetSize() {
+        String url = "/file1.txt";
+        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(url) };
+        final BValue[] readContents = BRunUtil.invoke(result, "size", inputArg);
+        BInteger size = (BInteger) readContents[0];
+        Assert.assertEquals(size.intValue(), 12, "File size mismatch.");
     }
 
-    @Test(dependsOnMethods = "testCopyFiles")
-    public void testMoveFile() {
-        String source = "/file2.txt";
+    @Test
+    public void testList() {
+        String url = "/child_directory";
+        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(url) };
+        final BValue[] readContents = BRunUtil.invoke(result, "list", inputArg);
+        BStringArray list = (BStringArray) readContents[0];
+        Assert.assertEquals(list.getStringArray().length, 2, "File list mismatch.");
+    }
+
+    @Test()
+    public void testRename() {
+        String source = "/file3.txt";
         String destination = "/move.txt";
         BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(destination) };
-        BRunUtil.invoke(result, "moveFile", inputArg);
-        Assert.assertFalse(fileSystem.exists(rootFolder + "/file2.txt"), "file not moved.");
+        BRunUtil.invoke(result, "rename", inputArg);
+        Assert.assertFalse(fileSystem.exists(rootFolder + "/file3.txt"), "file not moved.");
         Assert.assertTrue(fileSystem.exists(rootFolder + "/move.txt"), "file not created.");
         final FileEntry entry = (FileEntry) fileSystem.getEntry(rootFolder + "/move.txt");
         InputStream inputStream = entry.createInputStream();
@@ -120,25 +129,25 @@ public class FTPClientConnectorTest {
     }
 
     @Test(dependsOnMethods = "testWriteFile")
-    public void testPipe() {
+    public void testAppend() {
         String source = "/write.txt";
-        String destination = "/pipeWrite.txt";
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(destination) };
-        BRunUtil.invoke(result, "pipeContent", inputArg);
-        Assert.assertTrue(fileSystem.exists(rootFolder + "/pipeWrite.txt"), "file not created.");
-        final FileEntry entry = (FileEntry) fileSystem.getEntry(rootFolder + "/pipeWrite.txt");
+        String appendContent = "New content";
+        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(appendContent) };
+        BRunUtil.invoke(result, "append", inputArg);
+        Assert.assertTrue(fileSystem.exists(rootFolder + "/write.txt"), "file not created.");
+        final FileEntry entry = (FileEntry) fileSystem.getEntry(rootFolder + "/write.txt");
         InputStream inputStream = entry.createInputStream();
         String fileContent = new BufferedReader(new InputStreamReader(inputStream)).lines().
                 collect(Collectors.joining("\n"));
-        Assert.assertEquals(fileContent, content, "File content not identical.");
+        Assert.assertEquals(fileContent, content + appendContent, "File content not identical.");
     }
 
-    @Test(dependsOnMethods = "testPipe")
+    @Test(dependsOnMethods = "testAppend")
     public void testDeleteFile() {
         String source = "/write.txt";
         BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source) };
         BRunUtil.invoke(result, "fileDelete", inputArg);
-        Assert.assertFalse(fileSystem.exists(rootFolder + "/write.txt"), "file not deleted.");
+        Assert.assertFalse(fileSystem.exists(rootFolder + "/write.txt"), "File not deleted.");
     }
 
     @AfterClass
