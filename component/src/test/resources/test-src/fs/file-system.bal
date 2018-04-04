@@ -1,14 +1,20 @@
-import ballerina.net.fs;
-import ballerina.io;
+import ballerina/net.fs;
 
-@fs:configuration {
-    dirURI:"target/fs",
-    events:"create,delete,modify",
+endpoint fs:DirectoryListener localFolder {
+    path:"target/fs",
     recursive:false
+};
+
+boolean invoked = false;
+
+@fs:ServiceConfig {
 }
-service<fs> fileSystem {
-    resource fileResource (fs:FileSystemEvent m) {
-        io:println(m.name);
-        io:println(m.operation);
+service<fs:Service> fileSystem bind localFolder {
+    onCreate (fs:FileEvent m) {
+        invoked = true;
     }
+}
+
+function isInvoked() returns boolean {
+    return invoked;
 }

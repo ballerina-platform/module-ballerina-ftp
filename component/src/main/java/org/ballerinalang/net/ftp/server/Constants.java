@@ -24,15 +24,15 @@ package org.ballerinalang.net.ftp.server;
 public class Constants {
 
     //Annotation
-    public static final String ANNOTATION_CONFIG = "configuration";
     public static final String FTP_PACKAGE_NAME = "ballerina.net.ftp";
     public static final String FTP_SERVER_EVENT = "FTPServerEvent";
+    public static final String FTP_SERVER_CONNECTOR = "serverConnector";
+    public static final String CONFIG_ANNOTATION_NAME = "serviceConfig";
 
     public static final String ANNOTATION_DIR_URI = "dirURI";
     public static final String ANNOTATION_FILE_PATTERN = "fileNamePattern";
     public static final String ANNOTATION_POLLING_INTERVAL = "pollingInterval";
     public static final String ANNOTATION_CRON_EXPRESSION = "cronExpression";
-    public static final String ANNOTATION_ACK_TIMEOUT = "ackTimeOut";
     public static final String ANNOTATION_FILE_COUNT = "perPollFileCount";
 
     public static final String ANNOTATION_SORT_ATTRIBUTE = "fileSortAttribute";
@@ -52,4 +52,5 @@ public class Constants {
     public static final String ANNOTATION_SFTP_IDENTITIES = "sftpIdentities";
     public static final String ANNOTATION_SFTP_IDENTITY_PASS_PHRASE = "sftpIdentityPassPhrase";
     public static final String ANNOTATION_SFTP_USER_DIR_IS_ROOT = "sftpUserDirIsRoot";
+    public static final String ANNOTATION_AVOID_PERMISSION_CHECK = "sftpAvoidPermissionCheck";
 }

@@ -1,33 +1,30 @@
 package org.ballerinalang.net.ftp.server;
 
-import org.ballerinalang.connector.api.BallerinaConnectorException;
-import org.ballerinalang.connector.api.BallerinaServerConnector;
-import org.ballerinalang.connector.api.ConnectorUtils;
+import org.ballerinalang.launcher.util.BCompileUtil;
+import org.ballerinalang.launcher.util.BRunUtil;
 import org.ballerinalang.launcher.util.BServiceUtil;
 import org.ballerinalang.launcher.util.CompileResult;
+import org.ballerinalang.model.values.BBoolean;
+import org.ballerinalang.model.values.BValue;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
 import org.mockftpserver.fake.filesystem.FileEntry;
 import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.wso2.transport.remotefilesystem.message.RemoteFileSystemEvent;
-
-import java.lang.reflect.Field;
-import java.util.Map;
-
-import static org.ballerinalang.net.ftp.server.Constants.FTP_PACKAGE_NAME;
 
 /**
- * Test class for the {@link FTPServerConnector}.
+ * Test class for the {@link}.
  */
 @Test(sequential = true)
 public class FTPServerConnectorTest {
 
     private FakeFtpServer ftpServer;
+    private FileSystem fileSystem;
 
     @BeforeClass
     public void init() {
@@ -37,7 +34,7 @@ public class FTPServerConnectorTest {
         String password = "wso2123";
         String rootFolder = "/home/wso2";
         ftpServer.addUserAccount(new UserAccount(username, password, rootFolder));
-        FileSystem fileSystem = new UnixFakeFileSystem();
+        fileSystem = new UnixFakeFileSystem();
         fileSystem.add(new DirectoryEntry(rootFolder));
         fileSystem.add(new FileEntry("/home/wso2/file1.txt"));
         ftpServer.setFileSystem(fileSystem);
@@ -46,38 +43,17 @@ public class FTPServerConnectorTest {
 
     @Test
     public void testValidFTPServerConnectorSyntax() {
-        CompileResult compileResult = BServiceUtil.setupProgramFile(this, "test-src/ftp/remote-system.bal");
-        BallerinaServerConnector ballerinaServerConnector =
-                ConnectorUtils.getBallerinaServerConnector(compileResult.getProgFile(), FTP_PACKAGE_NAME);
-        final Field connectorMapInstance;
+        CompileResult compileResult = BCompileUtil.compileAndSetup("test-src/ftp/remote-system.bal");
+        BServiceUtil.runService(compileResult);
+        fileSystem.add(new FileEntry("/home/wso2/newFile.txt"));
         try {
-            connectorMapInstance = BallerinaServerConnector.class.getDeclaredField("connectorMap");
-            connectorMapInstance.setAccessible(true);
-            Map<String, ConnectorInfo> connectorInfoMap =
-                    (Map<String, ConnectorInfo>) connectorMapInstance.get(ballerinaServerConnector);
-
-            FTPServerConnector connector = (FTPServerConnector) ballerinaServerConnector;
-            BallerinaFTPFileSystemListener systemListener =
-                    new BallerinaFTPFileSystemListener(connectorInfoMap.get("._ftpServerConnector").getService());
-            RemoteFileSystemEvent event = new RemoteFileSystemEvent("/home/ballerina/bal/file.txt");
-            systemListener.onMessage(event);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            //Ignore
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            // Ignore.
         }
-    }
-
-    @Test(expectedExceptions = BallerinaConnectorException.class,
-            expectedExceptionsMessageRegExp = "Unable to find the associated configuration " +
-                    "annotation for given service: .*")
-    public void testMissingConfig() {
-        BServiceUtil.setupProgramFile(this, "test-src/ftp/missing-config.bal");
-    }
-
-    @Test(dependsOnMethods = "testMissingConfig",
-            expectedExceptions = BallerinaConnectorException.class,
-            expectedExceptionsMessageRegExp = "More than one resource define for given service: .*")
-    public void testMoreResources() {
-        BServiceUtil.setupProgramFile(this, "test-src/ftp/more-resources.bal");
+        final BValue[] result = BRunUtil.invokeStateful(compileResult, "isInvoked");
+        BBoolean isInvoked = (BBoolean) result[0];
+        Assert.assertTrue(isInvoked.booleanValue(), "Resource didn't invoke for the file create.");
     }
 
     @AfterClass
