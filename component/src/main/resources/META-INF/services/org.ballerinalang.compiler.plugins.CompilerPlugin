@@ -1,2 +1,1 @@
-org.ballerinalang.net.compiler.FileServiceCompilerPlugin
-org.ballerinalang.net.compiler.FTPMonitorServiceCompilerPlugin
+org.ballerinalang.compiler.FTPMonitorServiceCompilerPlugin

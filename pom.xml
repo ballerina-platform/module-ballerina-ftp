@@ -154,11 +154,6 @@
                 <version>${file.transport.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.transport.file</groupId>
-                <artifactId>org.wso2.transport.local-file-system</artifactId>
-                <version>${file.transport.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-builtin</artifactId>
                 <version>${ballerina.version}</version>
@@ -331,7 +326,7 @@
                     </processors>
                     <options>
                         <nativeEntityProviderPackage>
-                            org.ballerinalang.net.ftp.generated.providers
+                            org.ballerinalang.ftp.generated.providers
                         </nativeEntityProviderPackage>
                         <nativeEntityProviderClass>StandardNativeElementProvider</nativeEntityProviderClass>
                     </options>

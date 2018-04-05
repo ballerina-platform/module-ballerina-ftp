@@ -24,8 +24,8 @@
         <packages>
             <package name="org.ballerinalang.net.fs.server.*"/>
             <package name="org.ballerinalang.net.fs.nativeimpl.*"/>
-            <package name="org.ballerinalang.net.ftp.server.*"/>
-            <package name="org.ballerinalang.net.ftp.client.nativeimpl.*"/>
+            <package name="org.ballerinalang.ftp.server.*"/>
+            <package name="org.ballerinalang.ftp.client.nativeimpl.*"/>
         </packages>
     </test>
 </suite>
