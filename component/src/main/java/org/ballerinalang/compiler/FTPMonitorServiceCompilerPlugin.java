@@ -43,6 +43,9 @@ import org.wso2.ballerinalang.compiler.tree.expressions.BLangSimpleVarRef;
 
 import java.util.List;
 
+import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.ftp.util.ServerConstants.FTP_SERVER_EVENT;
+
 /**
  * Compiler plugin for validating FTP server service.
  */
@@ -58,7 +61,7 @@ public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
     @Override
     public void process(ServiceNode serviceNode, List<AnnotationAttachmentNode> annotations) {
         for (AnnotationAttachmentNode annotation : annotations) {
-            if (!ServerConstants.FTP_PACKAGE_NAME
+            if (!FTP_PACKAGE_NAME
                     .equals(((BLangAnnotationAttachment) annotation).annotationSymbol.pkgID.name.value)) {
                 continue;
             }
@@ -76,18 +79,18 @@ public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
         }
         final List<BLangVariable> parameters = resources.get(0).getParameters();
         if (parameters.size() != 1) {
-            throw new BallerinaConnectorException("Invalid resource signature. "
-                    + "Only a single ftp:FTPServerEvent parameter allow in the resource signature.");
+            throw new BallerinaConnectorException("Invalid resource signature. Only a single " + FTP_SERVER_EVENT
+                    + " parameter allow in the resource signature.");
         }
         final BType type = parameters.get(0).getTypeNode().type;
         if (type.getKind().equals(TypeKind.STRUCT)) {
             if (type instanceof BStructType) {
                 BStructType event = (BStructType) type;
-                if (!ServerConstants.FTP_PACKAGE_NAME.equals(event.tsymbol.pkgID.name.value)
-                        || !ServerConstants.FTP_SERVER_EVENT.equals(event.tsymbol.name.value)) {
+                if (!FTP_PACKAGE_NAME.equals(event.tsymbol.pkgID.name.value)
+                        || !FTP_SERVER_EVENT.equals(event.tsymbol.name.value)) {
                     throw new BallerinaConnectorException(
-                            "Parameter should be of type - " + ServerConstants.FTP_PACKAGE_NAME + ":"
-                                    + ServerConstants.FTP_SERVER_EVENT);
+                            "Parameter should be of type - " + FTP_PACKAGE_NAME + ":"
+                                    + FTP_SERVER_EVENT);
                 }
             }
         }

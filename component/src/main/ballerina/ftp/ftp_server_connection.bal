@@ -19,10 +19,10 @@ package ballerina.ftp;
 @Field {value:"name: Absolute file URI for triggerd event"}
 @Field {value:"size: Size of the file"}
 @Field {value:"lastModifiedTimeStamp: Last modified timestamp of the file"}
-public struct FTPServerEvent {
-    string name;
-    int size;
-    int lastModifiedTimeStamp;
-}
+public type FileEvent {
+    string name,
+    int size,
+    int lastModifiedTimeStamp,
+};
 
-public struct Connection {}
+public type Connection {};

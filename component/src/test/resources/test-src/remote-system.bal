@@ -1,7 +1,7 @@
 import ballerina/ftp;
 import ballerina/io;
 
-endpoint ftp:ServiceEndpoint remoteServer {
+endpoint ftp:Listener remoteServer {
     protocol:"ftp",
     host:"localhost",
     username:"wso2",
@@ -14,10 +14,8 @@ endpoint ftp:ServiceEndpoint remoteServer {
 
 boolean invoked = false;
 
-@ftp:serviceConfig {
-}
-service<ftp:Service> ftpServerConnector bind remoteServer {
-    fileResource (ftp:FTPServerEvent m) {
+service ftpServerConnector bind remoteServer {
+    fileResource (ftp:FileEvent m) {
         io:println(m.name);
         invoked = true;
     }

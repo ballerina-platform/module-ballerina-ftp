@@ -38,7 +38,7 @@ import org.ballerinalang.util.exceptions.BallerinaException;
         orgName = "ballerina",
         packageName = "ftp",
         functionName = "initEndpoint",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientEndpoint", structPackage = "ballerina.ftp"),
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Client", structPackage = "ballerina.ftp"),
         args = {@Argument(name = "epName", type = TypeKind.STRING),
                 @Argument(name = "config", type = TypeKind.STRUCT, structType = "ClientEndpointConfiguration")},
         isPublic = true

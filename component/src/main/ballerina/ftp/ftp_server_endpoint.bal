@@ -16,9 +16,51 @@
 
 package ballerina.ftp;
 
-public struct ServiceEndpoint {
-    Connection conn;
-    ServiceEndpointConfiguration config;
+public type Listener object {
+    private {
+        Connection conn;
+        ListenerEndpointConfiguration config;
+    }
+
+    @Description {value:"Gets called when the endpoint is being initialized during the package initialization."}
+    @Param {value:"ep: The endpoint to which the service should be registered to"}
+    @Param {value:"config: The ListenerEndpointConfiguration of the endpoint"}
+    @Return {value:"Error occured during initialization"}
+    public function init (ListenerEndpointConfiguration config);
+
+    @Description {value:"Gets called when the endpoint is being initialize during package init time"}
+    @Return {value:"Error occured during initialization"}
+    public native function initEndpoint () returns (error);
+
+    @Description {value:"Gets called every time a service attaches itself to this endpoint. Also happens at package initialization."}
+    @Param {value:"ep: The endpoint to which the service should be registered to"}
+    @Param {value:"serviceType: The type of the service to be registered"}
+    public native function register (typedesc serviceType);
+
+    @Description {value:"Starts the registered service"}
+    @Param {value:"ep: The endpoint to which the service should be registered to"}
+    public native function start ();
+
+    @Description {value:"Returns the connector that client code uses"}
+    @Param {value:"ep: The endpoint to which the service should be registered to"}
+    @Return {value:"The connector that client code uses"}
+    public native function getClient () returns (Connection);
+
+    @Description {value:"Stops the registered service"}
+    @Param {value:"ep: The endpoint to which the service should be registered to"}
+    public native function stop ();
+};
+
+@Description {value:"Gets called when the endpoint is being initialized during the package initialization."}
+@Param {value:"ep: The endpoint to which the service should be registered to"}
+@Param {value:"config: The ListenerEndpointConfiguration of the endpoint"}
+@Return {value:"Error occured during initialization"}
+public function Listener::init (ListenerEndpointConfiguration config) {
+    self.config = config;
+    var err = self.initEndpoint();
+    if (err != null) {
+        throw err;
+    }
 }
 
 @Description {value:"Configuration for FTP monitor service endpoint"}
@@ -39,54 +81,22 @@ public struct ServiceEndpoint {
 @Field {value:"sftpUserDirIsRoot: Set user directory as a root or not. Default false"}
 @Field {value:"sftpAvoidPermissionCheck: Whether to avoid permission check. Default false"}
 @Field {value:"passiveMode: Whether to work on passive mode or not. Default true"}
-public struct ServiceEndpointConfiguration {
-    string protocol;
-    string host;
-    int port;
-    string username;
-    string passPhrase;
-    string path;
-    string fileNamePattern;
-    string pollingInterval;
-    string cronExpression;
-    string perPollFileCount;
-    string parallel;
-    string threadPoolSize;
-    string sftpIdentities;
-    string sftpIdentityPassPhrase;
-    string sftpUserDirIsRoot;
-    string sftpAvoidPermissionCheck;
-    string passiveMode;
-}
-
-@Description {value:"Gets called when the endpoint is being initialized during the package initialization."}
-@Param {value:"ep: The endpoint to which the service should be registered to"}
-@Param {value:"config: The ServiceEndpointConfiguration of the endpoint"}
-@Return {value:"Error occured during initialization"}
-public function <ServiceEndpoint ep> init (ServiceEndpointConfiguration config) {
-    ep.config = config;
-    var err = ep.initEndpoint();
-    if (err != null) {
-        throw err;
-    }
-}
-
-public native function <ServiceEndpoint ep> initEndpoint () returns (error);
-
-@Description {value:"Gets called every time a service attaches itself to this endpoint. Also happens at package initialization."}
-@Param {value:"ep: The endpoint to which the service should be registered to"}
-@Param {value:"serviceType: The type of the service to be registered"}
-public native function <ServiceEndpoint ep> register (typedesc serviceType);
-
-@Description {value:"Starts the registered service"}
-@Param {value:"ep: The endpoint to which the service should be registered to"}
-public native function <ServiceEndpoint ep> start ();
-
-@Description {value:"Returns the connector that client code uses"}
-@Param {value:"ep: The endpoint to which the service should be registered to"}
-@Return {value:"The connector that client code uses"}
-public native function <ServiceEndpoint ep> getClient () returns (Connection);
-
-@Description {value:"Stops the registered service"}
-@Param {value:"ep: The endpoint to which the service should be registered to"}
-public native function <ServiceEndpoint ep> stop ();
+public type ListenerEndpointConfiguration {
+    string protocol,
+    string host,
+    int port,
+    string username,
+    string passPhrase,
+    string path,
+    string fileNamePattern,
+    string pollingInterval,
+    string cronExpression,
+    string perPollFileCount,
+    string parallel,
+    string threadPoolSize,
+    string sftpIdentities,
+    string sftpIdentityPassPhrase,
+    string sftpUserDirIsRoot,
+    string sftpAvoidPermissionCheck,
+    string passiveMode,
+};

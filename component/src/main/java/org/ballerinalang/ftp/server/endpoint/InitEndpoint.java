@@ -34,9 +34,8 @@ import org.ballerinalang.natives.annotations.Receiver;
         orgName = "ballerina",
         packageName = "ftp",
         functionName = "initEndpoint",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ServiceEndpoint", structPackage = "ballerina.ftp"),
-        args = {@Argument(name = "epName", type = TypeKind.STRING),
-                @Argument(name = "config", type = TypeKind.STRUCT, structType = "ServiceEndpointConfiguration",
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Listener", structPackage = "ballerina.ftp"),
+        args = {@Argument(name = "config", type = TypeKind.STRUCT, structType = "ListenerEndpointConfiguration",
                           structPackage = "ballerina.ftp")
         },
         isPublic = true

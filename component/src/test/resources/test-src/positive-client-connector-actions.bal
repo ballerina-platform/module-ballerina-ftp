@@ -2,30 +2,31 @@ import ballerina/io;
 import ballerina/ftp;
 
 function createDirectory (string host, string url) {
-    endpoint ftp:ClientEndpoint clientEndpoint {
+    endpoint ftp:Client client {
         protocol: "ftp",
         host:host
     };
 
-    _ = clientEndpoint -> mkdir(url);
+    _ = client -> mkdir(url);
 }
 
 function removeDirectory (string host, string url) {
-    endpoint ftp:ClientEndpoint clientEndpoint {
+    endpoint ftp:Client client {
         protocol: "ftp",
         host:host
     };
 
-    _ = clientEndpoint -> rmdir(url);
+    _ = client -> rmdir(url);
 }
 
 function readContent (string host, string url) returns string {
-    endpoint ftp:ClientEndpoint clientEndpoint {
+    endpoint ftp:Client client {
         protocol: "ftp",
         host:host
     };
 
-    io:ByteChannel channel =? clientEndpoint -> get(url);
+    var output = client -> get(url);
+    io:ByteChannel channel = check output;
     blob contentB;
     var result = channel.read(15);
     match result {
@@ -42,60 +43,62 @@ function readContent (string host, string url) returns string {
 }
 
 function write (string host, string path, string content) {
-    endpoint ftp:ClientEndpoint clientEndpoint {
+    endpoint ftp:Client client {
         protocol: "ftp",
         host:host
     };
 
     blob contentD = content.toBlob("UTF-8");
-    _ = clientEndpoint -> put(contentD, path);
+    _ = client -> put(contentD, path);
 }
 
 
 function append (string host, string path, string content) {
-    endpoint ftp:ClientEndpoint clientEndpoint {
+    endpoint ftp:Client client {
         protocol:"ftp",
         host:host
     };
 
     blob contentD = content.toBlob("UTF-8");
-    _ = clientEndpoint -> append(contentD, path);
+    _ = client -> append(contentD, path);
 }
 
 function fileDelete (string host, string path) {
-    endpoint ftp:ClientEndpoint clientEndpoint {
+    endpoint ftp:Client client {
         protocol: "ftp",
         host:host
     };
 
-    _ = clientEndpoint -> delete(path);
+    _ = client -> delete(path);
 }
 
 function size (string host, string path) returns int {
-    endpoint ftp:ClientEndpoint clientEndpoint {
+    endpoint ftp:Client client {
         protocol: "ftp",
         host:host
     };
     int size = 0;
-    size =? clientEndpoint -> size(path);
+    var result = client -> size(path);
+    size = check result;
     return size;
 }
 
 function list (string host, string path) returns string[] {
-    endpoint ftp:ClientEndpoint clientEndpoint {
+    endpoint ftp:Client client {
         protocol:"ftp",
         host:host
     };
     string[] list;
-    list =? clientEndpoint -> list(path);
+    var result = client -> list(path);
+    list = check result;
     return list;
 }
 
 function rename (string host, string source, string destination) {
-    endpoint ftp:ClientEndpoint clientEndpoint {
+    endpoint ftp:Client client {
         protocol:"ftp",
         host:host
     };
 
-    _ = clientEndpoint -> rename(source, destination);
+    _ = client -> rename(source, destination);
 }

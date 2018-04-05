@@ -52,9 +52,7 @@ import static org.wso2.transport.remotefilesystem.Constants.ACTION_NONE;
         orgName = "ballerina",
         packageName = "ftp",
         functionName = "register",
-        receiver = @Receiver(type = TypeKind.STRUCT,
-                             structType = "ServiceEndpoint",
-                             structPackage = "ballerina.ftp"),
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Listener", structPackage = "ballerina.ftp"),
         args = {@Argument(name = "serviceType", type = TypeKind.TYPEDESC)},
         isPublic = true
 )
