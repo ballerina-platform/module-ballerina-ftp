@@ -21,6 +21,9 @@ import org.testng.annotations.Test;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
 /**
@@ -116,9 +119,11 @@ public class FTPClientConnectorTest {
     }
 
     @Test()
-    public void testWriteFile() {
+    public void testWriteFile() throws URISyntaxException {
         String source = "/write.txt";
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(content) };
+        final URL url = this.getClass().getClassLoader().getResource("datafiles/file1.txt");
+        final String resourcePath = Paths.get(url.toURI()).toAbsolutePath().toString();
+        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(resourcePath) };
         BRunUtil.invoke(result, "write", inputArg);
         Assert.assertTrue(fileSystem.exists(rootFolder + "/write.txt"), "file not created.");
         final FileEntry entry = (FileEntry) fileSystem.getEntry(rootFolder + "/write.txt");
@@ -129,10 +134,12 @@ public class FTPClientConnectorTest {
     }
 
     @Test(dependsOnMethods = "testWriteFile")
-    public void testAppend() {
+    public void testAppend() throws URISyntaxException {
         String source = "/write.txt";
         String appendContent = "New content";
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(appendContent) };
+        final URL url = this.getClass().getClassLoader().getResource("datafiles/file2.txt");
+        final String resourcePath = Paths.get(url.toURI()).toAbsolutePath().toString();
+        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(resourcePath) };
         BRunUtil.invoke(result, "append", inputArg);
         Assert.assertTrue(fileSystem.exists(rootFolder + "/write.txt"), "file not created.");
         final FileEntry entry = (FileEntry) fileSystem.getEntry(rootFolder + "/write.txt");

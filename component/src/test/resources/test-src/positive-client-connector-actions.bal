@@ -1,5 +1,6 @@
 import ballerina/io;
 import ballerina/ftp;
+import ballerina/file;
 
 function createDirectory (string host, string url) {
     endpoint ftp:Client client {
@@ -42,25 +43,27 @@ function readContent (string host, string url) returns string {
     return contentB.toString("UTF-8");
 }
 
-function write (string host, string path, string content) {
+function write (string host, string path, string filePath) {
     endpoint ftp:Client client {
         protocol: "ftp",
         host:host
     };
 
-    blob contentD = content.toBlob("UTF-8");
-    _ = client -> put(contentD, path);
+    file:Path target = file:getPath(filePath);
+    io:ByteChannel bchannel = check file:newByteChannel(target, "r");
+    _ = client -> put(path, bchannel);
 }
 
 
-function append (string host, string path, string content) {
+function append (string host, string path, string filePath) {
     endpoint ftp:Client client {
         protocol:"ftp",
         host:host
     };
 
-    blob contentD = content.toBlob("UTF-8");
-    _ = client -> append(contentD, path);
+    file:Path target = file:getPath(filePath);
+    io:ByteChannel bchannel = check file:newByteChannel(target, "r");
+    _ = client -> append(path, bchannel);
 }
 
 function fileDelete (string host, string path) {

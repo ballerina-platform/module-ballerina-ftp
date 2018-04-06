@@ -21,6 +21,8 @@ import org.ballerinalang.bre.Context;
 import org.ballerinalang.ftp.util.ClientConstants;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
+import org.ballerinalang.nativeimpl.io.IOConstants;
+import org.ballerinalang.nativeimpl.io.channels.base.Channel;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
@@ -29,7 +31,6 @@ import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientCo
 import org.wso2.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,8 +43,9 @@ import java.util.Map;
         functionName = "append",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector", structPackage = "ballerina.ftp"),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
-                @Argument(name = "blob", type = TypeKind.BLOB),
-                @Argument(name = "path", type = TypeKind.STRING)},
+                @Argument(name = "path", type = TypeKind.STRING),
+                @Argument(name = "source", type = TypeKind.STRUCT, structType = "ByteChannel",
+                          structPackage = "ballerina.io")},
         returnType = {
                 @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError", structPackage = "ballerina.ftp")
         }
@@ -54,10 +56,12 @@ public class Append extends AbstractFtpAction {
     public void execute(Context context) {
         BStruct clientConnector = (BStruct) context.getRefArgument(0);
         String url = (String) clientConnector.getNativeData(ClientConstants.URL);
-        byte[] content = context.getBlobArgument(0);
+        BStruct sourceChannel = (BStruct) context.getRefArgument(1);
         String path = context.getStringArgument(0);
 
-        RemoteFileSystemMessage message = new RemoteFileSystemMessage(ByteBuffer.wrap(content));
+        Channel byteChannel = (Channel) sourceChannel.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
+        RemoteFileSystemMessage message = new RemoteFileSystemMessage(byteChannel.getInputStream());
+
         //Create property map to send to transport.
         Map<String, String> propertyMap = new HashMap<>(5);
         propertyMap.put(ClientConstants.PROPERTY_URI, url + path);

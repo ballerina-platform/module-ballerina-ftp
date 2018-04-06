@@ -44,16 +44,16 @@ public type ClientConnector object {
     public native function delete (string path) returns (FTPClientError | ());
 
     @Description {value:"Put a file using the given blob"}
-    @Param {value:"blob: Content to be written"}
     @Param {value:"path: Destination path of the file"}
+    @Param {value:"channel: A ByteChannel that represent the data source"}
     @Return {value:"Error occured during FTP client invocation"}
-    public native function put (blob content, string path) returns (FTPClientError | ());
+    public native function put (string path, io:ByteChannel channel) returns (FTPClientError | ());
 
     @Description {value:"Append to a file using the given blob"}
-    @Param {value:"blob: Content to be written"}
-    @Param {value:"file: Destination path of the file"}
+    @Param {value:"path: Destination path of the file"}
+    @Param {value:"channel: A ByteChannel that represent the data source"}
     @Return {value:"Error occured during FTP client invocation"}
-    public native function append (blob content, string path) returns (FTPClientError | ());
+    public native function append (string path, io:ByteChannel channel) returns (FTPClientError | ());
 
     @Description {value:"Create a directory in a given location"}
     @Param {value:"path: Path that directory need to create"}
