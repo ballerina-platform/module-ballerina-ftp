@@ -16,11 +16,15 @@
 
 package ballerina.ftp;
 
-@Field {value:"name: Absolute file URI for triggerd event"}
+@Field {value:"uri: Absolute file URI for the triggerd event"}
+@Field {value:"baseName: File/directory name for the triggerd event"}
+@Field {value:"path: Relative file/directory path for the triggerd event"}
 @Field {value:"size: Size of the file"}
 @Field {value:"lastModifiedTimeStamp: Last modified timestamp of the file"}
 public type FileEvent {
-    string name,
+    string uri,
+    string baseName,
+    string path,
     int size,
     int lastModifiedTimeStamp,
 };

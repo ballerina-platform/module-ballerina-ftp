@@ -57,6 +57,8 @@ public class FTPFileSystemListener implements RemoteFileSystemListener {
     private BValue[] getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
         BStruct eventStruct = new BStruct(structInfo.getType());
         eventStruct.setStringField(0, fileSystemEvent.getUri());
+        eventStruct.setStringField(1, fileSystemEvent.getBaseName());
+        eventStruct.setStringField(2, fileSystemEvent.getPath());
         eventStruct.setIntField(0, fileSystemEvent.getFileSize());
         eventStruct.setIntField(1, fileSystemEvent.getLastModifiedTime());
         return new BValue[] { eventStruct };

@@ -16,7 +16,7 @@ boolean invoked = false;
 
 service ftpServerConnector bind remoteServer {
     fileResource (ftp:FileEvent m) {
-        io:println(m.name);
+        io:println(m.uri);
         invoked = true;
     }
 }
