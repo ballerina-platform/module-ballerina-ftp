@@ -50,7 +50,7 @@ import static org.ballerinalang.ftp.util.ServerConstants.FTP_SERVER_EVENT;
  * Compiler plugin for validating FTP server service.
  */
 @SupportEndpointTypes(
-        value = {@SupportEndpointTypes.EndpointType(packageName = "ballerina.ftp", name = "ServiceEndpoint")
+        value = {@SupportEndpointTypes.EndpointType(packageName = "wso2.ftp", name = "ServiceEndpoint")
         }
 )
 public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {

@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package ballerina.ftp;
+package wso2.ftp;
 
 import ballerina/io;
 
@@ -23,7 +23,7 @@ import ballerina/io;
 @Field {value:"cause: The error(s) that caused FTPClientError to get thrown"}
 public type FTPClientError {
     string message,
-    error[] cause,
+    error? cause,
 };
 
 @Description {value:"FTP client connector for outbound FTP file requests"}

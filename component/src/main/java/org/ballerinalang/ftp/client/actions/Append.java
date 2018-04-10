@@ -34,20 +34,22 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+
 /**
  * FTP Append operation.
  */
 @BallerinaFunction(
-        orgName = "ballerina",
+        orgName = "wso2",
         packageName = "ftp",
         functionName = "append",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector", structPackage = "ballerina.ftp"),
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector", structPackage = FTP_PACKAGE_NAME),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "path", type = TypeKind.STRING),
                 @Argument(name = "source", type = TypeKind.STRUCT, structType = "ByteChannel",
                           structPackage = "ballerina.io")},
         returnType = {
-                @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError", structPackage = "ballerina.ftp")
+                @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError", structPackage = FTP_PACKAGE_NAME)
         }
 )
 public class Append extends AbstractFtpAction {

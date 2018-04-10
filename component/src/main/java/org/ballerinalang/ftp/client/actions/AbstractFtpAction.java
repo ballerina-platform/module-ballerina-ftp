@@ -33,7 +33,7 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 abstract class AbstractFtpAction extends BlockingNativeCallableUnit {
 
     static BStruct getClientErrorStruct(Context context) {
-        PackageInfo packageInfo = context.getProgramFile().getPackageInfo("ballerina.ftp");
+        PackageInfo packageInfo = context.getProgramFile().getPackageInfo("wso2.ftp");
         final StructInfo structInfo = packageInfo.getStructInfo("FTPClientError");
         return BLangVMStructs.createBStruct(structInfo);
     }

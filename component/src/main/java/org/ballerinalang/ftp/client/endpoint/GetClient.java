@@ -28,6 +28,8 @@ import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 
+import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+
 /**
  * Get the client endpoint.
  *
@@ -35,10 +37,10 @@ import org.ballerinalang.natives.annotations.ReturnType;
  */
 
 @BallerinaFunction(
-        orgName = "ballerina",
+        orgName = "wso2",
         packageName = "ftp",
         functionName = "getClient",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Client", structPackage = "ballerina.ftp"),
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Client", structPackage = FTP_PACKAGE_NAME),
         returnType = {@ReturnType(type = TypeKind.STRUCT)},
         isPublic = true
 )
@@ -49,7 +51,7 @@ public class GetClient extends BlockingNativeCallableUnit {
         BStruct clientEndpoint = (BStruct) context.getRefArgument(0);
         BStruct clientEndpointConfig = (BStruct) clientEndpoint.getRefField(0);
         BStruct clientConnector = BLangConnectorSPIUtil
-                .createBStruct(context.getProgramFile(), "ballerina.ftp", "ClientConnector",
+                .createBStruct(context.getProgramFile(), FTP_PACKAGE_NAME, "ClientConnector",
                         clientEndpointConfig);
         final String url = (String) clientEndpoint.getNativeData(ClientConstants.URL);
         clientConnector.addNativeData(ClientConstants.URL, url);

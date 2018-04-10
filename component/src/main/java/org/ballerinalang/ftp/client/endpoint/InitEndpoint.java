@@ -30,15 +30,17 @@ import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.util.exceptions.BallerinaException;
 
+import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+
 /**
  * Initialization of client endpoint.
  */
 
 @BallerinaFunction(
-        orgName = "ballerina",
+        orgName = "wso2",
         packageName = "ftp",
         functionName = "initEndpoint",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Client", structPackage = "ballerina.ftp"),
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Client", structPackage = FTP_PACKAGE_NAME),
         args = {@Argument(name = "epName", type = TypeKind.STRING),
                 @Argument(name = "config", type = TypeKind.STRUCT, structType = "ClientEndpointConfiguration")},
         isPublic = true

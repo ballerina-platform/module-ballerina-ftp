@@ -14,19 +14,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package ballerina.ftp;
+package wso2.ftp;
 
 public type Listener object {
     private {
         Connection conn;
-        ListenerEndpointConfiguration config;
+        ListenerEndpointConfig config;
     }
 
     @Description {value:"Gets called when the endpoint is being initialized during the package initialization."}
     @Param {value:"ep: The endpoint to which the service should be registered to"}
     @Param {value:"config: The ListenerEndpointConfiguration of the endpoint"}
     @Return {value:"Error occured during initialization"}
-    public function init (ListenerEndpointConfiguration config);
+    public function init (ListenerEndpointConfig config);
 
     @Description {value:"Gets called when the endpoint is being initialize during package init time"}
     @Return {value:"Error occured during initialization"}
@@ -55,7 +55,7 @@ public type Listener object {
 @Param {value:"ep: The endpoint to which the service should be registered to"}
 @Param {value:"config: The ListenerEndpointConfiguration of the endpoint"}
 @Return {value:"Error occured during initialization"}
-public function Listener::init (ListenerEndpointConfiguration config) {
+public function Listener::init (ListenerEndpointConfig config) {
     self.config = config;
     var err = self.initEndpoint();
     if (err != null) {
@@ -81,7 +81,7 @@ public function Listener::init (ListenerEndpointConfiguration config) {
 @Field {value:"sftpUserDirIsRoot: Set user directory as a root or not. Default false"}
 @Field {value:"sftpAvoidPermissionCheck: Whether to avoid permission check. Default false"}
 @Field {value:"passiveMode: Whether to work on passive mode or not. Default true"}
-public type ListenerEndpointConfiguration {
+public type ListenerEndpointConfig {
     string protocol,
     string host,
     int port,

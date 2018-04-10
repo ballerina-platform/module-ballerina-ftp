@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package ballerina.ftp;
+package wso2.ftp;
 
 @Field {value:"uri: Absolute file URI for the triggerd event"}
 @Field {value:"baseName: File/directory name for the triggerd event"}

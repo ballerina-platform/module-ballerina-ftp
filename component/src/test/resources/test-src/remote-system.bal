@@ -1,4 +1,4 @@
-import ballerina/ftp;
+import wso2/ftp;
 import ballerina/io;
 
 endpoint ftp:Listener remoteServer {

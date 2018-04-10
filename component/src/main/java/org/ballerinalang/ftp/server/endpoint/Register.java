@@ -42,6 +42,7 @@ import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileS
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
 import static org.wso2.transport.remotefilesystem.Constants.ACTION_NONE;
 
 /**
@@ -49,10 +50,10 @@ import static org.wso2.transport.remotefilesystem.Constants.ACTION_NONE;
  */
 
 @BallerinaFunction(
-        orgName = "ballerina",
+        orgName = "wso2",
         packageName = "ftp",
         functionName = "register",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Listener", structPackage = "ballerina.ftp"),
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Listener", structPackage = FTP_PACKAGE_NAME),
         args = {@Argument(name = "serviceType", type = TypeKind.TYPEDESC)},
         isPublic = true
 )
@@ -78,7 +79,7 @@ public class Register extends BlockingNativeCallableUnit {
     }
 
     private StructInfo getStrcutIno(Context context) {
-        PackageInfo httpPackageInfo = context.getProgramFile().getPackageInfo(ServerConstants.FTP_PACKAGE_NAME);
+        PackageInfo httpPackageInfo = context.getProgramFile().getPackageInfo(FTP_PACKAGE_NAME);
         return httpPackageInfo.getStructInfo(ServerConstants.FTP_SERVER_EVENT);
     }
 

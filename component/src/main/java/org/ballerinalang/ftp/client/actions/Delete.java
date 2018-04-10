@@ -32,19 +32,21 @@ import org.wso2.transport.remotefilesystem.client.connector.contractimpl.VFSClie
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+
 /**
  * FTP delete file operation.
  */
 @BallerinaFunction(
-        orgName = "ballerina",
+        orgName = "wso2",
         packageName = "ftp",
         functionName = "delete",
         receiver = @Receiver(
-                type = TypeKind.STRUCT, structType = "ClientConnector", structPackage = "ballerina.ftp"),
+                type = TypeKind.STRUCT, structType = "ClientConnector", structPackage = FTP_PACKAGE_NAME),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "path", type = TypeKind.STRING)},
         returnType = {
-                @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError", structPackage = "ballerina.ftp")
+                @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError", structPackage = FTP_PACKAGE_NAME)
         }
 )
 public class Delete extends AbstractFtpAction {

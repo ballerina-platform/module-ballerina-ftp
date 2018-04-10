@@ -1,5 +1,5 @@
 import ballerina/io;
-import ballerina/ftp;
+import wso2/ftp;
 import ballerina/file;
 
 function createDirectory (string host, string url) {

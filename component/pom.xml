@@ -85,7 +85,7 @@
             </resource>
             <resource>
                 <directory>${generated.ballerina.source.directory}</directory>
-                <targetPath>META-INF/ballerina</targetPath>
+                <targetPath>META-INF/wso2</targetPath>
             </resource>
         </resources>
         <plugins>
@@ -213,7 +213,7 @@
                         <configuration>
                             <outputDir>${project.build.directory}/api-docs</outputDir>
                             <sourceDir>
-                                ${basedir}/target/classes/META-INF/ballerina
+                                ${basedir}/target/classes/META-INF/wso2
                             </sourceDir>
                             <nativeCode>true</nativeCode>
                         </configuration>
@@ -266,8 +266,6 @@
         <package.repository.provider.class>
             org.ballerinalang.net.fs.repository.BallerinaBuiltinPackageRepository
         </package.repository.provider.class>
-        <!--<native.constructs.provider.package>org.ballerinalang.net.fs</native.constructs.provider.package>-->
-        <!--<native.constructs.provider.class>BallerinaFSConstructsProvider</native.constructs.provider.class>-->
 
         <!-- Path to the generated natives ballerina files temp directory -->
         <generated.ballerina.source.directory>

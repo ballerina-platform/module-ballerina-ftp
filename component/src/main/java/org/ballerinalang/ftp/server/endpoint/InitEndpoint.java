@@ -26,17 +26,19 @@ import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 
+import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+
 /**
  * Initialize endpoints.
  */
 
 @BallerinaFunction(
-        orgName = "ballerina",
+        orgName = "wso2",
         packageName = "ftp",
         functionName = "initEndpoint",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Listener", structPackage = "ballerina.ftp"),
-        args = {@Argument(name = "config", type = TypeKind.STRUCT, structType = "ListenerEndpointConfiguration",
-                          structPackage = "ballerina.ftp")
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Listener", structPackage = FTP_PACKAGE_NAME),
+        args = {@Argument(name = "config", type = TypeKind.STRUCT, structType = "ListenerEndpointConfig",
+                          structPackage = FTP_PACKAGE_NAME)
         },
         isPublic = true
 )
