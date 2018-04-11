@@ -74,7 +74,6 @@ public function Listener::init (ListenerEndpointConfig config) {
 @Field {value:"pollingInterval: Periodic time interval to check new update"}
 @Field {value:"cronExpression: Cron expression to check new update"}
 @Field {value:"perPollFileCount: Maximum number of file names for per poll"}
-@Field {value:"parallel: Whether file polling sequencial or parallel"}
 @Field {value:"threadPoolSize: Number of thread to poll file information. Default is 5"}
 @Field {value:"sftpIdentities: Username details for SFTP communication"}
 @Field {value:"sftpIdentityPassPhrase: User password  for SFTP communication"}
@@ -92,7 +91,6 @@ public type ListenerEndpointConfig {
     string pollingInterval,
     string cronExpression,
     string perPollFileCount,
-    string parallel,
     string threadPoolSize,
     string sftpIdentities,
     string sftpIdentityPassPhrase,

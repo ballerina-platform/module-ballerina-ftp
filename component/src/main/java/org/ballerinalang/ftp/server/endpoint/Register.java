@@ -97,10 +97,9 @@ public class Register extends BlockingNativeCallableUnit {
         String url = FTPUtil.createUrl(protocol, host, port, username, passPhrase, path);
         params.put(ServerConstants.ANNOTATION_DIR_URI, url);
         addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_FILE_PATTERN, null);
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_POLLING_INTERVAL, null);
+        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_POLLING_INTERVAL, "1000");
         addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_CRON_EXPRESSION, null);
         addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_FILE_COUNT, null);
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_PARALLEL, null);
         addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_THREAD_POOL_SIZE, null);
         addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_SFTP_IDENTITIES, null);
         addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_SFTP_IDENTITY_PASS_PHRASE, null);
@@ -108,6 +107,7 @@ public class Register extends BlockingNativeCallableUnit {
                 String.valueOf(false));
         addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_AVOID_PERMISSION_CHECK,
                 String.valueOf(true));
+        params.put(ServerConstants.ANNOTATION_PARALLEL, String.valueOf(false));
         params.put(ServerConstants.ANNOTATION_ACTION_AFTER_FAILURE, ACTION_NONE);
         params.put(ServerConstants.ANNOTATION_MOVE_AFTER_FAILURE, ACTION_NONE);
         params.put(ServerConstants.ANNOTATION_MOVE_AFTER_PROCESS, ACTION_NONE);

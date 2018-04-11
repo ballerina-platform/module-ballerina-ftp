@@ -51,7 +51,7 @@ function main (string[] args) {
     }
     
     // Upload file to a remote server
-    io:ByteChannel summaryChannel = io:openFile("/home/ballerina/prog/summary.bal", "r");
+    io:ByteChannel summaryChannel = io:openFile("/home/ballerina/prog/summary.bal", io:MODE_R);
     ftp:FTPClientError? filePutErr = client -> put("/ballerina-user/sample-dir/summary.bal", summaryChannel);    
     match filePutErr {
         ftp:FTPClientError => {
@@ -80,10 +80,10 @@ function main (string[] args) {
     
     // Read content of a remote file
     var getResult = client -> get("/ballerina-user/sample-dir/stock.json");
-    match getRsult {
+    match getResult {
         io:ByteChannel channel => {
             io:CharacterChannel characters = check io:createCharacterChannel(channel, "UTF-8");
-            json stock = characters.readJson();
+            json stock = check characters.readJson();
             _ = channel.close();
         }
         ftp:FTPClientError => {

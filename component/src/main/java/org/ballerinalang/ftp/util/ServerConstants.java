@@ -28,7 +28,6 @@ public class ServerConstants {
     public static final String FTP_PACKAGE_NAME = "wso2.ftp";
     public static final String FTP_SERVER_EVENT = "FileEvent";
     public static final String FTP_SERVER_CONNECTOR = "serverConnector";
-    public static final String CONFIG_ANNOTATION_NAME = "serviceConfig";
 
     public static final String ANNOTATION_DIR_URI = "dirURI";
     public static final String ANNOTATION_PROTOCOL = "protocol";

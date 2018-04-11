@@ -21,6 +21,7 @@ package org.ballerinalang.compiler;
 import org.ballerinalang.compiler.plugins.AbstractCompilerPlugin;
 import org.ballerinalang.compiler.plugins.SupportEndpointTypes;
 import org.ballerinalang.connector.api.BallerinaConnectorException;
+import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.ServerConstants;
 import org.ballerinalang.model.tree.AnnotationAttachmentNode;
 import org.ballerinalang.model.tree.EndpointNode;
@@ -32,25 +33,23 @@ import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BStructType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
-import org.wso2.ballerinalang.compiler.tree.BLangAnnotationAttachment;
 import org.wso2.ballerinalang.compiler.tree.BLangResource;
 import org.wso2.ballerinalang.compiler.tree.BLangVariable;
-import org.wso2.ballerinalang.compiler.tree.expressions.BLangArrayLiteral;
-import org.wso2.ballerinalang.compiler.tree.expressions.BLangExpression;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangLiteral;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangRecordLiteral;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangSimpleVarRef;
 
 import java.util.List;
 
-import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
 import static org.ballerinalang.ftp.util.ServerConstants.FTP_SERVER_EVENT;
 
 /**
- * Compiler plugin for validating FTP server service.
+ * Compiler plugin for validating FTP Listener.
  */
-@SupportEndpointTypes(
-        value = {@SupportEndpointTypes.EndpointType(packageName = "wso2.ftp", name = "ServiceEndpoint")
+@SupportEndpointTypes(value = {
+        @SupportEndpointTypes.EndpointType(orgName = "wso2",
+                                           packageName = "ftp",
+                                           name = "Listener")
         }
 )
 public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
@@ -60,15 +59,6 @@ public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
 
     @Override
     public void process(ServiceNode serviceNode, List<AnnotationAttachmentNode> annotations) {
-        for (AnnotationAttachmentNode annotation : annotations) {
-            if (!FTP_PACKAGE_NAME
-                    .equals(((BLangAnnotationAttachment) annotation).annotationSymbol.pkgID.name.value)) {
-                continue;
-            }
-            if (ServerConstants.CONFIG_ANNOTATION_NAME.equals(annotation.getAnnotationName().getValue())) {
-                handleServiceConfigAnnotation(serviceNode, (BLangAnnotationAttachment) annotation);
-            }
-        }
         List<BLangResource> resources = (List<BLangResource>) serviceNode.getResources();
         if (resources == null || resources.size() == 0) {
             throw new BallerinaConnectorException(
@@ -86,11 +76,9 @@ public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
         if (type.getKind().equals(TypeKind.STRUCT)) {
             if (type instanceof BStructType) {
                 BStructType event = (BStructType) type;
-                if (!FTP_PACKAGE_NAME.equals(event.tsymbol.pkgID.name.value)
+                if (!"ftp".equals(event.tsymbol.pkgID.name.value)
                         || !FTP_SERVER_EVENT.equals(event.tsymbol.name.value)) {
-                    throw new BallerinaConnectorException(
-                            "Parameter should be of type - " + FTP_PACKAGE_NAME + ":"
-                                    + FTP_SERVER_EVENT);
+                    throw new BallerinaConnectorException("Parameter should be of type - ftp:" + FTP_SERVER_EVENT);
                 }
             }
         }
@@ -101,37 +89,46 @@ public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
         final ExpressionNode configurationExpression = endpointNode.getConfigurationExpression();
         if (NodeKind.RECORD_LITERAL_EXPR.equals(configurationExpression.getKind())) {
             BLangRecordLiteral recordLiteral = (BLangRecordLiteral) configurationExpression;
-            boolean valid = false;
+            boolean isNonEmptyPath = false;
+            boolean isNonEmptyHost = false;
+            boolean isValidProtocol = false;
             for (BLangRecordLiteral.BLangRecordKeyValue config : recordLiteral.getKeyValuePairs()) {
                 final String key = ((BLangSimpleVarRef) config.getKey()).variableName.value;
-                if (ServerConstants.ANNOTATION_DIR_URI.equals(key)) {
-                    final Object value = ((BLangLiteral) config.getValue()).getValue();
-                    if (value != null) {
-                        if (!value.toString().isEmpty()) {
-                            valid = true;
-                            break;
+                final Object value = ((BLangLiteral) config.getValue()).getValue();
+                switch (key) {
+                    case ServerConstants.ANNOTATION_PATH:
+                        if (value != null) {
+                            if (!value.toString().isEmpty()) {
+                                isNonEmptyPath = true;
+                            }
                         }
-                    }
+                        break;
+                    case ServerConstants.ANNOTATION_HOST:
+                        if (value != null) {
+                            if (!value.toString().isEmpty()) {
+                                isNonEmptyHost = true;
+                            }
+                        }
+                        break;
+                    case ServerConstants.ANNOTATION_PROTOCOL:
+                        if (value != null) {
+                            if (!value.toString().isEmpty()) {
+                                isValidProtocol = !FTPUtil.notValidProtocol(value.toString());
+                            }
+                        }
+                        break;
+                    default:
+                        // Do nothing.
                 }
             }
-            if (!valid) {
-                throw new BallerinaException("Cannot create FTP server connector without dirURI");
+            if (!isNonEmptyPath) {
+                throw new BallerinaException("Cannot create FTP Listener without path.");
             }
-        }
-    }
-
-    private void handleServiceConfigAnnotation(ServiceNode serviceNode, BLangAnnotationAttachment annotation) {
-        final BLangRecordLiteral expression = (BLangRecordLiteral) annotation.expr;
-        for (BLangRecordLiteral.BLangRecordKeyValue valueNode : expression.getKeyValuePairs()) {
-            final String key = ((BLangSimpleVarRef) valueNode.getKey()).variableName.value;
-            if (!key.equals("endpoints")) {
-                continue;
+            if (!isNonEmptyHost) {
+                throw new BallerinaException("Cannot create FTP Listener without host.");
             }
-            final List<BLangExpression> endpoints = ((BLangArrayLiteral) valueNode.getValue()).exprs;
-            for (BLangExpression endpoint : endpoints) {
-                if (endpoint instanceof BLangSimpleVarRef) {
-                    serviceNode.bindToEndpoint((BLangSimpleVarRef) endpoint);
-                }
+            if (!isValidProtocol) {
+                throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by FTP listener.");
             }
         }
     }

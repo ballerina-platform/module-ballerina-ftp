@@ -60,7 +60,7 @@ public class InitEndpoint extends BlockingNativeCallableUnit {
             if (protocol.isEmpty()) {
                 protocol = "tcp";
             } else if (FTPUtil.notValidProtocol(protocol)) {
-                throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by this connector");
+                throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by FTP listener");
             }
         }
         String url = FTPUtil.createUrl(protocol, host, port, username, passPhrase, null);

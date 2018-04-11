@@ -49,8 +49,7 @@ function write (string host, string path, string filePath) {
         host:host
     };
 
-    file:Path target = file:getPath(filePath);
-    io:ByteChannel bchannel = check file:newByteChannel(target, "r");
+    io:ByteChannel bchannel = io:openFile(filePath, io:MODE_R);
     _ = client -> put(path, bchannel);
 }
 
@@ -61,8 +60,7 @@ function append (string host, string path, string filePath) {
         host:host
     };
 
-    file:Path target = file:getPath(filePath);
-    io:ByteChannel bchannel = check file:newByteChannel(target, "r");
+    io:ByteChannel bchannel = io:openFile(filePath, io:MODE_R);
     _ = client -> append(path, bchannel);
 }
 
