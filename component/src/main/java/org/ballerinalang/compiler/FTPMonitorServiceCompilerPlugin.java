@@ -20,7 +20,6 @@ package org.ballerinalang.compiler;
 
 import org.ballerinalang.compiler.plugins.AbstractCompilerPlugin;
 import org.ballerinalang.compiler.plugins.SupportEndpointTypes;
-import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.ServerConstants;
 import org.ballerinalang.model.tree.AnnotationAttachmentNode;
@@ -29,6 +28,7 @@ import org.ballerinalang.model.tree.NodeKind;
 import org.ballerinalang.model.tree.ServiceNode;
 import org.ballerinalang.model.tree.expressions.ExpressionNode;
 import org.ballerinalang.model.types.TypeKind;
+import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BStructType;
@@ -53,32 +53,40 @@ import static org.ballerinalang.ftp.util.ServerConstants.FTP_SERVER_EVENT;
         }
 )
 public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
+
+    private DiagnosticLog dlog = null;
+
     @Override
     public void init(DiagnosticLog diagnosticLog) {
+        dlog = diagnosticLog;
     }
 
     @Override
     public void process(ServiceNode serviceNode, List<AnnotationAttachmentNode> annotations) {
         List<BLangResource> resources = (List<BLangResource>) serviceNode.getResources();
-        if (resources == null || resources.size() == 0) {
-            throw new BallerinaConnectorException(
-                    "No resources define for given service: " + serviceNode.getName().getValue());
+        if (resources.size() == 0) {
+            dlog.logDiagnostic(Diagnostic.Kind.ERROR, serviceNode.getPosition(),
+                    "No resources define for service: " + serviceNode.getName().getValue());
         } else if (resources.size() >= 2) {
-            throw new BallerinaConnectorException(
-                    "More than one resource define for given service: " + serviceNode.getName().getValue());
+            dlog.logDiagnostic(Diagnostic.Kind.ERROR, serviceNode.getPosition(),
+                    "Only one resource allows for service: " + serviceNode.getName().getValue());
         }
-        final List<BLangVariable> parameters = resources.get(0).getParameters();
-        if (parameters.size() != 1) {
-            throw new BallerinaConnectorException("Invalid resource signature. Only a single " + FTP_SERVER_EVENT
-                    + " parameter allow in the resource signature.");
-        }
-        final BType type = parameters.get(0).getTypeNode().type;
-        if (type.getKind().equals(TypeKind.STRUCT)) {
-            if (type instanceof BStructType) {
-                BStructType event = (BStructType) type;
-                if (!"ftp".equals(event.tsymbol.pkgID.name.value)
-                        || !FTP_SERVER_EVENT.equals(event.tsymbol.name.value)) {
-                    throw new BallerinaConnectorException("Parameter should be of type - ftp:" + FTP_SERVER_EVENT);
+        if (resources.size() == 1) {
+            final List<BLangVariable> parameters = resources.get(0).getParameters();
+            if (parameters.size() != 1) {
+                dlog.logDiagnostic(Diagnostic.Kind.ERROR, resources.get(0).getPosition(),
+                        "Invalid resource signature. A single " + FTP_SERVER_EVENT
+                                + " parameter allow in the resource signature.");
+            }
+            final BType type = parameters.get(0).getTypeNode().type;
+            if (type.getKind().equals(TypeKind.STRUCT)) {
+                if (type instanceof BStructType) {
+                    BStructType event = (BStructType) type;
+                    if (!"ftp".equals(event.tsymbol.pkgID.name.value) || !FTP_SERVER_EVENT
+                            .equals(event.tsymbol.name.value)) {
+                        dlog.logDiagnostic(Diagnostic.Kind.ERROR, parameters.get(0).getPosition(),
+                                "Parameter should be of type - ftp:" + FTP_SERVER_EVENT);
+                    }
                 }
             }
         }
@@ -122,13 +130,17 @@ public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
                 }
             }
             if (!isNonEmptyPath) {
-                throw new BallerinaException("Cannot create FTP Listener without path.");
+                dlog.logDiagnostic(Diagnostic.Kind.ERROR, endpointNode.getPosition(),
+                        "Cannot create FTP Listener without path.");
             }
             if (!isNonEmptyHost) {
+                dlog.logDiagnostic(Diagnostic.Kind.ERROR, endpointNode.getPosition(),
+                        "Cannot create FTP Listener without host.");
                 throw new BallerinaException("Cannot create FTP Listener without host.");
             }
             if (!isValidProtocol) {
-                throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by FTP listener.");
+                dlog.logDiagnostic(Diagnostic.Kind.ERROR, endpointNode.getPosition(),
+                        "FTP, SFTP and FTPS are the supported protocols by FTP listener.");
             }
         }
     }
