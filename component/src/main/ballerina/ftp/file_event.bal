@@ -22,11 +22,9 @@ package wso2.ftp;
 @Field {value:"size: Size of the file"}
 @Field {value:"lastModifiedTimeStamp: Last modified timestamp of the file"}
 public type FileEvent {
-    string uri,
+    string uri, // no need
     string baseName,
     string path,
     int size,
-    int lastModifiedTimeStamp,
+    int lastModifiedTimestamp,
 };
-
-public type Connection {};

@@ -29,7 +29,6 @@ public class ServerConstants {
     public static final String FTP_SERVER_EVENT = "FileEvent";
     public static final String FTP_SERVER_CONNECTOR = "serverConnector";
 
-    public static final String ANNOTATION_DIR_URI = "dirURI";
     public static final String ANNOTATION_PROTOCOL = "protocol";
     public static final String ANNOTATION_HOST = "host";
     public static final String ANNOTATION_PORT = "port";
@@ -39,17 +38,10 @@ public class ServerConstants {
     public static final String ANNOTATION_FILE_PATTERN = "fileNamePattern";
     public static final String ANNOTATION_POLLING_INTERVAL = "pollingInterval";
     public static final String ANNOTATION_CRON_EXPRESSION = "cronExpression";
-    public static final String ANNOTATION_FILE_COUNT = "perPollFileCount";
-    public static final String ANNOTATION_PARALLEL = "parallel";
-    public static final String ANNOTATION_THREAD_POOL_SIZE = "threadPoolSize";
 
-    public static final String ANNOTATION_SFTP_IDENTITIES = "sftpIdentities";
-    public static final String ANNOTATION_SFTP_IDENTITY_PASS_PHRASE = "sftpIdentityPassPhrase";
-    public static final String ANNOTATION_SFTP_USER_DIR_IS_ROOT = "sftpUserDirIsRoot";
-    public static final String ANNOTATION_AVOID_PERMISSION_CHECK = "sftpAvoidPermissionCheck";
-
-    public static final String ANNOTATION_ACTION_AFTER_PROCESS = "actionAfterProcess";
-    public static final String ANNOTATION_ACTION_AFTER_FAILURE = "actionAfterFailure";
-    public static final String ANNOTATION_MOVE_AFTER_PROCESS = "moveAfterProcess";
-    public static final String ANNOTATION_MOVE_AFTER_FAILURE = "moveAfterFailure";
+    public static final String ANNOTATION_IDENTITY = "identity";
+    public static final String ANNOTATION_IDENTITY_PASS_PHRASE = "identityPassPhrase";
+    public static final String ANNOTATION_USER_DIR_IS_ROOT = "userDirIsRoot";
+    public static final String ANNOTATION_AVOID_PERMISSION_CHECK = "avoidPermissionCheck";
+    public static final String ANNOTATION_PASSIVE_MODE = "passiveMode";
 }

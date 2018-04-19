@@ -26,8 +26,11 @@ import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
+import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
+import org.wso2.transport.remotefilesystem.client.connector.contract.FtpAction;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
-import org.wso2.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
+import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
+import org.wso2.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +45,7 @@ import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
         packageName = "ftp",
         functionName = "mkdir",
         receiver = @Receiver(
-                type = TypeKind.STRUCT, structType = "ClientConnector", structPackage = FTP_PACKAGE_NAME),
+                type = TypeKind.STRUCT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "path", type = TypeKind.STRING)},
         returnType = {
@@ -56,16 +59,23 @@ public class Mkdir extends AbstractFtpAction {
         BStruct clientConnector = (BStruct) context.getRefArgument(0);
         String url = (String) clientConnector.getNativeData(ClientConstants.URL);
         String path = context.getStringArgument(0);
+        Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(ClientConstants.PROPERTY_MAP);
 
         //Create property map to send to transport.
-        Map<String, String> propertyMap = new HashMap<>(4);
+        Map<String, String> propertyMap = new HashMap<>(prop);
         propertyMap.put(ClientConstants.PROPERTY_URI, url + path);
-        propertyMap.put(ClientConstants.PROPERTY_ACTION, ClientConstants.ACTION_MKDIR);
-        propertyMap.put(ClientConstants.PROTOCOL, ClientConstants.PROTOCOL_FTP);
-        propertyMap.put(ClientConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 
         FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context);
-        VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
-        connector.send(null);
+        RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
+        VFSClientConnector connector;
+        try {
+            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
+        } catch (RemoteFileSystemConnectorException e) {
+            BStruct error = getClientErrorStruct(context);
+            error.setStringField(0, e.getMessage());
+            context.setReturnValues(error);
+            return;
+        }
+        connector.send(null, FtpAction.MKDIR);
     }
 }

@@ -18,7 +18,6 @@ package wso2.ftp;
 
 public type Listener object {
     private {
-        Connection conn;
         ListenerEndpointConfig config;
     }
 
@@ -26,42 +25,23 @@ public type Listener object {
     @Param {value:"ep: The endpoint to which the service should be registered to"}
     @Param {value:"config: The ListenerEndpointConfiguration of the endpoint"}
     @Return {value:"Error occured during initialization"}
-    public function init (ListenerEndpointConfig config);
-
-    @Description {value:"Gets called when the endpoint is being initialize during package init time"}
-    @Return {value:"Error occured during initialization"}
-    public native function initEndpoint () returns (error);
+    public function init(ListenerEndpointConfig config) {
+        self.config = config;
+    }
 
     @Description {value:"Gets called every time a service attaches itself to this endpoint. Also happens at package initialization."}
     @Param {value:"ep: The endpoint to which the service should be registered to"}
     @Param {value:"serviceType: The type of the service to be registered"}
-    public native function register (typedesc serviceType);
+    public native function register(typedesc serviceType);
 
     @Description {value:"Starts the registered service"}
     @Param {value:"ep: The endpoint to which the service should be registered to"}
-    public native function start ();
-
-    @Description {value:"Returns the connector that client code uses"}
-    @Param {value:"ep: The endpoint to which the service should be registered to"}
-    @Return {value:"The connector that client code uses"}
-    public native function getClient () returns (Connection);
+    public native function start();
 
     @Description {value:"Stops the registered service"}
     @Param {value:"ep: The endpoint to which the service should be registered to"}
-    public native function stop ();
+    public native function stop();
 };
-
-@Description {value:"Gets called when the endpoint is being initialized during the package initialization."}
-@Param {value:"ep: The endpoint to which the service should be registered to"}
-@Param {value:"config: The ListenerEndpointConfiguration of the endpoint"}
-@Return {value:"Error occured during initialization"}
-public function Listener::init (ListenerEndpointConfig config) {
-    self.config = config;
-    var err = self.initEndpoint();
-    if (err != null) {
-        throw err;
-    }
-}
 
 @Description {value:"Configuration for FTP monitor service endpoint"}
 @Field {value:"protocol: Either ftp or sftp"}
@@ -73,12 +53,10 @@ public function Listener::init (ListenerEndpointConfig config) {
 @Field {value:"fileNamePattern: File name pattern that event need to trigger"}
 @Field {value:"pollingInterval: Periodic time interval to check new update"}
 @Field {value:"cronExpression: Cron expression to check new update"}
-@Field {value:"perPollFileCount: Maximum number of file names for per poll"}
-@Field {value:"threadPoolSize: Number of thread to poll file information. Default is 5"}
-@Field {value:"sftpIdentities: Username details for SFTP communication"}
-@Field {value:"sftpIdentityPassPhrase: User password  for SFTP communication"}
-@Field {value:"sftpUserDirIsRoot: Set user directory as a root or not. Default false"}
-@Field {value:"sftpAvoidPermissionCheck: Whether to avoid permission check. Default false"}
+@Field {value:"identity: Username details for SFTP communication"}
+@Field {value:"identityPassPhrase: User password  for SFTP communication"}
+@Field {value:"userDirIsRoot: Set user directory as a root or not. Default false"}
+@Field {value:"avoidPermissionCheck: Whether to avoid permission check. Default true"}
 @Field {value:"passiveMode: Whether to work on passive mode or not. Default true"}
 public type ListenerEndpointConfig {
     string protocol,
@@ -88,13 +66,13 @@ public type ListenerEndpointConfig {
     string passPhrase,
     string path,
     string fileNamePattern,
-    string pollingInterval,
-    string cronExpression,
-    string perPollFileCount,
-    string threadPoolSize,
-    string sftpIdentities,
-    string sftpIdentityPassPhrase,
-    string sftpUserDirIsRoot,
-    string sftpAvoidPermissionCheck,
-    string passiveMode,
+
+    int pollingInterval = 1000, // Timer
+    string cronExpression, //
+
+    string identity,
+    string identityPassPhrase,
+    boolean userDirIsRoot = false,
+    boolean avoidPermissionCheck = true,
+    boolean passiveMode = true,
 };

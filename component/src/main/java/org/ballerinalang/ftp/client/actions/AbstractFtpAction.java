@@ -20,6 +20,7 @@ package org.ballerinalang.ftp.client.actions;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMStructs;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.util.codegen.PackageInfo;
@@ -27,13 +28,15 @@ import org.ballerinalang.util.codegen.StructInfo;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 
+import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+
 /**
  * {@code AbstractFtpAction} is the base class for all FTP Connector Actions.
  */
 abstract class AbstractFtpAction extends BlockingNativeCallableUnit {
 
     static BStruct getClientErrorStruct(Context context) {
-        PackageInfo packageInfo = context.getProgramFile().getPackageInfo("wso2.ftp");
+        PackageInfo packageInfo = context.getProgramFile().getPackageInfo(FTP_PACKAGE_NAME);
         final StructInfo structInfo = packageInfo.getStructInfo("FTPClientError");
         return BLangVMStructs.createBStruct(structInfo);
     }

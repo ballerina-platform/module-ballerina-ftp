@@ -34,6 +34,7 @@ import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.util.codegen.PackageInfo;
 import org.ballerinalang.util.codegen.StructInfo;
+import org.wso2.transport.remotefilesystem.Constants;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
 import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
 import org.wso2.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
@@ -43,7 +44,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
-import static org.wso2.transport.remotefilesystem.Constants.ACTION_NONE;
 
 /**
  * Register remote FTP server listener service.
@@ -73,7 +73,7 @@ public class Register extends BlockingNativeCallableUnit {
                             new FTPFileSystemListener(resource, structInfo));
             serviceEndpoint.addNativeData(ServerConstants.FTP_SERVER_CONNECTOR, serverConnector);
         } catch (RemoteFileSystemConnectorException e) {
-            throw new BallerinaConnectorException("Unable to initialize server connector", e);
+            throw new BallerinaConnectorException("Unable to initialize the FTP listener: " + e.getMessage(), e);
         }
         context.setReturnValues();
     }
@@ -84,7 +84,7 @@ public class Register extends BlockingNativeCallableUnit {
     }
 
     private Map<String, String> getServerConnectorParamMap(Struct serviceEndpointConfig) {
-        Map<String, String> params = new HashMap<>(15);
+        Map<String, String> params = new HashMap<>(12);
         final String path = serviceEndpointConfig.getStringField(ServerConstants.ANNOTATION_PATH);
         String protocol = serviceEndpointConfig.getStringField(ServerConstants.ANNOTATION_PROTOCOL);
         final String host = serviceEndpointConfig.getStringField(ServerConstants.ANNOTATION_HOST);
@@ -95,27 +95,23 @@ public class Register extends BlockingNativeCallableUnit {
             protocol = "tcp";
         }
         String url = FTPUtil.createUrl(protocol, host, port, username, passPhrase, path);
-        params.put(ServerConstants.ANNOTATION_DIR_URI, url);
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_FILE_PATTERN, null);
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_POLLING_INTERVAL, "1000");
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_CRON_EXPRESSION, null);
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_FILE_COUNT, null);
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_THREAD_POOL_SIZE, null);
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_SFTP_IDENTITIES, null);
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_SFTP_IDENTITY_PASS_PHRASE, null);
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_SFTP_USER_DIR_IS_ROOT,
-                String.valueOf(false));
-        addProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_AVOID_PERMISSION_CHECK,
-                String.valueOf(true));
-        params.put(ServerConstants.ANNOTATION_PARALLEL, String.valueOf(false));
-        params.put(ServerConstants.ANNOTATION_ACTION_AFTER_FAILURE, ACTION_NONE);
-        params.put(ServerConstants.ANNOTATION_MOVE_AFTER_FAILURE, ACTION_NONE);
-        params.put(ServerConstants.ANNOTATION_MOVE_AFTER_PROCESS, ACTION_NONE);
-        params.put(ServerConstants.ANNOTATION_ACTION_AFTER_PROCESS, ACTION_NONE);
+        params.put(Constants.TRANSPORT_FILE_URI, url);
+        addStringProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_FILE_PATTERN, null);
+        addStringProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_CRON_EXPRESSION, null);
+        addStringProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_IDENTITY, null);
+        addStringProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_IDENTITY_PASS_PHRASE, null);
+        params.put(ServerConstants.ANNOTATION_POLLING_INTERVAL,
+                String.valueOf(serviceEndpointConfig.getIntField(ServerConstants.ANNOTATION_POLLING_INTERVAL)));
+        params.put(Constants.USER_DIR_IS_ROOT,
+                String.valueOf(serviceEndpointConfig.getBooleanField(ServerConstants.ANNOTATION_USER_DIR_IS_ROOT)));
+        params.put(Constants.AVOID_PERMISSION_CHECK, String.valueOf(
+                serviceEndpointConfig.getBooleanField(ServerConstants.ANNOTATION_AVOID_PERMISSION_CHECK)));
+        params.put(Constants.PASSIVE_MODE,
+                String.valueOf(serviceEndpointConfig.getBooleanField(ServerConstants.ANNOTATION_PASSIVE_MODE)));
         return params;
     }
 
-    private void addProperty(Struct config, Map<String, String> params, String key, String defaultValue) {
+    private void addStringProperty(Struct config, Map<String, String> params, String key, String defaultValue) {
         final String value = config.getStringField(key);
         if (value != null && !value.isEmpty()) {
             params.put(key, value);

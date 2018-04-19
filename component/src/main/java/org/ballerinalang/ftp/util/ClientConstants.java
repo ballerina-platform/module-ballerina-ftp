@@ -26,22 +26,11 @@ public class ClientConstants {
 
     public static final String PROPERTY_URI = Constants.URI;
     public static final String PROPERTY_DESTINATION = Constants.DESTINATION;
-    public static final String PROPERTY_ACTION = Constants.ACTION;
 
-    public static final String ACTION_GET = Constants.GET;
-    public static final String ACTION_PUT = Constants.PUT;
-    public static final String ACTION_APPEND = Constants.PUT;
-    public static final String ACTION_DELETE = Constants.DELETE;
-    public static final String ACTION_MKDIR = Constants.MKDIR;
-    public static final String ACTION_RMDIR = Constants.RMDIR;
-    public static final String ACTION_RENAME = Constants.RENAME;
-    public static final String ACTION_SIZE = Constants.SIZE;
-    public static final String ACTION_LIST = Constants.LIST;
-
-    public static final String FTP_PASSIVE_MODE = Constants.FTP_PASSIVE_MODE;
-    public static final String PROTOCOL = Constants.PROTOCOL;
-    public static final String PROTOCOL_FTP = Constants.PROTOCOL_FTP;
-    public static final String PROPERTY_APPEND = Constants.APPEND;
+    public static final String FTP_PASSIVE_MODE = Constants.PASSIVE_MODE;
+    public static final String USER_DIR_IS_ROOT = Constants.USER_DIR_IS_ROOT;
+    public static final String AVOID_PERMISSION_CHECK = Constants.AVOID_PERMISSION_CHECK;
 
     public static final String URL = "URL";
+    public static final String PROPERTY_MAP = "map";
 }

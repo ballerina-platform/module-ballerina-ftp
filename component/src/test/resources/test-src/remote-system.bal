@@ -8,7 +8,7 @@ endpoint ftp:Listener remoteServer {
     passPhrase:"wso2123",
     port:48123,
     path:"/home/wso2",
-    pollingInterval:"2000"
+    pollingInterval:2000
 };
 
 boolean invoked = false;

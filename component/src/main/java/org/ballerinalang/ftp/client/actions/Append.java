@@ -27,8 +27,11 @@ import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
+import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
+import org.wso2.transport.remotefilesystem.client.connector.contract.FtpAction;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
-import org.wso2.transport.remotefilesystem.client.connector.contractimpl.VFSClientConnectorImpl;
+import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
+import org.wso2.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
 import java.util.HashMap;
@@ -43,7 +46,7 @@ import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
         orgName = "wso2",
         packageName = "ftp",
         functionName = "append",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientConnector", structPackage = FTP_PACKAGE_NAME),
+        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "path", type = TypeKind.STRING),
                 @Argument(name = "source", type = TypeKind.STRUCT, structType = "ByteChannel",
@@ -63,17 +66,23 @@ public class Append extends AbstractFtpAction {
 
         Channel byteChannel = (Channel) sourceChannel.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(byteChannel.getInputStream());
+        Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(ClientConstants.PROPERTY_MAP);
 
         //Create property map to send to transport.
-        Map<String, String> propertyMap = new HashMap<>(5);
+        Map<String, String> propertyMap = new HashMap<>(prop);
         propertyMap.put(ClientConstants.PROPERTY_URI, url + path);
-        propertyMap.put(ClientConstants.PROPERTY_ACTION, ClientConstants.ACTION_APPEND);
-        propertyMap.put(ClientConstants.PROTOCOL, ClientConstants.PROTOCOL_FTP);
-        propertyMap.put(ClientConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
-        propertyMap.put(ClientConstants.PROPERTY_APPEND, Boolean.TRUE.toString());
 
         FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context);
-        VFSClientConnector connector = new VFSClientConnectorImpl(propertyMap, connectorListener);
-        connector.send(message);
+        RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
+        VFSClientConnector connector;
+        try {
+            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
+        } catch (RemoteFileSystemConnectorException e) {
+            BStruct error = getClientErrorStruct(context);
+            error.setStringField(0, e.getMessage());
+            context.setReturnValues(error);
+            return;
+        }
+        connector.send(message, FtpAction.APPEND);
     }
 }

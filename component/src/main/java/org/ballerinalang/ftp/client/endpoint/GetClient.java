@@ -28,6 +28,8 @@ import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 
+import java.util.Map;
+
 import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
 
 /**
@@ -51,10 +53,12 @@ public class GetClient extends BlockingNativeCallableUnit {
         BStruct clientEndpoint = (BStruct) context.getRefArgument(0);
         BStruct clientEndpointConfig = (BStruct) clientEndpoint.getRefField(0);
         BStruct clientConnector = BLangConnectorSPIUtil
-                .createBStruct(context.getProgramFile(), FTP_PACKAGE_NAME, "ClientConnector",
+                .createBStruct(context.getProgramFile(), FTP_PACKAGE_NAME, "ClientActions",
                         clientEndpointConfig);
         final String url = (String) clientEndpoint.getNativeData(ClientConstants.URL);
         clientConnector.addNativeData(ClientConstants.URL, url);
+        Map<String, String> prop = (Map<String, String>) clientEndpoint.getNativeData(ClientConstants.PROPERTY_MAP);
+        clientConnector.addNativeData(ClientConstants.PROPERTY_MAP, prop);
         context.setReturnValues(clientConnector);
     }
 }

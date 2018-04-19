@@ -29,23 +29,17 @@ public type Client object {
     @Description {value:"Gets called when the endpoint is being initialized during the package initialization."}
     @Param {value:"ep: The endpoint to be initialized"}
     @Param {value:"config: The ClientEndpointConfiguration of the endpoint"}
-    public function init (ClientEndpointConfiguration config);
-
-    public native function initEndpoint ();
-
-    public function register (typedesc serviceType) {
+    // make this a native
+    public function init(ClientEndpointConfiguration config) {
+        self.config = config;
+        self.initEndpoint();
     }
 
-    public function start () {
-    }
+    native function initEndpoint();
 
     @Description {value:"Returns the connector that client code uses"}
     @Return {value:"The connector that client code uses"}
-    public native function  getClient () returns ClientConnector;
-
-    @Description {value:"Stops the registered service"}
-    public function stop () {
-    }
+    public native function  getClient() returns ClientActions;
 };
 
 
@@ -55,18 +49,22 @@ public type Client object {
 @Field {value:"port: Port number of the remote service"}
 @Field {value:"username: Username for authentication"}
 @Field {value:"passPhrase: Password for authentication"}
+@Field {value:"identity: Username details for SFTP communication"}
+@Field {value:"identityPassPhrase: User password  for SFTP communication"}
+@Field {value:"userDirIsRoot: Set user directory as a root or not. Default false"}
+@Field {value:"avoidPermissionCheck: Whether to avoid permission check. Default true"}
+@Field {value:"passiveMode: Whether to work on passive mode or not. Default true"} // improve this
 public type ClientEndpointConfiguration {
-    string protocol,
+    string protocol, //
     string host,
     int port,
     string username,
-    string passPhrase,
-};
+    string passPhrase, // password
 
-@Description {value:"Gets called when the endpoint is being initialized during the package initialization."}
-@Param {value:"ep: The endpoint to be initialized"}
-@Param {value:"config: The ClientEndpointConfiguration of the endpoint"}
-public function Client::init (ClientEndpointConfiguration config) {
-    self.config = config;
-    self.initEndpoint();
-}
+    string identity,
+    string identityPassPhrase, //
+
+    boolean userDirIsRoot = false,
+    boolean avoidPermissionCheck = true, // checkPermission
+    boolean passiveMode = true,
+};

@@ -30,6 +30,9 @@ import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.util.exceptions.BallerinaException;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
 
 /**
@@ -41,8 +44,7 @@ import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
         packageName = "ftp",
         functionName = "initEndpoint",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "Client", structPackage = FTP_PACKAGE_NAME),
-        args = {@Argument(name = "epName", type = TypeKind.STRING),
-                @Argument(name = "config", type = TypeKind.STRUCT, structType = "ClientEndpointConfiguration")},
+        args = {@Argument(name = "config", type = TypeKind.STRUCT, structType = "ClientEndpointConfiguration")},
         isPublic = true
 )
 public class InitEndpoint extends BlockingNativeCallableUnit {
@@ -65,6 +67,14 @@ public class InitEndpoint extends BlockingNativeCallableUnit {
         }
         String url = FTPUtil.createUrl(protocol, host, port, username, passPhrase, null);
         clientEndpoint.addNativeData(ClientConstants.URL, url);
+        Map<String, String> config = new HashMap<>(5);
+        config.put(ClientConstants.FTP_PASSIVE_MODE,
+                String.valueOf(clientEndpointConfig.getBooleanField("passiveMode")));
+        config.put(ClientConstants.USER_DIR_IS_ROOT,
+                String.valueOf(clientEndpointConfig.getBooleanField("userDirIsRoot")));
+        config.put(ClientConstants.AVOID_PERMISSION_CHECK,
+                String.valueOf(clientEndpointConfig.getBooleanField("avoidPermissionCheck")));
+        clientEndpoint.addNativeData(ClientConstants.PROPERTY_MAP, config);
         context.setReturnValues();
     }
 }

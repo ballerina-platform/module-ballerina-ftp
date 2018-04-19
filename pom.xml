@@ -366,9 +366,9 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <ballerina.version>0.970.0-alpha6-SNAPSHOT</ballerina.version>
+        <ballerina.version>0.970.0-beta1-SNAPSHOT</ballerina.version>
         <docerina.version>${ballerina.version}</docerina.version>
-        <file.transport.version>6.0.54</file.transport.version>
+        <file.transport.version>6.0.55-SNAPSHOT</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>
         <maven.findbugsplugin.version.exclude>findbugs-exclude.xml</maven.findbugsplugin.version.exclude>
         <mock.ftp.server.version>2.7.1</mock.ftp.server.version>
