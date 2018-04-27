@@ -2,31 +2,31 @@ import ballerina/io;
 import wso2/ftp;
 import ballerina/file;
 
-function createDirectory (string host, string url) {
+function createDirectory(string host, string url) {
     endpoint ftp:Client client {
-        protocol: "ftp",
-        host:host
+        protocol: ftp:FTP,
+        host: host
     };
 
-    _ = client -> mkdir(url);
+    _ = client->mkdir(url);
 }
 
-function removeDirectory (string host, string url) {
+function removeDirectory(string host, string url) {
     endpoint ftp:Client client {
-        protocol: "ftp",
-        host:host
+        protocol: ftp:FTP,
+        host: host
     };
 
-    _ = client -> rmdir(url);
+    _ = client->rmdir(url);
 }
 
-function readContent (string host, string url) returns string {
+function readContent(string host, string url) returns string {
     endpoint ftp:Client client {
-        protocol: "ftp",
-        host:host
+        protocol: ftp:FTP,
+        host: host
     };
 
-    var output = client -> get(url);
+    var output = client->get(url);
     io:ByteChannel channel = check output;
     blob contentB;
     var result = channel.read(15);
@@ -35,7 +35,7 @@ function readContent (string host, string url) returns string {
             var (cont, readSize) = content;
             contentB = cont;
         }
-        io:IOError readError => {
+        error readError => {
             throw readError;
         }
     }
@@ -43,63 +43,63 @@ function readContent (string host, string url) returns string {
     return contentB.toString("UTF-8");
 }
 
-function write (string host, string path, string filePath) {
+function write(string host, string path, string filePath) {
     endpoint ftp:Client client {
-        protocol: "ftp",
-        host:host
+        protocol: ftp:FTP,
+        host: host
     };
 
-    io:ByteChannel bchannel = io:openFile(filePath, io:MODE_R);
-    _ = client -> put(path, bchannel);
+    io:ByteChannel bchannel = io:openFile(filePath, io:READ);
+    _ = client->put(path, bchannel);
 }
 
 
-function append (string host, string path, string filePath) {
+function append(string host, string path, string filePath) {
     endpoint ftp:Client client {
-        protocol:"ftp",
-        host:host
+        protocol: ftp:FTP,
+        host: host
     };
 
-    io:ByteChannel bchannel = io:openFile(filePath, io:MODE_R);
-    _ = client -> append(path, bchannel);
+    io:ByteChannel bchannel = io:openFile(filePath, io:READ);
+    _ = client->append(path, bchannel);
 }
 
-function fileDelete (string host, string path) {
+function fileDelete(string host, string path) {
     endpoint ftp:Client client {
-        protocol: "ftp",
-        host:host
+        protocol: ftp:FTP,
+        host: host
     };
 
-    _ = client -> delete(path);
+    _ = client->delete(path);
 }
 
-function size (string host, string path) returns int {
+function size(string host, string path) returns int {
     endpoint ftp:Client client {
-        protocol: "ftp",
-        host:host
+        protocol: ftp:FTP,
+        host: host
     };
     int size = 0;
-    var result = client -> size(path);
+    var result = client->size(path);
     size = check result;
     return size;
 }
 
-function list (string host, string path) returns string[] {
+function list(string host, string path) returns string[] {
     endpoint ftp:Client client {
-        protocol:"ftp",
-        host:host
+        protocol: ftp:FTP,
+        host: host
     };
     string[] list;
-    var result = client -> list(path);
+    var result = client->list(path);
     list = check result;
     return list;
 }
 
-function rename (string host, string source, string destination) {
+function rename(string host, string source, string destination) {
     endpoint ftp:Client client {
-        protocol:"ftp",
-        host:host
+        protocol: ftp:FTP,
+        host: host
     };
 
-    _ = client -> rename(source, destination);
+    _ = client->rename(source, destination);
 }

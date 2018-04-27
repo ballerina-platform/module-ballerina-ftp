@@ -14,17 +14,26 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package wso2.ftp;
+documentation {
+    This give newly added file's meta information.
 
-@Field {value:"uri: Absolute file URI for the triggerd event"}
-@Field {value:"baseName: File/directory name for the triggerd event"}
-@Field {value:"path: Relative file/directory path for the triggerd event"}
-@Field {value:"size: Size of the file"}
-@Field {value:"lastModifiedTimeStamp: Last modified timestamp of the file"}
-public type FileEvent {
-    string uri, // no need
-    string baseName,
+    F{{path}} Relative file path for newly added file.
+    F{{size}} Size of the file.
+    F{{lastModifiedTimestamp}} Last modified timestamp of the file.
+}
+public type FileInfo {
     string path,
     int size,
     int lastModifiedTimestamp,
+};
+
+documentation {
+    This represents the latest status change of the server from the last status change.
+
+    F{{addedFiles}} Array of FileInfo which represents newly added files.
+    F{{deletedFiles}} Array of string which contains deleted file names.
+}
+public type WatchEvent {
+    FileInfo[] addedFiles,
+    string[] deletedFiles,
 };

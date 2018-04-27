@@ -18,15 +18,21 @@
 
 package org.ballerinalang.ftp.server;
 
+import org.ballerinalang.bre.bvm.BLangVMStructs;
 import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
+import org.ballerinalang.ftp.util.FtpConstants;
+import org.ballerinalang.model.values.BRefValueArray;
+import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.services.ErrorHandlerUtils;
+import org.ballerinalang.util.codegen.PackageInfo;
 import org.ballerinalang.util.codegen.StructInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
+import org.wso2.transport.remotefilesystem.message.FileInfo;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemEvent;
 
@@ -37,31 +43,42 @@ public class FTPFileSystemListener implements RemoteFileSystemListener {
 
     private static final Logger log = LoggerFactory.getLogger(FTPFileSystemListener.class);
     private Resource resource;
-    private StructInfo structInfo;
+    private PackageInfo packageInfo;
 
-    public FTPFileSystemListener(Resource resource, StructInfo structInfo) {
+    public FTPFileSystemListener(Resource resource, PackageInfo packageInfo) {
         this.resource = resource;
-        this.structInfo = structInfo;
+        this.packageInfo = packageInfo;
     }
 
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
-            BValue[] parameters = getSignatureParameters(event);
+            BValue parameters = getSignatureParameters(event);
             Executor.submit(resource, new FTPCallableUnitCallback(), null, null, parameters);
         }
         return true;
     }
 
-    private BValue[] getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
-        BStruct eventStruct = new BStruct(structInfo.getType());
-        eventStruct.setStringField(0, fileSystemEvent.getUri());
-        eventStruct.setStringField(1, fileSystemEvent.getBaseName());
-        eventStruct.setStringField(2, fileSystemEvent.getPath());
-        eventStruct.setIntField(0, fileSystemEvent.getFileSize());
-        eventStruct.setIntField(1, fileSystemEvent.getLastModifiedTime());
-        return new BValue[] { eventStruct };
+    private BValue getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
+        // For newly added files.
+        final StructInfo fileInfoStructInfo = getFileInfoStructInfo(packageInfo);
+        BRefValueArray fileInfoArray = new BRefValueArray(fileInfoStructInfo.getType());
+        int i = 0;
+        for (FileInfo info : fileSystemEvent.getAddedFiles()) {
+            final BStruct fileInfoStruct = BLangVMStructs
+                    .createBStruct(fileInfoStructInfo, info.getPath(), info.getFileSize(), info.getLastModifiedTime());
+            fileInfoArray.add(i++, fileInfoStruct);
+        }
+        // For deleted files.
+        BStringArray deletedFilesArray = new BStringArray();
+        i = 0;
+        for (String fileName : fileSystemEvent.getDeletedFiles()) {
+            deletedFilesArray.add(i++, fileName);
+        }
+        // WatchEvent
+        return BLangVMStructs
+                .createBStruct(getWatchEventStructInfo(packageInfo), fileInfoArray, deletedFilesArray);
     }
 
     @Override
@@ -72,5 +89,13 @@ public class FTPFileSystemListener implements RemoteFileSystemListener {
     @Override
     public void done() {
         log.debug("Successfully finished the action.");
+    }
+
+    private StructInfo getWatchEventStructInfo(PackageInfo packageInfo) {
+        return packageInfo.getStructInfo(FtpConstants.FTP_SERVER_EVENT);
+    }
+
+    private StructInfo getFileInfoStructInfo(PackageInfo packageInfo) {
+        return packageInfo.getStructInfo(FtpConstants.FTP_FILE_INFO);
     }
 }

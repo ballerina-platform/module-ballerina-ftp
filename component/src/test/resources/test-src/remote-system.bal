@@ -2,24 +2,28 @@ import wso2/ftp;
 import ballerina/io;
 
 endpoint ftp:Listener remoteServer {
-    protocol:"ftp",
-    host:"localhost",
-    username:"wso2",
-    passPhrase:"wso2123",
-    port:48123,
-    path:"/home/wso2",
-    pollingInterval:2000
+    protocol: ftp:FTP,
+    host: "localhost",
+    secureSocket: {
+        basicAuth: {
+            username: "wso2",
+            password: "wso2123"
+        }
+    },
+    port: 48123,
+    path: "/home/wso2",
+    pollingInterval: 2000
 };
 
-boolean invoked = false;
+int noOfFilesAdded = 0;
 
 service ftpServerConnector bind remoteServer {
-    fileResource (ftp:FileEvent m) {
-        io:println(m.uri);
-        invoked = true;
+    fileResource(ftp:WatchEvent m) {
+        io:println("Length: " + lengthof m.addedFiles);
+        noOfFilesAdded = lengthof m.addedFiles;
     }
 }
 
-function isInvoked () returns boolean {
-    return invoked;
+function getFileCount() returns int {
+    return noOfFilesAdded;
 }

@@ -162,12 +162,6 @@
                                     <version>${file.transport.version}</version>
                                     <type>${project.packaging}</type>
                                 </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.wso2.carbon.polling.core</groupId>
-                                    <artifactId>org.wso2.carbon.connector.framework</artifactId>
-                                    <version>${connector.framework.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
                                 <dependency>
                                     <groupId>org.wso2.org.apache.commons</groupId>
                                     <artifactId>commons-vfs2</artifactId>
@@ -177,12 +171,6 @@
                                     <groupId>com.jcraft</groupId>
                                     <artifactId>jsch</artifactId>
                                     <version>${jsch.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.wso2.carbon.messaging</groupId>
-                                    <artifactId>org.wso2.carbon.messaging</artifactId>
-                                    <version>${carbon.messaging.version}</version>
                                     <type>${project.packaging}</type>
                                 </artifactItem>
                                 <artifactItem>

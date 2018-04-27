@@ -19,42 +19,51 @@
 package org.ballerinalang.ftp.server.endpoint;
 
 import org.ballerinalang.bre.Context;
+import org.ballerinalang.bre.bvm.BLangVMStructs;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
-import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
-import org.ballerinalang.connector.api.BallerinaConnectorException;
-import org.ballerinalang.connector.api.Struct;
-import org.ballerinalang.ftp.util.ServerConstants;
+import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
+import org.ballerinalang.model.values.BStruct;
+import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
-import org.ballerinalang.natives.annotations.Receiver;
+import org.ballerinalang.util.codegen.PackageInfo;
+import org.ballerinalang.util.codegen.StructInfo;
 import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
 import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileSystemServerConnector;
 
-import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.ftp.util.FtpConstants.BALLERINA_BUILTIN;
+import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 /**
- * Start server connector.
+ * Native method for poll.
  */
 
 @BallerinaFunction(
         orgName = "wso2",
         packageName = "ftp",
-        functionName = "start",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Listener", structPackage = FTP_PACKAGE_NAME),
+        functionName = "poll",
+        args = {@Argument(name = "config", type = TypeKind.STRUCT, structType = "ListenerEndpointConfig",
+                          structPackage = FTP_PACKAGE_NAME)},
         isPublic = true
 )
-public class Start extends BlockingNativeCallableUnit {
-
+public class Poll extends BlockingNativeCallableUnit {
     @Override
     public void execute(Context context) {
-        Struct serviceEndpoint = BLangConnectorSPIUtil.getConnectorEndpointStruct(context);
-        RemoteFileSystemServerConnector serverConnector = (RemoteFileSystemServerConnector) serviceEndpoint
-                .getNativeData(ServerConstants.FTP_SERVER_CONNECTOR);
+        final BStruct config = (BStruct) context.getRefArgument(0);
+        RemoteFileSystemServerConnector connector = (RemoteFileSystemServerConnector) config
+                .getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         try {
-            serverConnector.start();
+            connector.poll();
         } catch (RemoteFileSystemConnectorException e) {
-            throw new BallerinaConnectorException("Unable to start server connector", e);
+            context.setReturnValues(getErrorStruct(context));
+            return;
         }
         context.setReturnValues();
+    }
+
+    private BStruct getErrorStruct(Context context) {
+        PackageInfo packageInfo = context.getProgramFile().getPackageInfo(BALLERINA_BUILTIN);
+        final StructInfo structInfo = packageInfo.getStructInfo("error");
+        return BLangVMStructs.createBStruct(structInfo);
     }
 }

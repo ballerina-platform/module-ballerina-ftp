@@ -14,22 +14,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package wso2.ftp;
-
 ////////////////////////////
 /// FTP Client Endpoint ///
 ///////////////////////////
 
-@Description {value:"Represents an FTP client"}
+documentation {
+    Represents a FTP client which intract with a remote FTP server.
+}
 public type Client object {
     public {
         ClientEndpointConfiguration config;
     }
 
-    @Description {value:"Gets called when the endpoint is being initialized during the package initialization."}
-    @Param {value:"ep: The endpoint to be initialized"}
-    @Param {value:"config: The ClientEndpointConfiguration of the endpoint"}
-    // make this a native
     public function init(ClientEndpointConfiguration config) {
         self.config = config;
         self.initEndpoint();
@@ -37,34 +33,20 @@ public type Client object {
 
     native function initEndpoint();
 
-    @Description {value:"Returns the connector that client code uses"}
-    @Return {value:"The connector that client code uses"}
-    public native function  getClient() returns ClientActions;
+    public native function  getCallerActions() returns ClientActions;
 };
 
+documentation {
+    Configuration for FTP client endpoint.
 
-@Description {value:"ClientEndpointConfiguration struct represents options to be used for FTP client invocation"}
-@Field {value:"protocol: Either ftp or sftp"}
-@Field {value:"host: Target service url"}
-@Field {value:"port: Port number of the remote service"}
-@Field {value:"username: Username for authentication"}
-@Field {value:"passPhrase: Password for authentication"}
-@Field {value:"identity: Username details for SFTP communication"}
-@Field {value:"identityPassPhrase: User password  for SFTP communication"}
-@Field {value:"userDirIsRoot: Set user directory as a root or not. Default false"}
-@Field {value:"avoidPermissionCheck: Whether to avoid permission check. Default true"}
-@Field {value:"passiveMode: Whether to work on passive mode or not. Default true"} // improve this
+    F{{protocol}} Supported FTP protocols
+    F{{host}} Target service url
+    F{{port}} Port number of the remote service
+    F{{secureSocket}} Authenthication options
+}
 public type ClientEndpointConfiguration {
-    string protocol, //
+    Protocol protocol = FTP,
     string host,
     int port,
-    string username,
-    string passPhrase, // password
-
-    string identity,
-    string identityPassPhrase, //
-
-    boolean userDirIsRoot = false,
-    boolean avoidPermissionCheck = true, // checkPermission
-    boolean passiveMode = true,
+    SecureSocket? secureSocket,
 };

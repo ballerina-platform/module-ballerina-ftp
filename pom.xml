@@ -179,11 +179,6 @@
                 <version>${docerina.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.polling.core</groupId>
-                <artifactId>org.wso2.carbon.connector.framework</artifactId>
-                <version>${connector.framework.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.mockftpserver</groupId>
                 <artifactId>MockFtpServer</artifactId>
                 <version>${mock.ftp.server.version}</version>
@@ -366,7 +361,7 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <ballerina.version>0.970.0-beta1-SNAPSHOT</ballerina.version>
+        <ballerina.version>0.970.0-rc2-SNAPSHOT</ballerina.version>
         <docerina.version>${ballerina.version}</docerina.version>
         <file.transport.version>6.0.55-SNAPSHOT</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>
@@ -388,11 +383,9 @@
         <docerina.maven.plugin.version>${ballerina.version}</docerina.maven.plugin.version>
 
         <!--Bundle dependency versions-->
-        <connector.framework.version>6.0.50</connector.framework.version>
         <commons-vfs2.wso2.version>2.2-wso2v1</commons-vfs2.wso2.version>
         <!--<quartz.version>2.3.0.wso2v2</quartz.version>-->
         <jsch.version>0.1.54</jsch.version>
-        <carbon.messaging.version>2.3.7</carbon.messaging.version>
         <commons-net.version>3.6</commons-net.version>
 
         <project.scm.id>my-scm-server</project.scm.id>

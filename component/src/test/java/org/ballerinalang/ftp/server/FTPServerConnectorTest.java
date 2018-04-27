@@ -4,7 +4,7 @@ import org.ballerinalang.launcher.util.BCompileUtil;
 import org.ballerinalang.launcher.util.BRunUtil;
 import org.ballerinalang.launcher.util.BServiceUtil;
 import org.ballerinalang.launcher.util.CompileResult;
-import org.ballerinalang.model.values.BBoolean;
+import org.ballerinalang.model.values.BInteger;
 import org.ballerinalang.model.values.BValue;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
@@ -47,13 +47,13 @@ public class FTPServerConnectorTest {
         BServiceUtil.runService(compileResult);
         fileSystem.add(new FileEntry("/home/wso2/newFile.txt"));
         try {
-            Thread.sleep(2000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             // Ignore.
         }
-        final BValue[] result = BRunUtil.invokeStateful(compileResult, "isInvoked");
-        BBoolean isInvoked = (BBoolean) result[0];
-        Assert.assertTrue(isInvoked.booleanValue(), "Resource didn't invoke for the file create.");
+        final BValue[] result = BRunUtil.invokeStateful(compileResult, "getFileCount");
+        BInteger fileCount = (BInteger) result[0];
+        Assert.assertEquals(fileCount.intValue(), 2, "Resource didn't invoke for the file create.");
     }
 
     @AfterClass

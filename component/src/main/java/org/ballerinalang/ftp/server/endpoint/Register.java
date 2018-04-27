@@ -25,15 +25,14 @@ import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.connector.api.Service;
 import org.ballerinalang.connector.api.Struct;
+import org.ballerinalang.connector.api.Value;
 import org.ballerinalang.ftp.server.FTPFileSystemListener;
 import org.ballerinalang.ftp.util.FTPUtil;
-import org.ballerinalang.ftp.util.ServerConstants;
+import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
-import org.ballerinalang.util.codegen.PackageInfo;
-import org.ballerinalang.util.codegen.StructInfo;
 import org.wso2.transport.remotefilesystem.Constants;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
 import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
@@ -43,7 +42,7 @@ import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileS
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 /**
  * Register remote FTP server listener service.
@@ -67,56 +66,63 @@ public class Register extends BlockingNativeCallableUnit {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
             final Resource resource = service.getResources()[0];
-            StructInfo structInfo = getStrcutIno(context);
+            final FTPFileSystemListener listener = new FTPFileSystemListener(resource,
+                    context.getProgramFile().getPackageInfo(FTP_PACKAGE_NAME));
             RemoteFileSystemServerConnector serverConnector = fileSystemConnectorFactory
-                    .createServerConnector(service.getName(), paramMap,
-                            new FTPFileSystemListener(resource, structInfo));
-            serviceEndpoint.addNativeData(ServerConstants.FTP_SERVER_CONNECTOR, serverConnector);
+                    .createServerConnector(service.getName(), paramMap, listener);
+            serviceEndpoint.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
+            // This is a temporary solution.
+            serviceEndpointConfig.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
         } catch (RemoteFileSystemConnectorException e) {
             throw new BallerinaConnectorException("Unable to initialize the FTP listener: " + e.getMessage(), e);
         }
         context.setReturnValues();
     }
 
-    private StructInfo getStrcutIno(Context context) {
-        PackageInfo httpPackageInfo = context.getProgramFile().getPackageInfo(FTP_PACKAGE_NAME);
-        return httpPackageInfo.getStructInfo(ServerConstants.FTP_SERVER_EVENT);
-    }
-
     private Map<String, String> getServerConnectorParamMap(Struct serviceEndpointConfig) {
         Map<String, String> params = new HashMap<>(12);
-        final String path = serviceEndpointConfig.getStringField(ServerConstants.ANNOTATION_PATH);
-        String protocol = serviceEndpointConfig.getStringField(ServerConstants.ANNOTATION_PROTOCOL);
-        final String host = serviceEndpointConfig.getStringField(ServerConstants.ANNOTATION_HOST);
-        final long port = serviceEndpointConfig.getIntField(ServerConstants.ANNOTATION_PORT);
-        final String username = serviceEndpointConfig.getStringField(ServerConstants.ANNOTATION_USERNAME);
-        final String passPhrase = serviceEndpointConfig.getStringField(ServerConstants.ANNOTATION_PASSPHRASE);
-        if (protocol != null && protocol.isEmpty()) {
-            protocol = "tcp";
+        final String path = serviceEndpointConfig.getStringField(FtpConstants.ENDPOINT_CONFIG_PATH);
+        Value protocol = serviceEndpointConfig.getRefField(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
+        final String host = serviceEndpointConfig.getStringField(FtpConstants.ENDPOINT_CONFIG_HOST);
+        final long port = serviceEndpointConfig.getIntField(FtpConstants.ENDPOINT_CONFIG_PORT);
+
+        final Struct secureSocket = serviceEndpointConfig.getStructField(FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
+        String username = null;
+        String password = null;
+        if (secureSocket != null) {
+            final Struct basicAuth = secureSocket.getStructField(FtpConstants.ENDPOINT_CONFIG_BASIC_AUTH);
+            if (basicAuth != null) {
+                username = basicAuth.getStringField(FtpConstants.ENDPOINT_CONFIG_USERNAME);
+                password = basicAuth.getStringField(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
+            }
         }
-        String url = FTPUtil.createUrl(protocol, host, port, username, passPhrase, path);
+        String url = FTPUtil.createUrl(protocol.getStringValue(), host, port, username, password, path);
         params.put(Constants.TRANSPORT_FILE_URI, url);
-        addStringProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_FILE_PATTERN, null);
-        addStringProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_CRON_EXPRESSION, null);
-        addStringProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_IDENTITY, null);
-        addStringProperty(serviceEndpointConfig, params, ServerConstants.ANNOTATION_IDENTITY_PASS_PHRASE, null);
-        params.put(ServerConstants.ANNOTATION_POLLING_INTERVAL,
-                String.valueOf(serviceEndpointConfig.getIntField(ServerConstants.ANNOTATION_POLLING_INTERVAL)));
-        params.put(Constants.USER_DIR_IS_ROOT,
-                String.valueOf(serviceEndpointConfig.getBooleanField(ServerConstants.ANNOTATION_USER_DIR_IS_ROOT)));
-        params.put(Constants.AVOID_PERMISSION_CHECK, String.valueOf(
-                serviceEndpointConfig.getBooleanField(ServerConstants.ANNOTATION_AVOID_PERMISSION_CHECK)));
-        params.put(Constants.PASSIVE_MODE,
-                String.valueOf(serviceEndpointConfig.getBooleanField(ServerConstants.ANNOTATION_PASSIVE_MODE)));
+        addStringProperty(serviceEndpointConfig, params, Constants.FILE_NAME_PATTERN,
+                FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN);
+        if (secureSocket != null) {
+            final Struct privateKey = secureSocket.getStructField(FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY);
+            if (privateKey != null) {
+                final String privateKeyPath = privateKey.getStringField(FtpConstants.ENDPOINT_CONFIG_FILE_PATH);
+                if (privateKeyPath != null && !privateKeyPath.isEmpty()) {
+                    params.put(Constants.IDENTITY, privateKeyPath);
+                    final String privateKeyPassword = privateKey.getStringField(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
+                    if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
+                        params.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword);
+                    }
+                }
+            }
+        }
+        params.put(Constants.USER_DIR_IS_ROOT, String.valueOf(false));
+        params.put(Constants.AVOID_PERMISSION_CHECK, String.valueOf(true));
+        params.put(Constants.PASSIVE_MODE, String.valueOf(true));
         return params;
     }
 
-    private void addStringProperty(Struct config, Map<String, String> params, String key, String defaultValue) {
-        final String value = config.getStringField(key);
+    private void addStringProperty(Struct config, Map<String, String> params, String transportKey, String endpointKey) {
+        final String value = config.getStringField(endpointKey);
         if (value != null && !value.isEmpty()) {
-            params.put(key, value);
-        } else if (defaultValue != null) {
-            params.put(key, defaultValue);
+            params.put(transportKey, value);
         }
     }
 }

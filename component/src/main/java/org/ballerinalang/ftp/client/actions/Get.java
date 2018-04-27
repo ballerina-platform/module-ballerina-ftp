@@ -19,7 +19,7 @@ package org.ballerinalang.ftp.client.actions;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMStructs;
-import org.ballerinalang.ftp.util.ClientConstants;
+import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.nativeimpl.io.BallerinaIOException;
@@ -51,7 +51,8 @@ import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.ftp.util.FtpConstants.BALLERINA_BUILTIN;
+import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 /**
 * FTP Get operation.
@@ -64,8 +65,7 @@ import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "path", type = TypeKind.STRING)},
         returnType = {@ReturnType(type = TypeKind.STRUCT, structType = "ByteChannel", structPackage = "ballerina.io"),
-                      @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError",
-                                  structPackage = FTP_PACKAGE_NAME)
+                      @ReturnType(type = TypeKind.STRUCT, structType = "error", structPackage = BALLERINA_BUILTIN)
         }
 )
 public class Get extends AbstractFtpAction {
@@ -75,11 +75,11 @@ public class Get extends AbstractFtpAction {
         BStruct clientConnector = (BStruct) context.getRefArgument(0);
         String pathString = context.getStringArgument(0);
 
-        String url = (String) clientConnector.getNativeData(ClientConstants.URL);
-        Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(ClientConstants.PROPERTY_MAP);
+        String url = (String) clientConnector.getNativeData(FtpConstants.URL);
+        Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
         //Create property map to send to transport.
         Map<String, String> propertyMap = new HashMap<>(prop);
-        propertyMap.put(ClientConstants.PROPERTY_URI, url + pathString);
+        propertyMap.put(FtpConstants.PROPERTY_URI, url + pathString);
 
         FTPReadClientConnectorListener connectorListener = new FTPReadClientConnectorListener(context);
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();

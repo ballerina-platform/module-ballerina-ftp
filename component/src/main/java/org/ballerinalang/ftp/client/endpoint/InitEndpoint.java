@@ -22,8 +22,9 @@ import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
 import org.ballerinalang.connector.api.Struct;
-import org.ballerinalang.ftp.util.ClientConstants;
+import org.ballerinalang.connector.api.Value;
 import org.ballerinalang.ftp.util.FTPUtil;
+import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
@@ -33,7 +34,7 @@ import org.ballerinalang.util.exceptions.BallerinaException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 /**
  * Initialization of client endpoint.
@@ -53,28 +54,30 @@ public class InitEndpoint extends BlockingNativeCallableUnit {
     public void execute(Context context) {
         Struct clientEndpoint = BLangConnectorSPIUtil.getConnectorEndpointStruct(context);
         Struct clientEndpointConfig = clientEndpoint.getStructField("config");
-        String protocol = clientEndpointConfig.getStringField("protocol");
-        String host = clientEndpointConfig.getStringField("host");
-        long port = clientEndpointConfig.getIntField("port");
-        String username = clientEndpointConfig.getStringField("username");
-        String passPhrase = clientEndpointConfig.getStringField("passPhrase");
-        if (protocol != null) {
-            if (protocol.isEmpty()) {
-                protocol = "tcp";
-            } else if (FTPUtil.notValidProtocol(protocol)) {
-                throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by FTP listener");
+        Value protocol = clientEndpointConfig.getRefField(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
+        if (FTPUtil.notValidProtocol(protocol.getStringValue())) {
+            throw new BallerinaException("Only FTP, SFTP and FTPS protocols are supported by FTP client.");
+        }
+        String host = clientEndpointConfig.getStringField(FtpConstants.ENDPOINT_CONFIG_HOST);
+        long port = clientEndpointConfig.getIntField(FtpConstants.ENDPOINT_CONFIG_PORT);
+
+        final Struct secureSocket = clientEndpointConfig.getStructField(FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
+        String username = null;
+        String password = null;
+        if (secureSocket != null) {
+            final Struct basicAuth = secureSocket.getStructField(FtpConstants.ENDPOINT_CONFIG_BASIC_AUTH);
+            if (basicAuth != null) {
+                username = basicAuth.getStringField(FtpConstants.ENDPOINT_CONFIG_USERNAME);
+                password = basicAuth.getStringField(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
             }
         }
-        String url = FTPUtil.createUrl(protocol, host, port, username, passPhrase, null);
-        clientEndpoint.addNativeData(ClientConstants.URL, url);
-        Map<String, String> config = new HashMap<>(5);
-        config.put(ClientConstants.FTP_PASSIVE_MODE,
-                String.valueOf(clientEndpointConfig.getBooleanField("passiveMode")));
-        config.put(ClientConstants.USER_DIR_IS_ROOT,
-                String.valueOf(clientEndpointConfig.getBooleanField("userDirIsRoot")));
-        config.put(ClientConstants.AVOID_PERMISSION_CHECK,
-                String.valueOf(clientEndpointConfig.getBooleanField("avoidPermissionCheck")));
-        clientEndpoint.addNativeData(ClientConstants.PROPERTY_MAP, config);
+        String url = FTPUtil.createUrl(protocol.getStringValue(), host, port, username, password, null);
+        clientEndpoint.addNativeData(FtpConstants.URL, url);
+        Map<String, String> config = new HashMap<>(3);
+        config.put(FtpConstants.FTP_PASSIVE_MODE, String.valueOf(true));
+        config.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(false));
+        config.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
+        clientEndpoint.addNativeData(FtpConstants.PROPERTY_MAP, config);
         context.setReturnValues();
     }
 }

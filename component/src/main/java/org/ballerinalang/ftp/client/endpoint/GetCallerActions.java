@@ -21,7 +21,7 @@ package org.ballerinalang.ftp.client.endpoint;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
-import org.ballerinalang.ftp.util.ClientConstants;
+import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
@@ -30,7 +30,7 @@ import org.ballerinalang.natives.annotations.ReturnType;
 
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 /**
  * Get the client endpoint.
@@ -41,12 +41,12 @@ import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
 @BallerinaFunction(
         orgName = "wso2",
         packageName = "ftp",
-        functionName = "getClient",
+        functionName = "getCallerActions",
         receiver = @Receiver(type = TypeKind.STRUCT, structType = "Client", structPackage = FTP_PACKAGE_NAME),
         returnType = {@ReturnType(type = TypeKind.STRUCT)},
         isPublic = true
 )
-public class GetClient extends BlockingNativeCallableUnit {
+public class GetCallerActions extends BlockingNativeCallableUnit {
 
     @Override
     public void execute(Context context) {
@@ -55,10 +55,10 @@ public class GetClient extends BlockingNativeCallableUnit {
         BStruct clientConnector = BLangConnectorSPIUtil
                 .createBStruct(context.getProgramFile(), FTP_PACKAGE_NAME, "ClientActions",
                         clientEndpointConfig);
-        final String url = (String) clientEndpoint.getNativeData(ClientConstants.URL);
-        clientConnector.addNativeData(ClientConstants.URL, url);
-        Map<String, String> prop = (Map<String, String>) clientEndpoint.getNativeData(ClientConstants.PROPERTY_MAP);
-        clientConnector.addNativeData(ClientConstants.PROPERTY_MAP, prop);
+        final String url = (String) clientEndpoint.getNativeData(FtpConstants.URL);
+        clientConnector.addNativeData(FtpConstants.URL, url);
+        Map<String, String> prop = (Map<String, String>) clientEndpoint.getNativeData(FtpConstants.PROPERTY_MAP);
+        clientConnector.addNativeData(FtpConstants.PROPERTY_MAP, prop);
         context.setReturnValues(clientConnector);
     }
 }

@@ -18,7 +18,7 @@
 package org.ballerinalang.ftp.client.actions;
 
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.ftp.util.ClientConstants;
+import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BInteger;
 import org.ballerinalang.model.values.BStruct;
@@ -37,7 +37,8 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.ftp.util.FtpConstants.BALLERINA_BUILTIN;
+import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 /**
 * FTP file size operation.
@@ -50,8 +51,7 @@ import static org.ballerinalang.ftp.util.ServerConstants.FTP_PACKAGE_NAME;
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "path", type = TypeKind.STRING)},
         returnType = {@ReturnType(type = TypeKind.INT),
-                      @ReturnType(type = TypeKind.STRUCT, structType = "FTPClientError",
-                                  structPackage = FTP_PACKAGE_NAME)
+                      @ReturnType(type = TypeKind.STRUCT, structType = "error", structPackage = BALLERINA_BUILTIN)
         }
 )
 public class Size extends AbstractFtpAction {
@@ -61,11 +61,11 @@ public class Size extends AbstractFtpAction {
         BStruct clientConnector = (BStruct) context.getRefArgument(0);
         String pathString = context.getStringArgument(0);
 
-        String url = (String) clientConnector.getNativeData(ClientConstants.URL);
-        Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(ClientConstants.PROPERTY_MAP);
+        String url = (String) clientConnector.getNativeData(FtpConstants.URL);
+        Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
         Map<String, String> propertyMap = new HashMap<>(prop);
-        propertyMap.put(ClientConstants.PROPERTY_URI, url + pathString);
-        propertyMap.put(ClientConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
+        propertyMap.put(FtpConstants.PROPERTY_URI, url + pathString);
+        propertyMap.put(FtpConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 
         FTPFileSizeListener connectorListener = new FTPFileSizeListener(context);
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
