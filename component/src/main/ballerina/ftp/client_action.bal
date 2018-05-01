@@ -13,64 +13,102 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/io;
 
-@Description { value: "FTP client connector for outbound FTP file requests" }
+documentation {
+    Provides the FTP client actions for interacting with an FTP server.
+
+    F{{config}} The configurations of the client endpoint associated with this ClientActions instance.
+}
 public type ClientActions object {
     public {
         ClientEndpointConfiguration config;
     }
 
-    @Description { value: "Retrieves ByteChannel" }
-    @Param { value: "path: The file path to be read" }
-    @Return { value: "channel: A ByteChannel that represent the data source" }
-    @Return { value: "Error occured during FTP client invocation" }
+    documentation {
+        The `get()` function can be used to retrieve file content from a remote resource.
+
+        P{{path}} The resource path
+        R{{}} A ByteChannel which represent the data source to the resource or
+        an `error` if failed to establish communication with the FTP server or read the resource
+    }
     public native function get(string path) returns io:ByteChannel|error;
 
-    @Description { value: "Deletes a file from a given location" }
-    @Param { value: "path: File path that should be deleted" }
-    @Return { value: "Error occured during FTP client invocation" }
+    documentation {
+        The `delete()` function can be used to delete a file from an FTP server.
+
+        P{{path}} The resource path
+        R{{}} Returns an `error` if failed to establish communication with the FTP server
+    }
     public native function delete(string path) returns error?;
 
-    @Description { value: "Put a file using the given blob" }
-    @Param { value: "path: Destination path of the file" }
-    @Param { value: "channel: A ByteChannel that represent the data source" }
-    @Return { value: "Error occured during FTP client invocation" }
+    documentation {
+        The `put()` function can be used to add a file to an FTP server.
+
+        P{{path}} The resource path
+        P{{channel}} A ByteChannel that represent the local data source
+        R{{}} Returns an `error` if failed to establish communication with the FTP server
+    }
     public native function put(string path, io:ByteChannel channel) returns error?;
 
-    @Description { value: "Append to a file using the given blob" }
-    @Param { value: "path: Destination path of the file" }
-    @Param { value: "channel: A ByteChannel that represent the data source" }
-    @Return { value: "Error occured during FTP client invocation" }
+    documentation {
+        The `append()` function can be used to append content to an existing file in an FTP server.
+        A new file will create if file does not exist.
+
+        P{{path}} The resource path
+        P{{channel}} A ByteChannel that represent the local data source
+        R{{}} Returns an `error` if failed to establish communication with the FTP server
+    }
     public native function append(string path, io:ByteChannel channel) returns error?;
 
-    @Description { value: "Create a directory in a given location" }
-    @Param { value: "path: Path that directory need to create" }
-    @Return { value: "Error occured during FTP client invocation" }
+    documentation {
+        The `mkdir()` function can be used to create new direcotry in an FTP server.
+
+        P{{path}} The directory path
+        R{{}} Returns an `error` if failed to establish communication with the FTP server
+    }
     public native function mkdir(string path) returns error?;
 
-    @Description { value: "Remove directory in a given location" }
-    @Param { value: "path: Path that directory need to remove" }
-    @Return { value: "Error occured during FTP client invocation" }
+    documentation {
+        The `rmdir()` function can be used to delete an empty direcotry in an FTP server.
+
+        P{{path}} The directory path
+        R{{}} Returns an `error` if failed to establish communication with the FTP server
+    }
     public native function rmdir(string path) returns error?;
 
-    @Description { value: "Rename the existing file. This can also use to move file to a different location" }
-    @Param { value: "origin: Origin file path" }
-    @Param { value: "destination: Destination file path" }
-    @Return { value: "Error occured during FTP client invocation" }
+    documentation {
+        The `rename()` function can be used to rename a file or move to new location with in the same FTP server.
+
+        P{{origin}} The source file location
+        P{{destination}} The destination file location.
+        R{{}} Returns an `error` if failed to establish communication with the FTP server
+    }
     public native function rename(string origin, string destination) returns error?;
 
-    @Description { value: "Get the size of the given file" }
-    @Param { value: "path: File location" }
-    @Return { value: "Returns size of the given file" }
-    @Return { value: "Error occured during FTP client invocation" }
+    documentation {
+        The `size()` function can be used to get the size of a file resource.
+
+        P{{path}} The resource path
+        R{{}} The file size in bytes or an `error` if failed to establish communication with the FTP server
+    }
     public native function size(string path) returns int|error;
 
-    @Description { value: "Get the list of folder/file names in the given location" }
-    @Param { value: "path: Directory location" }
-    @Return { value: "Returns size of the given file" }
-    @Return { value: "Error occured during FTP client invocation" }
+    documentation {
+        The `list()` function can be used to get the file name list in a give folder.
+
+        P{{path}} The direcotry path
+        R{{}} An array of file names or an `error` if failed to establish communication with the FTP server
+    }
     public native function list(string path) returns string[]|error;
 
-    // isDirectory(string path)
+    documentation {
+        The `isDirectory()` function can be used checks if given resource is a direcotry.
+
+        P{{path}} The resource path
+        R{{}} Returns true if given resouce is a direcotry or
+        an `error` if failed to establish communication with the FTP server
+    }
+    public native function isDirectory(string path) returns boolean|error;
 };

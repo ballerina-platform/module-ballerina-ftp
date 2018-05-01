@@ -97,7 +97,7 @@ public class Register extends BlockingNativeCallableUnit {
             }
         }
         String url = FTPUtil.createUrl(protocol.getStringValue(), host, port, username, password, path);
-        params.put(Constants.TRANSPORT_FILE_URI, url);
+        params.put(Constants.URI, url);
         addStringProperty(serviceEndpointConfig, params, Constants.FILE_NAME_PATTERN,
                 FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN);
         if (secureSocket != null) {

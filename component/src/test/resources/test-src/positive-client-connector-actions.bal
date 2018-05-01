@@ -103,3 +103,12 @@ function rename(string host, string source, string destination) {
 
     _ = client->rename(source, destination);
 }
+
+function isDirectory(string host, string path) returns boolean{
+    endpoint ftp:Client client {
+        protocol: ftp:FTP,
+        host: host
+    };
+
+    return check client->isDirectory(path);
+}

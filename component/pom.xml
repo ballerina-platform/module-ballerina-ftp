@@ -200,10 +200,10 @@
                         </goals>
                         <configuration>
                             <outputDir>${project.build.directory}/api-docs</outputDir>
-                            <sourceDir>
-                                ${basedir}/target/classes/META-INF/wso2
-                            </sourceDir>
+                            <sourceRoot>${basedir}/target/classes/META-INF/wso2</sourceRoot>
                             <nativeCode>true</nativeCode>
+                            <packageFilter>compression</packageFilter>
+                            <orgName>wso2</orgName>
                         </configuration>
                     </execution>
                 </executions>

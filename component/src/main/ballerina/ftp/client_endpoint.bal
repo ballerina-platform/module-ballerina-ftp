@@ -19,7 +19,7 @@
 ///////////////////////////
 
 documentation {
-    Represents a FTP client which intract with a remote FTP server.
+    Represents a FTP client which intract with an FTP server.
 }
 public type Client object {
     public {

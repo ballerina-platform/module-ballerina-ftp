@@ -19,7 +19,7 @@ documentation {
 
     F{{path}} Relative file path for newly added file.
     F{{size}} Size of the file.
-    F{{lastModifiedTimestamp}} Last modified timestamp of the file.
+    F{{lastModifiedTimestamp}} Last modified timestamp of the file in UNIX Epoch time.
 }
 public type FileInfo {
     string path,

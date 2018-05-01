@@ -23,7 +23,7 @@
     <test name="ballerina-lang-test-suite" preserve-order="true" parallel="false">
         <packages>
             <package name="org.ballerinalang.ftp.server.*"/>
-            <package name="org.ballerinalang.ftp.client.nativeimpl.*"/>
+            <package name="org.ballerinalang.ftp.client.*"/>
         </packages>
     </test>
 </suite>
