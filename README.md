@@ -1,93 +1,114 @@
-# **Ballerina File System Connectors**
+# **Ballerina FTP Listener and Client**
 
-## File System Server Connector
-
-The File System Server Connector can be used to listen to a directory in the local file system. It will keep listening to the specified directory and process the files in the directory as they get added to the directory.
+## FTP Listener
+The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and periodically notify the file addition and deletion.
 ```ballerina
-import ballerina.net.fs;
-import ballerina.log;
-@fs:configuration {
-    dirURI:"/home/ballerina/programs",
-    events:"create,delete,modify",
-    recursive:false
-}
-service<fs> fileSystem {
-    resource fileResource (fs:FileSystemEvent m) {
-        log:info(m.name);
-        log:info(m.operation);
-    }
-}
-```
-FileSystemEvent struct consists of additional two functions that support file move and file delete:
-move(string filePath) and delete().
+import wso2/ftp;
+import ballerina/io;
 
-## FTP Server Connector
-The FTP Server Connector can be used to listen to a remote directory. It will keep listening to the specified directory and process the files in the directory as they get added to the directory.
-```ballerina
-import ballerina.net.ftp;
-import ballerina.log;
-@ftp:configuration {
-    dirURI:"ftp://ballerina:ballerina123@localhost:48123/home/ballerina",
-    pollingInterval:"2000",
-    actionAfterProcess:"NONE",
-    moveAfterFailure:"NONE",
-    parallel:"false",
-    createMoveDir:"true"
-}
-service<ftp> ftpServerConnector {
-    resource fileResource (ftp:FTPServerEvent m) {
-        log:info(m.name);
+endpoint ftp:Listener remoteLocation {
+    protocol:ftp:FTP,
+    host:"localhost",
+    port:48123,
+    secureSocket: {
+        basicAuth: {
+            username: "ballerina",
+            password: "ballerina123"
+        }
+    },
+    path:"/home/ballerina"
+};
+
+service monitor bind remoteLocation {
+    fileResource (ftp:WatchEvent m) {
+        foreach v in m.addedFiles {
+            io:println("Added file path: ", v.path);
+        }
+        
+        foreach v in m.deletedFiles {
+            io:println("Deleted file path: ", v);
+        }
     }
 }
 ```
 
-## FTP Client Connector
+## FTP Client
 The FTP Client Connector can be used to connect to an FTP server and perform I/O operations.
 ```ballerina
-import ballerina.net.ftp;
-import ballerina.file;
-import ballerina.io;
+import wso2/ftp;
+import ballerina/io;
 
+endpoint ftp:Client client {
+    protocol: ftp:FTP,
+    host:"127.0.0.1",
+    port:21
+};
+    
 function main (string[] args) {
-    endpoint<ftp:FTPClient> c { create ftp:FTPClient();}
-    file:File target = {path:"ftp://127.0.0.1/ballerina-user/aa.txt"};
-    boolean filesExists = c.exists(target);
-    io:println("File exists: " + filesExists);
+    // To create a folder in remote server
+    errorr? dirCreErr = client -> mkdir("/ballerina-user/sample-dir");
+    match dirCreErr {
+        error err => {
+            io:println("An error occured.");
+            return;
+        }
+        () => {}
+    }
     
-    file:File newDir = {path:"ftp://127.0.0.1/ballerina-user/new-dir/"};
-    c.createFile(newDir, true);
+    // Upload file to a remote server
+    io:ByteChannel summaryChannel = io:openFile("/home/ballerina/prog/summary.bal", io:MODE_R);
+    error? filePutErr = client -> put("/ballerina-user/sample-dir/summary.bal", summaryChannel);    
+    match filePutErr {
+        error err => {
+            io:println("An error occured.");
+            return;
+        }
+        () => {}
+    }
     
-    file:File txtFile = {path:"ftp://127.0.0.1/ballerina-user/bb.txt"};
-    io:ByteChannel channel = c.read(txtFile);
-    blob bytes;
-    int numberOfBytesRead;
-    bytes,numberOfBytesRead = channel.readAllBytes();
-    io:println(bytes.toString("UTF-8"));
-    channel.close();
+    // Get the content list of a given path
+    var listResult = client -> list("/ballerina-user/sample-dir");
+    match  listResult {
+        string[] list => {
+            foreach file in list {
+                io:println("File: " + file);
+            }
+        }
+        error err=> {
+            io:println("An error occured.");
+            return;
+        }
+    }    
     
-    files:File copyOfTxt = {path:"ftp://127.0.0.1/ballerina-user/new-dir/copy-of-bb.txt"};
-    c.copy(txtFile, copyOfTxt);
+    // Get the size of a remote file
+    int size = check client -> size("/ballerina-user/sample-dir/stock.json");
     
-    file:File mvSrc = {path:"ftp://127.0.0.1/ballerina-user/aa.txt"};
-    file:File mvTarget = {path:"ftp://127.0.0.1/ballerina-user/move/moved-aa.txt"};
-    c.move(mvSrc, mvTarget);
+    // Read content of a remote file
+    var getResult = client -> get("/ballerina-user/sample-dir/stock.json");
+    match getResult {
+        io:ByteChannel channel => {
+            io:CharacterChannel characters = check io:createCharacterChannel(channel, "UTF-8");
+            json stock = check characters.readJson();
+            _ = channel.close();
+        }
+        error err => {
+            io:println("An error occured.");
+            return;
+        }
+    }    
     
-    file:File del = {path:"ftp://127.0.0.1/ballerina-user/cc.txt"};
-    c.delete(del);
+    // Rename or move remote file to a another remote location in a same FTP server
+    error? renameErr = client -> rename("/ballerina-user/sample-dir/stock.json", "/ballerina-user/sample-dir/done/stock.json");
     
-    file:File wrt = {path:"ftp://127.0.0.1/ballerina-user/dd.txt"};
-    blob contentD = content.toBlob("Hello World!", "UTF-8");
-    c.write(contentD, wrt, "a");
+    // Delete remote file
+    error? fileDelCreErr = client -> delete("/ballerina-user/sample-dir/temp/MyMockProxy.xml");
     
-    file:File sourceContent = {path:"ftp://127.0.0.1/ballerina-user/product.zip"};
-    io:ByteChannel channel = c.read(sourceContent);
-    file:File destinationFile = {path:"ftp://127.0.0.2/pipe-content/product.zip"};
-    c.pipe(channel, destinationFile, "o");
-    channel.close(); 
+    // Remove direcotry from remote server 
+    _ = client -> rmdir("/ballerina-user/sample-dir/temp");  
 }
 ```
-## How to install File System Connectors
-1. Download correct distribution.zip from [releases](https://github.com/ballerinalang/connector-file/releases) that match with ballerina 
+## How to install FTP Connectors
+1. Download correct distribution.zip from [releases](https://github.com/wso2-ballerina/package-file/releases) that match with ballerina 
   version.
 2. Unzip connector distribution and copy to all jars to <BALLERINA_HOME>/bre/lib folder.
 
@@ -95,3 +116,4 @@ function main (string[] args) {
 | ----------------- | ---------------------- |
 | 0.95.0 | 0.95.0 |
 | 0.963.0| 0.96.0 |
+| 0.970.0| 0.97.0 |

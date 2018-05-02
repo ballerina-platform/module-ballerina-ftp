@@ -16,21 +16,22 @@
   ~ under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.ballerinalang</groupId>
     <artifactId>file-connector-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.96.1-SNAPSHOT</version>
+    <version>0.97.0-SNAPSHOT</version>
     <name>Ballerina - File Connector ParentParent</name>
 
     <url>http://ballerinalang.org</url>
 
     <scm>
-        <url>https://github.com/ballerinalang/connector-file.git</url>
-        <developerConnection>scm:git:https://github.com/ballerinalang/connector-file.git</developerConnection>
-        <connection>scm:git:https://github.com/ballerinalang/connector-file.git</connection>
+        <url>https://github.com/wso2-ballerina/package-file.git</url>
+        <developerConnection>scm:git:https://github.com/wso2-ballerina/package-file.git</developerConnection>
+        <connection>scm:git:https://github.com/wso2-ballerina/package-file.git</connection>
         <tag>HEAD</tag>
     </scm>
     <modules>
@@ -153,11 +154,6 @@
                 <version>${file.transport.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.transport.file</groupId>
-                <artifactId>org.wso2.transport.local-file-system</artifactId>
-                <version>${file.transport.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-builtin</artifactId>
                 <version>${ballerina.version}</version>
@@ -181,11 +177,6 @@
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>docerina</artifactId>
                 <version>${docerina.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.polling.core</groupId>
-                <artifactId>org.wso2.carbon.connector.framework</artifactId>
-                <version>${connector.framework.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mockftpserver</groupId>
@@ -330,7 +321,7 @@
                     </processors>
                     <options>
                         <nativeEntityProviderPackage>
-                            org.ballerinalang.net.ftp.generated.providers
+                            org.ballerinalang.ftp.generated.providers
                         </nativeEntityProviderPackage>
                         <nativeEntityProviderClass>StandardNativeElementProvider</nativeEntityProviderClass>
                     </options>
@@ -370,9 +361,9 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <ballerina.version>0.963.0</ballerina.version>
+        <ballerina.version>0.970.0</ballerina.version>
         <docerina.version>${ballerina.version}</docerina.version>
-        <file.transport.version>6.0.51</file.transport.version>
+        <file.transport.version>6.0.55</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>
         <maven.findbugsplugin.version.exclude>findbugs-exclude.xml</maven.findbugsplugin.version.exclude>
         <mock.ftp.server.version>2.7.1</mock.ftp.server.version>
@@ -389,14 +380,12 @@
         <maven.dependency.plugin.version>3.0.2</maven.dependency.plugin.version>
         <maven.processor.plugin.version>2.2.4</maven.processor.plugin.version>
         <maven.remote.resource.plugin.version>1.5</maven.remote.resource.plugin.version>
-        <docerina.maven.plugin.version>0.96.0</docerina.maven.plugin.version>
+        <docerina.maven.plugin.version>${ballerina.version}</docerina.maven.plugin.version>
 
         <!--Bundle dependency versions-->
-        <connector.framework.version>6.0.50</connector.framework.version>
-        <commons-vfs2.wso2.version>2.0-wso2v15</commons-vfs2.wso2.version>
+        <commons-vfs2.wso2.version>2.2-wso2v1</commons-vfs2.wso2.version>
         <!--<quartz.version>2.3.0.wso2v2</quartz.version>-->
-        <jsch.version>0.1.51.wso2v1</jsch.version>
-        <carbon.messaging.version>2.3.7</carbon.messaging.version>
+        <jsch.version>0.1.54</jsch.version>
         <commons-net.version>3.6</commons-net.version>
 
         <project.scm.id>my-scm-server</project.scm.id>

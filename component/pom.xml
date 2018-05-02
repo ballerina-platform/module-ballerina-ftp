@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.ballerinalang</groupId>
         <artifactId>file-connector-parent</artifactId>
-        <version>0.96.1-SNAPSHOT</version>
+        <version>0.97.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -34,10 +34,6 @@
         <dependency>
             <groupId>org.wso2.transport.file</groupId>
             <artifactId>org.wso2.transport.remote-file-system</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.transport.file</groupId>
-            <artifactId>org.wso2.transport.local-file-system</artifactId>
         </dependency>
         <dependency>
             <groupId>org.ballerinalang</groupId>
@@ -89,7 +85,7 @@
             </resource>
             <resource>
                 <directory>${generated.ballerina.source.directory}</directory>
-                <targetPath>META-INF/natives</targetPath>
+                <targetPath>META-INF/wso2</targetPath>
             </resource>
         </resources>
         <plugins>
@@ -119,18 +115,6 @@
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
-                                    <!-- <limits>
-                                        <limit >
-                                            <counter>INSTRUCTION</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.76</minimum>
-                                        </limit>
-                                        <limit >
-                                            <counter>BRANCH</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.62</minimum>
-                                        </limit>
-                                    </limits> -->
                                     <excludes>
                                         <exclude>*Test</exclude>
                                         <exclude>**/generated/**</exclude>
@@ -178,34 +162,15 @@
                                     <version>${file.transport.version}</version>
                                     <type>${project.packaging}</type>
                                 </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.wso2.transport.file</groupId>
-                                    <artifactId>org.wso2.transport.local-file-system</artifactId>
-                                    <version>${file.transport.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.wso2.carbon.polling.core</groupId>
-                                    <artifactId>org.wso2.carbon.connector.framework</artifactId>
-                                    <version>${connector.framework.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.apache.commons.wso2</groupId>
+                                <dependency>
+                                    <groupId>org.wso2.org.apache.commons</groupId>
                                     <artifactId>commons-vfs2</artifactId>
                                     <version>${commons-vfs2.wso2.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
+                                </dependency>
                                 <artifactItem>
                                     <groupId>com.jcraft</groupId>
                                     <artifactId>jsch</artifactId>
                                     <version>${jsch.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.wso2.carbon.messaging</groupId>
-                                    <artifactId>org.wso2.carbon.messaging</artifactId>
-                                    <version>${carbon.messaging.version}</version>
                                     <type>${project.packaging}</type>
                                 </artifactItem>
                                 <artifactItem>
@@ -235,10 +200,10 @@
                         </goals>
                         <configuration>
                             <outputDir>${project.build.directory}/api-docs</outputDir>
-                            <sourceDir>
-                                ${basedir}/target/classes/META-INF/natives
-                            </sourceDir>
+                            <sourceRoot>${basedir}/target/classes/META-INF/wso2</sourceRoot>
                             <nativeCode>true</nativeCode>
+                            <packageFilter>compression</packageFilter>
+                            <orgName>wso2</orgName>
                         </configuration>
                     </execution>
                 </executions>
@@ -289,8 +254,6 @@
         <package.repository.provider.class>
             org.ballerinalang.net.fs.repository.BallerinaBuiltinPackageRepository
         </package.repository.provider.class>
-        <native.constructs.provider.package>org.ballerinalang.net.fs</native.constructs.provider.package>
-        <native.constructs.provider.class>BallerinaFSConstructsProvider</native.constructs.provider.class>
 
         <!-- Path to the generated natives ballerina files temp directory -->
         <generated.ballerina.source.directory>
