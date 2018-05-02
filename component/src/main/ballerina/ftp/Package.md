@@ -4,12 +4,12 @@ The `wso2/ftp` package provides an FTP client and an FTP server listener impleme
 ### FTP client
 `ftp:Client` connects to an FTP server and performs various operations on the files. It supports `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`,  `rename`, `size`, and `list` operations.
 
-An FTP client endpoint is defined using these parameters: `protocol`, `host` and optionally, `port` and `secureSocket`.  Authentication configuration whether is in basicAuth based or private key based or TrustStore,Keystore based can be configure using  secureSocket parameter.
+An FTP client endpoint is defined using these parameters: `protocol`, `host` and optionally, `port` and `secureSocket`.  Authentication configuration can be configured using the secureSocket parameter for basicAuth, private key, or TrustStore/Keystore.
 
 ### FTP listener
-`ftp:Listener` is used to listen to a remote FTP location and trigger an event of type `WatchEvent` when a new files are added/deleted to the directory. The `fileResource` function is invoked when a new file is added and/or deleted.
+`ftp:Listener` is used to listen to a remote FTP location and trigger an event of type `WatchEvent` when new files are added/deleted to the directory. The `fileResource` function is invoked when a new file is added and/or deleted.
 
-An FTP listener endpoint is defined using these parameters: `protocol`, `host` and  `path` are mandatory parameters.  Authentication configuration can be done using `secureSocket` and polling interval can be configure using `pollingInterval`. Default polling interval is 60 seconds.
+An FTP listener endpoint is defined using these parameters: `protocol`, `host`, and  `path` are mandatory parameters.  Authentication configuration can be done using `secureSocket` and polling interval can be configure using `pollingInterval`. Default polling interval is 60 seconds.
 
 ## Samples
 
@@ -33,7 +33,7 @@ All of the following operations return `FTPClientError` in case of an error.
 // Make a directory in the remote FTP location.
 error? dirCreErr client -> mkdir("/personal/files");  
 
-//Add Put a file to the FTP location.
+//Add a file to the FTP location.
 io:ByteChannel bchannel = io:openFile("/home/john/files/MyFile.xml", io:READ);
 error? filePutErr = client -> put("/personal/files/MyFile.xml", bchannel);
 

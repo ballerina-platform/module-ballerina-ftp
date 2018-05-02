@@ -15,7 +15,7 @@
 // under the License.
 
 documentation {
-    This give newly added file's meta information.
+    This provides metadata information for newly added files.
 
     F{{path}} Relative file path for newly added file.
     F{{size}} Size of the file.
@@ -30,8 +30,8 @@ public type FileInfo {
 documentation {
     This represents the latest status change of the server from the last status change.
 
-    F{{addedFiles}} Array of FileInfo which represents newly added files.
-    F{{deletedFiles}} Array of string which contains deleted file names.
+    F{{addedFiles}} Array of FileInfo that represents newly added files.
+    F{{deletedFiles}} Array of string that contains deleted file names.
 }
 public type WatchEvent {
     FileInfo[] addedFiles,

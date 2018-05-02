@@ -19,7 +19,7 @@
 ///////////////////////////
 
 documentation {
-    Represents a FTP client which intract with an FTP server.
+    Represents an FTP client that intracts with an FTP server.
 }
 public type Client object {
     public {
@@ -40,7 +40,7 @@ documentation {
     Configuration for FTP client endpoint.
 
     F{{protocol}} Supported FTP protocols
-    F{{host}} Target service url
+    F{{host}} Target service URL
     F{{port}} Port number of the remote service
     F{{secureSocket}} Authenthication options
 }

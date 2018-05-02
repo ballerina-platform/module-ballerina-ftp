@@ -28,10 +28,10 @@ public type Protocol "ftp"|"sftp"|"ftps";
 @final public Protocol FTPS = "ftps";
 
 documentation {
-    A record for providing trust store related configurations.
+    A record for providing TrustStore related configurations.
 
-    F{{path}} Path to the trust store file
-    F{{password}} Trust store password
+    F{{path}} Path to the TrustStore file
+    F{{password}} TrustStore password
 }
 public type TrustStore {
     string path,
@@ -39,10 +39,10 @@ public type TrustStore {
 };
 
 documentation {
-    A record for providing key store related configurations.
+    A record for providing KeyStore related configurations.
 
-    F{{path}} Path to the key store file
-    F{{password}} Key store password
+    F{{path}} Path to the KeyStore file
+    F{{password}} KeyStore password
 }
 public type KeyStore {
     string path,
@@ -50,10 +50,10 @@ public type KeyStore {
 };
 
 documentation {
-    A record for providing key store related configurations.
+    A record for providing PrivateKey related configurations.
 
-    F{{path}} Path to the key store file
-    F{{password}} Key store password
+    F{{path}} Path to the PrivateKey file
+    F{{password}} PrivateKey password
 }
 public type PrivateKey {
     string path,
@@ -61,7 +61,7 @@ public type PrivateKey {
 };
 
 documentation {
-    A record for providing basic auth related configurations.
+    A record for providing BasicAuth related configurations.
 
     F{{username}} Username of the user
     F{{password}} Password of the user

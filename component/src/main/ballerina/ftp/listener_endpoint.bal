@@ -19,7 +19,7 @@ import ballerina/io;
 ListenerEndpointConfig c;
 
 documentation {
-    Represents a service listener which monitor FTP location.
+    Represents a service listener that monitors the FTP location.
 }
 public type Listener object {
     private {

@@ -101,19 +101,18 @@ public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
                 final String key = ((BLangSimpleVarRef) config.getKey()).variableName.value;
                 if (config.getValue() instanceof BLangLiteral) {
                     final Object value = ((BLangLiteral) config.getValue()).getValue();
+                    if (value == null) {
+                        throw new BallerinaException(key + " does not contains any value.");
+                    }
                     switch (key) {
                         case FtpConstants.ENDPOINT_CONFIG_PATH:
-                            if (value != null) {
-                                if (!value.toString().isEmpty()) {
-                                    isNonEmptyPath = true;
-                                }
+                            if (!value.toString().isEmpty()) {
+                                isNonEmptyPath = true;
                             }
                             break;
                         case FtpConstants.ENDPOINT_CONFIG_HOST:
-                            if (value != null) {
-                                if (!value.toString().isEmpty()) {
-                                    isNonEmptyHost = true;
-                                }
+                            if (!value.toString().isEmpty()) {
+                                isNonEmptyHost = true;
                             }
                             break;
                         default:
@@ -128,7 +127,6 @@ public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
             if (!isNonEmptyHost) {
                 dlog.logDiagnostic(Diagnostic.Kind.ERROR, endpointNode.getPosition(),
                         "Cannot create FTP Listener without host.");
-                throw new BallerinaException("Cannot create FTP Listener without host.");
             }
         }
     }

@@ -80,7 +80,7 @@ function main (string[] args) {
         }
     }    
     
-    // Get a size of a remote file
+    // Get the size of a remote file
     int size = check client -> size("/ballerina-user/sample-dir/stock.json");
     
     // Read content of a remote file
@@ -103,7 +103,7 @@ function main (string[] args) {
     // Delete remote file
     error? fileDelCreErr = client -> delete("/ballerina-user/sample-dir/temp/MyMockProxy.xml");
     
-    // 
+    // Remove direcotry from remote server 
     _ = client -> rmdir("/ballerina-user/sample-dir/temp");  
 }
 ```
