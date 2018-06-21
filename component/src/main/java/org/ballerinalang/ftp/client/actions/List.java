@@ -45,14 +45,14 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 */
 @BallerinaFunction(
         orgName = "wso2",
-        packageName = "ftp",
+        packageName = "ftp:0.0.0",
         functionName = "list",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
+        receiver = @Receiver(type = TypeKind.OBJECT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "path", type = TypeKind.STRING)},
         returnType = {
                 @ReturnType(type = TypeKind.ARRAY, elementType = TypeKind.STRING),
-                @ReturnType(type = TypeKind.STRUCT, structType = "error", structPackage = BALLERINA_BUILTIN)
+                @ReturnType(type = TypeKind.OBJECT, structType = "error", structPackage = BALLERINA_BUILTIN)
         }
 )
 public class List extends AbstractFtpAction {

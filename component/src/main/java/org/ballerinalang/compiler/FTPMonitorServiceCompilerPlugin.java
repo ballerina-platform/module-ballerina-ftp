@@ -30,7 +30,7 @@ import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.ballerinalang.util.exceptions.BallerinaException;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BStructType;
+import org.wso2.ballerinalang.compiler.semantics.model.types.BObjectType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.ballerinalang.compiler.tree.BLangResource;
 import org.wso2.ballerinalang.compiler.tree.BLangVariable;
@@ -77,9 +77,9 @@ public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
                                 + " parameter allow in the resource signature.");
             }
             final BType type = parameters.get(0).getTypeNode().type;
-            if (type.getKind().equals(TypeKind.STRUCT)) {
-                if (type instanceof BStructType) {
-                    BStructType event = (BStructType) type;
+            if (type.getKind().equals(TypeKind.OBJECT)) {
+                if (type instanceof BObjectType) {
+                    BObjectType event = (BObjectType) type;
                     if (!"ftp".equals(event.tsymbol.pkgID.name.value) || !FTP_SERVER_EVENT
                             .equals(event.tsymbol.name.value)) {
                         dlog.logDiagnostic(Diagnostic.Kind.ERROR, parameters.get(0).getPosition(),

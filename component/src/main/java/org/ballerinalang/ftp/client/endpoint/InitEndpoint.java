@@ -42,10 +42,10 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 @BallerinaFunction(
         orgName = "wso2",
-        packageName = "ftp",
+        packageName = "ftp:0.0.0",
         functionName = "initEndpoint",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Client", structPackage = FTP_PACKAGE_NAME),
-        args = {@Argument(name = "config", type = TypeKind.STRUCT, structType = "ClientEndpointConfiguration")},
+        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Client", structPackage = FTP_PACKAGE_NAME),
+        args = {@Argument(name = "config", type = TypeKind.OBJECT, structType = "ClientEndpointConfiguration")},
         isPublic = true
 )
 public class InitEndpoint extends BlockingNativeCallableUnit {

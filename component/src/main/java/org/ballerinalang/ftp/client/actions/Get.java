@@ -32,7 +32,7 @@ import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.util.codegen.PackageInfo;
-import org.ballerinalang.util.codegen.StructInfo;
+import org.ballerinalang.util.codegen.StructureTypeInfo;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
 import org.wso2.transport.remotefilesystem.client.connector.contract.FtpAction;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
@@ -59,13 +59,13 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 */
 @BallerinaFunction(
         orgName = "wso2",
-        packageName = "ftp",
+        packageName = "ftp:0.0.0",
         functionName = "get",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
+        receiver = @Receiver(type = TypeKind.OBJECT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
         args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
                 @Argument(name = "path", type = TypeKind.STRING)},
-        returnType = {@ReturnType(type = TypeKind.STRUCT, structType = "ByteChannel", structPackage = "ballerina.io"),
-                      @ReturnType(type = TypeKind.STRUCT, structType = "error", structPackage = BALLERINA_BUILTIN)
+        returnType = {@ReturnType(type = TypeKind.OBJECT, structType = "ByteChannel", structPackage = "ballerina/io"),
+                      @ReturnType(type = TypeKind.OBJECT, structType = "error", structPackage = BALLERINA_BUILTIN)
         }
 )
 public class Get extends AbstractFtpAction {
@@ -122,8 +122,8 @@ public class Get extends AbstractFtpAction {
         }
 
         private BStruct getBStruct() {
-            PackageInfo timePackageInfo = getContext().getProgramFile().getPackageInfo("ballerina.io");
-            final StructInfo structInfo = timePackageInfo.getStructInfo("ByteChannel");
+            PackageInfo timePackageInfo = getContext().getProgramFile().getPackageInfo("ballerina/io");
+            final StructureTypeInfo structInfo = timePackageInfo.getStructInfo("ByteChannel");
             return BLangVMStructs.createBStruct(structInfo);
         }
     }

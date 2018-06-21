@@ -33,7 +33,7 @@ public class FtpConstants {
     public static final String URL = "URL";
     public static final String PROPERTY_MAP = "map";
     public static final String BALLERINA_BUILTIN = "ballerina.builtin";
-    public static final String FTP_PACKAGE_NAME = "wso2.ftp";
+    public static final String FTP_PACKAGE_NAME = "wso2/ftp:0.0.0";
     public static final String FTP_SERVER_EVENT = "WatchEvent";
     public static final String FTP_FILE_INFO = "FileInfo";
     public static final String FTP_SERVER_CONNECTOR = "serverConnector";

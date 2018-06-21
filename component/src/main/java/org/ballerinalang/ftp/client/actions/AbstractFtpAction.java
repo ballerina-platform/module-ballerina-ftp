@@ -23,7 +23,7 @@ import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.util.codegen.PackageInfo;
-import org.ballerinalang.util.codegen.StructInfo;
+import org.ballerinalang.util.codegen.StructureTypeInfo;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 
@@ -36,7 +36,7 @@ abstract class AbstractFtpAction extends BlockingNativeCallableUnit {
 
     static BStruct getClientErrorStruct(Context context) {
         PackageInfo packageInfo = context.getProgramFile().getPackageInfo(BALLERINA_BUILTIN);
-        final StructInfo structInfo = packageInfo.getStructInfo("error");
+        final StructureTypeInfo structInfo = packageInfo.getStructInfo("error");
         return BLangVMStructs.createBStruct(structInfo);
     }
 
