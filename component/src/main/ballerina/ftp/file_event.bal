@@ -21,7 +21,7 @@ documentation {
     F{{size}} Size of the file.
     F{{lastModifiedTimestamp}} Last modified timestamp of the file in UNIX Epoch time.
 }
-public type FileInfo {
+public type FileInfo record {
     string path,
     int size,
     int lastModifiedTimestamp,
@@ -33,7 +33,7 @@ documentation {
     F{{addedFiles}} Array of FileInfo that represents newly added files.
     F{{deletedFiles}} Array of string that contains deleted file names.
 }
-public type WatchEvent {
+public type WatchEvent record {
     FileInfo[] addedFiles,
     string[] deletedFiles,
 };

@@ -50,9 +50,9 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 @BallerinaFunction(
         orgName = "wso2",
-        packageName = "ftp",
+        packageName = "ftp:0.0.0",
         functionName = "register",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Listener", structPackage = FTP_PACKAGE_NAME),
+        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Listener", structPackage = FTP_PACKAGE_NAME),
         args = {@Argument(name = "serviceType", type = TypeKind.TYPEDESC)},
         isPublic = true
 )

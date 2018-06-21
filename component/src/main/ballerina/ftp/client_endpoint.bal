@@ -26,8 +26,8 @@ public type Client object {
         ClientEndpointConfiguration config;
     }
 
-    public function init(ClientEndpointConfiguration config) {
-        self.config = config;
+    public function init(ClientEndpointConfiguration clientConfig) {
+        self.config = clientConfig;
         self.initEndpoint();
     }
 
@@ -44,7 +44,7 @@ documentation {
     F{{port}} Port number of the remote service
     F{{secureSocket}} Authenthication options
 }
-public type ClientEndpointConfiguration {
+public type ClientEndpointConfiguration record {
     Protocol protocol = FTP,
     string host,
     int port,

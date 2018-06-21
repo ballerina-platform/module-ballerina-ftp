@@ -28,7 +28,7 @@ import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.services.ErrorHandlerUtils;
 import org.ballerinalang.util.codegen.PackageInfo;
-import org.ballerinalang.util.codegen.StructInfo;
+import org.ballerinalang.util.codegen.StructureTypeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
@@ -62,7 +62,7 @@ public class FTPFileSystemListener implements RemoteFileSystemListener {
 
     private BValue getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
         // For newly added files.
-        final StructInfo fileInfoStructInfo = getFileInfoStructInfo(packageInfo);
+        final StructureTypeInfo fileInfoStructInfo = getFileInfoStructInfo(packageInfo);
         BRefValueArray fileInfoArray = new BRefValueArray(fileInfoStructInfo.getType());
         int i = 0;
         for (FileInfo info : fileSystemEvent.getAddedFiles()) {
@@ -91,11 +91,11 @@ public class FTPFileSystemListener implements RemoteFileSystemListener {
         log.debug("Successfully finished the action.");
     }
 
-    private StructInfo getWatchEventStructInfo(PackageInfo packageInfo) {
+    private StructureTypeInfo getWatchEventStructInfo(PackageInfo packageInfo) {
         return packageInfo.getStructInfo(FtpConstants.FTP_SERVER_EVENT);
     }
 
-    private StructInfo getFileInfoStructInfo(PackageInfo packageInfo) {
+    private StructureTypeInfo getFileInfoStructInfo(PackageInfo packageInfo) {
         return packageInfo.getStructInfo(FtpConstants.FTP_FILE_INFO);
     }
 }

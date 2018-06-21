@@ -78,10 +78,10 @@ function size(string host, string path) returns int {
         protocol: ftp:FTP,
         host: host
     };
-    int size = 0;
+    int fileSize = 0;
     var result = client->size(path);
-    size = check result;
-    return size;
+    fileSize = check result;
+    return fileSize;
 }
 
 function list(string host, string path) returns string[] {
@@ -89,10 +89,10 @@ function list(string host, string path) returns string[] {
         protocol: ftp:FTP,
         host: host
     };
-    string[] list;
+    string[] fileList;
     var result = client->list(path);
-    list = check result;
-    return list;
+    fileList = check result;
+    return fileList;
 }
 
 function rename(string host, string source, string destination) {
@@ -104,7 +104,7 @@ function rename(string host, string source, string destination) {
     _ = client->rename(source, destination);
 }
 
-function isDirectory(string host, string path) returns boolean{
+function isDirectory(string host, string path) returns boolean {
     endpoint ftp:Client client {
         protocol: ftp:FTP,
         host: host

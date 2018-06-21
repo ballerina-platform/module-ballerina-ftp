@@ -28,9 +28,9 @@ public type Listener object {
         task:Timer? task;
     }
 
-    public function init(ListenerEndpointConfig config) {
-        self.config = config;
-        c = config;
+    public function init(ListenerEndpointConfig listenerConfig) {
+        self.config = listenerConfig;
+        c = listenerConfig;
     }
 
     public native function register(typedesc serviceType);
@@ -84,7 +84,7 @@ documentation {
     F{{pollingInterval}} Periodic time interval to check new update
     F{{cronExpression}} Cron expression to check new update
 }
-public type ListenerEndpointConfig {
+public type ListenerEndpointConfig record {
     Protocol protocol = FTP,
     string host,
     int port,

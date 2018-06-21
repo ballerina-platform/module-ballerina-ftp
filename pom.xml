@@ -16,9 +16,10 @@
   ~ under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+<modelVersion>4.0.0</modelVersion>
     <groupId>org.ballerinalang</groupId>
     <artifactId>file-connector-parent</artifactId>
     <packaging>pom</packaging>
@@ -174,6 +175,13 @@
             </dependency>
             <dependency>
                 <groupId>org.ballerinalang</groupId>
+                <artifactId>ballerina-builtin</artifactId>
+                <version>${ballerina.version}</version>
+                <type>zip</type>
+                <classifier>ballerina-binary-repo</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.ballerinalang</groupId>
                 <artifactId>docerina</artifactId>
                 <version>${docerina.version}</version>
             </dependency>
@@ -232,28 +240,6 @@
                 <configuration>
                     <source>${wso2.maven.compiler.source}</source>
                     <target>${wso2.maven.compiler.target}</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.plugin.version}</version>
-                <configuration>
-                    <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
-                    <additionalClasspathElements>
-                        <additionalClasspathElement>
-                            ${basedir}/target/classes/org/ballerinalang/net/StandardExtensionPackageRepositoryProvider.class
-                        </additionalClasspathElement>
-                        <additionalClasspathElement>
-                            ${basedir}/target/classes/org/ballerinalang/net/ftp/generated/providers/StandardNativeElementProvider.class
-                        </additionalClasspathElement>
-                    </additionalClasspathElements>
-                    <environmentVariables>
-                        <testEnvironmentVariable>EnvironmentVariable</testEnvironmentVariable>
-                    </environmentVariables>
-                    <suiteXmlFiles>
-                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
-                    </suiteXmlFiles>
                 </configuration>
             </plugin>
             <plugin><!-- Overridden from parent pom to exclude generated sources -->
@@ -345,6 +331,21 @@
                 <artifactId>maven-remote-resources-plugin</artifactId>
                 <version>${maven.remote.resource.plugin.version}</version>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>${maven.properties.plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${maven.exec.plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven.resources.plugin.version}</version>
+            </plugin>
         </plugins>
     </build>
     <distributionManagement>
@@ -360,7 +361,7 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <ballerina.version>0.970.0</ballerina.version>
+        <ballerina.version>0.975.0</ballerina.version>
         <docerina.version>${ballerina.version}</docerina.version>
         <file.transport.version>6.0.55</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>
@@ -373,7 +374,7 @@
         <maven.findbugsplugin.version>3.0.3</maven.findbugsplugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.plugin.version>3.5.1</maven.compiler.plugin.version>
-        <maven.surefire.plugin.version>2.19.1</maven.surefire.plugin.version>
+        <maven.surefire.plugin.version>2.20.1</maven.surefire.plugin.version>
         <maven.checkstyle.plugin.version>2.17</maven.checkstyle.plugin.version>
         <maven.jacoco.plugin.version>0.7.8</maven.jacoco.plugin.version>
         <maven.dependency.plugin.version>3.0.2</maven.dependency.plugin.version>
@@ -382,7 +383,7 @@
         <docerina.maven.plugin.version>${ballerina.version}</docerina.maven.plugin.version>
 
         <!--Bundle dependency versions-->
-        <commons-vfs2.wso2.version>2.2-wso2v1</commons-vfs2.wso2.version>
+        <commons-vfs2.wso2.version>2.2-wso2v2</commons-vfs2.wso2.version>
         <!--<quartz.version>2.3.0.wso2v2</quartz.version>-->
         <jsch.version>0.1.54</jsch.version>
         <commons-net.version>3.6</commons-net.version>
@@ -391,5 +392,9 @@
         <maven.wagon.ssh.version>2.1</maven.wagon.ssh.version>
         <maven.release.plugin.version>2.5.3</maven.release.plugin.version>
         <maven.deploy.plugin.version>2.8.2</maven.deploy.plugin.version>
+        <maven.properties.plugin.version>1.0.0</maven.properties.plugin.version>
+        <maven.remote.resources.plugin.version>1.5</maven.remote.resources.plugin.version>
+        <maven.exec.plugin.version>1.6.0</maven.exec.plugin.version>
+        <maven.resources.plugin.version>3.0.2</maven.resources.plugin.version>
     </properties>
 </project>

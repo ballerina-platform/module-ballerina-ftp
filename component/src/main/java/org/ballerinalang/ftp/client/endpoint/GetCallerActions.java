@@ -40,10 +40,10 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 @BallerinaFunction(
         orgName = "wso2",
-        packageName = "ftp",
+        packageName = "ftp:0.0.0",
         functionName = "getCallerActions",
-        receiver = @Receiver(type = TypeKind.STRUCT, structType = "Client", structPackage = FTP_PACKAGE_NAME),
-        returnType = {@ReturnType(type = TypeKind.STRUCT)},
+        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Client", structPackage = FTP_PACKAGE_NAME),
+        returnType = {@ReturnType(type = TypeKind.OBJECT)},
         isPublic = true
 )
 public class GetCallerActions extends BlockingNativeCallableUnit {

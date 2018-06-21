@@ -33,7 +33,7 @@ documentation {
     F{{path}} Path to the TrustStore file
     F{{password}} TrustStore password
 }
-public type TrustStore {
+public type TrustStore record {
     string path,
     string password,
 };
@@ -44,7 +44,7 @@ documentation {
     F{{path}} Path to the KeyStore file
     F{{password}} KeyStore password
 }
-public type KeyStore {
+public type KeyStore record {
     string path,
     string password,
 };
@@ -55,7 +55,7 @@ documentation {
     F{{path}} Path to the PrivateKey file
     F{{password}} PrivateKey password
 }
-public type PrivateKey {
+public type PrivateKey record {
     string path,
     string password,
 };
@@ -66,7 +66,7 @@ documentation {
     F{{username}} Username of the user
     F{{password}} Password of the user
 }
-public type BasicAuth {
+public type BasicAuth record {
     string username,
     string password,
 };
@@ -79,7 +79,7 @@ documentation {
     F{{basicAuth}} Configurations associated with BasicAuth
     F{{privateKey}} Configurations associated with PrivateKey
 }
-public type SecureSocket {
+public type SecureSocket record {
     TrustStore? trustStore,
     KeyStore? keyStore,
     BasicAuth? basicAuth,

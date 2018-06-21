@@ -27,7 +27,7 @@ import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.util.codegen.PackageInfo;
-import org.ballerinalang.util.codegen.StructInfo;
+import org.ballerinalang.util.codegen.StructureTypeInfo;
 import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
 import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileSystemServerConnector;
 
@@ -40,9 +40,9 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 @BallerinaFunction(
         orgName = "wso2",
-        packageName = "ftp",
+        packageName = "ftp:0.0.0",
         functionName = "poll",
-        args = {@Argument(name = "config", type = TypeKind.STRUCT, structType = "ListenerEndpointConfig",
+        args = {@Argument(name = "config", type = TypeKind.OBJECT, structType = "ListenerEndpointConfig",
                           structPackage = FTP_PACKAGE_NAME)},
         isPublic = true
 )
@@ -63,7 +63,7 @@ public class Poll extends BlockingNativeCallableUnit {
 
     private BStruct getErrorStruct(Context context) {
         PackageInfo packageInfo = context.getProgramFile().getPackageInfo(BALLERINA_BUILTIN);
-        final StructInfo structInfo = packageInfo.getStructInfo("error");
+        final StructureTypeInfo structInfo = packageInfo.getStructInfo("error");
         return BLangVMStructs.createBStruct(structInfo);
     }
 }
