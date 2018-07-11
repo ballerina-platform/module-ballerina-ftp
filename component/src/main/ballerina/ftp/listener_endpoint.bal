@@ -22,11 +22,9 @@ documentation {
     Represents a service listener that monitors the FTP location.
 }
 public type Listener object {
-    private {
-        ListenerEndpointConfig config;
-        task:Appointment? appointment;
-        task:Timer? task;
-    }
+    ListenerEndpointConfig config;
+    task:Appointment? appointment;
+    task:Timer? task;
 
     public function init(ListenerEndpointConfig listenerConfig) {
         self.config = listenerConfig;

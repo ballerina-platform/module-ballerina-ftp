@@ -19,7 +19,8 @@
 package org.ballerinalang.ftp.server;
 
 import org.ballerinalang.bre.bvm.CallableUnitCallback;
-import org.ballerinalang.model.values.BStruct;
+import org.ballerinalang.model.values.BMap;
+import org.ballerinalang.model.values.BValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,7 @@ public class FTPCallableUnitCallback implements CallableUnitCallback {
     }
 
     @Override
-    public void notifyFailure(BStruct bStruct) {
+    public void notifyFailure(BMap<String, BValue> bStruct) {
         log.debug("File Listener: event deliver failed.");
     }
 }

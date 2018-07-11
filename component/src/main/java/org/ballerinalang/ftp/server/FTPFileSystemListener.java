@@ -22,9 +22,9 @@ import org.ballerinalang.bre.bvm.BLangVMStructs;
 import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.ftp.util.FtpConstants;
+import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BRefValueArray;
 import org.ballerinalang.model.values.BStringArray;
-import org.ballerinalang.model.values.BStruct;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.services.ErrorHandlerUtils;
 import org.ballerinalang.util.codegen.PackageInfo;
@@ -66,7 +66,7 @@ public class FTPFileSystemListener implements RemoteFileSystemListener {
         BRefValueArray fileInfoArray = new BRefValueArray(fileInfoStructInfo.getType());
         int i = 0;
         for (FileInfo info : fileSystemEvent.getAddedFiles()) {
-            final BStruct fileInfoStruct = BLangVMStructs
+            final BMap<String, BValue> fileInfoStruct = BLangVMStructs
                     .createBStruct(fileInfoStructInfo, info.getPath(), info.getFileSize(), info.getLastModifiedTime());
             fileInfoArray.add(i++, fileInfoStruct);
         }

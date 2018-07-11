@@ -20,13 +20,15 @@ package org.ballerinalang.ftp.client.actions;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.nativeimpl.io.IOConstants;
-import org.ballerinalang.nativeimpl.io.channels.base.Channel;
+import org.ballerinalang.model.values.BMap;
+import org.ballerinalang.model.values.BString;
+import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
+import org.ballerinalang.stdlib.io.channels.base.Channel;
+import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
 import org.wso2.transport.remotefilesystem.client.connector.contract.FtpAction;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
@@ -60,9 +62,9 @@ public class Append extends AbstractFtpAction {
 
     @Override
     public void execute(Context context) {
-        BStruct clientConnector = (BStruct) context.getRefArgument(0);
+        BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
         String url = (String) clientConnector.getNativeData(FtpConstants.URL);
-        BStruct sourceChannel = (BStruct) context.getRefArgument(1);
+        BMap<String, BValue> sourceChannel = (BMap<String, BValue>) context.getRefArgument(1);
         String path = context.getStringArgument(0);
 
         Channel byteChannel = (Channel) sourceChannel.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
@@ -79,8 +81,8 @@ public class Append extends AbstractFtpAction {
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            BStruct error = getClientErrorStruct(context);
-            error.setStringField(0, e.getMessage());
+            BMap<String, BValue> error = getClientErrorStruct(context);
+            error.put("message", new BString(e.getMessage()));
             context.setReturnValues(error);
             return;
         }
