@@ -16,8 +16,9 @@
   ~ under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-<parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
         <groupId>org.ballerinalang</groupId>
         <artifactId>file-connector-parent</artifactId>
         <version>0.97.3-SNAPSHOT</version>
@@ -25,7 +26,7 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>ballerina-file</artifactId>
+    <artifactId>wso2-ftp</artifactId>
     <packaging>jar</packaging>
     <name>Ballerina - File System Implementation</name>
     <url>http://ballerinalang.org</url>
@@ -34,6 +35,10 @@
         <dependency>
             <groupId>org.wso2.transport.file</groupId>
             <artifactId>org.wso2.transport.remote-file-system</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
         </dependency>
         <dependency>
             <groupId>org.ballerinalang</groupId>
@@ -100,6 +105,16 @@
             <classifier>ballerina-binary-repo</classifier>
         </dependency>
         <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>ballerina-log-api</artifactId>
+            <type>zip</type>
+            <classifier>ballerina-binary-repo</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>ballerina-log-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
@@ -109,14 +124,8 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <excludes>
-                    <exclude>ballerina/**</exclude>
-                </excludes>
+                <filtering>true</filtering>
             </resource>
-            <!--<resource>-->
-                <!--<directory>${generated.ballerina.source.directory}</directory>-->
-                <!--<targetPath>META-INF/wso2</targetPath>-->
-            <!--</resource>-->
         </resources>
         <plugins>
             <plugin>
@@ -172,51 +181,6 @@
                 <version>${maven.dependency.plugin.version}</version>
                 <inherited>false</inherited>
                 <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>${project.groupId}</groupId>
-                                    <artifactId>${project.artifactId}</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.wso2.transport.file</groupId>
-                                    <artifactId>org.wso2.transport.remote-file-system</artifactId>
-                                    <version>${file.transport.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                                <dependency>
-                                    <groupId>org.wso2.org.apache.commons</groupId>
-                                    <artifactId>commons-vfs2</artifactId>
-                                    <version>${commons-vfs2.wso2.version}</version>
-                                </dependency>
-                                <artifactItem>
-                                    <groupId>com.jcraft</groupId>
-                                    <artifactId>jsch</artifactId>
-                                    <version>${jsch.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>commons-net</groupId>
-                                    <artifactId>commons-net</artifactId>
-                                    <version>${commons-net.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                            </artifactItems>
-                            <outputDirectory>${project.build.directory}/distribution</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>true</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                            <useBaseVersion>true</useBaseVersion>
-                        </configuration>
-                    </execution>
                     <execution>
                         <id>unpack-dependencies</id>
                         <phase>generate-resources</phase>
@@ -293,6 +257,7 @@
                     </suiteXmlFiles>
                     <systemPropertyVariables>
                         <ballerina.home>${project.build.directory}</ballerina.home>
+                        <java.util.logging.manager>org.ballerinalang.logging.BLogManager</java.util.logging.manager>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -379,6 +344,43 @@
                                     <directory>${project.build.directory}/generated-balo/repo/</directory>
                                 </resource>
                             </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>wso2-ftp-package-${project.version}</finalName>
+                            <artifactSet>
+                                <includes>
+                                    <include>org.ballerinalang:wso2-ftp</include>
+                                    <include>org.wso2.transport.file:org.wso2.transport.remote-file-system</include>
+                                    <include>com.jcraft:jsch</include>
+                                    <include>commons-net:commons-net</include>
+                                    <include>org.wso2.org.apache.commons:commons-vfs2</include>
+                                </includes>
+
+                            </artifactSet>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                                    <resources>
+                                        <resource>installation-scripts/install.bat</resource>
+                                        <resource>installation-scripts/install.sh</resource>
+                                        <resource>installation-scripts/uninstall.bat</resource>
+                                        <resource>installation-scripts/uninstall.sh</resource>
+                                        <resource>installation-scripts/README.txt</resource>
+                                    </resources>
+                                </transformer>
+                            </transformers>
                         </configuration>
                     </execution>
                 </executions>

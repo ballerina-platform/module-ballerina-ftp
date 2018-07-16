@@ -46,7 +46,7 @@ endpoint ftp:Client client {
     port:21
 };
     
-function main (string[] args) {
+function main (string... args) {
     // To create a folder in remote server
     errorr? dirCreErr = client -> mkdir("/ballerina-user/sample-dir");
     match dirCreErr {
@@ -58,7 +58,7 @@ function main (string[] args) {
     }
     
     // Upload file to a remote server
-    io:ByteChannel summaryChannel = io:openFile("/home/ballerina/prog/summary.bal", io:MODE_R);
+    io:ByteChannel summaryChannel = io:openFile("/home/ballerina/prog/summary.bal", io:READ);
     error? filePutErr = client -> put("/ballerina-user/sample-dir/summary.bal", summaryChannel);    
     match filePutErr {
         error err => {
@@ -89,7 +89,7 @@ function main (string[] args) {
     var getResult = client -> get("/ballerina-user/sample-dir/stock.json");
     match getResult {
         io:ByteChannel channel => {
-            io:CharacterChannel characters = check io:createCharacterChannel(channel, "UTF-8");
+            io:CharacterChannel characters = check io:CharacterChannel(channel, "utf-8");
             json stock = check characters.readJson();
             _ = channel.close();
         }
@@ -112,7 +112,8 @@ function main (string[] args) {
 ## How to install FTP Connectors
 1. Download correct distribution.zip from [releases](https://github.com/wso2-ballerina/package-file/releases) that match with ballerina 
   version.
-2. Unzip connector distribution and copy to all jars to <BALLERINA_HOME>/bre/lib folder.
+2. Unzip package distribution.
+3. Run the install.<sh|bat> script to install the package. You can uninstall the package by running uninstall.<sh|bat>.
 
 | Ballerina Version | File Connector Version |
 | ----------------- | ---------------------- |
@@ -120,3 +121,4 @@ function main (string[] args) {
 | 0.963.0| 0.96.0 |
 | 0.970.0| 0.97.0 |
 | 0.975.0| 0.97.1 |
+| 0.980.0| 0.97.3 |
