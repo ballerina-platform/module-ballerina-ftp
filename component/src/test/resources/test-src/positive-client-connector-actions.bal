@@ -154,7 +154,3 @@ function readCharacters(int numberOfCharacters, io:CharacterChannel characterCha
         }
     }
 }
-
-function main(string... args) {
-    io:println("Hello");
-}
