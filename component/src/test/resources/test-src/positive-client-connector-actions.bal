@@ -55,7 +55,6 @@ function readContent(string host, string url) returns string? {
         () => {
         }
     }
-    //_ = characterChannel1.close();
     return returnValue;
 }
 
@@ -133,9 +132,9 @@ function readAllCharacters(io:CharacterChannel characterChannel) returns string|
     int fixedSize = 50;
     boolean isDone = false;
     string result;
-    while (!isDone){
+    while (!isDone) {
         string value = check readCharacters(fixedSize, characterChannel);
-        if (lengthof value == 0){
+        if (lengthof value == 0) {
             isDone = true;
         } else {
             result = result + value;
