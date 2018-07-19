@@ -1,6 +1,5 @@
 import ballerina/io;
 import wso2/ftp;
-import ballerina/file;
 
 function createDirectory(string host, string url) {
     endpoint ftp:Client client {
@@ -20,7 +19,7 @@ function removeDirectory(string host, string url) {
     _ = client->rmdir(url);
 }
 
-function readContent(string host, string url) returns string {
+function readContent(string host, string url) returns string? {
     endpoint ftp:Client client {
         protocol: ftp:FTP,
         host: host
@@ -28,19 +27,35 @@ function readContent(string host, string url) returns string {
 
     var output = client->get(url);
     io:ByteChannel channel = check output;
-    blob contentB;
-    var result = channel.read(15);
-    match result {
-        (blob, int) content => {
-            var (cont, readSize) = content;
-            contentB = cont;
+    string? returnValue;
+    io:CharacterChannel? characterChannel1 = new io:CharacterChannel(channel, "utf-8");
+    match characterChannel1 {
+        io:CharacterChannel characterChannel => {
+            match readAllCharacters(characterChannel) {
+                string str => {
+                    returnValue = untaint str;
+                    io:println(returnValue);
+                }
+                error err => {
+                    throw err;
+                }
+                () => {
+                    io:println("Empty return from channel.");
+                }
+            }
+            match characterChannel.close() {
+                error e1 => {
+                    io:println("CharacterChannel close error: ", e1.message);
+                }
+                () => {
+                    io:println("Connection closed successfully.");
+                }
+            }
         }
-        error readError => {
-            throw readError;
+        () => {
         }
     }
-    _ = channel.close();
-    return contentB.toString("UTF-8");
+    return returnValue;
 }
 
 function write(string host, string path, string filePath) {
@@ -111,4 +126,31 @@ function isDirectory(string host, string path) returns boolean {
     };
 
     return check client->isDirectory(path);
+}
+
+function readAllCharacters(io:CharacterChannel characterChannel) returns string|error? {
+    int fixedSize = 50;
+    boolean isDone = false;
+    string result;
+    while (!isDone) {
+        string value = check readCharacters(fixedSize, characterChannel);
+        if (lengthof value == 0) {
+            isDone = true;
+        } else {
+            result = result + value;
+        }
+    }
+    return result;
+}
+
+function readCharacters(int numberOfCharacters, io:CharacterChannel characterChannel) returns string|error {
+    var result = characterChannel.read(numberOfCharacters);
+    match result {
+        string characters => {
+            return characters;
+        }
+        error err => {
+            return err;
+        }
+    }
 }

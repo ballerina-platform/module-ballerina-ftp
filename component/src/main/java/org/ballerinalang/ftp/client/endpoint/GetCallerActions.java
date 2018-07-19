@@ -23,7 +23,8 @@ import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.model.values.BStruct;
+import org.ballerinalang.model.values.BMap;
+import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
@@ -50,9 +51,9 @@ public class GetCallerActions extends BlockingNativeCallableUnit {
 
     @Override
     public void execute(Context context) {
-        BStruct clientEndpoint = (BStruct) context.getRefArgument(0);
-        BStruct clientEndpointConfig = (BStruct) clientEndpoint.getRefField(0);
-        BStruct clientConnector = BLangConnectorSPIUtil
+        BMap<String, BValue> clientEndpoint = (BMap<String, BValue>) context.getRefArgument(0);
+        BMap<String, BValue> clientEndpointConfig = (BMap<String, BValue>) clientEndpoint.get("config");
+        BMap<String, BValue> clientConnector = BLangConnectorSPIUtil
                 .createBStruct(context.getProgramFile(), FTP_PACKAGE_NAME, "ClientActions",
                         clientEndpointConfig);
         final String url = (String) clientEndpoint.getNativeData(FtpConstants.URL);

@@ -22,9 +22,7 @@ documentation {
     Represents an FTP client that intracts with an FTP server.
 }
 public type Client object {
-    public {
-        ClientEndpointConfiguration config;
-    }
+    public ClientEndpointConfiguration config;
 
     public function init(ClientEndpointConfiguration clientConfig) {
         self.config = clientConfig;

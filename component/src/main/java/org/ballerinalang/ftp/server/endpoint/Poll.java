@@ -23,7 +23,8 @@ import org.ballerinalang.bre.bvm.BLangVMStructs;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.model.values.BStruct;
+import org.ballerinalang.model.values.BMap;
+import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.util.codegen.PackageInfo;
@@ -49,7 +50,7 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 public class Poll extends BlockingNativeCallableUnit {
     @Override
     public void execute(Context context) {
-        final BStruct config = (BStruct) context.getRefArgument(0);
+        final BMap<String, BValue> config = (BMap<String, BValue>) context.getRefArgument(0);
         RemoteFileSystemServerConnector connector = (RemoteFileSystemServerConnector) config
                 .getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         try {
@@ -61,7 +62,7 @@ public class Poll extends BlockingNativeCallableUnit {
         context.setReturnValues();
     }
 
-    private BStruct getErrorStruct(Context context) {
+    private BMap<String, BValue> getErrorStruct(Context context) {
         PackageInfo packageInfo = context.getProgramFile().getPackageInfo(BALLERINA_BUILTIN);
         final StructureTypeInfo structInfo = packageInfo.getStructInfo("error");
         return BLangVMStructs.createBStruct(structInfo);

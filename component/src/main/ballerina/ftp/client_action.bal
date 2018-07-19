@@ -22,9 +22,7 @@ documentation {
     F{{config}} The configurations of the client endpoint associated with this ClientActions instance.
 }
 public type ClientActions object {
-    public {
-        ClientEndpointConfiguration config;
-    }
+    public ClientEndpointConfiguration config;
 
     documentation {
         The `get()` function can be used to retrieve file content from a remote resource.

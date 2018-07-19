@@ -21,16 +21,18 @@ import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMStructs;
 import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.nativeimpl.io.BallerinaIOException;
-import org.ballerinalang.nativeimpl.io.IOConstants;
-import org.ballerinalang.nativeimpl.io.channels.base.Channel;
-import org.ballerinalang.nativeimpl.io.channels.base.readers.BlockingReader;
-import org.ballerinalang.nativeimpl.io.channels.base.writers.BlockingWriter;
+import org.ballerinalang.model.values.BMap;
+import org.ballerinalang.model.values.BString;
+import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
+import org.ballerinalang.stdlib.io.channels.base.Channel;
+import org.ballerinalang.stdlib.io.channels.base.readers.AsyncReader;
+import org.ballerinalang.stdlib.io.channels.base.writers.AsyncWriter;
+import org.ballerinalang.stdlib.io.utils.BallerinaIOException;
+import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.ballerinalang.util.codegen.PackageInfo;
 import org.ballerinalang.util.codegen.StructureTypeInfo;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
@@ -72,7 +74,7 @@ public class Get extends AbstractFtpAction {
 
     @Override
     public void execute(Context context) {
-        BStruct clientConnector = (BStruct) context.getRefArgument(0);
+        BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
         String pathString = context.getStringArgument(0);
 
         String url = (String) clientConnector.getNativeData(FtpConstants.URL);
@@ -87,8 +89,8 @@ public class Get extends AbstractFtpAction {
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            BStruct error = getClientErrorStruct(context);
-            error.setStringField(0, e.getMessage());
+            BMap<String, BValue> error = getClientErrorStruct(context);
+            error.put("message", new BString(e.getMessage()));
             context.setReturnValues(error);
             return;
         }
@@ -107,7 +109,7 @@ public class Get extends AbstractFtpAction {
                 final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
                 ByteChannel byteChannel = new ReadByteChannel(in);
                 Channel channel = new FTPGetAbstractChannel(byteChannel);
-                BStruct channelStruct = getBStruct();
+                BMap<String, BValue> channelStruct = getBStruct();
                 channelStruct.addNativeData(IOConstants.BYTE_CHANNEL_NAME, channel);
                 getContext().setReturnValues(channelStruct);
             }
@@ -116,12 +118,12 @@ public class Get extends AbstractFtpAction {
 
         @Override
         public void onError(Throwable throwable) {
-            BStruct error = getClientErrorStruct(getContext());
-            error.setStringField(0, throwable.getMessage());
+            BMap<String, BValue> error = getClientErrorStruct(getContext());
+            error.put("message", new BString(throwable.getMessage()));
             getContext().setReturnValues(error);
         }
 
-        private BStruct getBStruct() {
+        private BMap<String, BValue> getBStruct() {
             PackageInfo timePackageInfo = getContext().getProgramFile().getPackageInfo("ballerina/io");
             final StructureTypeInfo structInfo = timePackageInfo.getStructInfo("ByteChannel");
             return BLangVMStructs.createBStruct(structInfo);
@@ -134,7 +136,7 @@ public class Get extends AbstractFtpAction {
     private static class FTPGetAbstractChannel extends Channel {
 
         FTPGetAbstractChannel(ByteChannel channel) throws BallerinaIOException {
-            super(channel, new BlockingReader(), new BlockingWriter(), 1024);
+            super(channel, new AsyncReader(), new AsyncWriter());
         }
 
         @Override
