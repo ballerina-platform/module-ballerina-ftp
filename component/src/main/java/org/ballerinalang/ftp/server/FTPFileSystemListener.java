@@ -26,7 +26,6 @@ import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BRefValueArray;
 import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.services.ErrorHandlerUtils;
 import org.ballerinalang.util.codegen.PackageInfo;
 import org.ballerinalang.util.codegen.StructureTypeInfo;
 import org.slf4j.Logger;
@@ -83,7 +82,7 @@ public class FTPFileSystemListener implements RemoteFileSystemListener {
 
     @Override
     public void onError(Throwable throwable) {
-        ErrorHandlerUtils.printError(throwable);
+        log.error(throwable.getMessage(), throwable);
     }
 
     @Override

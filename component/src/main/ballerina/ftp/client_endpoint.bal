@@ -29,9 +29,9 @@ public type Client object {
         self.initEndpoint();
     }
 
-    native function initEndpoint();
+    extern function initEndpoint();
 
-    public native function  getCallerActions() returns ClientActions;
+    public extern function  getCallerActions() returns ClientActions;
 };
 
 documentation {

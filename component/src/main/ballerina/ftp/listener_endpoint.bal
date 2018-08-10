@@ -31,7 +31,7 @@ public type Listener object {
         c = listenerConfig;
     }
 
-    public native function register(typedesc serviceType);
+    public extern function register(typedesc serviceType);
 
     public function start() {
         (function() returns error?) onTriggerFunction = tempFunc;
@@ -68,7 +68,7 @@ function tempFunc() returns error? {
     return poll(c);
 }
 
-native function poll(ListenerEndpointConfig config) returns error?;
+extern function poll(ListenerEndpointConfig config) returns error?;
 
 documentation {
     Configuration for FTP listener endpoint.

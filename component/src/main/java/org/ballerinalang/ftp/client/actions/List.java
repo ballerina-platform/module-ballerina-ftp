@@ -28,6 +28,8 @@ import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
 import org.wso2.transport.remotefilesystem.client.connector.contract.FtpAction;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
@@ -59,6 +61,8 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 )
 public class List extends AbstractFtpAction {
 
+    private static final Logger log = LoggerFactory.getLogger(List.class);
+
     @Override
     public void execute(Context context) {
         BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
@@ -78,12 +82,15 @@ public class List extends AbstractFtpAction {
             BMap<String, BValue> error = getClientErrorStruct(context);
             error.put("message", new BString(e.getMessage()));
             context.setReturnValues(error);
+            log.error(e.getMessage(), e);
             return;
         }
         connector.send(null, FtpAction.LIST);
     }
 
     private static class FTPFileListListener extends FTPClientConnectorListener {
+
+        private static final Logger log = LoggerFactory.getLogger(FTPFileListListener.class);
 
         FTPFileListListener(Context context) {
             super(context);
@@ -103,6 +110,7 @@ public class List extends AbstractFtpAction {
             BMap<String, BValue> error = getClientErrorStruct(getContext());
             error.put("message", new BString(throwable.getMessage()));
             getContext().setReturnValues(error);
+            log.error(throwable.getMessage(), throwable);
         }
     }
 }

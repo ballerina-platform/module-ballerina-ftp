@@ -25,6 +25,8 @@ import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.util.codegen.PackageInfo;
 import org.ballerinalang.util.codegen.StructureTypeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 
@@ -45,6 +47,8 @@ abstract class AbstractFtpAction extends BlockingNativeCallableUnit {
      * {@link RemoteFileSystemListener} implementation for receive notification from transport.
      */
     protected static class FTPClientConnectorListener implements RemoteFileSystemListener {
+
+        private static final Logger log = LoggerFactory.getLogger(FTPClientConnectorListener.class);
         private Context context;
 
         FTPClientConnectorListener(Context context) {
@@ -69,6 +73,7 @@ abstract class AbstractFtpAction extends BlockingNativeCallableUnit {
             BMap<String, BValue> error = getClientErrorStruct(context);
             error.put("message", new BString(throwable.getMessage()));
             context.setReturnValues(error);
+            log.error(throwable.getMessage(), throwable);
         }
 
         @Override

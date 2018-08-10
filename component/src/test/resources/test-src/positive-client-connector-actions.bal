@@ -133,11 +133,17 @@ function readAllCharacters(io:CharacterChannel characterChannel) returns string|
     boolean isDone = false;
     string result;
     while (!isDone) {
-        string value = check readCharacters(fixedSize, characterChannel);
-        if (lengthof value == 0) {
-            isDone = true;
-        } else {
-            result = result + value;
+        match readCharacters(fixedSize, characterChannel) {
+            string value => {
+                result = result + value;
+            }
+            error err => {
+                if (err.message == "io.EOF"){
+                    isDone = true;
+                } else {
+                    return err;
+                }
+            }
         }
     }
     return result;

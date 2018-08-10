@@ -48,7 +48,7 @@ endpoint ftp:Client client {
     
 function main (string... args) {
     // To create a folder in remote server
-    errorr? dirCreErr = client -> mkdir("/ballerina-user/sample-dir");
+    error? dirCreErr = client -> mkdir("/ballerina-user/sample-dir");
     match dirCreErr {
         error err => {
             io:println("An error occured.");
@@ -117,8 +117,9 @@ function main (string... args) {
 
 | Ballerina Version | File Connector Version |
 | ----------------- | ---------------------- |
-| 0.95.0 | 0.95.0 |
-| 0.963.0| 0.96.0 |
-| 0.970.0| 0.97.0 |
-| 0.975.0| 0.97.1 |
+| 0.981.0| 0.97.4 |
 | 0.980.0| 0.97.3 |
+| 0.975.0| 0.97.1 |
+| 0.970.0| 0.97.0 |
+| 0.963.0| 0.96.0 |
+| 0.95.0 | 0.95.0 |
