@@ -29,12 +29,14 @@ import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
-import org.ballerinalang.stdlib.io.channels.base.readers.AsyncReader;
-import org.ballerinalang.stdlib.io.channels.base.writers.AsyncWriter;
+import org.ballerinalang.stdlib.io.channels.base.readers.ChannelReader;
+import org.ballerinalang.stdlib.io.channels.base.writers.ChannelWriter;
 import org.ballerinalang.stdlib.io.utils.BallerinaIOException;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.ballerinalang.util.codegen.PackageInfo;
 import org.ballerinalang.util.codegen.StructureTypeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
 import org.wso2.transport.remotefilesystem.client.connector.contract.FtpAction;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
@@ -72,6 +74,8 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 )
 public class Get extends AbstractFtpAction {
 
+    private static final Logger log = LoggerFactory.getLogger(Get.class);
+
     @Override
     public void execute(Context context) {
         BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
@@ -92,12 +96,15 @@ public class Get extends AbstractFtpAction {
             BMap<String, BValue> error = getClientErrorStruct(context);
             error.put("message", new BString(e.getMessage()));
             context.setReturnValues(error);
+            log.error(e.getMessage(), e);
             return;
         }
         connector.send(null, FtpAction.GET);
     }
 
     private static class FTPReadClientConnectorListener extends FTPClientConnectorListener {
+
+        private static final Logger log = LoggerFactory.getLogger(FTPReadClientConnectorListener.class);
 
         FTPReadClientConnectorListener(Context context) {
             super(context);
@@ -121,6 +128,7 @@ public class Get extends AbstractFtpAction {
             BMap<String, BValue> error = getClientErrorStruct(getContext());
             error.put("message", new BString(throwable.getMessage()));
             getContext().setReturnValues(error);
+            log.error(throwable.getMessage(), throwable);
         }
 
         private BMap<String, BValue> getBStruct() {
@@ -136,12 +144,22 @@ public class Get extends AbstractFtpAction {
     private static class FTPGetAbstractChannel extends Channel {
 
         FTPGetAbstractChannel(ByteChannel channel) throws BallerinaIOException {
-            super(channel, new AsyncReader(), new AsyncWriter());
+            super(channel, new ChannelReader(), new ChannelWriter());
         }
 
         @Override
         public void transfer(int i, int i1, WritableByteChannel writableByteChannel) throws BallerinaIOException {
             throw new BallerinaIOException("Unsupported operation.");
+        }
+
+        @Override
+        public Channel getChannel() {
+            return this;
+        }
+
+        @Override
+        public boolean isSelectable() {
+            return false;
         }
     }
 

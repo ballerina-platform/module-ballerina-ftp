@@ -29,6 +29,8 @@ import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.util.codegen.PackageInfo;
 import org.ballerinalang.util.codegen.StructureTypeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
 import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileSystemServerConnector;
 
@@ -48,6 +50,9 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
         isPublic = true
 )
 public class Poll extends BlockingNativeCallableUnit {
+
+    private static final Logger log = LoggerFactory.getLogger(Poll.class);
+
     @Override
     public void execute(Context context) {
         final BMap<String, BValue> config = (BMap<String, BValue>) context.getRefArgument(0);
@@ -57,6 +62,7 @@ public class Poll extends BlockingNativeCallableUnit {
             connector.poll();
         } catch (RemoteFileSystemConnectorException e) {
             context.setReturnValues(getErrorStruct(context));
+            log.error(e.getMessage(), e);
             return;
         }
         context.setReturnValues();

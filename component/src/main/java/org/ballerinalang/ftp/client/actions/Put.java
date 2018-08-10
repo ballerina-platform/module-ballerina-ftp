@@ -29,6 +29,8 @@ import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
 import org.wso2.transport.remotefilesystem.client.connector.contract.FtpAction;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
@@ -60,6 +62,8 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 )
 public class Put extends AbstractFtpAction {
 
+    private static final Logger log = LoggerFactory.getLogger(Put.class);
+
     @Override
     public void execute(Context context) {
         BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
@@ -83,6 +87,7 @@ public class Put extends AbstractFtpAction {
             BMap<String, BValue> error = getClientErrorStruct(context);
             error.put("message", new BString(e.getMessage()));
             context.setReturnValues(error);
+            log.error(e.getMessage(), e);
             return;
         }
         connector.send(message, FtpAction.PUT);
