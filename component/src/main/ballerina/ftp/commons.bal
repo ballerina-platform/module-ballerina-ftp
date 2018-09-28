@@ -24,37 +24,37 @@ public type Protocol "ftp"|"sftp"|"ftps";
 # Underlying communication happen using FTPS.
 @final public Protocol FTPS = "ftps";
 
-# A record for providing trust store related configurations.
+# A record for providing `Truststore` related configurations.
 #
-# + path - Path to the trust store file
-# + password - Trust store password
+# + path - Path to the truststore file
+# + password - Truststore password
 public type TrustStore record {
     string path;
     string password;
     !...
 };
 
-# A record for providing key store related configurations.
+# A record for providing `Keystore` related configurations.
 #
-# + path - Path to the key store file
-# + password - Key store password
+# + path - Path to the keystore file
+# + password - Keystore password
 public type KeyStore record {
     string path;
     string password;
     !...
 };
 
-# A record for providing PrivateKey related configurations.
+# A record for providing `PrivateKey` related configurations.
 #
-# + path - Path to the PrivateKey file
-# + password - PrivateKey password
+# + path - Path to the private key file
+# + password - Private key password
 public type PrivateKey record {
     string path;
     string password;
     !...
 };
 
-# A record for providing BasicAuth related configurations.
+# A record for providing `BasicAuth` related configurations.
 #
 # + username - Username of the user
 # + password - Password of the user
@@ -66,8 +66,8 @@ public type BasicAuth record {
 
 # Provides configurations for facilitating secure communication with a remote FTP server.
 #
-# + trustStore - Configures the trust store to be used
-# + keyStore - Configures the key store to be used
+# + trustStore - Configures the truststore to be used
+# + keyStore - Configures the keystore to be used
 # + basicAuth - Configure username/password to be used
 # + privateKey - Configures the private key to be used
 public type SecureSocket record {

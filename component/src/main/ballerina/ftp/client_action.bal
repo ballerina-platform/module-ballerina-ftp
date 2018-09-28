@@ -82,6 +82,6 @@ public type ClientActions object {
     # The `isDirectory()` function can be used to check if a given resource is a direcotry.
     #
     # + path - The resource path
-    # + return - true if given resouce is a direcotry or an `error` if failed to establish communication with the FTP server
+    # + return - true if given resource is a direcotry or an `error` if failed to establish communication with the FTP server
     public extern function isDirectory(string path) returns boolean|error;
 };
