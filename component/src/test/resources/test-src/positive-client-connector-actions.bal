@@ -26,9 +26,9 @@ function readContent(string host, string url) returns string? {
     };
 
     var output = client->get(url);
-    io:ByteChannel channel = check output;
+    io:ByteChannel byteChannel = check output;
     string? returnValue;
-    io:CharacterChannel? characterChannel1 = new io:CharacterChannel(channel, "utf-8");
+    io:CharacterChannel? characterChannel1 = new io:CharacterChannel(byteChannel, "utf-8");
     match characterChannel1 {
         io:CharacterChannel characterChannel => {
             match readAllCharacters(characterChannel) {

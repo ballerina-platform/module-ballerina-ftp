@@ -88,10 +88,10 @@ function main (string... args) {
     // Read content of a remote file
     var getResult = client -> get("/ballerina-user/sample-dir/stock.json");
     match getResult {
-        io:ByteChannel channel => {
-            io:CharacterChannel characters = check io:CharacterChannel(channel, "utf-8");
+        io:ByteChannel byteChannel => {
+            io:CharacterChannel characters = check io:CharacterChannel(byteChannel, "utf-8");
             json stock = check characters.readJson();
-            _ = channel.close();
+            _ = byteChannel.close();
         }
         error err => {
             io:println("An error occured.");
@@ -117,6 +117,7 @@ function main (string... args) {
 
 | Ballerina Version | File Connector Version |
 | ----------------- | ---------------------- |
+| 0.982.0| 0.97.5 |
 | 0.981.0| 0.97.4 |
 | 0.980.0| 0.97.3 |
 | 0.975.0| 0.97.1 |

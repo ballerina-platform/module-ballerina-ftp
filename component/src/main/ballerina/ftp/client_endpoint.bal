@@ -18,12 +18,13 @@
 /// FTP Client Endpoint ///
 ///////////////////////////
 
-documentation {
-    Represents an FTP client that intracts with an FTP server.
-}
+# Represents an FTP client that intracts with an FTP server.
 public type Client object {
-    public ClientEndpointConfiguration config;
+    private ClientEndpointConfiguration config;
 
+    # Gets invoked during package initialization to initialize the endpoint.
+    #
+    # + clientConfig - Configurations for FTP client endpoint
     public function init(ClientEndpointConfiguration clientConfig) {
         self.config = clientConfig;
         self.initEndpoint();
@@ -31,20 +32,22 @@ public type Client object {
 
     extern function initEndpoint();
 
+    # Returns the connector that client code uses.
+    #
+    # + return - The connector that client code uses
     public extern function  getCallerActions() returns ClientActions;
 };
 
-documentation {
-    Configuration for FTP client endpoint.
-
-    F{{protocol}} Supported FTP protocols
-    F{{host}} Target service URL
-    F{{port}} Port number of the remote service
-    F{{secureSocket}} Authenthication options
-}
+# Configuration for FTP client endpoint.
+#
+# + protocol - Supported FTP protocols
+# + host - Target service URL
+# + port - Port number of the remote service
+# + secureSocket - Authenthication options
 public type ClientEndpointConfiguration record {
-    Protocol protocol = FTP,
-    string host,
-    int port,
-    SecureSocket? secureSocket,
+    Protocol protocol = FTP;
+    string host;
+    int port;
+    SecureSocket? secureSocket;
+    !...
 };

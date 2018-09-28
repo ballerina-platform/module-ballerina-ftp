@@ -18,13 +18,11 @@ import ballerina/io;
 
 ListenerEndpointConfig c;
 
-documentation {
-    Represents a service listener that monitors the FTP location.
-}
+# Represents a service listener that monitors the FTP location.
 public type Listener object {
-    ListenerEndpointConfig config;
-    task:Appointment? appointment;
-    task:Timer? task;
+    private ListenerEndpointConfig config;
+    private task:Appointment? appointment;
+    private task:Timer? task;
 
     public function init(ListenerEndpointConfig listenerConfig) {
         self.config = listenerConfig;
@@ -70,25 +68,24 @@ function tempFunc() returns error? {
 
 extern function poll(ListenerEndpointConfig config) returns error?;
 
-documentation {
-    Configuration for FTP listener endpoint.
-
-    F{{protocol}} Supported FTP protocols
-    F{{host}} Target service url
-    F{{port}} Port number of the remote service
-    F{{secureSocket}} Authenthication options
-    F{{path}} Remote FTP direcotry location
-    F{{fileNamePattern}} File name pattern that event need to trigger
-    F{{pollingInterval}} Periodic time interval to check new update
-    F{{cronExpression}} Cron expression to check new update
-}
+# Configuration for FTP listener endpoint.
+#
+# + protocol - Supported FTP protocols
+# + host - Target service url
+# + port - Port number of the remote service
+# + secureSocket - Authenthication options
+# + path - Remote FTP direcotry location
+# + fileNamePattern - File name pattern that event need to trigger
+# + pollingInterval - Periodic time interval to check new update
+# + cronExpression - Cron expression to check new update
 public type ListenerEndpointConfig record {
-    Protocol protocol = FTP,
-    string host,
-    int port,
-    SecureSocket? secureSocket,
-    string path,
-    string fileNamePattern,
-    int pollingInterval = 60000,
-    string? cronExpression,
+    Protocol protocol = FTP;
+    string host;
+    int port;
+    SecureSocket? secureSocket;
+    string path;
+    string fileNamePattern;
+    int pollingInterval = 60000;
+    string? cronExpression;
+    !...
 };
