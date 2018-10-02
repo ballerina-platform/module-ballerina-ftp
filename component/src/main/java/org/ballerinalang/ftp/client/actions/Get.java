@@ -161,6 +161,11 @@ public class Get extends AbstractFtpAction {
         public boolean isSelectable() {
             return false;
         }
+
+        @Override
+        public boolean remaining() {
+            return false;
+        }
     }
 
     /**

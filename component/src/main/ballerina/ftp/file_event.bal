@@ -14,26 +14,24 @@
 // specific language governing permissions and limitations
 // under the License.
 
-documentation {
-    This provides metadata information for newly added files.
-
-    F{{path}} Relative file path for newly added file.
-    F{{size}} Size of the file.
-    F{{lastModifiedTimestamp}} Last modified timestamp of the file in UNIX Epoch time.
-}
+# This provides metadata information for newly added files.
+#
+# + path - Relative file path for newly added file
+# + size - Size of the file
+# + lastModifiedTimestamp - Last modified timestamp of the file in UNIX Epoch time
 public type FileInfo record {
-    string path,
-    int size,
-    int lastModifiedTimestamp,
+    @readonly string path;
+    @readonly int size;
+    @readonly int lastModifiedTimestamp;
+    !...
 };
 
-documentation {
-    This represents the latest status change of the server from the last status change.
-
-    F{{addedFiles}} Array of FileInfo that represents newly added files.
-    F{{deletedFiles}} Array of string that contains deleted file names.
-}
+# This represents the latest status change of the server from the last status change.
+#
+# + addedFiles - Array of FileInfo that represents newly added files
+# + deletedFiles - Array of string that contains deleted file names
 public type WatchEvent record {
-    FileInfo[] addedFiles,
-    string[] deletedFiles,
+    @readonly FileInfo[] addedFiles;
+    @readonly string[] deletedFiles;
+    !...
 };

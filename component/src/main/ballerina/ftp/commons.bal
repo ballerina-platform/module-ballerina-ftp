@@ -14,74 +14,66 @@
 // specific language governing permissions and limitations
 // under the License.
 
-documentation {
-    Represents the set of protocols supported by the FTP listener.
-
-    FTP - Communication happen using FTP
-    SFTP - Communication happen using SFTP
-    FTPS - Communication happen using FTPS
-}
+# Represents the set of protocols supported by the FTP listener and client.
 public type Protocol "ftp"|"sftp"|"ftps";
 
+# Underlying communication happen using FTP.
 @final public Protocol FTP = "ftp";
+# Underlying communication happen using SFTP.
 @final public Protocol SFTP = "sftp";
+# Underlying communication happen using FTPS.
 @final public Protocol FTPS = "ftps";
 
-documentation {
-    A record for providing TrustStore related configurations.
-
-    F{{path}} Path to the TrustStore file
-    F{{password}} TrustStore password
-}
+# A record for providing `Truststore` related configurations.
+#
+# + path - Path to the truststore file
+# + password - Truststore password
 public type TrustStore record {
-    string path,
-    string password,
+    string path;
+    string password;
+    !...
 };
 
-documentation {
-    A record for providing KeyStore related configurations.
-
-    F{{path}} Path to the KeyStore file
-    F{{password}} KeyStore password
-}
+# A record for providing `Keystore` related configurations.
+#
+# + path - Path to the keystore file
+# + password - Keystore password
 public type KeyStore record {
-    string path,
-    string password,
+    string path;
+    string password;
+    !...
 };
 
-documentation {
-    A record for providing PrivateKey related configurations.
-
-    F{{path}} Path to the PrivateKey file
-    F{{password}} PrivateKey password
-}
+# A record for providing `PrivateKey` related configurations.
+#
+# + path - Path to the private key file
+# + password - Private key password
 public type PrivateKey record {
-    string path,
-    string password,
+    string path;
+    string password;
+    !...
 };
 
-documentation {
-    A record for providing BasicAuth related configurations.
-
-    F{{username}} Username of the user
-    F{{password}} Password of the user
-}
+# A record for providing `BasicAuth` related configurations.
+#
+# + username - Username of the user
+# + password - Password of the user
 public type BasicAuth record {
-    string username,
-    string password,
+    string username;
+    string password;
+    !...
 };
 
-documentation {
-    Provides configurations for facilitating secure communication with a remote FTP server.
-
-    F{{trustStore}} Configurations associated with TrustStore
-    F{{keyStore}} Configurations associated with KeyStore
-    F{{basicAuth}} Configurations associated with BasicAuth
-    F{{privateKey}} Configurations associated with PrivateKey
-}
+# Provides configurations for facilitating secure communication with a remote FTP server.
+#
+# + trustStore - Configures the truststore to be used
+# + keyStore - Configures the keystore to be used
+# + basicAuth - Configure username/password to be used
+# + privateKey - Configures the private key to be used
 public type SecureSocket record {
-    TrustStore? trustStore,
-    KeyStore? keyStore,
-    BasicAuth? basicAuth,
-    PrivateKey? privateKey,
+    TrustStore? trustStore;
+    KeyStore? keyStore;
+    BasicAuth? basicAuth;
+    PrivateKey? privateKey;
+    !...
 };

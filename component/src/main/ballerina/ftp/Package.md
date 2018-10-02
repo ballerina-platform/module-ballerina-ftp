@@ -17,7 +17,7 @@ An FTP listener endpoint is defined using these parameters: `protocol`, `host`, 
 ```ballerina
 endpoint ftp:Client client {
     protocol: io:SFTP",
-    host:"ftp.ballerina.com",
+    host: "ftp.ballerina.com",
     secureSocket: {
         basicAuth: {
             username: "john",
@@ -58,8 +58,8 @@ error? dirDelErr = client -> rmdir("/personal/files");
 ### Sample FTP listener endpoint
 ```ballerina
 endpoint ftp:Listener remoteFolder {
-    protocol:ftp:SFTP,
-    host:"ftp.ballerina.com",
+    protocol: ftp:SFTP,
+    host: "ftp.ballerina.com",
     secureSocket: {
         basicAuth: {
             username: "john",
