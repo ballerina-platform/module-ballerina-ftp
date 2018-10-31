@@ -23,9 +23,9 @@ public type ClientActions object {
     # The `get()` function can be used to retrieve file content from a remote resource.
     #
     # + path - The resource path
-    # + return - A ByteChannel that represents the data source to the resource or
+    # + return - A ReadableByteChannel that represents the data source to the resource or
     # an `error` if failed to establish communication with the FTP server or read the resource
-    public extern function get(string path) returns io:ByteChannel|error;
+    public extern function get(string path) returns io:ReadableByteChannel|error;
 
     # The `delete()` function can be used to delete a file from an FTP server.
     #
@@ -36,17 +36,17 @@ public type ClientActions object {
     # The `put()` function can be used to add a file to an FTP server.
     #
     # + path - The resource path
-    # + byteChannel - A ByteChannel that represents the local data source
+    # + byteChannel - A ReadableByteChannel that represents the local data source
     # + return - An `error` if failed to establish communication with the FTP server
-    public extern function put(string path, io:ByteChannel byteChannel) returns error?;
+    public extern function put(string path, io:ReadableByteChannel byteChannel) returns error?;
 
     # The `append()` function can be used to append content to an existing file in an FTP server.
     # A new file is created if the file does not exist.
     #
     # + path - The resource path
-    # + byteChannel - A ByteChannel that represents the local data source
+    # + byteChannel - A ReadableByteChannel that represents the local data source
     # + return - An `error` if failed to establish communication with the FTP server
-    public extern function append(string path, io:ByteChannel byteChannel) returns error?;
+    public extern function append(string path, io:ReadableByteChannel byteChannel) returns error?;
 
     # The `mkdir()` function can be used to create a new direcotry in an FTP server.
     #

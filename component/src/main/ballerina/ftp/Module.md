@@ -1,5 +1,5 @@
-## Package overview
-The `wso2/ftp` package provides an FTP client and an FTP server listener implementation to facilitate an FTP connection to a remote location. 
+## Module overview
+The `wso2/ftp` module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection to a remote location. 
 
 ### FTP client
 `ftp:Client` connects to an FTP server and performs various operations on the files. It supports `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`,  `rename`, `size`, and `list` operations.

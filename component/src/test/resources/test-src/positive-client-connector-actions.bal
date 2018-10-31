@@ -26,11 +26,11 @@ function readContent(string host, string url) returns string? {
     };
 
     var output = client->get(url);
-    io:ByteChannel byteChannel = check output;
+    io:ReadableByteChannel byteChannel = check output;
     string? returnValue;
-    io:CharacterChannel? characterChannel1 = new io:CharacterChannel(byteChannel, "utf-8");
+    io:ReadableCharacterChannel? characterChannel1 = new io:ReadableCharacterChannel(byteChannel, "utf-8");
     match characterChannel1 {
-        io:CharacterChannel characterChannel => {
+        io:ReadableCharacterChannel characterChannel => {
             match readAllCharacters(characterChannel) {
                 string str => {
                     returnValue = untaint str;
@@ -45,7 +45,7 @@ function readContent(string host, string url) returns string? {
             }
             match characterChannel.close() {
                 error e1 => {
-                    io:println("CharacterChannel close error: ", e1.message);
+                    io:println("ReadableCharacterChannel close error: ", e1.message);
                 }
                 () => {
                     io:println("Connection closed successfully.");
@@ -64,7 +64,7 @@ function write(string host, string path, string filePath) {
         host: host
     };
 
-    io:ByteChannel bchannel = io:openFile(filePath, io:READ);
+    io:ReadableByteChannel bchannel = io:openReadableFile(filePath);
     _ = client->put(path, bchannel);
 }
 
@@ -75,7 +75,7 @@ function append(string host, string path, string filePath) {
         host: host
     };
 
-    io:ByteChannel bchannel = io:openFile(filePath, io:READ);
+    io:ReadableByteChannel bchannel = io:openReadableFile(filePath);
     _ = client->append(path, bchannel);
 }
 
@@ -128,7 +128,7 @@ function isDirectory(string host, string path) returns boolean {
     return check client->isDirectory(path);
 }
 
-function readAllCharacters(io:CharacterChannel characterChannel) returns string|error? {
+function readAllCharacters(io:ReadableCharacterChannel characterChannel) returns string|error? {
     int fixedSize = 50;
     boolean isDone = false;
     string result;
@@ -149,7 +149,7 @@ function readAllCharacters(io:CharacterChannel characterChannel) returns string|
     return result;
 }
 
-function readCharacters(int numberOfCharacters, io:CharacterChannel characterChannel) returns string|error {
+function readCharacters(int numberOfCharacters, io:ReadableCharacterChannel characterChannel) returns string|error {
     var result = characterChannel.read(numberOfCharacters);
     match result {
         string characters => {

@@ -58,7 +58,7 @@ function main (string... args) {
     }
     
     // Upload file to a remote server
-    io:ByteChannel summaryChannel = io:openFile("/home/ballerina/prog/summary.bal", io:READ);
+    io:ReadableByteChannel summaryChannel = io:openReadableFile("/home/ballerina/prog/summary.bal");
     error? filePutErr = client -> put("/ballerina-user/sample-dir/summary.bal", summaryChannel);    
     match filePutErr {
         error err => {
@@ -88,8 +88,8 @@ function main (string... args) {
     // Read content of a remote file
     var getResult = client -> get("/ballerina-user/sample-dir/stock.json");
     match getResult {
-        io:ByteChannel byteChannel => {
-            io:CharacterChannel characters = check io:CharacterChannel(byteChannel, "utf-8");
+        io:ReadableByteChannel byteChannel => {
+            io:ReadableByteChannel characters = check io:ReadableByteChannel(byteChannel, "utf-8");
             json stock = check characters.readJson();
             _ = byteChannel.close();
         }
@@ -117,6 +117,7 @@ function main (string... args) {
 
 | Ballerina Version | File Connector Version |
 | ----------------- | ---------------------- |
+| 0.983.0| 0.98.0 |
 | 0.982.0| 0.97.5 |
 | 0.981.0| 0.97.4 |
 | 0.980.0| 0.97.3 |
