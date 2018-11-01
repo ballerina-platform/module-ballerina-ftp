@@ -27,20 +27,20 @@ ballerina_balo_location=$ballerina_home/lib/repo/
 version=${project.version}
 package_name=ftp
 
-if [ ! -e "$ballerina_lib_location/wso2-$package_name-package-$version.jar" ]
+if [ ! -e "$ballerina_lib_location/wso2-$package_name-module-$version.jar" ]
 then
    if [ ! -e "$ballerina_balo_location/wso2/$package_name/0.0.0/$package_name.zip" ]
    then
-   echo "FTP package is not installed!"
+   echo "FTP module is not installed!"
    exit 0
    fi
 fi
 
-rm $ballerina_lib_location/wso2-$package_name-package-$version.jar
+rm $ballerina_lib_location/wso2-$package_name-module-$version.jar
 
-if [ -e "$ballerina_lib_location/wso2-$package_name-package-$version.jar" ]; then
+if [ -e "$ballerina_lib_location/wso2-$package_name-module-$version.jar" ]; then
     echo "Error occurred while deleting dependencies from $ballerina_lib_location"
-    echo "Please manually delete $ballerina_lib_location/wso2-$package_name-package-$version.jar and $ballerina_balo_location/wso2/$package_name/0.0.0/$package_name.zip"
+    echo "Please manually delete $ballerina_lib_location/wso2-$package_name-module-$version.jar and $ballerina_balo_location/wso2/$package_name/0.0.0/$package_name.zip"
     exit 1
 fi
 
@@ -51,5 +51,5 @@ if [ -e "$ballerina_balo_location/wso2/$package_name/0.0.0/$package_name.zip" ];
     echo "Please manually delete $ballerina_balo_location/wso2/$package_name/0.0.0 directory"
     exit 2
 else
-    echo "Successfully uninstalled FTP package!"
+    echo "Successfully uninstalled FTP module!"
 fi

@@ -25,17 +25,17 @@ SET ballerina_balo_location=%ballerina_home%\lib\repo\
 SET version=${project.version}
 SET package_name=ftp
 
-IF NOT EXIST "%ballerina_lib_location%\wso2-%package_name%-package-%version%.jar" (
+IF NOT EXIST "%ballerina_lib_location%\wso2-%package_name%-module-%version%.jar" (
     IF NOT EXIST "%ballerina_balo_location%\wso2\%package_name%\0.0.0\%package_name%.zip" (
-	   ECHO FTP package is not installed!
+	   ECHO FTP module is not installed!
 	   GOTO :END
 	)
 )
 
-IF EXIST "%ballerina_lib_location%\wso2-%package_name%-package-%version%.jar" (
-   DEL "%ballerina_lib_location%\wso2-%package_name%-package-%version%.jar"
-   IF EXIST "%ballerina_lib_location%\wso2-%package_name%-package-%version%.jar" (
-    ECHO An error occurred while deleting %ballerina_lib_location%wso2-%package_name%-package-%version%.jar
+IF EXIST "%ballerina_lib_location%\wso2-%package_name%-module-%version%.jar" (
+   DEL "%ballerina_lib_location%\wso2-%package_name%-module-%version%.jar"
+   IF EXIST "%ballerina_lib_location%\wso2-%package_name%-module-%version%.jar" (
+    ECHO An error occurred while deleting %ballerina_lib_location%wso2-%package_name%-module-%version%.jar
 	GOTO :FAILED_JAR_DELETION
    )
 )
@@ -49,11 +49,11 @@ IF EXIST "%ballerina_balo_location%\wso2\%package_name%\0.0.0\%package_name%.zip
 )
 
 :SUCCESS
-ECHO Successfully uninstalled FTP package!
+ECHO Successfully uninstalled FTP module!
 GOTO :END
 
 :FAILED_JAR_DELETION
-ECHO Un-installation is incomplete due to an error. Please manually delete %ballerina_lib_location%wso2-%package_name%-package-%version%.jar and %ballerina_balo_location%wso2\%package_name%\0.0.0\%package_name%.zip
+ECHO Un-installation is incomplete due to an error. Please manually delete %ballerina_lib_location%wso2-%package_name%-module-%version%.jar and %ballerina_balo_location%wso2\%package_name%\0.0.0\%package_name%.zip
 GOTO :END
 
 :FAILED_BALO_DELETION
