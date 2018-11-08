@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/wso2-ballerina/package-file.svg?branch=master)](https://travis-ci.org/wso2-ballerina/package-file)
+[![Build Status](https://travis-ci.org/wso2-ballerina/module-ftp.svg?branch=master)](https://travis-ci.org/wso2-ballerina/module-ftp)
 
 # **Ballerina FTP Listener and Client**
 
