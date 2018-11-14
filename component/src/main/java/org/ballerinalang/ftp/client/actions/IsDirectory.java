@@ -19,7 +19,6 @@ package org.ballerinalang.ftp.client.actions;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.ftp.util.FtpConstants;
-import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
@@ -43,6 +42,10 @@ import java.util.Map;
 
 import static org.ballerinalang.ftp.util.FtpConstants.BALLERINA_BUILTIN;
 import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.model.types.TypeKind.BOOLEAN;
+import static org.ballerinalang.model.types.TypeKind.CONNECTOR;
+import static org.ballerinalang.model.types.TypeKind.OBJECT;
+import static org.ballerinalang.model.types.TypeKind.STRING;
 
 /**
 * FTP isDirectory operation.
@@ -51,12 +54,12 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
         orgName = "wso2",
         packageName = "ftp:0.0.0",
         functionName = "isDirectory",
-        receiver = @Receiver(type = TypeKind.OBJECT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
-        args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
-                @Argument(name = "path", type = TypeKind.STRING)},
+        receiver = @Receiver(type = OBJECT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
+        args = {@Argument(name = "ftpClientConnector", type = CONNECTOR),
+                @Argument(name = "path", type = STRING)},
         returnType = {
-                @ReturnType(type = TypeKind.BOOLEAN),
-                @ReturnType(type = TypeKind.OBJECT, structType = "error", structPackage = BALLERINA_BUILTIN)
+                @ReturnType(type = BOOLEAN),
+                @ReturnType(type = OBJECT, structType = "error", structPackage = BALLERINA_BUILTIN)
         }
 )
 public class IsDirectory extends AbstractFtpAction {

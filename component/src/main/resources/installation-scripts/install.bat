@@ -30,16 +30,16 @@ SET ballerina_balo_location=%ballerina_home%\lib\repo
 SET version=${project.version}
 SET package_name=ftp
 
-IF EXIST "%ballerina_lib_location%\wso2-%package_name%-package-%version%.jar" (
+IF EXIST "%ballerina_lib_location%\wso2-%package_name%-module-%version%.jar" (
     rem Backup if a jar already exists with the same name
     MKDIR temp
-	XCOPY "%ballerina_lib_location%\wso2-%package_name%-package-%version%.jar" "temp" /y
+	XCOPY "%ballerina_lib_location%\wso2-%package_name%-module-%version%.jar" "temp" /y
 )
 
-XCOPY ".\dependencies\wso2-%package_name%-package-%version%.jar" "%ballerina_lib_location%" /y
+XCOPY ".\dependencies\wso2-%package_name%-module-%version%.jar" "%ballerina_lib_location%" /y
 
 IF %ERRORLEVEL% GTR 0 (
-    ECHO An error occurred while copying .\dependencies\wso2-%package_name%-package-%version%.jar to %ballerina_lib_location%
+    ECHO An error occurred while copying .\dependencies\wso2-%package_name%-module-%version%.jar to %ballerina_lib_location%
 	ECHO Installation unsuccessful.
 	GOTO :FAILED
 )
@@ -51,11 +51,11 @@ IF NOT EXIST "%ballerina_balo_location%\wso2\%package_name%\0.0.0" (
 	IF ERRORLEVEL 1 (
 		ECHO An error occurred while copying .\balo\wso2\%package_name%\0.0.0\%package_name%.zip to %ballerina_balo_location%\wso2\%package_name%\0.0.0
 		ECHO Installation unsuccessful. Reverting changes.
-		IF EXIST "temp\wso2-%package_name%-package-%version%.jar" (
-			ECHO Copying backed-up wso2-%package_name%-package-%version%.jar to %ballerina_lib_location%
-			XCOPY "temp\wso2-%package_name%-package-%version%.jar" "%ballerina_lib_location%" /y
+		IF EXIST "temp\wso2-%package_name%-module-%version%.jar" (
+			ECHO Copying backed-up wso2-%package_name%-module-%version%.jar to %ballerina_lib_location%
+			XCOPY "temp\wso2-%package_name%-module-%version%.jar" "%ballerina_lib_location%" /y
 		) ELSE (
-			DEL "%ballerina_lib_location%\wso2-%package_name%-package-%version%.jar"
+			DEL "%ballerina_lib_location%\wso2-%package_name%-module-%version%.jar"
 		)
 		GOTO :FAILED
     )
@@ -67,22 +67,22 @@ XCOPY ".\balo\wso2\%package_name%\0.0.0\%package_name%.zip" "%ballerina_balo_loc
 IF %ERRORLEVEL% GTR 0 (
     ECHO An error occurred while copying .\balo\wso2\%package_name%\0.0.0\%package_name%.zip to %ballerina_balo_location%\wso2\%package_name%\0.0.0
     ECHO Installation unsuccessful. Reverting changes.
-    IF EXIST "temp\wso2-%package_name%-package-%version%.jar" (
-	    ECHO Copying backed-up wso2-%package_name%-package-%version%.jar to %ballerina_lib_location%
-	    XCOPY "temp\wso2-%package_name%-package-%version%.jar" "%ballerina_lib_location%" /y
+    IF EXIST "temp\wso2-%package_name%-module-%version%.jar" (
+	    ECHO Copying backed-up wso2-%package_name%-module-%version%.jar to %ballerina_lib_location%
+	    XCOPY "temp\wso2-%package_name%-module-%version%.jar" "%ballerina_lib_location%" /y
 	) ELSE (
-	    DEL "%ballerina_lib_location%\wso2-%package_name%-package-%version%.jar"
+	    DEL "%ballerina_lib_location%\wso2-%package_name%-module-%version%.jar"
 	)
 	GOTO :FAILED
 )
 
 :SUCCESS
-ECHO Successfully installed FTP package!
+ECHO Successfully installed FTP module!
 GOTO :END
 
 :FAILED
-ECHO You can manually install the package by copying
-ECHO 1. dependencies\wso2-%package_name%-package-%version%.jar to %ballerina_lib_location%
+ECHO You can manually install the module by copying
+ECHO 1. dependencies\wso2-%package_name%-module-%version%.jar to %ballerina_lib_location%
 ECHO 2. balo\wso2\%package_name%\0.0.0\%package_name%.zip to %ballerina_balo_location%\wso2\%package_name%\0.0.0
 
 :END

@@ -20,7 +20,6 @@ package org.ballerinalang.ftp.client.actions;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.ftp.util.FtpConstants;
-import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValue;
@@ -41,6 +40,9 @@ import java.util.Map;
 
 import static org.ballerinalang.ftp.util.FtpConstants.BALLERINA_BUILTIN;
 import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.model.types.TypeKind.CONNECTOR;
+import static org.ballerinalang.model.types.TypeKind.OBJECT;
+import static org.ballerinalang.model.types.TypeKind.STRING;
 
 /**
  * FTP Rename operation.
@@ -49,14 +51,11 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
         orgName = "wso2",
         packageName = "ftp:0.0.0",
         functionName = "rename",
-        receiver = @Receiver(
-                type = TypeKind.OBJECT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
-        args = {@Argument(name = "ftpClientConnector", type = TypeKind.CONNECTOR),
-                @Argument(name = "origin", type = TypeKind.STRING),
-                @Argument(name = "destination", type = TypeKind.STRING)},
-        returnType = {
-                @ReturnType(type = TypeKind.OBJECT, structType = "error", structPackage = BALLERINA_BUILTIN)
-        }
+        receiver = @Receiver(type = OBJECT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
+        args = {@Argument(name = "ftpClientConnector", type = CONNECTOR),
+                @Argument(name = "origin", type = STRING),
+                @Argument(name = "destination", type = STRING)},
+        returnType = {@ReturnType(type = OBJECT, structType = "error", structPackage = BALLERINA_BUILTIN)}
 )
 public class Rename extends AbstractFtpAction {
 
