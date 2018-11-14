@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/wso2-ballerina/package-file.svg?branch=master)](https://travis-ci.org/wso2-ballerina/package-file)
+[![Build Status](https://travis-ci.org/wso2-ballerina/module-ftp.svg?branch=master)](https://travis-ci.org/wso2-ballerina/module-ftp)
 
 # **Ballerina FTP Listener and Client**
 
@@ -110,7 +110,7 @@ function main (string... args) {
 }
 ```
 ## How to install FTP Connectors
-1. Download correct distribution.zip from [releases](https://github.com/wso2-ballerina/package-file/releases) that match with ballerina 
+1. Download correct distribution.zip from [releases](https://github.com/wso2-ballerina/module-ftp/releases) that match with ballerina 
   version.
 2. Unzip package distribution.
 3. Run the install.<sh|bat> script to install the package. You can uninstall the package by running uninstall.<sh|bat>.
