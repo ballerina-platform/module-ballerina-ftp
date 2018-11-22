@@ -18,30 +18,18 @@
 package org.ballerinalang.ftp.client.actions;
 
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.bre.bvm.BLangVMStructs;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
-import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BString;
+import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.util.codegen.PackageInfo;
-import org.ballerinalang.util.codegen.StructureTypeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 
-import static org.ballerinalang.ftp.util.FtpConstants.BALLERINA_BUILTIN;
-
 /**
  * {@code AbstractFtpAction} is the base class for all FTP Connector Actions.
  */
 abstract class AbstractFtpAction extends BlockingNativeCallableUnit {
-
-    static BMap<String, BValue> getClientErrorStruct(Context context) {
-        PackageInfo packageInfo = context.getProgramFile().getPackageInfo(BALLERINA_BUILTIN);
-        final StructureTypeInfo structInfo = packageInfo.getStructInfo("error");
-        return BLangVMStructs.createBStruct(structInfo);
-    }
 
     /**
      * {@link RemoteFileSystemListener} implementation for receive notification from transport.
@@ -70,9 +58,7 @@ abstract class AbstractFtpAction extends BlockingNativeCallableUnit {
 
         @Override
         public void onError(Throwable throwable) {
-            BMap<String, BValue> error = getClientErrorStruct(context);
-            error.put("message", new BString(throwable.getMessage()));
-            context.setReturnValues(error);
+            context.setReturnValues(FTPUtil.createError(context, throwable.getMessage()));
             log.error(throwable.getMessage(), throwable);
         }
 

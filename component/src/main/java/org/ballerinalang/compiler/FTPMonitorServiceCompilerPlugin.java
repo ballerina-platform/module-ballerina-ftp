@@ -33,7 +33,7 @@ import org.ballerinalang.util.exceptions.BallerinaException;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BObjectType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.ballerinalang.compiler.tree.BLangResource;
-import org.wso2.ballerinalang.compiler.tree.BLangVariable;
+import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangLiteral;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangRecordLiteral;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangSimpleVarRef;
@@ -70,7 +70,7 @@ public class FTPMonitorServiceCompilerPlugin extends AbstractCompilerPlugin {
                     "Only one resource allows for service: " + serviceNode.getName().getValue());
         }
         if (resources.size() == 1) {
-            final List<BLangVariable> parameters = resources.get(0).getParameters();
+            final List<BLangSimpleVariable> parameters = resources.get(0).getParameters();
             if (parameters.size() != 1) {
                 dlog.logDiagnostic(Diagnostic.Kind.ERROR, resources.get(0).getPosition(),
                         "Invalid resource signature. A single " + FTP_SERVER_EVENT

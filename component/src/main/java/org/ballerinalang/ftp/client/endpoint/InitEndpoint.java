@@ -44,9 +44,7 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
         orgName = "wso2",
         packageName = "ftp:0.0.0",
         functionName = "initEndpoint",
-        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Client", structPackage = FTP_PACKAGE_NAME),
-        args = {@Argument(name = "config", type = TypeKind.OBJECT, structType = "ClientEndpointConfiguration")},
-        isPublic = true
+        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Client", structPackage = FTP_PACKAGE_NAME)
 )
 public class InitEndpoint extends BlockingNativeCallableUnit {
 

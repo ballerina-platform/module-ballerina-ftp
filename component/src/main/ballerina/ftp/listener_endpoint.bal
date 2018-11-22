@@ -16,13 +16,13 @@
 import ballerina/task;
 import ballerina/io;
 
-ListenerEndpointConfig c;
+ListenerEndpointConfig c = {};
 
 # Represents a service listener that monitors the FTP location.
 public type Listener object {
-    private ListenerEndpointConfig config;
-    private task:Appointment? appointment;
-    private task:Timer? task;
+    private ListenerEndpointConfig config = {};
+    private task:Appointment? appointment = ();
+    private task:Timer? task = ();
 
     public function init(ListenerEndpointConfig listenerConfig) {
         self.config = listenerConfig;
@@ -33,25 +33,25 @@ public type Listener object {
 
     public function start() {
         (function() returns error?) onTriggerFunction = tempFunc;
-        match config.cronExpression {
+        match self.config.cronExpression {
             string expression => {
-                appointment = new task:Appointment(onTriggerFunction, onError, expression);
-                _ = appointment.schedule();
+                self.appointment = new task:Appointment(onTriggerFunction, onError, expression);
+                _ = self.appointment.schedule();
             }
             () => {
-                task = new task:Timer(onTriggerFunction, onError, config.pollingInterval, delay = 100);
-                _ = task.start();
+                self.task = new task:Timer(onTriggerFunction, onError, self.config.pollingInterval, delay = 100);
+                _ = self.task.start();
             }
         }
     }
 
     public function stop() {
-        match appointment {
+        match self.appointment {
             task:Appointment t => {
                 t.cancel();
             }
             () => {
-                _ = task.stop();
+                _ = self.task.stop();
             }
         }
     }
@@ -80,12 +80,12 @@ extern function poll(ListenerEndpointConfig config) returns error?;
 # + cronExpression - Cron expression to check new update
 public type ListenerEndpointConfig record {
     Protocol protocol = FTP;
-    string host;
-    int port;
-    SecureSocket? secureSocket;
-    string path;
-    string fileNamePattern;
+    string host = "";
+    int port = 0;
+    SecureSocket? secureSocket = ();
+    string path = "";
+    string fileNamePattern = "";
     int pollingInterval = 60000;
-    string? cronExpression;
+    string? cronExpression = ();
     !...
 };
