@@ -45,7 +45,7 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
         orgName = "wso2",
         packageName = "ftp:0.0.0",
         functionName = "poll",
-        args = {@Argument(name = "config", type = TypeKind.OBJECT, structType = "ListenerEndpointConfig",
+        args = {@Argument(name = "config", type = TypeKind.OBJECT, structType = "ListenerConfig",
                           structPackage = FTP_PACKAGE_NAME)},
         isPublic = true
 )

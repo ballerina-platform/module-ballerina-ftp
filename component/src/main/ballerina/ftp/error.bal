@@ -16,6 +16,5 @@
 
 public type FTPError record {
     string message;
-    int id;
     !...
 };

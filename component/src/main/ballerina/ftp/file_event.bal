@@ -20,9 +20,9 @@
 # + size - Size of the file
 # + lastModifiedTimestamp - Last modified timestamp of the file in UNIX Epoch time
 public type FileInfo record {
-    @readonly string path;
-    @readonly int size;
-    @readonly int lastModifiedTimestamp;
+    string path;
+    int size;
+    int lastModifiedTimestamp;
     !...
 };
 
@@ -31,7 +31,7 @@ public type FileInfo record {
 # + addedFiles - Array of FileInfo that represents newly added files
 # + deletedFiles - Array of string that contains deleted file names
 public type WatchEvent record {
-    @readonly FileInfo[] addedFiles;
-    @readonly string[] deletedFiles;
+    FileInfo[] addedFiles;
+    string[] deletedFiles;
     !...
 };

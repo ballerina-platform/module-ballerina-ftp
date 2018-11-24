@@ -25,7 +25,7 @@ public type Client client object {
     # Gets invoked during object initialization.
     #
     # + clientConfig - Configurations for FTP client endpoint
-    public new(ClientEndpointConfig clientConfig) {
+    public function __init(ClientEndpointConfig clientConfig) {
         self.config = clientConfig;
         self.initEndpoint();
     }

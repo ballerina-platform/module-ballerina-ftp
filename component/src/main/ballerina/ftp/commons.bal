@@ -18,19 +18,19 @@
 public type Protocol "ftp"|"sftp"|"ftps";
 
 # Underlying communication happen using FTP.
-@final public Protocol FTP = "ftp";
+public final Protocol FTP= "ftp";
 # Underlying communication happen using SFTP.
-@final public Protocol SFTP = "sftp";
+public final Protocol SFTP= "sftp";
 # Underlying communication happen using FTPS.
-@final public Protocol FTPS = "ftps";
+public final Protocol FTPS= "ftps";
 
 # A record for providing `Truststore` related configurations.
 #
 # + path - Path to the truststore file
 # + password - Truststore password
 public type TrustStore record {
-    string path;
-    string password;
+    string? path = ();
+    string? password = ();
     !...
 };
 
@@ -39,8 +39,8 @@ public type TrustStore record {
 # + path - Path to the keystore file
 # + password - Keystore password
 public type KeyStore record {
-    string path;
-    string password;
+    string? path = ();
+    string? password = ();
     !...
 };
 
@@ -49,8 +49,8 @@ public type KeyStore record {
 # + path - Path to the private key file
 # + password - Private key password
 public type PrivateKey record {
-    string path;
-    string password;
+    string? path = ();
+    string? password = ();
     !...
 };
 
@@ -59,8 +59,8 @@ public type PrivateKey record {
 # + username - Username of the user
 # + password - Password of the user
 public type BasicAuth record {
-    string username;
-    string password;
+    string? username = ();
+    string? password = ();
     !...
 };
 
@@ -71,9 +71,9 @@ public type BasicAuth record {
 # + basicAuth - Configure username/password to be used
 # + privateKey - Configures the private key to be used
 public type SecureSocket record {
-    TrustStore? trustStore;
-    KeyStore? keyStore;
-    BasicAuth? basicAuth;
-    PrivateKey? privateKey;
+    TrustStore? trustStore = ();
+    KeyStore? keyStore = ();
+    BasicAuth? basicAuth = ();
+    PrivateKey? privateKey = ();
     !...
 };

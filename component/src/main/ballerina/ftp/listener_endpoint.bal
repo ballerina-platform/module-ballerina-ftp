@@ -16,43 +16,58 @@
 import ballerina/task;
 import ballerina/io;
 
-ListenerEndpointConfig c = {};
+ListenerConfig c = {};
 
 # Represents a service listener that monitors the FTP location.
 public type Listener object {
-    private ListenerEndpointConfig config = {};
+
+    *AbstractListener;
+
+    private ListenerConfig config = {};
     private task:Appointment? appointment = ();
     private task:Timer? task = ();
 
-    public function init(ListenerEndpointConfig listenerConfig) {
+    public function __init(ListenerConfig listenerConfig) {
         self.config = listenerConfig;
         c = listenerConfig;
     }
 
-    public extern function register(typedesc serviceType);
+    public function __start() returns error? {
+        return self.start();
+    }
 
-    public function start() {
+    public function __stop() returns error? {
+        self.stop();
+        return ();
+    }
+
+    public function __attach(service s, map<any> annotationData) returns error? {
+        return self.register(s, annotationData);
+    }
+
+    public extern function register(service s, map<any> annotationData) returns error?;
+
+    public function start() returns error? {
         (function() returns error?) onTriggerFunction = tempFunc;
-        match self.config.cronExpression {
-            string expression => {
-                self.appointment = new task:Appointment(onTriggerFunction, onError, expression);
-                _ = self.appointment.schedule();
-            }
-            () => {
-                self.task = new task:Timer(onTriggerFunction, onError, self.config.pollingInterval, delay = 100);
-                _ = self.task.start();
-            }
+        var scheduler = self.config.cronExpression;
+        if (scheduler is string) {
+            self.appointment = new
+            task:Appointment(onTriggerFunction, onError, scheduler);
+            _ = self.appointment.schedule();
+        } else {
+            self.task = new
+            task:Timer(onTriggerFunction, onError, self.config.pollingInterval, delay = 100);
+            _ = self.task.start();
         }
+        return ();
     }
 
     public function stop() {
-        match self.appointment {
-            task:Appointment t => {
-                t.cancel();
-            }
-            () => {
-                _ = self.task.stop();
-            }
+        var scheduler = self.appointment;
+        if (scheduler is task:Appointment) {
+            scheduler.cancel();
+        } else {
+            _ = self.task.stop();
         }
     }
 };
@@ -66,7 +81,7 @@ function tempFunc() returns error? {
     return poll(c);
 }
 
-extern function poll(ListenerEndpointConfig config) returns error?;
+extern function poll(ListenerConfig config) returns error?;
 
 # Configuration for FTP listener endpoint.
 #
@@ -78,10 +93,10 @@ extern function poll(ListenerEndpointConfig config) returns error?;
 # + fileNamePattern - File name pattern that event need to trigger
 # + pollingInterval - Periodic time interval to check new update
 # + cronExpression - Cron expression to check new update
-public type ListenerEndpointConfig record {
+public type ListenerConfig record {
     Protocol protocol = FTP;
     string host = "";
-    int port = 0;
+    int port = -1;
     SecureSocket? secureSocket = ();
     string path = "";
     string fileNamePattern = "";
