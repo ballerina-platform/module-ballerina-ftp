@@ -22,8 +22,8 @@ import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BValue;
+import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.slf4j.Logger;
@@ -91,7 +91,7 @@ public class List extends AbstractFtpAction {
         public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
                 RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
-                getContext().setReturnValues(new BStringArray(message.getChildNames()));
+                getContext().setReturnValues(new BValueArray(message.getChildNames()));
             }
             return true;
         }

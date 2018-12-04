@@ -19,23 +19,21 @@
 package org.ballerinalang.ftp.server.endpoint;
 
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.bre.bvm.BLangVMStructs;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
+import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
-import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
-import org.ballerinalang.util.codegen.PackageInfo;
-import org.ballerinalang.util.codegen.StructureTypeInfo;
+import org.ballerinalang.natives.annotations.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
 import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileSystemServerConnector;
 
-import static org.ballerinalang.ftp.util.FtpConstants.BALLERINA_BUILTIN;
 import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.model.types.TypeKind.OBJECT;
 
 /**
  * Native method for poll.
@@ -45,8 +43,9 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
         orgName = "wso2",
         packageName = "ftp:0.0.0",
         functionName = "poll",
-        args = {@Argument(name = "config", type = TypeKind.OBJECT, structType = "ListenerConfig",
+        args = {@Argument(name = "config", type = OBJECT, structType = "ListenerConfig",
                           structPackage = FTP_PACKAGE_NAME)},
+        receiver = @Receiver(type = OBJECT, structType = "Listener", structPackage = FTP_PACKAGE_NAME),
         isPublic = true
 )
 public class Poll extends BlockingNativeCallableUnit {
@@ -61,16 +60,10 @@ public class Poll extends BlockingNativeCallableUnit {
         try {
             connector.poll();
         } catch (RemoteFileSystemConnectorException e) {
-            context.setReturnValues(getErrorStruct(context));
+            context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
             log.error(e.getMessage(), e);
             return;
         }
         context.setReturnValues();
-    }
-
-    private BMap<String, BValue> getErrorStruct(Context context) {
-        PackageInfo packageInfo = context.getProgramFile().getPackageInfo(BALLERINA_BUILTIN);
-        final StructureTypeInfo structInfo = packageInfo.getStructInfo("error");
-        return BLangVMStructs.createBStruct(structInfo);
     }
 }

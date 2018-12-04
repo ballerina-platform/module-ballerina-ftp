@@ -16,8 +16,6 @@
 import ballerina/task;
 import ballerina/io;
 
-ListenerConfig c = {};
-
 # Represents a service listener that monitors the FTP location.
 public type Listener object {
 
@@ -29,7 +27,6 @@ public type Listener object {
 
     public function __init(ListenerConfig listenerConfig) {
         self.config = listenerConfig;
-        c = listenerConfig;
     }
 
     public function __start() returns error? {
@@ -45,24 +42,21 @@ public type Listener object {
         return self.register(s, annotationData);
     }
 
-    public extern function register(service s, map<any> annotationData) returns error?;
-
-    public function start() returns error? {
-        (function() returns error?) onTriggerFunction = tempFunc;
+    function start() returns error? {
+        (function() returns error?) onTriggerFunction = () => self.poll();
+        (function(error)) onErrorFunction = err => self.onError(err);
         var scheduler = self.config.cronExpression;
         if (scheduler is string) {
-            self.appointment = new
-            task:Appointment(onTriggerFunction, onError, scheduler);
+            self.appointment = new task:Appointment(onTriggerFunction, onErrorFunction, scheduler);
             _ = self.appointment.schedule();
         } else {
-            self.task = new
-            task:Timer(onTriggerFunction, onError, self.config.pollingInterval, delay = 100);
+            self.task = new task:Timer(onTriggerFunction, onErrorFunction, self.config.pollingInterval, delay = 100);
             _ = self.task.start();
         }
         return ();
     }
 
-    public function stop() {
+    function stop() {
         var scheduler = self.appointment;
         if (scheduler is task:Appointment) {
             scheduler.cancel();
@@ -70,18 +64,16 @@ public type Listener object {
             _ = self.task.stop();
         }
     }
+
+    function onError(error e) {
+        io:println("[ERROR] FTP listener poll failed. ");
+        io:println(e);
+    }
+
+    extern function poll() returns error?;
+
+    extern function register(service s, map<any> annotationData) returns error?;
 };
-
-function onError(error e) {
-    io:println("[ERROR] FTP listener poll failed. ");
-    io:println(e);
-}
-
-function tempFunc() returns error? {
-    return poll(c);
-}
-
-extern function poll(ListenerConfig config) returns error?;
 
 # Configuration for FTP listener endpoint.
 #

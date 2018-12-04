@@ -13,7 +13,7 @@ listener ftp:Listener remoteServer = new({
     port: 48123,
     path: "/home/wso2",
     pollingInterval: 2000
-    });
+});
 
 int noOfFilesAdded = 0;
 

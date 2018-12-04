@@ -22,10 +22,10 @@ import org.ballerinalang.bre.bvm.BLangVMStructs;
 import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.ftp.util.FtpConstants;
+import org.ballerinalang.model.types.BTypes;
 import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BRefValueArray;
-import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BValue;
+import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.util.codegen.PackageInfo;
 import org.ballerinalang.util.codegen.StructureTypeInfo;
 import org.slf4j.Logger;
@@ -62,7 +62,7 @@ public class FTPFileSystemListener implements RemoteFileSystemListener {
     private BValue getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
         // For newly added files.
         final StructureTypeInfo fileInfoStructInfo = getFileInfoStructInfo(packageInfo);
-        BRefValueArray fileInfoArray = new BRefValueArray(fileInfoStructInfo.getType());
+        BValueArray fileInfoArray = new BValueArray(fileInfoStructInfo.getType());
         int i = 0;
         for (FileInfo info : fileSystemEvent.getAddedFiles()) {
             final BMap<String, BValue> fileInfoStruct = BLangVMStructs
@@ -70,7 +70,7 @@ public class FTPFileSystemListener implements RemoteFileSystemListener {
             fileInfoArray.add(i++, fileInfoStruct);
         }
         // For deleted files.
-        BStringArray deletedFilesArray = new BStringArray();
+        BValueArray deletedFilesArray = new BValueArray(BTypes.typeString);
         i = 0;
         for (String fileName : fileSystemEvent.getDeletedFiles()) {
             deletedFilesArray.add(i++, fileName);
