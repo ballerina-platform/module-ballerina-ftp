@@ -6,7 +6,7 @@
 The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and periodically notify the file addition and deletion.
 ```ballerina
 import wso2/ftp;
-import ballerina/io;
+import ballerina/log;
 
 listener ftp:Listener remoteServer = new({
     protocol:ftp:FTP,
@@ -23,12 +23,12 @@ listener ftp:Listener remoteServer = new({
 
 service monitor on remoteLocation {
     resource function fileResource (ftp:WatchEvent m) {
-        foreach v in m.addedFiles {
-            io:println("Added file path: ", v.path);
+        foreach ftp:FileInfo v1 in m.addedFiles {
+            log:printInfo("Added file path: " + v1.path);
         }
         
-        foreach v in m.deletedFiles {
-            io:println("Deleted file path: ", v);
+        foreach string v2 in m.deletedFiles {
+            log:printInfo("Deleted file path: " + v2);
         }
     }
 }
@@ -60,7 +60,7 @@ function main (string... args) {
     // Get the content list of a given path
     var listResult = ftpClient -> list("/ballerina-user/sample-dir");
     if (listResult is string[]) {
-        foreach file in listResult {
+        foreach string file in listResult {
             io:println("File: " + file);
         }
     } else {
@@ -89,7 +89,10 @@ function main (string... args) {
     error? fileDelCreErr = ftpClient -> delete("/ballerina-user/sample-dir/temp/MyMockProxy.xml");
     
     // Remove direcotry from remote server 
-    _ = ftpClient -> rmdir("/ballerina-user/sample-dir/temp");  
+   var result = ftpClient -> rmdir("/ballerina-user/sample-dir/temp");
+   if (result is error) {
+        io:println("An error occured."); 
+   }
 }
 ```
 ## How to install FTP Connectors

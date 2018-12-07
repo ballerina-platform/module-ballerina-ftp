@@ -1,5 +1,5 @@
 import wso2/ftp;
-import ballerina/io;
+import ballerina/log;
 
 listener ftp:Listener remoteServer = new({
     protocol: ftp:FTP,
@@ -19,7 +19,10 @@ int noOfFilesAdded = 0;
 
 service ftpServerConnector on remoteServer {
     resource function fileResource(ftp:WatchEvent m) {
-        io:println("Length: ", m.addedFiles.length());
+        foreach ftp:FileInfo v1 in m.addedFiles {
+            log:printInfo("Added file path: " + v1.path);
+        }
+        log:printInfo("Length: " + m.addedFiles.length());
         noOfFilesAdded = m.addedFiles.length();
     }
 }
