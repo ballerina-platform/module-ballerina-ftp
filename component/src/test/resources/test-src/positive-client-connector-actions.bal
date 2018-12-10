@@ -2,147 +2,100 @@ import ballerina/io;
 import wso2/ftp;
 
 function createDirectory(string host, string url) {
-    endpoint ftp:Client client {
-        protocol: ftp:FTP,
-        host: host
-    };
-
-    _ = client->mkdir(url);
+    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
+    _ = ftpClient->mkdir(url);
 }
 
 function removeDirectory(string host, string url) {
-    endpoint ftp:Client client {
-        protocol: ftp:FTP,
-        host: host
-    };
-
-    _ = client->rmdir(url);
+    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
+    _ = ftpClient->rmdir(url);
 }
 
-function readContent(string host, string url) returns string? {
-    endpoint ftp:Client client {
-        protocol: ftp:FTP,
-        host: host
-    };
-
-    var output = client->get(url);
+function readContent(string host, string url) returns string|error? {
+    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
+    var output = ftpClient->get(url);
     io:ReadableByteChannel byteChannel = check output;
-    string? returnValue;
-    io:ReadableCharacterChannel? characterChannel1 = new io:ReadableCharacterChannel(byteChannel, "utf-8");
-    match characterChannel1 {
-        io:ReadableCharacterChannel characterChannel => {
-            match readAllCharacters(characterChannel) {
-                string str => {
-                    returnValue = untaint str;
-                    io:println(returnValue);
-                }
-                error err => {
-                    throw err;
-                }
-                () => {
-                    io:println("Empty return from channel.");
-                }
-            }
-            match characterChannel.close() {
-                error e1 => {
-                    io:println("ReadableCharacterChannel close error: ", e1.message);
-                }
-                () => {
-                    io:println("Connection closed successfully.");
-                }
-            }
+    string? returnValue = ();
+    io:ReadableCharacterChannel? characterChannel = new io:ReadableCharacterChannel(byteChannel, "utf-8");
+    if (characterChannel is io:ReadableCharacterChannel) {
+        var characters = readAllCharacters(characterChannel);
+        if (characters is string) {
+            returnValue = untaint characters;
+            io:println(returnValue);
+        } else if (characters is error) {
+            return characters;
+        } else {
+            io:println("Empty return from channel.");
         }
-        () => {
+        var closeResult = characterChannel.close();
+        if (closeResult is error) {
+            io:println("ReadableCharacterChannel close error: ", closeResult.reason());
+        } else {
+            io:println("Connection closed successfully.");
         }
+    } else {
+        returnValue = ();
     }
     return returnValue;
 }
 
 function write(string host, string path, string filePath) {
-    endpoint ftp:Client client {
-        protocol: ftp:FTP,
-        host: host
-    };
-
+    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
     io:ReadableByteChannel bchannel = io:openReadableFile(filePath);
-    _ = client->put(path, bchannel);
+    _ = ftpClient->put(path, bchannel);
 }
 
 
 function append(string host, string path, string filePath) {
-    endpoint ftp:Client client {
-        protocol: ftp:FTP,
-        host: host
-    };
-
+    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
     io:ReadableByteChannel bchannel = io:openReadableFile(filePath);
-    _ = client->append(path, bchannel);
+    _ = ftpClient->append(path, bchannel);
 }
 
 function fileDelete(string host, string path) {
-    endpoint ftp:Client client {
-        protocol: ftp:FTP,
-        host: host
-    };
-
-    _ = client->delete(path);
+    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
+    _ = ftpClient->delete(path);
 }
 
-function size(string host, string path) returns int {
-    endpoint ftp:Client client {
-        protocol: ftp:FTP,
-        host: host
-    };
+function size(string host, string path) returns int|error {
+    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
     int fileSize = 0;
-    var result = client->size(path);
+    var result = ftpClient->size(path);
     fileSize = check result;
     return fileSize;
 }
 
-function list(string host, string path) returns string[] {
-    endpoint ftp:Client client {
-        protocol: ftp:FTP,
-        host: host
-    };
+function list(string host, string path) returns string[]|error {
+    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
     string[] fileList;
-    var result = client->list(path);
+    var result = ftpClient->list(path);
     fileList = check result;
     return fileList;
 }
 
 function rename(string host, string source, string destination) {
-    endpoint ftp:Client client {
-        protocol: ftp:FTP,
-        host: host
-    };
-
-    _ = client->rename(source, destination);
+    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
+    _ = ftpClient->rename(source, destination);
 }
 
-function isDirectory(string host, string path) returns boolean {
-    endpoint ftp:Client client {
-        protocol: ftp:FTP,
-        host: host
-    };
-
-    return check client->isDirectory(path);
+function isDirectory(string host, string path) returns boolean|error {
+    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
+    return check ftpClient->isDirectory(path);
 }
 
 function readAllCharacters(io:ReadableCharacterChannel characterChannel) returns string|error? {
-    int fixedSize = 50;
+    int fixedSize = 500;
     boolean isDone = false;
-    string result;
+    string result = "";
     while (!isDone) {
-        match readCharacters(fixedSize, characterChannel) {
-            string value => {
-                result = result + value;
-            }
-            error err => {
-                if (err.message == "io.EOF"){
-                    isDone = true;
-                } else {
-                    return err;
-                }
+        var readResult = readCharacters(fixedSize, characterChannel);
+        if (readResult is string) {
+            result = result + readResult;
+        } else if (readResult is error) {
+            if (<string>readResult.detail()["message"] == "io.EOF") {
+                isDone = true;
+            } else {
+                return readResult;
             }
         }
     }
@@ -151,12 +104,12 @@ function readAllCharacters(io:ReadableCharacterChannel characterChannel) returns
 
 function readCharacters(int numberOfCharacters, io:ReadableCharacterChannel characterChannel) returns string|error {
     var result = characterChannel.read(numberOfCharacters);
-    match result {
-        string characters => {
-            return characters;
-        }
-        error err => {
-            return err;
-        }
+    if (result is string) {
+        return result;
+    } else if (result is error) {
+        return result;
+    } else {
+        error e = error("Character channel not initialized properly");
+        return e;
     }
 }

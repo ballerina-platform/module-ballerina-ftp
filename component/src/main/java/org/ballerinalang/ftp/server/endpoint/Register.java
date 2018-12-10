@@ -30,7 +30,6 @@ import org.ballerinalang.ftp.server.FTPFileSystemListener;
 import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.wso2.transport.remotefilesystem.Constants;
@@ -52,9 +51,7 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
         orgName = "wso2",
         packageName = "ftp:0.0.0",
         functionName = "register",
-        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Listener", structPackage = FTP_PACKAGE_NAME),
-        args = {@Argument(name = "serviceType", type = TypeKind.TYPEDESC)},
-        isPublic = true
+        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Listener", structPackage = FTP_PACKAGE_NAME)
 )
 public class Register extends BlockingNativeCallableUnit {
     @Override

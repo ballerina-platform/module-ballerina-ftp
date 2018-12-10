@@ -18,15 +18,14 @@
 package org.ballerinalang.ftp.client.actions;
 
 import org.ballerinalang.bre.Context;
+import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
+import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BString;
-import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.annotations.Argument;
+import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
-import org.ballerinalang.natives.annotations.ReturnType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
@@ -40,12 +39,7 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.FtpConstants.BALLERINA_BUILTIN;
 import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
-import static org.ballerinalang.model.types.TypeKind.ARRAY;
-import static org.ballerinalang.model.types.TypeKind.CONNECTOR;
-import static org.ballerinalang.model.types.TypeKind.OBJECT;
-import static org.ballerinalang.model.types.TypeKind.STRING;
 
 /**
 * FTP file names list operation.
@@ -54,13 +48,7 @@ import static org.ballerinalang.model.types.TypeKind.STRING;
         orgName = "wso2",
         packageName = "ftp:0.0.0",
         functionName = "list",
-        receiver = @Receiver(type = OBJECT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
-        args = {@Argument(name = "ftpClientConnector", type = CONNECTOR),
-                @Argument(name = "path", type = STRING)},
-        returnType = {
-                @ReturnType(type = ARRAY, elementType = STRING),
-                @ReturnType(type = OBJECT, structType = "error", structPackage = BALLERINA_BUILTIN)
-        }
+        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Client", structPackage = FTP_PACKAGE_NAME)
 )
 public class List extends AbstractFtpAction {
 
@@ -82,9 +70,7 @@ public class List extends AbstractFtpAction {
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            BMap<String, BValue> error = getClientErrorStruct(context);
-            error.put("message", new BString(e.getMessage()));
-            context.setReturnValues(error);
+            context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
             log.error(e.getMessage(), e);
             return;
         }
@@ -94,25 +80,25 @@ public class List extends AbstractFtpAction {
     private static class FTPFileListListener extends FTPClientConnectorListener {
 
         private static final Logger log = LoggerFactory.getLogger(FTPFileListListener.class);
+        private Context context;
 
         FTPFileListListener(Context context) {
             super(context);
+            this.context = context;
         }
 
         @Override
         public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
                 RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
-                getContext().setReturnValues(new BStringArray(message.getChildNames()));
+                getContext().setReturnValues(new BValueArray(message.getChildNames()));
             }
             return true;
         }
 
         @Override
         public void onError(Throwable throwable) {
-            BMap<String, BValue> error = getClientErrorStruct(getContext());
-            error.put("message", new BString(throwable.getMessage()));
-            getContext().setReturnValues(error);
+            getContext().setReturnValues(FTPUtil.createError(context, throwable.getMessage()));
             log.error(throwable.getMessage(), throwable);
         }
     }

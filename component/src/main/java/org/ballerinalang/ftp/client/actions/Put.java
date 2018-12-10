@@ -18,14 +18,13 @@
 package org.ballerinalang.ftp.client.actions;
 
 import org.ballerinalang.bre.Context;
+import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
+import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
-import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.slf4j.Logger;
@@ -40,11 +39,7 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.FtpConstants.BALLERINA_BUILTIN;
 import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
-import static org.ballerinalang.model.types.TypeKind.CONNECTOR;
-import static org.ballerinalang.model.types.TypeKind.OBJECT;
-import static org.ballerinalang.model.types.TypeKind.STRING;
 
 /**
  * FTP Put operation.
@@ -53,14 +48,7 @@ import static org.ballerinalang.model.types.TypeKind.STRING;
         orgName = "wso2",
         packageName = "ftp:0.0.0",
         functionName = "put",
-        receiver = @Receiver(type = OBJECT, structType = "ClientActions", structPackage = FTP_PACKAGE_NAME),
-        args = {@Argument(name = "ftpClientConnector", type = CONNECTOR),
-                @Argument(name = "path", type = STRING),
-                @Argument(name = "source", type = OBJECT, structType = "ReadableByteChannel",
-                          structPackage = "ballerina/io")},
-        returnType = {
-                @ReturnType(type = OBJECT, structType = "error", structPackage = BALLERINA_BUILTIN)
-        }
+        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Client", structPackage = FTP_PACKAGE_NAME)
 )
 public class Put extends AbstractFtpAction {
 
@@ -86,9 +74,7 @@ public class Put extends AbstractFtpAction {
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            BMap<String, BValue> error = getClientErrorStruct(context);
-            error.put("message", new BString(e.getMessage()));
-            context.setReturnValues(error);
+            context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
             log.error(e.getMessage(), e);
             return;
         }

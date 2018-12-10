@@ -20,17 +20,17 @@
 
 <modelVersion>4.0.0</modelVersion>
     <groupId>org.ballerinalang</groupId>
-    <artifactId>file-connector-parent</artifactId>
+    <artifactId>ftp-connector-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.98.1-SNAPSHOT</version>
-    <name>Ballerina - File Connector ParentParent</name>
+    <version>0.99.0-SNAPSHOT</version>
+    <name>Ballerina - FTP Connector ParentParent</name>
 
-    <url>http://ballerinalang.org</url>
+    <url>https://ballerina.io/</url>
 
     <scm>
-        <url>https://github.com/wso2-ballerina/package-file.git</url>
-        <developerConnection>scm:git:https://github.com/wso2-ballerina/package-file.git</developerConnection>
-        <connection>scm:git:https://github.com/wso2-ballerina/package-file.git</connection>
+        <url>https://github.com/wso2-ballerina/module-ftp.git</url>
+        <developerConnection>scm:git:https://github.com/wso2-ballerina/module-ftp.git</developerConnection>
+        <connection>scm:git:https://github.com/wso2-ballerina/module-ftp.git</connection>
         <tag>HEAD</tag>
     </scm>
     <modules>
@@ -411,7 +411,7 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <ballerina.version>0.983.0</ballerina.version>
+        <ballerina.version>0.990.0</ballerina.version>
         <docerina.version>${ballerina.version}</docerina.version>
         <file.transport.version>6.0.55</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>

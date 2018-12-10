@@ -24,8 +24,8 @@ import org.ballerinalang.launcher.util.CompileResult;
 import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BInteger;
 import org.ballerinalang.model.values.BString;
-import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BValue;
+import org.ballerinalang.model.values.BValueArray;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
@@ -125,7 +125,7 @@ public class FTPClientConnectorTest {
         String url = "/child_directory";
         BValue[] inputArg = { new BString(buildConnectionURL()), new BString(url) };
         final BValue[] readContents = BRunUtil.invoke(result, "list", inputArg);
-        BStringArray list = (BStringArray) readContents[0];
+        BValueArray list = (BValueArray) readContents[0];
         Assert.assertEquals(list.getStringArray().length, 2, "File list mismatch.");
     }
 
