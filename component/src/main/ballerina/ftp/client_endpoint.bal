@@ -109,5 +109,5 @@ public type ClientEndpointConfig record {
     string host = "";
     int? port = -1;
     SecureSocket? secureSocket = ();
-    !...
+    !...;
 };

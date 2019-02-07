@@ -31,7 +31,7 @@ public final Protocol FTPS= "ftps";
 public type TrustStore record {
     string? path = ();
     string? password = ();
-    !...
+    !...;
 };
 
 # A record for providing `Keystore` related configurations.
@@ -41,7 +41,7 @@ public type TrustStore record {
 public type KeyStore record {
     string? path = ();
     string? password = ();
-    !...
+    !...;
 };
 
 # A record for providing `PrivateKey` related configurations.
@@ -51,7 +51,7 @@ public type KeyStore record {
 public type PrivateKey record {
     string? path = ();
     string? password = ();
-    !...
+    !...;
 };
 
 # A record for providing `BasicAuth` related configurations.
@@ -61,7 +61,7 @@ public type PrivateKey record {
 public type BasicAuth record {
     string? username = ();
     string? password = ();
-    !...
+    !...;
 };
 
 # Provides configurations for facilitating secure communication with a remote FTP server.
@@ -75,5 +75,5 @@ public type SecureSocket record {
     KeyStore? keyStore = ();
     BasicAuth? basicAuth = ();
     PrivateKey? privateKey = ();
-    !...
+    !...;
 };

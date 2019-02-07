@@ -94,5 +94,5 @@ public type ListenerConfig record {
     string fileNamePattern = "";
     int pollingInterval = 60000;
     string? cronExpression = ();
-    !...
+    !...;
 };
