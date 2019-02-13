@@ -91,7 +91,7 @@ function readAllCharacters(io:ReadableCharacterChannel characterChannel) returns
         var readResult = readCharacters(fixedSize, characterChannel);
         if (readResult is string) {
             result = result + readResult;
-        } else if (readResult is error) {
+        } else {
             if (<string>readResult.detail()["message"] == "io.EOF") {
                 isDone = true;
             } else {
@@ -106,10 +106,7 @@ function readCharacters(int numberOfCharacters, io:ReadableCharacterChannel char
     var result = characterChannel.read(numberOfCharacters);
     if (result is string) {
         return result;
-    } else if (result is error) {
-        return result;
     } else {
-        error e = error("Character channel not initialized properly");
-        return e;
+        return result;
     }
 }

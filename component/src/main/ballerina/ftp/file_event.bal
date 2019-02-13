@@ -23,7 +23,7 @@ public type FileInfo record {
     string path;
     int size;
     int lastModifiedTimestamp;
-    !...
+    !...;
 };
 
 # This represents the latest status change of the server from the last status change.
@@ -33,5 +33,5 @@ public type FileInfo record {
 public type WatchEvent record {
     FileInfo[] addedFiles;
     string[] deletedFiles;
-    !...
+    !...;
 };
