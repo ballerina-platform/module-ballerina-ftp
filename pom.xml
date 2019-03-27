@@ -22,7 +22,7 @@
     <groupId>org.ballerinalang</groupId>
     <artifactId>ftp-connector-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.99.1-SNAPSHOT</version>
+    <version>0.99.2-SNAPSHOT</version>
     <name>Ballerina - FTP Connector ParentParent</name>
 
     <url>https://ballerina.io/</url>
