@@ -19,19 +19,17 @@
 # + path - Relative file path for newly added file
 # + size - Size of the file
 # + lastModifiedTimestamp - Last modified timestamp of the file in UNIX Epoch time
-public type FileInfo record {
+public type FileInfo record {|
     string path;
     int size;
     int lastModifiedTimestamp;
-    !...;
-};
+|};
 
 # This represents the latest status change of the server from the last status change.
 #
 # + addedFiles - Array of FileInfo that represents newly added files
 # + deletedFiles - Array of string that contains deleted file names
-public type WatchEvent record {
+public type WatchEvent record {|
     FileInfo[] addedFiles;
     string[] deletedFiles;
-    !...;
-};
+|};

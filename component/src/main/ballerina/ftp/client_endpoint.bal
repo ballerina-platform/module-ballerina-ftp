@@ -104,10 +104,9 @@ public type Client client object {
 # + host - Target service URL
 # + port - Port number of the remote service
 # + secureSocket - Authenthication options
-public type ClientEndpointConfig record {
+public type ClientEndpointConfig record {|
     Protocol protocol = FTP;
     string host = "";
     int? port = -1;
     SecureSocket? secureSocket = ();
-    !...;
-};
+|};

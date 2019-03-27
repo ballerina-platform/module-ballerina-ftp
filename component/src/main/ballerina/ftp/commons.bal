@@ -18,51 +18,47 @@
 public type Protocol "ftp"|"sftp"|"ftps";
 
 # Underlying communication happen using FTP.
-public final Protocol FTP= "ftp";
+public const FTP = "ftp";
 # Underlying communication happen using SFTP.
-public final Protocol SFTP= "sftp";
+public const SFTP = "sftp";
 # Underlying communication happen using FTPS.
-public final Protocol FTPS= "ftps";
+public const FTPS = "ftps";
 
 # A record for providing `Truststore` related configurations.
 #
 # + path - Path to the truststore file
 # + password - Truststore password
-public type TrustStore record {
+public type TrustStore record {|
     string? path = ();
     string? password = ();
-    !...;
-};
+|};
 
 # A record for providing `Keystore` related configurations.
 #
 # + path - Path to the keystore file
 # + password - Keystore password
-public type KeyStore record {
+public type KeyStore record {|
     string? path = ();
     string? password = ();
-    !...;
-};
+|};
 
 # A record for providing `PrivateKey` related configurations.
 #
 # + path - Path to the private key file
 # + password - Private key password
-public type PrivateKey record {
+public type PrivateKey record {|
     string? path = ();
     string? password = ();
-    !...;
-};
+|};
 
 # A record for providing `BasicAuth` related configurations.
 #
 # + username - Username of the user
 # + password - Password of the user
-public type BasicAuth record {
+public type BasicAuth record {|
     string? username = ();
     string? password = ();
-    !...;
-};
+|};
 
 # Provides configurations for facilitating secure communication with a remote FTP server.
 #
@@ -70,10 +66,9 @@ public type BasicAuth record {
 # + keyStore - Configures the keystore to be used
 # + basicAuth - Configure username/password to be used
 # + privateKey - Configures the private key to be used
-public type SecureSocket record {
+public type SecureSocket record {|
     TrustStore? trustStore = ();
     KeyStore? keyStore = ();
     BasicAuth? basicAuth = ();
     PrivateKey? privateKey = ();
-    !...;
-};
+|};
