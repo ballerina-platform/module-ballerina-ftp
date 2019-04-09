@@ -1,14 +1,14 @@
 import ballerina/io;
 import wso2/ftp;
 
-function createDirectory(string host, string url) {
+function createDirectory(string host, string url) returns error? {
     ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
-    _ = ftpClient->mkdir(url);
+    check ftpClient->mkdir(url);
 }
 
-function removeDirectory(string host, string url) {
+function removeDirectory(string host, string url) returns error? {
     ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
-    _ = ftpClient->rmdir(url);
+    check ftpClient->rmdir(url);
 }
 
 function readContent(string host, string url) returns string|error? {
@@ -39,22 +39,22 @@ function readContent(string host, string url) returns string|error? {
     return returnValue;
 }
 
-function write(string host, string path, string filePath) {
+function write(string host, string path, string filePath) returns error? {
     ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
     io:ReadableByteChannel bchannel = io:openReadableFile(filePath);
-    _ = ftpClient->put(path, bchannel);
+    check ftpClient->put(path, bchannel);
 }
 
 
-function append(string host, string path, string filePath) {
+function append(string host, string path, string filePath) returns error? {
     ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
     io:ReadableByteChannel bchannel = io:openReadableFile(filePath);
-    _ = ftpClient->append(path, bchannel);
+    check ftpClient->append(path, bchannel);
 }
 
-function fileDelete(string host, string path) {
+function fileDelete(string host, string path) returns error? {
     ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
-    _ = ftpClient->delete(path);
+    check ftpClient->delete(path);
 }
 
 function size(string host, string path) returns int|error {
@@ -73,9 +73,9 @@ function list(string host, string path) returns string[]|error {
     return fileList;
 }
 
-function rename(string host, string source, string destination) {
+function rename(string host, string source, string destination) returns error? {
     ftp:Client ftpClient = new({ protocol: ftp:FTP, host: host });
-    _ = ftpClient->rename(source, destination);
+    check ftpClient->rename(source, destination);
 }
 
 function isDirectory(string host, string path) returns boolean|error {

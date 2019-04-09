@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 import ballerina/io;
+import ballerina/log;
 import ballerina/task;
 
 # Represents a service listener that monitors the FTP location.
@@ -33,12 +34,11 @@ public type Listener object {
     }
 
     public function __stop() returns error? {
-        self.stop();
-        return ();
+        check self.stop();
     }
 
-    public function __attach(service s, map<any> annotationData) returns error? {
-        return self.register(s, annotationData);
+    public function __attach(service s, string? name) returns error? {
+        return self.register(s, name);
     }
 
     function start() returns error? {
@@ -50,25 +50,25 @@ public type Listener object {
             task:TimerConfiguration config = { interval: self.config.pollingInterval, initialDelay: 100};
             self.appointment = new (config);
         }
-        _ = self.appointment.attach(appointmentService, attachment = self);
-        _ = self.appointment.start();
-        return ();
+        check self.appointment.attach(appointmentService, attachment = self);
+        check self.appointment.start();
     }
 
-    function stop() {
-        //if (self.appointment is task:Scheduler) {
-        _ = self.appointment.stop();
-        //}
+    function stop() returns error? {
+        check self.appointment.stop();
     }
 
-    extern function poll() returns error?;
+    function poll() returns error? = external;
 
-    extern function register(service s, map<any> annotationData) returns error?;
+    function register(service s, string? name) returns error? = external;
 };
 
     service appointmentService = service {
         resource function onTrigger(Listener l) {
-            _ = l.poll();
+            var result = l.poll();
+            if (result is error) {
+                log:printError("Error while executing poll function", err = result);
+            }
         }
     };
 
