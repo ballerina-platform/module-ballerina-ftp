@@ -203,14 +203,14 @@
             </dependency>
             <dependency>
                 <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-runtime</artifactId>
+                <artifactId>ballerina-runtime-api</artifactId>
                 <version>${ballerina.version}</version>
                 <type>zip</type>
                 <classifier>ballerina-binary-repo</classifier>
             </dependency>
             <dependency>
                 <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-runtime</artifactId>
+                <artifactId>ballerina-runtime-api</artifactId>
                 <version>${ballerina.version}</version>
             </dependency>
             <dependency>
@@ -285,6 +285,7 @@
                 <configuration>
                     <source>${wso2.maven.compiler.source}</source>
                     <target>${wso2.maven.compiler.target}</target>
+                    <compilerArgument>-proc:none</compilerArgument>
                 </configuration>
             </plugin>
             <plugin><!-- Overridden from parent pom to exclude generated sources -->
@@ -411,7 +412,7 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <ballerina.version>0.990.3</ballerina.version>
+        <ballerina.version>0.991.0</ballerina.version>
         <docerina.version>${ballerina.version}</docerina.version>
         <file.transport.version>6.0.55</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>

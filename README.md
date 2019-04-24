@@ -79,9 +79,11 @@ public function main(string... args) {
     // Read content of a remote file.
     var getResult = ftpClient->get("/ballerina-user/sample-dir/stock.json");
     if (getResult is io:ReadableByteChannel) {
-        io:ReadableByteChannel characters = check io:ReadableByteChannel(getResult, "utf-8");
-        json stock = check characters.readJson();
-        _ = byteChannel.close();
+        io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResult, "utf-8");
+        if (characters is io:ReadableCharacterChannel) {
+            json stock = check characters.readJson();
+            var closeResult = characters.close();
+        }
     } else {
         io:println("An error occured.");
         return;
@@ -93,7 +95,7 @@ public function main(string... args) {
     // Delete remote file.
     error? fileDelCreErr = ftpClient->delete("/ballerina-user/sample-dir/temp/MyMockProxy.xml");
     
-    // Remove direcotry from remote server.
+    // Remove directory from remote server.
    var result = ftpClient->rmdir("/ballerina-user/sample-dir/temp");
    if (result is error) {
         io:println("An error occured."); 
