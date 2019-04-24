@@ -112,6 +112,7 @@ public function main(string... args) {
 
 | Ballerina Version | File Connector Version |
 | ----------------- | ---------------------- |
+| 0.991.0| 0.99.2 |
 | 0.990.3| 0.99.1 |
 | 0.990.0| 0.99.0 |
 | 0.983.0| 0.98.0 |
