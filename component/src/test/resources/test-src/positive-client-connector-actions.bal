@@ -12,7 +12,6 @@ ftp:ClientEndpointConfig ftpConfig = {
         }
     }
 };
-
 ftp:Client ftpClient = new(ftpConfig);
 
 function createDirectory(string path) returns error? {

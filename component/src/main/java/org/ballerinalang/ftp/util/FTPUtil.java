@@ -27,8 +27,6 @@ import org.ballerinalang.model.values.BError;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -42,7 +40,6 @@ public class FTPUtil {
 
     private static final String FTP_ERROR_CODE = "{wso2/ftp}FTPError";
     private static final String FTP_ERROR = "FTPError";
-    private static final Logger log = LoggerFactory.getLogger(FTPUtil.class);
     public static boolean notValidProtocol(String url) {
         return !url.startsWith("ftp") && !url.startsWith("sftp") && !url.startsWith("ftps");
     }
