@@ -7,24 +7,22 @@ The FTP Listener can be used to listen to a remote directory. It will keep liste
 
 ```ballerina
 import wso2/ftp;
-
 import ballerina/log;
 
 listener ftp:Listener remoteServer = new({
     protocol: ftp:FTP,
-    host: "localhost",
-    port: 48123,
+    host: "<The FTP host>",
+    port: <The FTP port>,
     secureSocket: {
         basicAuth: {
-            username: "ballerina",
-            password: "ballerina123"
+            username: "<The FTP username>",
+            password: "<The FTP passowrd>"
         }
     },
-    path: "/home/ballerina"
+    path: "<The remote FTP direcotry location>"
 });
 
-service monitor on remoteLocation {
-
+service monitor on remoteServer {
     resource function fileResource(ftp:WatchEvent m) {
         foreach ftp:FileInfo v1 in m.addedFiles {
             log:printInfo("Added file path: " + v1.path);
@@ -42,28 +40,39 @@ The FTP Client Connector can be used to connect to an FTP server and perform I/O
 
 ```ballerina
 import wso2/ftp;
-
 import ballerina/io;
+
+ftp:ClientEndpointConfig ftpConfig = {
+    protocol: ftp:FTP,
+    host: "<The FTP host>",
+    port: <The FTP port>,
+    secureSocket: {
+        basicAuth: {
+            username: "<The FTP username>",
+            password: "<The FTP passowrd>"
+        }
+    }
+};
+ftp:Client ftpClient = new(ftpConfig);
     
 public function main(string... args) {
-    ftp:Client ftpClient = new({ protocol: ftp:FTP, host: "127.0.0.1", port: 21 });
     // To create a folder in remote server.
-    var dirCreErr = ftpClient->mkdir("/ballerina-user/sample-dir");
+    var dirCreErr = ftpClient -> mkdir("<The directory path>");
     if (dirCreErr is error) {
         io:println("An error occured.");
         return;
     }
     
     // Upload file to a remote server.
-    io:ReadableByteChannel summaryChannel = io:openReadableFile("/home/ballerina/prog/summary.bal");
-    var filePutErr = ftpClient->put("/ballerina-user/sample-dir/summary.bal", summaryChannel);    
+    io:ReadableByteChannel summaryChannel = io:openReadableFile("<The local data source path>");
+    var filePutErr = ftpClient -> put("<The resource path>", summaryChannel);    
     if (filePutErr is error) {
         io:println("An error occured.");
         return;
     }
     
     // Get the content list of a given path.
-    var listResult = ftpClient->list("/ballerina-user/sample-dir");
+    var listResult = ftpClient -> list("<The resource path>");
     if (listResult is string[]) {
         foreach string file in listResult {
             io:println("File: " + file);
@@ -74,14 +83,20 @@ public function main(string... args) {
     }
     
     // Get the size of a remote file.
-    int size = check ftpClient->size("/ballerina-user/sample-dir/stock.json");
+    var size = ftpClient -> size("<The resource path>");
+    if (size is int) {
+        io:println("File size: " + size);
+    } else {
+        io:println("An error occured.");
+        return;
+    }
     
     // Read content of a remote file.
-    var getResult = ftpClient->get("/ballerina-user/sample-dir/stock.json");
+    var getResult = ftpClient -> get("/home/kalai/symbol193/a.bal");
     if (getResult is io:ReadableByteChannel) {
         io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResult, "utf-8");
         if (characters is io:ReadableCharacterChannel) {
-            json stock = check characters.readJson();
+            io:println("File content : ", characters.readJson()); 
             var closeResult = characters.close();
         }
     } else {
@@ -90,13 +105,13 @@ public function main(string... args) {
     }
     
     // Rename or move remote file to a another remote location in a same FTP server.
-    error? renameErr = ftpClient->rename("/ballerina-user/sample-dir/stock.json", "/ballerina-user/sample-dir/done/stock.json");
+    error? renameErr = ftpClient -> rename("<The source file path>", "<The destination file path>");
     
     // Delete remote file.
-    error? fileDelCreErr = ftpClient->delete("/ballerina-user/sample-dir/temp/MyMockProxy.xml");
+    error? fileDelCreErr = ftpClient -> delete("<The resource path>");
     
     // Remove directory from remote server.
-   var result = ftpClient->rmdir("/ballerina-user/sample-dir/temp");
+   var result = ftpClient -> rmdir("<The directory path>");
    if (result is error) {
         io:println("An error occured."); 
    }

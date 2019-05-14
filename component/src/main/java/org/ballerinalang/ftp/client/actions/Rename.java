@@ -55,15 +55,20 @@ public class Rename extends AbstractFtpAction {
     @Override
     public void execute(Context context) {
         BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
-        String url = (String) clientConnector.getNativeData(FtpConstants.URL);
         String origin = context.getStringArgument(0);
         String destination = context.getStringArgument(1);
+        String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
+        String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
+        String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
+        int port = (int) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
+        String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
         Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
 
         //Create property map to send to transport.
         Map<String, String> propertyMap = new HashMap<>(prop);
-        propertyMap.put(FtpConstants.PROPERTY_URI, url + origin);
-        propertyMap.put(FtpConstants.PROPERTY_DESTINATION, url + destination);
+        propertyMap.put(FtpConstants.PROPERTY_URI, FTPUtil.createUrl(protocol, host, port, username, password, origin));
+        propertyMap.put(FtpConstants.PROPERTY_DESTINATION, FTPUtil.createUrl(protocol, host, port, username, password,
+                destination));
 
         FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context);
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();

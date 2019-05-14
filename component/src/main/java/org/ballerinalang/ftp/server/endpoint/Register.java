@@ -81,7 +81,7 @@ public class Register extends BlockingNativeCallableUnit {
         final String path = serviceEndpointConfig.getStringField(FtpConstants.ENDPOINT_CONFIG_PATH);
         Value protocol = serviceEndpointConfig.getRefField(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
         final String host = serviceEndpointConfig.getStringField(FtpConstants.ENDPOINT_CONFIG_HOST);
-        final long port = serviceEndpointConfig.getIntField(FtpConstants.ENDPOINT_CONFIG_PORT);
+        int port = (int) serviceEndpointConfig.getIntField(FtpConstants.ENDPOINT_CONFIG_PORT);
 
         final Struct secureSocket = serviceEndpointConfig.getStructField(FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
         String username = null;
