@@ -42,7 +42,7 @@ All of the following operations return `FTPClientError` in case of an error.
 // Make a directory in the remote FTP location.
 var dirCreErr = ftpClient -> mkdir("<The directory path>");
 if (dirCreErr is error) {
-    io:println("An error occured.");
+    io:println("An error occured.", dirCreErr);
     return;
 }
 
@@ -50,7 +50,7 @@ if (dirCreErr is error) {
 io:ReadableByteChannel summaryChannel = io:openReadableFile("<The local data source path>");
 var filePutErr = ftpClient -> put("<The resource path>", summaryChannel);    
 if (filePutErr is error) {
-    io:println("An error occured.");
+    io:println("An error occured.", filePutErr);
     return;
 }
 
@@ -61,29 +61,35 @@ if (listResult is string[]) {
         io:println("File: " + file);
     }
 } else {
-    io:println("An error occured.");
+    io:println("An error occured.", listResult);
     return;
 }
 
 // Read the size of a file in the FTP location.
 var size = ftpClient -> size("<The resource path>");
 if (size is int) {
-    io:println("File size: " + size);
+    io:println("File size: ", size);
 } else {
-    io:println("An error occured.");
+    io:println("An error occured.", size);
     return;
 }
 
 // Download a file from the FTP location.
-var getResult = ftpClient -> get("/home/kalai/symbol193/a.bal");
+var getResult = ftpClient -> get("<The json file path>");
 if (getResult is io:ReadableByteChannel) {
     io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResult, "utf-8");
     if (characters is io:ReadableCharacterChannel) {
-        io:println("File content : ", characters.readJson()); 
+        var stock = characters.readJson();
+        if (stock is json) {
+            io:println("File content: ", stock);
+        } else {
+            io:println("An error occured.", stock);
+            return;
+        }
         var closeResult = characters.close();
     }
 } else {
-    io:println("An error occured.");
+    io:println("An error occured.", getResult );
     return;
 }
 
@@ -96,7 +102,7 @@ error? fileDelCreErr = ftpClient -> delete("<The resource path>");
 // Delete a directory in the FTP location.
 var result = ftpClient -> rmdir("<The directory path>");
 if (result is error) {
-    io:println("An error occured."); 
+    io:println("An error occured.", result); 
 }
    
 ```

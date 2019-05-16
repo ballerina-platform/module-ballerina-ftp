@@ -59,7 +59,7 @@ public function main(string... args) {
     // To create a folder in remote server.
     var dirCreErr = ftpClient -> mkdir("<The directory path>");
     if (dirCreErr is error) {
-        io:println("An error occured.");
+        io:println("An error occured.", dirCreErr);
         return;
     }
     
@@ -67,7 +67,7 @@ public function main(string... args) {
     io:ReadableByteChannel summaryChannel = io:openReadableFile("<The local data source path>");
     var filePutErr = ftpClient -> put("<The resource path>", summaryChannel);    
     if (filePutErr is error) {
-        io:println("An error occured.");
+        io:println("An error occured.", filePutErr);
         return;
     }
     
@@ -78,7 +78,7 @@ public function main(string... args) {
             io:println("File: " + file);
         }
     } else {
-        io:println("An error occured.");
+        io:println("An error occured.", listResult);
         return;
     }
     
@@ -87,20 +87,26 @@ public function main(string... args) {
     if (size is int) {
         io:println("File size: " + size);
     } else {
-        io:println("An error occured.");
+        io:println("An error occured.", size);
         return;
     }
     
     // Read content of a remote file.
-    var getResult = ftpClient -> get("/home/kalai/symbol193/a.bal");
+    var getResult = ftpClient -> get("<The json file path>");
     if (getResult is io:ReadableByteChannel) {
         io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResult, "utf-8");
         if (characters is io:ReadableCharacterChannel) {
-            io:println("File content : ", characters.readJson()); 
+            var stock = characters.readJson();
+            if (stock is json) {
+                io:println("File content: ", stock);
+            } else {
+                io:println("An error occured.", stock);
+                return;
+            }
             var closeResult = characters.close();
         }
     } else {
-        io:println("An error occured.");
+        io:println("An error occured.", getResult );
         return;
     }
     
@@ -113,7 +119,7 @@ public function main(string... args) {
     // Remove directory from remote server.
    var result = ftpClient -> rmdir("<The directory path>");
    if (result is error) {
-        io:println("An error occured."); 
+        io:println("An error occured.", result); 
    }
 }
 ```
