@@ -57,7 +57,7 @@ ftp:Client ftpClient = new(ftpConfig);
     
 public function main(string... args) {
     // To create a folder in remote server.
-    var dirCreErr = ftpClient -> mkdir("<The directory path>");
+    var dirCreErr = ftpClient->mkdir("<The directory path>");
     if (dirCreErr is error) {
         io:println("An error occured.", dirCreErr);
         return;
@@ -65,14 +65,14 @@ public function main(string... args) {
     
     // Upload file to a remote server.
     io:ReadableByteChannel summaryChannel = io:openReadableFile("<The local data source path>");
-    var filePutErr = ftpClient -> put("<The resource path>", summaryChannel);    
+    var filePutErr = ftpClient->put("<The resource path>", summaryChannel);    
     if (filePutErr is error) {
         io:println("An error occured.", filePutErr);
         return;
     }
     
     // Get the content list of a given path.
-    var listResult = ftpClient -> list("<The resource path>");
+    var listResult = ftpClient->list("<The resource path>");
     if (listResult is string[]) {
         foreach string file in listResult {
             io:println("File: " + file);
@@ -83,7 +83,7 @@ public function main(string... args) {
     }
     
     // Get the size of a remote file.
-    var size = ftpClient -> size("<The resource path>");
+    var size = ftpClient->size("<The resource path>");
     if (size is int) {
         io:println("File size: " + size);
     } else {
@@ -92,7 +92,7 @@ public function main(string... args) {
     }
     
     // Read content of a remote file.
-    var getResult = ftpClient -> get("<The json file path>");
+    var getResult = ftpClient->get("<The json file path>");
     if (getResult is io:ReadableByteChannel) {
         io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResult, "utf-8");
         if (characters is io:ReadableCharacterChannel) {
@@ -111,13 +111,13 @@ public function main(string... args) {
     }
     
     // Rename or move remote file to a another remote location in a same FTP server.
-    error? renameErr = ftpClient -> rename("<The source file path>", "<The destination file path>");
+    error? renameErr = ftpClient->rename("<The source file path>", "<The destination file path>");
     
     // Delete remote file.
-    error? fileDelCreErr = ftpClient -> delete("<The resource path>");
+    error? fileDelCreErr = ftpClient->delete("<The resource path>");
     
     // Remove directory from remote server.
-   var result = ftpClient -> rmdir("<The directory path>");
+   var result = ftpClient->rmdir("<The directory path>");
    if (result is error) {
         io:println("An error occured.", result); 
    }

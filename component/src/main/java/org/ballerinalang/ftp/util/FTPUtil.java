@@ -55,8 +55,8 @@ public class FTPUtil {
         try {
             uri = new URI(protocol, userInfo, host, port, basePath, null, null);
         } catch (URISyntaxException e) {
-            throw new BallerinaConnectorException("Error occurred while constructing a URI from the given components: "
-                    + e.getMessage(), e);
+            throw new BallerinaConnectorException("Error occurred while constructing a URI from host: " + host +
+                    ", port: " + port +", username: " + username + "and basePath: " + basePath + e.getMessage(), e);
         }
         return uri.toString();
     }

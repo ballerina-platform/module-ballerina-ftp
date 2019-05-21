@@ -40,7 +40,7 @@ All of the following operations return `FTPClientError` in case of an error.
 
 ```ballerina
 // Make a directory in the remote FTP location.
-var dirCreErr = ftpClient -> mkdir("<The directory path>");
+var dirCreErr = ftpClient->mkdir("<The directory path>");
 if (dirCreErr is error) {
     io:println("An error occured.", dirCreErr);
     return;
@@ -48,14 +48,14 @@ if (dirCreErr is error) {
 
 //Add a file to the FTP location.
 io:ReadableByteChannel summaryChannel = io:openReadableFile("<The local data source path>");
-var filePutErr = ftpClient -> put("<The resource path>", summaryChannel);    
+var filePutErr = ftpClient->put("<The resource path>", summaryChannel);    
 if (filePutErr is error) {
     io:println("An error occured.", filePutErr);
     return;
 }
 
 // List the files in the FTP location.
-var listResult = ftpClient -> list("<The resource path>");
+var listResult = ftpClient->list("<The resource path>");
 if (listResult is string[]) {
     foreach string file in listResult {
         io:println("File: " + file);
@@ -66,7 +66,7 @@ if (listResult is string[]) {
 }
 
 // Read the size of a file in the FTP location.
-var size = ftpClient -> size("<The resource path>");
+var size = ftpClient->size("<The resource path>");
 if (size is int) {
     io:println("File size: ", size);
 } else {
@@ -75,7 +75,7 @@ if (size is int) {
 }
 
 // Download a file from the FTP location.
-var getResult = ftpClient -> get("<The json file path>");
+var getResult = ftpClient->get("<The json file path>");
 if (getResult is io:ReadableByteChannel) {
     io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResult, "utf-8");
     if (characters is io:ReadableCharacterChannel) {
@@ -94,13 +94,13 @@ if (getResult is io:ReadableByteChannel) {
 }
 
 // Rename or move remote file to a another remote location in a same FTP server.
-error? renameErr = ftpClient -> rename("<The source file path>", "<The destination file path>");
+error? renameErr = ftpClient->rename("<The source file path>", "<The destination file path>");
 
 // Delete a file in the FTP location.
-error? fileDelCreErr = ftpClient -> delete("<The resource path>");
+error? fileDelCreErr = ftpClient->delete("<The resource path>");
 
 // Delete a directory in the FTP location.
-var result = ftpClient -> rmdir("<The directory path>");
+var result = ftpClient->rmdir("<The directory path>");
 if (result is error) {
     io:println("An error occured.", result); 
 }
