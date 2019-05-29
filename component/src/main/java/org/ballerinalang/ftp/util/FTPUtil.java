@@ -21,11 +21,15 @@ package org.ballerinalang.ftp.util;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
 import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
+import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.model.types.BTypes;
 import org.ballerinalang.model.values.BError;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValue;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
@@ -36,7 +40,6 @@ public class FTPUtil {
 
     private static final String FTP_ERROR_CODE = "{wso2/ftp}FTPError";
     private static final String FTP_ERROR = "FTPError";
-
     public static boolean notValidProtocol(String url) {
         return !url.startsWith("ftp") && !url.startsWith("sftp") && !url.startsWith("ftps");
     }
@@ -45,29 +48,17 @@ public class FTPUtil {
         return url.startsWith("ftp://") || url.startsWith("sftp://") || url.startsWith("ftps://");
     }
 
-    public static String createUrl(String protocol, String host, long port, String username, String passPhrase,
+    public static String createUrl(String protocol, String host, int port, String username, String passPhrase,
             String basePath) {
-        StringBuilder urlBuilder = new StringBuilder();
-        urlBuilder.append(protocol);
-        urlBuilder.append(":");
-        urlBuilder.append("//");
-        if (username != null && !username.isEmpty()) {
-            urlBuilder.append(username);
-            if (passPhrase != null && !passPhrase.isEmpty()) {
-                urlBuilder.append(":");
-                urlBuilder.append(passPhrase);
-            }
-            urlBuilder.append("@");
+        String userInfo = username + ":" + passPhrase;
+        URI uri = null;
+        try {
+            uri = new URI(protocol, userInfo, host, port, basePath, null, null);
+        } catch (URISyntaxException e) {
+            throw new BallerinaConnectorException("Error occurred while constructing a URI from host: " + host +
+                    ", port: " + port + ", username: " + username + " and basePath: " + basePath + e.getMessage(), e);
         }
-        urlBuilder.append(host);
-        if (port > 0) {
-            urlBuilder.append(":");
-            urlBuilder.append(port);
-        }
-        if (basePath != null) {
-            urlBuilder.append(basePath);
-        }
-        return urlBuilder.toString();
+        return uri.toString();
     }
 
     /**

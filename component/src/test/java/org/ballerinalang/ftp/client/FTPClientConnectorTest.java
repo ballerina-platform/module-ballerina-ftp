@@ -53,10 +53,7 @@ public class FTPClientConnectorTest {
 
     private FakeFtpServer ftpServer;
     private FileSystem fileSystem;
-    private String username = "wso2";
-    private String password = "wso2123";
     private String rootFolder = "/home/wso2";
-    private int serverPort = 49567;
     private CompileResult result;
     private final String newFolder = "/newFolder";
     private final String content = "File content";
@@ -64,7 +61,10 @@ public class FTPClientConnectorTest {
     @BeforeClass
     public void init() {
         ftpServer = new FakeFtpServer();
+        int serverPort = 49567;
         ftpServer.setServerControlPort(serverPort);
+        String username = "wso2";
+        String password = "wso2123";
         ftpServer.addUserAccount(new UserAccount(username, password, rootFolder));
         fileSystem = new UnixFakeFileSystem();
         fileSystem.add(new DirectoryEntry(rootFolder));
@@ -84,21 +84,21 @@ public class FTPClientConnectorTest {
 
     @Test
     public void testCreateNewDirectory() {
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(newFolder) };
+        BValue[] inputArg = { new BString(rootFolder + newFolder) };
         BRunUtil.invoke(result, "createDirectory", inputArg);
         Assert.assertTrue(fileSystem.exists(rootFolder + newFolder), "Folder not created.");
     }
 
     @Test(dependsOnMethods = "testCreateNewDirectory")
     public void testIsDirectory() {
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(newFolder) };
+        BValue[] inputArg = { new BString(rootFolder + newFolder) };
         final BValue[] results = BRunUtil.invoke(result, "isDirectory", inputArg);
         Assert.assertTrue(((BBoolean) results[0]).booleanValue(), "Not identified as a directory.");
     }
 
     @Test(dependsOnMethods = "testIsDirectory")
     public void testRemoveDirectory() {
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(newFolder) };
+        BValue[] inputArg = { new BString(rootFolder + newFolder) };
         BRunUtil.invoke(result, "removeDirectory", inputArg);
         Assert.assertFalse(fileSystem.exists(rootFolder + newFolder), "Folder not deleted.");
     }
@@ -106,7 +106,7 @@ public class FTPClientConnectorTest {
     @Test
     public void testReadContent() {
         String url = "/file1.txt";
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(url) };
+        BValue[] inputArg = { new BString(rootFolder + url) };
         final BValue[] readContents = BRunUtil.invoke(result, "readContent", inputArg);
         Assert.assertEquals(readContents[0].stringValue(), content, "File content mismatch.");
     }
@@ -114,7 +114,7 @@ public class FTPClientConnectorTest {
     @Test
     public void testGetSize() {
         String url = "/file1.txt";
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(url) };
+        BValue[] inputArg = { new BString(rootFolder + url) };
         final BValue[] readContents = BRunUtil.invoke(result, "size", inputArg);
         BInteger size = (BInteger) readContents[0];
         Assert.assertEquals(size.intValue(), 12, "File size mismatch.");
@@ -123,7 +123,7 @@ public class FTPClientConnectorTest {
     @Test
     public void testList() {
         String url = "/child_directory";
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(url) };
+        BValue[] inputArg = { new BString(rootFolder + url) };
         final BValue[] readContents = BRunUtil.invoke(result, "list", inputArg);
         BValueArray list = (BValueArray) readContents[0];
         Assert.assertEquals(list.getStringArray().length, 2, "File list mismatch.");
@@ -133,7 +133,7 @@ public class FTPClientConnectorTest {
     public void testRename() {
         String source = "/file3.txt";
         String destination = "/move.txt";
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(destination) };
+        BValue[] inputArg = { new BString(rootFolder + source), new BString(rootFolder + destination) };
         BRunUtil.invoke(result, "rename", inputArg);
         Assert.assertFalse(fileSystem.exists(rootFolder + "/file3.txt"), "file not moved.");
         Assert.assertTrue(fileSystem.exists(rootFolder + "/move.txt"), "file not created.");
@@ -149,7 +149,7 @@ public class FTPClientConnectorTest {
         String source = "/write.txt";
         final URL url = this.getClass().getClassLoader().getResource("datafiles/file1.txt");
         final String resourcePath = Paths.get(url.toURI()).toAbsolutePath().toString();
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(resourcePath) };
+        BValue[] inputArg = { new BString(rootFolder + source), new BString(resourcePath) };
         BRunUtil.invoke(result, "write", inputArg);
         Assert.assertTrue(fileSystem.exists(rootFolder + "/write.txt"), "file not created.");
         final FileEntry entry = (FileEntry) fileSystem.getEntry(rootFolder + "/write.txt");
@@ -165,7 +165,7 @@ public class FTPClientConnectorTest {
         String appendContent = "New content";
         final URL url = this.getClass().getClassLoader().getResource("datafiles/file2.txt");
         final String resourcePath = Paths.get(url.toURI()).toAbsolutePath().toString();
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source), new BString(resourcePath) };
+        BValue[] inputArg = { new BString(rootFolder + source), new BString(resourcePath) };
         BRunUtil.invoke(result, "append", inputArg);
         Assert.assertTrue(fileSystem.exists(rootFolder + "/write.txt"), "file not created.");
         final FileEntry entry = (FileEntry) fileSystem.getEntry(rootFolder + "/write.txt");
@@ -178,7 +178,7 @@ public class FTPClientConnectorTest {
     @Test(dependsOnMethods = "testAppend")
     public void testDeleteFile() {
         String source = "/write.txt";
-        BValue[] inputArg = { new BString(buildConnectionURL()), new BString(source) };
+        BValue[] inputArg = { new BString(rootFolder + source) };
         BRunUtil.invoke(result, "fileDelete", inputArg);
         Assert.assertFalse(fileSystem.exists(rootFolder + "/write.txt"), "File not deleted.");
     }
@@ -188,9 +188,5 @@ public class FTPClientConnectorTest {
         if (ftpServer != null && ftpServer.isStarted()) {
             ftpServer.stop();
         }
-    }
-
-    private String buildConnectionURL() {
-        return username + ":" + password + "@localhost:" + serverPort + rootFolder;
     }
 }

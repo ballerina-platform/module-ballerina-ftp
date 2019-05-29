@@ -11,73 +11,126 @@ An FTP client endpoint is defined using these parameters: `protocol`, `host` and
 
 An FTP listener endpoint is defined using these parameters: `protocol`, `host`, and  `path` are mandatory parameters.  Authentication configuration can be done using `secureSocket` and polling interval can be configure using `pollingInterval`. Default polling interval is 60 seconds.
 
+
 ## Samples
 
-### Sample FTP client endpoint
+### Obtaining the credentials to Run the Sample
+
+1. Install and configure FTP Server. For more information, see [https://www.unixmen.com/install-configure-ftp-server-ubuntu/](https://www.unixmen.com/install-configure-ftp-server-ubuntu/)
+2. obtain ftpUsername, ftpPassword, ftpServer, ftpPort
+.
+You can now enter the credentials in the FTP client config:
+
 ```ballerina
-endpoint ftp:Client client {
-    protocol: io:SFTP",
-    host: "ftp.ballerina.com",
+ftp:ClientEndpointConfig ftpConfig = {
+    protocol: ftp:FTP,
+    host: "<The FTP host>",
+    port: <The FTP port>,
     secureSocket: {
         basicAuth: {
-            username: "john",
-            password: "password"
+            username: "<The FTP username>",
+            password: "<The FTP passowrd>"
         }
     }
 };
+ftp:Client ftpClient = new(ftpConfig);
 ```
 ### Sample FTP client operations
 All of the following operations return `FTPClientError` in case of an error. 
 
 ```ballerina
 // Make a directory in the remote FTP location.
-error? dirCreErr client -> mkdir("/personal/files");  
+var dirCreErr = ftpClient->mkdir("<The directory path>");
+if (dirCreErr is error) {
+    io:println("An error occured.", dirCreErr);
+    return;
+}
 
 //Add a file to the FTP location.
-io:ByteChannel bchannel = io:openFile("/home/john/files/MyFile.xml", io:READ);
-error? filePutErr = client -> put("/personal/files/MyFile.xml", bchannel);
+io:ReadableByteChannel summaryChannel = io:openReadableFile("<The local data source path>");
+var filePutErr = ftpClient->put("<The resource path>", summaryChannel);    
+if (filePutErr is error) {
+    io:println("An error occured.", filePutErr);
+    return;
+}
 
 // List the files in the FTP location.
-var listOrError = client -> list("/personal/files");
-
-// Rename or move a file in the FTP location.
-error? renameErr = client -> rename("/personal/files/MyFile.xml", "/personal/New.xml");
+var listResult = ftpClient->list("<The resource path>");
+if (listResult is string[]) {
+    foreach string file in listResult {
+        io:println("File: " + file);
+    }
+} else {
+    io:println("An error occured.", listResult);
+    return;
+}
 
 // Read the size of a file in the FTP location.
-var sizeOrError = client -> size("/personal/New.xml");
+var size = ftpClient->size("<The resource path>");
+if (size is int) {
+    io:println("File size: ", size);
+} else {
+    io:println("An error occured.", size);
+    return;
+}
 
 // Download a file from the FTP location.
-var byteChannelOrError = client -> get("/personal/New.xml");
+var getResult = ftpClient->get("<The json file path>");
+if (getResult is io:ReadableByteChannel) {
+    io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResult, "utf-8");
+    if (characters is io:ReadableCharacterChannel) {
+        var stock = characters.readJson();
+        if (stock is json) {
+            io:println("File content: ", stock);
+        } else {
+            io:println("An error occured.", stock);
+            return;
+        }
+        var closeResult = characters.close();
+    }
+} else {
+    io:println("An error occured.", getResult );
+    return;
+}
+
+// Rename or move remote file to a another remote location in a same FTP server.
+error? renameErr = ftpClient->rename("<The source file path>", "<The destination file path>");
 
 // Delete a file in the FTP location.
-error? fileDelErr = client -> delete("/personal/New.xml");
+error? fileDelCreErr = ftpClient->delete("<The resource path>");
 
 // Delete a directory in the FTP location.
-error? dirDelErr = client -> rmdir("/personal/files");    
+var result = ftpClient->rmdir("<The directory path>");
+if (result is error) {
+    io:println("An error occured.", result); 
+}
+   
 ```
 ### Sample FTP listener endpoint
 ```ballerina
-endpoint ftp:Listener remoteFolder {
-    protocol: ftp:SFTP,
-    host: "ftp.ballerina.com",
+listener ftp:Listener remoteServer = new ({
+    protocol: ftp:FTP,
+    host: "<The FTP host>",
+    port: <The FTP port>,
     secureSocket: {
         basicAuth: {
-            username: "john",
-            password: "password"
+            username: "<The FTP username>",
+            password: "<The FTP passowrd>"
         }
     },
-    path:"/personal"
-};
+    path: "<The remote FTP direcotry location>"
+});
 ```
 ### Sample service for the FTP listener endpoint
 ```ballerina
-service myRemoteFiles bind remoteFolder {
-    fileResource (ftp:WatchEvent m) {
-        foreach v in m.addedFiles {
-            io:println("Added file path: ", v.path);
-        }		
-        foreach v in m.deletedFiles {
-            io:println("Deleted file path: ", v);
+service monitor on remoteServer {
+    resource function fileResource(ftp:WatchEvent m) {
+        foreach ftp:FileInfo v1 in m.addedFiles {
+            log:printInfo("Added file path: " + v1.path);
+        }
+        
+        foreach string v2 in m.deletedFiles {
+            log:printInfo("Deleted file path: " + v2);
         }
     }
 }

@@ -55,12 +55,16 @@ public class Delete extends AbstractFtpAction {
     @Override
     public void execute(Context context) {
         BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
-        String url = (String) clientConnector.getNativeData(FtpConstants.URL);
         String path = context.getStringArgument(0);
-
+        String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
+        String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
+        String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
+        int port = (int) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
+        String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
+        String url = FTPUtil.createUrl(protocol, host, port, username, password, path);
         Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
         Map<String, String> propertyMap = new HashMap<>(prop);
-        propertyMap.put(FtpConstants.PROPERTY_URI, url + path);
+        propertyMap.put(FtpConstants.PROPERTY_URI, url);
 
         FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context);
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
