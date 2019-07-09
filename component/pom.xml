@@ -69,6 +69,14 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
+         <dependency>
+            <groupId>jcifs</groupId>
+            <artifactId>jcifs</artifactId>
+        </dependency>
+         <dependency>
+             <groupId>org.apache.commons.wso2</groupId>
+             <artifactId>commons-vfs2</artifactId>
+         </dependency>
         <dependency>
             <groupId>org.ballerinalang</groupId>
             <artifactId>docerina</artifactId>
@@ -363,8 +371,10 @@
                                     <include>org.ballerinalang:wso2-ftp</include>
                                     <include>org.wso2.transport.file:org.wso2.transport.remote-file-system</include>
                                     <include>com.jcraft:jsch</include>
+                                    <include>jcifs:jcifs</include>
                                     <include>commons-net:commons-net</include>
                                     <include>org.wso2.org.apache.commons:commons-vfs2</include>
+                                    <include>org.apache.commons.wso2:commons-vfs2</include>
                                 </includes>
 
                             </artifactSet>

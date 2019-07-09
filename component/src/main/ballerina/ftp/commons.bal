@@ -15,7 +15,7 @@
 // under the License.
 
 # Represents the set of protocols supported by the FTP listener and client.
-public type Protocol "ftp"|"sftp"|"ftps";
+public type Protocol "ftp"|"sftp"|"ftps"|"smb";
 
 # Underlying communication happen using FTP.
 public const FTP = "ftp";
@@ -23,7 +23,8 @@ public const FTP = "ftp";
 public const SFTP = "sftp";
 # Underlying communication happen using FTPS.
 public const FTPS = "ftps";
-
+# Underlying communication happen using SMB.
+public const SMB = "smb";
 # A record for providing `Truststore` related configurations.
 #
 # + path - Path to the truststore file

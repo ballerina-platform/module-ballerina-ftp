@@ -253,6 +253,16 @@
                 <version>${slf4j.version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>jcifs</groupId>
+                <artifactId>jcifs</artifactId>
+                <version>${jcifs.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons.wso2</groupId>
+                <artifactId>commons-vfs2</artifactId>
+                <version>${commons-vfs2.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <build>
@@ -416,6 +426,7 @@
         <docerina.version>${ballerina.version}</docerina.version>
         <file.transport.version>6.0.55</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>
+        <jcifs.version>1.3.17</jcifs.version>
         <maven.findbugsplugin.version.exclude>findbugs-exclude.xml</maven.findbugsplugin.version.exclude>
         <mock.ftp.server.version>2.7.1</mock.ftp.server.version>
         <testng.version>6.9.4</testng.version>
@@ -435,6 +446,7 @@
 
         <!--Bundle dependency versions-->
         <commons-vfs2.wso2.version>2.2-wso2v2</commons-vfs2.wso2.version>
+        <commons-vfs2.version>2.2-wso2v1</commons-vfs2.version>
         <!--<quartz.version>2.3.0.wso2v2</quartz.version>-->
         <jsch.version>0.1.54</jsch.version>
         <commons-net.version>3.6</commons-net.version>

@@ -41,11 +41,12 @@ public class FTPUtil {
     private static final String FTP_ERROR_CODE = "{wso2/ftp}FTPError";
     private static final String FTP_ERROR = "FTPError";
     public static boolean notValidProtocol(String url) {
-        return !url.startsWith("ftp") && !url.startsWith("sftp") && !url.startsWith("ftps");
+        return !url.startsWith("ftp") && !url.startsWith("sftp") && !url.startsWith("ftps") && !url.startsWith("smb");
     }
 
     public static boolean validProtocol(String url) {
-        return url.startsWith("ftp://") || url.startsWith("sftp://") || url.startsWith("ftps://");
+        return url.startsWith("ftp://") || url.startsWith("sftp://") || url.startsWith("ftps://")
+                                                                         || url.startsWith("smb://");
     }
 
     public static String createUrl(String protocol, String host, int port, String username, String passPhrase,
