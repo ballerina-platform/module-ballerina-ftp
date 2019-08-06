@@ -23,7 +23,7 @@
     <artifactId>ftp-connector-parent</artifactId>
     <packaging>pom</packaging>
     <version>0.99.3-SNAPSHOT</version>
-    <name>Ballerina - FTP Connector ParentParent</name>
+    <name>Ballerina - FTP Connector Parent</name>
 
     <url>https://ballerina.io/</url>
 
@@ -34,7 +34,7 @@
         <tag>HEAD</tag>
     </scm>
     <modules>
-        <module>component</module>
+        <module>utils/ftp-java</module>
     </modules>
     <profiles>
         <profile>
@@ -42,9 +42,9 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
-            <modules>
-                <module>component</module>
-            </modules>
+            <!--<modules>-->
+                <!--<module>wso2-ftp</module>-->
+            <!--</modules>-->
         </profile>
         <profile>
             <id>wso2-release</id>
@@ -179,47 +179,52 @@
             </dependency>
             <dependency>
                 <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-io</artifactId>
+                <artifactId>ballerina-utils</artifactId>
                 <version>${ballerina.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-io</artifactId>
                 <version>${ballerina.version}</version>
-                <type>zip</type>
-                <classifier>ballerina-binary-repo</classifier>
             </dependency>
+            <!--<dependency>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>ballerina-io</artifactId>-->
+                <!--<version>${ballerina.version}</version>-->
+                <!--<type>zip</type>-->
+                <!--<classifier>ballerina-binary-repo</classifier>-->
+            <!--</dependency>-->
             <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-task</artifactId>
                 <version>${ballerina.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-task</artifactId>
-                <version>${ballerina.version}</version>
-                <type>zip</type>
-                <classifier>ballerina-binary-repo</classifier>
-            </dependency>
+            <!--<dependency>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>ballerina-task</artifactId>-->
+                <!--<version>${ballerina.version}</version>-->
+                <!--<type>zip</type>-->
+                <!--<classifier>ballerina-binary-repo</classifier>-->
+            <!--</dependency>-->
+            <!--<dependency>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>ballerina-runtime-api</artifactId>-->
+                <!--<version>${ballerina.version}</version>-->
+                <!--<type>zip</type>-->
+                <!--<classifier>ballerina-binary-repo</classifier>-->
+            <!--</dependency>-->
             <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-runtime-api</artifactId>
                 <version>${ballerina.version}</version>
-                <type>zip</type>
-                <classifier>ballerina-binary-repo</classifier>
             </dependency>
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-runtime-api</artifactId>
-                <version>${ballerina.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-log-api</artifactId>
-                <version>${ballerina.version}</version>
-                <type>zip</type>
-                <classifier>ballerina-binary-repo</classifier>
-            </dependency>
+            <!--<dependency>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>ballerina-log-api</artifactId>-->
+                <!--<version>${ballerina.version}</version>-->
+                <!--<type>zip</type>-->
+                <!--<classifier>ballerina-binary-repo</classifier>-->
+            <!--</dependency>-->
             <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-log-api</artifactId>
@@ -367,11 +372,11 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>docerina-maven-plugin</artifactId>
-                <version>${docerina.maven.plugin.version}</version>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>docerina-maven-plugin</artifactId>-->
+                <!--<version>${docerina.maven.plugin.version}</version>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-remote-resources-plugin</artifactId>
@@ -412,7 +417,7 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <ballerina.version>0.991.0</ballerina.version>
+        <ballerina.version>1.0.0-alpha</ballerina.version>
         <docerina.version>${ballerina.version}</docerina.version>
         <file.transport.version>6.0.55</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>

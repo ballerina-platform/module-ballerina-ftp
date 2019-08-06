@@ -16,11 +16,12 @@
 import ballerina/io;
 import ballerina/log;
 import ballerina/task;
+import ballerina/'lang\.object as lang;
 
 # Represents a service listener that monitors the FTP location.
 public type Listener object {
 
-    *AbstractListener;
+    *lang:AbstractListener;
 
     private ListenerConfig config = {};
     private task:Scheduler? appointment = ();
@@ -47,15 +48,21 @@ public type Listener object {
             task:AppointmentConfiguration config = { appointmentDetails: scheduler };
             self.appointment = new(config);
         } else {
-            task:TimerConfiguration config = { interval: self.config.pollingInterval, initialDelay: 100};
+            task:TimerConfiguration config = { intervalInMillis: self.config.pollingInterval, initialDelayInMillis: 100};
             self.appointment = new (config);
         }
-        check self.appointment.attach(appointmentService, attachment = self);
-        check self.appointment.start();
+        var appointment = self.appointment;
+        if (appointment is task:Scheduler) {
+            check appointment.attach(appointmentService, attachment = self);
+            check appointment.start();
+        }
     }
 
     function stop() returns error? {
-        check self.appointment.stop();
+        var appointment = self.appointment;
+        if (appointment is task:Scheduler) {
+            check appointment.stop();
+        }
     }
 
     function poll() returns error? = external;
