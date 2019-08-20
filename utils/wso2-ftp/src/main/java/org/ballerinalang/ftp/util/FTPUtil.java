@@ -18,20 +18,14 @@
 
 package org.ballerinalang.ftp.util;
 
-import org.ballerinalang.bre.Context;
-import org.ballerinalang.bre.bvm.BLangVMErrors;
-import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
 import org.ballerinalang.connector.api.BallerinaConnectorException;
-import org.ballerinalang.model.types.BTypes;
-import org.ballerinalang.model.values.BError;
-import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BString;
-import org.ballerinalang.model.values.BValue;
+import org.ballerinalang.jvm.scheduling.Strand;
+import org.ballerinalang.jvm.values.ErrorValue;
+import org.ballerinalang.jvm.values.MapValue;
+import org.slf4j.Logger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-
-import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
 
 /**
  * Utils class for FTP client operations.
@@ -40,16 +34,20 @@ public class FTPUtil {
 
     private static final String FTP_ERROR_CODE = "{wso2/ftp}FTPError";
     private static final String FTP_ERROR = "FTPError";
+
     public static boolean notValidProtocol(String url) {
+
         return !url.startsWith("ftp") && !url.startsWith("sftp") && !url.startsWith("ftps");
     }
 
     public static boolean validProtocol(String url) {
+
         return url.startsWith("ftp://") || url.startsWith("sftp://") || url.startsWith("ftps://");
     }
 
     public static String createUrl(String protocol, String host, int port, String username, String passPhrase,
-            String basePath) {
+                                   String basePath) {
+
         String userInfo = username + ":" + passPhrase;
         URI uri = null;
         try {
@@ -64,13 +62,49 @@ public class FTPUtil {
     /**
      * Creates an error message.
      *
-     * @param context context which is invoked.
-     * @param errMsg  the cause for the error.
+     * @param strand corresponding jvm strand.
+     * @param errMsg the cause for the error.
      * @return an error which will be propagated to ballerina user.
      */
-    public static BError createError(Context context, String errMsg) {
-        BMap<String, BValue> ftpErrorRecord = BLangConnectorSPIUtil.createBStruct(context, FTP_PACKAGE_NAME, FTP_ERROR);
-        ftpErrorRecord.put("message", new BString(errMsg));
-        return BLangVMErrors.createError(context, true, BTypes.typeError, FTP_ERROR_CODE, ftpErrorRecord);
+    public static ErrorValue createError(Strand strand, String errMsg) {
+//        MapValue<String, Object> ftpErrorRecord = BLangConnectorSPIUtil.createBStruct
+//          (context, FTP_PACKAGE_NAME, FTP_ERROR);
+//        ftpErrorRecord.put("message", errMsg);
+        return new ErrorValue(FTP_ERROR_CODE, "");
+    }
+
+    /**
+     * Gets an int from the {@link MapValue} config.
+     *
+     * @param config the config
+     * @param key    the key that has an integer value
+     * @param logger the logger to log errors
+     * @return the relevant int value from the config
+     */
+    public static int getIntFromConfig(MapValue config, String key, Logger logger) {
+
+        return getIntFromLong(config.getIntValue(key), key, logger);
+    }
+
+    /**
+     * Gets an integer from a long value. Handles errors appropriately.
+     *
+     * @param longVal the long value.
+     * @param name    the name of the long value: useful for logging the error.
+     * @param logger  the logger to log errors
+     * @return the int value from the given long value
+     */
+    public static int getIntFromLong(long longVal, String name, Logger logger) {
+
+        if (longVal <= 0) {
+            return -1;
+        }
+        try {
+            return Math.toIntExact(longVal);
+        } catch (ArithmeticException e) {
+            logger.warn("The value set for {} needs to be less than {}. The {} value is set to {}", name,
+                    Integer.MAX_VALUE, name, Integer.MAX_VALUE);
+            return Integer.MAX_VALUE;
+        }
     }
 }

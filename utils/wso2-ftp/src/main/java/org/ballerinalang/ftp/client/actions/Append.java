@@ -17,14 +17,10 @@
  */
 package org.ballerinalang.ftp.client.actions;
 
-import org.ballerinalang.bre.Context;
+import org.ballerinalang.ftp.util.BallerinaFTPException;
 import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
-import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.annotations.BallerinaFunction;
-import org.ballerinalang.natives.annotations.Receiver;
+import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.slf4j.Logger;
@@ -39,26 +35,16 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
-
 /**
  * FTP Append operation.
  */
-@BallerinaFunction(
-        orgName = "wso2",
-        packageName = "ftp:0.0.0",
-        functionName = "append",
-        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Client", structPackage = FTP_PACKAGE_NAME)
-)
 public class Append extends AbstractFtpAction {
 
-    private static final Logger log = LoggerFactory.getLogger(Append.class);
+    private static final Logger log = LoggerFactory.getLogger("ballerina");
 
-    @Override
-    public void execute(Context context) {
-        BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
-        BMap<String, BValue> sourceChannel = (BMap<String, BValue>) context.getRefArgument(1);
-        String path = context.getStringArgument(0);
+    public static void append(ObjectValue clientConnector, String path, ObjectValue sourceChannel)
+            throws BallerinaFTPException {
+
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
         String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
@@ -73,15 +59,14 @@ public class Append extends AbstractFtpAction {
         Map<String, String> propertyMap = new HashMap<>(prop);
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
 
-        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context);
+        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener();
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
             log.error(e.getMessage(), e);
-            return;
+            throw new BallerinaFTPException(e.getMessage());
         }
         connector.send(message, FtpAction.APPEND);
     }

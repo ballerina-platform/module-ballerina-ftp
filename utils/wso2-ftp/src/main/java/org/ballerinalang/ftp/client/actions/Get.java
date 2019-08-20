@@ -17,22 +17,17 @@
  */
 package org.ballerinalang.ftp.client.actions;
 
-import org.ballerinalang.bre.Context;
-import org.ballerinalang.bre.bvm.BLangVMStructs;
+import org.ballerinalang.ftp.util.BallerinaFTPException;
 import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
-import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.annotations.BallerinaFunction;
-import org.ballerinalang.natives.annotations.Receiver;
+import org.ballerinalang.jvm.BallerinaValues;
+import org.ballerinalang.jvm.values.MapValue;
+import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.channels.base.readers.ChannelReader;
 import org.ballerinalang.stdlib.io.channels.base.writers.ChannelWriter;
 import org.ballerinalang.stdlib.io.utils.BallerinaIOException;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
-import org.ballerinalang.util.codegen.PackageInfo;
-import org.ballerinalang.util.codegen.StructureTypeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
@@ -53,27 +48,18 @@ import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
+import static org.ballerinalang.jvm.util.BLangConstants.ORG_NAME_SEPARATOR;
 
 /**
-* FTP Get operation.
-*/
-@BallerinaFunction(
-        orgName = "wso2",
-        packageName = "ftp:0.0.0",
-        functionName = "get",
-        receiver = @Receiver(type = TypeKind.OBJECT,
-                             structType = "Client",
-                             structPackage = FTP_PACKAGE_NAME)
-)
+ * FTP Get operation.
+ */
 public class Get extends AbstractFtpAction {
 
-    private static final Logger log = LoggerFactory.getLogger(Get.class);
+    private static final Logger log = LoggerFactory.getLogger("ballerina");
 
-    @Override
-    public void execute(Context context) {
-        BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
-        String path = context.getStringArgument(0);
+    public static void get(ObjectValue clientConnector, String path) throws BallerinaFTPException {
+//        BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
+//        String path = context.getStringArgument(0);
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
         String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
@@ -85,52 +71,59 @@ public class Get extends AbstractFtpAction {
         Map<String, String> propertyMap = new HashMap<>(prop);
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
 
-        FTPReadClientConnectorListener connectorListener = new FTPReadClientConnectorListener(context);
+        FTPReadClientConnectorListener connectorListener = new FTPReadClientConnectorListener();
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
+//            context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
             log.error(e.getMessage(), e);
-            return;
+            throw new BallerinaFTPException(e.getMessage());
         }
         connector.send(null, FtpAction.GET);
     }
 
     private static class FTPReadClientConnectorListener extends FTPClientConnectorListener {
 
-        private static final Logger log = LoggerFactory.getLogger(FTPReadClientConnectorListener.class);
-        private Context context;
+        private static final Logger log = LoggerFactory.getLogger("ballerina");
+        //        private Context context;
+        private static final String PACKAGE_INFO = "ballerina" + ORG_NAME_SEPARATOR + "io";
+        private static final String STRUCT_INFO = "ReadableByteChannel";
 
-        FTPReadClientConnectorListener(Context context) {
-            super(context);
-            this.context = context;
+        FTPReadClientConnectorListener() {
+//            super(context);
+//            this.context = context;
         }
 
         @Override
         public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
+
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
                 final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
                 ByteChannel byteChannel = new ReadByteChannel(in);
                 Channel channel = new FTPGetAbstractChannel(byteChannel);
-                BMap<String, BValue> channelStruct = getBStruct();
+                MapValue<String, Object> channelStruct = getBStruct();
                 channelStruct.addNativeData(IOConstants.BYTE_CHANNEL_NAME, channel);
-                getContext().setReturnValues(channelStruct);
+//                getContext().setReturnValues(channelStruct);
             }
             return true;
         }
 
         @Override
         public void onError(Throwable throwable) {
-            getContext().setReturnValues(FTPUtil.createError(context, throwable.getMessage()));
+//            getContext().setReturnValues(FTPUtil.createError(context, throwable.getMessage()));
             log.error(throwable.getMessage(), throwable);
         }
 
-        private BMap<String, BValue> getBStruct() {
-            PackageInfo timePackageInfo = getContext().getProgramFile().getPackageInfo("ballerina/io");
-            final StructureTypeInfo structInfo = timePackageInfo.getStructInfo("ReadableByteChannel");
-            return BLangVMStructs.createBStruct(structInfo);
+        private MapValue<String, Object> getBStruct() {
+//            PackageInfo timePackageInfo = getContext().getProgramFile().getPackageInfo("ballerina/io");
+////            log.info("package: " + getContext().getProperty("ballerina/io"));
+//            final StructureTypeInfo structInfo = timePackageInfo.getStructInfo("ReadableByteChannel");
+////            BallerinaValues.createRecord(structInfo);
+//            return BLangVMStructs.createBStruct(structInfo);
+//            return null;
+            return BallerinaValues.createRecordValue(PACKAGE_INFO, STRUCT_INFO);
         }
     }
 
@@ -140,26 +133,31 @@ public class Get extends AbstractFtpAction {
     private static class FTPGetAbstractChannel extends Channel {
 
         FTPGetAbstractChannel(ByteChannel channel) throws BallerinaIOException {
+
             super(channel, new ChannelReader(), new ChannelWriter());
         }
 
         @Override
         public void transfer(int i, int i1, WritableByteChannel writableByteChannel) throws BallerinaIOException {
+
             throw new BallerinaIOException("Unsupported operation.");
         }
 
         @Override
         public Channel getChannel() {
+
             return this;
         }
 
         @Override
         public boolean isSelectable() {
+
             return false;
         }
 
         @Override
         public boolean remaining() {
+
             return false;
         }
     }
@@ -168,31 +166,37 @@ public class Get extends AbstractFtpAction {
      * This class will use to create ByteChannel by encapsulating InputStream that coming from transport layer.
      */
     private static class ReadByteChannel implements ByteChannel {
+
         private InputStream in;
         private ReadableByteChannel inChannel;
 
         ReadByteChannel(InputStream in) {
+
             this.in = in;
             this.inChannel = Channels.newChannel(in);
         }
 
         @Override
         public int read(ByteBuffer dst) throws IOException {
+
             return inChannel.read(dst);
         }
 
         @Override
         public int write(ByteBuffer src) {
+
             return 0;
         }
 
         @Override
         public boolean isOpen() {
+
             return inChannel.isOpen();
         }
 
         @Override
         public void close() throws IOException {
+
             inChannel.close();
             in.close();
         }

@@ -20,7 +20,6 @@ package org.ballerinalang.ftp.server.endpoint;
 
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
-import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BValue;
@@ -60,7 +59,7 @@ public class Poll extends BlockingNativeCallableUnit {
         try {
             connector.poll();
         } catch (RemoteFileSystemConnectorException e) {
-            context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
+           // context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
             log.error(e.getMessage(), e);
             return;
         }

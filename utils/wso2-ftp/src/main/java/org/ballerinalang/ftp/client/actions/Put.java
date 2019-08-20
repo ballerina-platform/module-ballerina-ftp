@@ -15,17 +15,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.ballerinalang.ftp.client.actions;
 
-import org.ballerinalang.bre.Context;
+import org.ballerinalang.ftp.util.BallerinaFTPException;
 import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
-import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.annotations.BallerinaFunction;
-import org.ballerinalang.natives.annotations.Receiver;
+import org.ballerinalang.jvm.values.ObjectValue;
+import org.ballerinalang.stdlib.io.channels.base.Channel;
+import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
@@ -33,53 +30,44 @@ import org.wso2.transport.remotefilesystem.client.connector.contract.FtpAction;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
 import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
 import org.wso2.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
-
 /**
- * FTP Rename operation.
+ * FTP Put operation.
  */
-@BallerinaFunction(
-        orgName = "wso2",
-        packageName = "ftp:0.0.0",
-        functionName = "rename",
-        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Client", structPackage = FTP_PACKAGE_NAME)
-)
-public class Rename extends AbstractFtpAction {
+public class Put extends AbstractFtpAction {
 
-    private static final Logger log = LoggerFactory.getLogger(Rename.class);
+    private static final Logger log = LoggerFactory.getLogger("ballerina");
 
-    @Override
-    public void execute(Context context) {
-        BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
-        String origin = context.getStringArgument(0);
-        String destination = context.getStringArgument(1);
+    public static void put(ObjectValue clientConnector, String path, ObjectValue sourceChannel)
+            throws BallerinaFTPException {
+
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
         String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
         int port = (int) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
         String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
+        String url = FTPUtil.createUrl(protocol, host, port, username, password, path);
+
+        Channel byteChannel = (Channel) sourceChannel.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
+        RemoteFileSystemMessage message = new RemoteFileSystemMessage(byteChannel.getInputStream());
+
         Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
-
-        //Create property map to send to transport.
         Map<String, String> propertyMap = new HashMap<>(prop);
-        propertyMap.put(FtpConstants.PROPERTY_URI, FTPUtil.createUrl(protocol, host, port, username, password, origin));
-        propertyMap.put(FtpConstants.PROPERTY_DESTINATION, FTPUtil.createUrl(protocol, host, port, username, password,
-                destination));
+        propertyMap.put(FtpConstants.PROPERTY_URI, url);
 
-        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context);
+        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener();
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
             log.error(e.getMessage(), e);
-            return;
+            throw new BallerinaFTPException(e.getMessage());
         }
-        connector.send(null, FtpAction.RENAME);
+        connector.send(message, FtpAction.PUT);
     }
 }

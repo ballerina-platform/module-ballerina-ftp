@@ -18,14 +18,10 @@
 
 package org.ballerinalang.ftp.client.actions;
 
-import org.ballerinalang.bre.Context;
+import org.ballerinalang.ftp.util.BallerinaFTPException;
 import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
-import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.annotations.BallerinaFunction;
-import org.ballerinalang.natives.annotations.Receiver;
+import org.ballerinalang.jvm.values.ObjectValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
@@ -37,47 +33,34 @@ import org.wso2.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactory
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
-
 /**
- * FTP create directory operation.
+ * FTP delete file operation.
  */
-@BallerinaFunction(
-        orgName = "wso2",
-        packageName = "ftp:0.0.0",
-        functionName = "mkdir",
-        receiver = @Receiver(type = TypeKind.OBJECT, structType = "Client", structPackage = FTP_PACKAGE_NAME)
-)
-public class Mkdir extends AbstractFtpAction {
+public class Delete extends AbstractFtpAction {
 
-    private static final Logger log = LoggerFactory.getLogger(Mkdir.class);
+    private static final Logger log = LoggerFactory.getLogger("ballerina");
 
-    @Override
-    public void execute(Context context) {
-        BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
-        String path = context.getStringArgument(0);
-        Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
+    public static void delete(ObjectValue clientConnector, String path) throws BallerinaFTPException {
+
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
         String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
         int port = (int) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
         String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
         String url = FTPUtil.createUrl(protocol, host, port, username, password, path);
-
-        //Create property map to send to transport.
+        Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
         Map<String, String> propertyMap = new HashMap<>(prop);
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
 
-        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(context);
+        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener();
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
             log.error(e.getMessage(), e);
-            return;
+            throw new BallerinaFTPException(e.getMessage());
         }
-        connector.send(null, FtpAction.MKDIR);
+        connector.send(null, FtpAction.DELETE);
     }
 }

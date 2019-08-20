@@ -19,7 +19,6 @@
 package org.ballerinalang.ftp.server.endpoint;
 
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
 import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.connector.api.Resource;
@@ -53,8 +52,9 @@ import static org.ballerinalang.ftp.util.FtpConstants.FTP_PACKAGE_NAME;
         functionName = "register",
         receiver = @Receiver(type = TypeKind.OBJECT, structType = "Listener", structPackage = FTP_PACKAGE_NAME)
 )
-public class Register extends BlockingNativeCallableUnit {
-    @Override
+public class Register {
+
+//    @Override
     public void execute(Context context) {
         Service service = BLangConnectorSPIUtil.getServiceRegistered(context);
         Struct serviceEndpoint = BLangConnectorSPIUtil.getConnectorEndpointStruct(context);

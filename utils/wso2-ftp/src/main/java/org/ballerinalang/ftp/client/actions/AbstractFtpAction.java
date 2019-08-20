@@ -17,10 +17,6 @@
  */
 package org.ballerinalang.ftp.client.actions;
 
-import org.ballerinalang.bre.Context;
-import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
-import org.ballerinalang.ftp.util.FTPUtil;
-import org.ballerinalang.model.values.BValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
@@ -29,7 +25,7 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 /**
  * {@code AbstractFtpAction} is the base class for all FTP Connector Actions.
  */
-abstract class AbstractFtpAction extends BlockingNativeCallableUnit {
+abstract class AbstractFtpAction {
 
     /**
      * {@link RemoteFileSystemListener} implementation for receive notification from transport.
@@ -37,28 +33,28 @@ abstract class AbstractFtpAction extends BlockingNativeCallableUnit {
     protected static class FTPClientConnectorListener implements RemoteFileSystemListener {
 
         private static final Logger log = LoggerFactory.getLogger(FTPClientConnectorListener.class);
-        private Context context;
+//        private Context context;
 
-        FTPClientConnectorListener(Context context) {
-            this.context = context;
+        FTPClientConnectorListener() {
+//            this.context = context;
         }
-
-        public Context getContext() {
-            return context;
-        }
+//
+//        public Context getContext() {
+//            return context;
+//        }
 
         @Override
         public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
-            // This default implementation handle situation where no response return from the transport side.
-            // If there are any response coming from transport then specifically need to handle from relevant action
-            // class by overriding this method.
-            context.setReturnValues((BValue) null);
+            // This default implementation handles the situation where no response is returned from the transport side.
+            // If there is any response coming from transport then it specifically needs to be handled from the relevant
+            // action class by overriding this method.
+//            context.setReturnValues(null);
             return true;
         }
 
         @Override
         public void onError(Throwable throwable) {
-            context.setReturnValues(FTPUtil.createError(context, throwable.getMessage()));
+//            context.setReturnValues(FTPUtil.createError(context, throwable.getMessage()));
             log.error(throwable.getMessage(), throwable);
         }
 

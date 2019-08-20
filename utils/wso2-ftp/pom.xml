@@ -16,7 +16,8 @@
   ~ under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <parent>
         <groupId>org.ballerinalang</groupId>
         <artifactId>ftp-connector-parent</artifactId>
@@ -25,23 +26,23 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>ftp-java</artifactId>
+    <artifactId>wso2-ftp</artifactId>
     <packaging>jar</packaging>
     <name>Ballerina - FTP Connector Implementation</name>
     <url>https://ballerina.io/</url>
 
     <dependencies>
+        <dependency>
+            <groupId>org.wso2.transport.file</groupId>
+            <artifactId>org.wso2.transport.remote-file-system</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+        </dependency>
         <!--<dependency>-->
-            <!--<groupId>org.wso2.transport.file</groupId>-->
-            <!--<artifactId>org.wso2.transport.remote-file-system</artifactId>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>com.jcraft</groupId>-->
-            <!--<artifactId>jsch</artifactId>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>ballerina-builtin</artifactId>-->
+        <!--<groupId>org.ballerinalang</groupId>-->
+        <!--<artifactId>ballerina-builtin</artifactId>-->
         <!--</dependency>-->
         <dependency>
             <groupId>org.ballerinalang</groupId>
@@ -61,9 +62,13 @@
             <groupId>org.ballerinalang</groupId>
             <artifactId>ballerina-utils</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>ballerina-runtime</artifactId>
+        </dependency>
         <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>ballerina-launcher</artifactId>-->
+        <!--<groupId>org.ballerinalang</groupId>-->
+        <!--<artifactId>ballerina-launcher</artifactId>-->
         <!--</dependency>-->
         <dependency>
             <groupId>org.mockftpserver</groupId>
@@ -80,59 +85,93 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>docerina</artifactId>-->
+        <!--<groupId>org.ballerinalang</groupId>-->
+        <!--<artifactId>docerina</artifactId>-->
+        <!--</dependency>-->
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>ballerina-io</artifactId>
+        </dependency>
+        <!--<dependency>-->
+        <!--<groupId>org.ballerinalang</groupId>-->
+        <!--<artifactId>ballerina-io</artifactId>-->
+        <!--<type>zip</type>-->
+        <!--<classifier>ballerina-binary-repo</classifier>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>ballerina-io</artifactId>-->
+        <!--<groupId>org.ballerinalang</groupId>-->
+        <!--<artifactId>ballerina-runtime-api</artifactId>-->
+        <!--<type>zip</type>-->
+        <!--<classifier>ballerina-binary-repo</classifier>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>ballerina-io</artifactId>-->
-            <!--<type>zip</type>-->
-            <!--<classifier>ballerina-binary-repo</classifier>-->
+        <!--<groupId>org.ballerinalang</groupId>-->
+        <!--<artifactId>ballerina-runtime-api</artifactId>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>ballerina-runtime-api</artifactId>-->
-            <!--<type>zip</type>-->
-            <!--<classifier>ballerina-binary-repo</classifier>-->
+        <!--<groupId>org.ballerinalang</groupId>-->
+        <!--<artifactId>ballerina-task</artifactId>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>ballerina-runtime-api</artifactId>-->
+        <!--<groupId>org.ballerinalang</groupId>-->
+        <!--<artifactId>ballerina-task</artifactId>-->
+        <!--<type>zip</type>-->
+        <!--<classifier>ballerina-binary-repo</classifier>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>ballerina-task</artifactId>-->
+        <!--<groupId>org.ballerinalang</groupId>-->
+        <!--<artifactId>ballerina-log-api</artifactId>-->
+        <!--<type>zip</type>-->
+        <!--<classifier>ballerina-binary-repo</classifier>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>ballerina-task</artifactId>-->
-            <!--<type>zip</type>-->
-            <!--<classifier>ballerina-binary-repo</classifier>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>ballerina-log-api</artifactId>-->
-            <!--<type>zip</type>-->
-            <!--<classifier>ballerina-binary-repo</classifier>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.ballerinalang</groupId>-->
-            <!--<artifactId>ballerina-log-api</artifactId>-->
+        <!--<groupId>org.ballerinalang</groupId>-->
+        <!--<artifactId>ballerina-log-api</artifactId>-->
         <!--</dependency>-->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>error</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>error</artifactId>
+            <type>zip</type>
+            <classifier>ballerina-binary-repo</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>annotations</artifactId>
+            <type>zip</type>
+            <classifier>ballerina-binary-repo</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>internal</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>internal</artifactId>
+            <type>zip</type>
+            <classifier>ballerina-binary-repo</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>lib-creator</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <resources>
             <resource>
-                <directory>../../component/src/main/resources</directory>
+                <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
         </resources>
@@ -197,7 +236,7 @@
                             <goal>unpack-dependencies</goal>
                         </goals>
                         <configuration>
-                            <!--<includeClassifiers>ballerina-binary-repo</includeClassifiers>-->
+                            <includeClassifiers>ballerina-binary-repo</includeClassifiers>
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
                         </configuration>
                     </execution>
@@ -226,55 +265,56 @@
                 </executions>
             </plugin>
             <!--<plugin>-->
-                <!--<groupId>org.ballerinalang</groupId>-->
-                <!--<artifactId>docerina-maven-plugin</artifactId>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<phase>package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>docerina</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<outputDir>${project.build.directory}/api-docs</outputDir>-->
-                            <!--<sourceRoot>${basedir}/src/main/ballerina</sourceRoot>-->
-                            <!--<nativeCode>true</nativeCode>-->
-                            <!--<packageFilter>compression</packageFilter>-->
-                            <!--<orgName>wso2</orgName>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
+            <!--<groupId>org.ballerinalang</groupId>-->
+            <!--<artifactId>docerina-maven-plugin</artifactId>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<phase>package</phase>-->
+            <!--<goals>-->
+            <!--<goal>docerina</goal>-->
+            <!--</goals>-->
+            <!--<configuration>-->
+            <!--<outputDir>${project.build.directory}/api-docs</outputDir>-->
+            <!--<sourceRoot>${basedir}/src/main/ballerina</sourceRoot>-->
+            <!--<nativeCode>true</nativeCode>-->
+            <!--<packageFilter>compression</packageFilter>-->
+            <!--<orgName>wso2</orgName>-->
+            <!--</
+            configuration>-->
+            <!--</execution>-->
+            <!--</executions>-->
             <!--</plugin>-->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.plugin.version}</version>
-                <configuration>
-                    <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
-                    <additionalClasspathElements>
-                        <additionalClasspathElement>
-                            ${basedir}/target/classes/org/ballerinalang/net/StandardExtensionPackageRepositoryProvider.class
-                        </additionalClasspathElement>
-                        <additionalClasspathElement>
-                            ${basedir}/target/classes/org/ballerinalang/net/ftp/generated/providers/StandardNativeElementProvider.class
-                        </additionalClasspathElement>
-                    </additionalClasspathElements>
-                    <environmentVariables>
-                        <testEnvironmentVariable>EnvironmentVariable</testEnvironmentVariable>
-                    </environmentVariables>
-                    <suiteXmlFiles>
-                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
-                    </suiteXmlFiles>
-                    <systemPropertyVariables>
-                        <ballerina.home>${project.build.directory}</ballerina.home>
-                        <java.util.logging.manager>org.ballerinalang.logging.BLogManager</java.util.logging.manager>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-surefire-plugin</artifactId>-->
+<!--                <version>${maven.surefire.plugin.version}</version>-->
+<!--                <configuration>-->
+<!--                    <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>-->
+<!--                    <additionalClasspathElements>-->
+<!--                        <additionalClasspathElement>-->
+<!--                            ${basedir}/target/classes/org/ballerinalang/net/StandardExtensionPackageRepositoryProvider.class-->
+<!--                        </additionalClasspathElement>-->
+<!--                        <additionalClasspathElement>-->
+<!--                            ${basedir}/target/classes/org/ballerinalang/net/ftp/generated/providers/StandardNativeElementProvider.class-->
+<!--                        </additionalClasspathElement>-->
+<!--                    </additionalClasspathElements>-->
+<!--                    <environmentVariables>-->
+<!--                        <testEnvironmentVariable>EnvironmentVariable</testEnvironmentVariable>-->
+<!--                    </environmentVariables>-->
+<!--                    <suiteXmlFiles>-->
+<!--                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>-->
+<!--                    </suiteXmlFiles>-->
+<!--                    <systemPropertyVariables>-->
+<!--                        <ballerina.home>${project.build.directory}</ballerina.home>-->
+<!--                        <java.util.logging.manager>org.ballerinalang.logging.BLogManager</java.util.logging.manager>-->
+<!--                    </systemPropertyVariables>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
-                        <descriptor>../../component/src/main/assembly/dist.xml</descriptor>
+                        <descriptor>src/main/assembly/dist.xml</descriptor>
                     </descriptors>
                     <finalName>distribution</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
@@ -288,6 +328,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <compilerArgument>-proc:none</compilerArgument>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -306,33 +354,34 @@
                 </executions>
             </plugin>
             <!--<plugin>-->
-                <!--<groupId>org.codehaus.mojo</groupId>-->
-                <!--<artifactId>exec-maven-plugin</artifactId>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>gen-balo</id>-->
-                        <!--<goals>-->
-                            <!--<goal>java</goal>-->
-                        <!--</goals>-->
-                        <!--<phase>compile</phase>-->
-                        <!--<configuration>-->
-                            <!--<systemProperties>-->
-                                <!--<systemProperty>-->
-                                    <!--<key>BALLERINA_DEV_MODE_COMPILE</key>-->
-                                    <!--<value>true</value>-->
-                                <!--</systemProperty>-->
-                            <!--</systemProperties>-->
-                            <!--<arguments>-->
-                                <!--<argument>false</argument>-->
-                                <!--<argument>${basedir}/src/main/ballerina/</argument>-->
-                                <!--<argument>${project.build.directory}/generated-balo/repo/wso2</argument>-->
-                                <!--<argument>${project.build.directory}</argument>-->
-                                <!--<argument>${project.version}</argument>-->
-                            <!--</arguments>-->
-                            <!--&lt;!&ndash;<mainClass>org.ballerinalang.stdlib.utils.GenerateBalo</mainClass>&ndash;&gt;-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
+            <!--<groupId>org.codehaus.mojo</groupId>-->
+            <!--<artifactId>exec-maven-plugin</artifactId>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<id>gen-balo</id>-->
+            <!--<goals>-->
+            <!--<goal>java</goal>-->
+            <!--</goals>-->
+            <!--<phase>compile</phase>-->
+            <!--<configuration>-->
+            <!--<systemProperties>-->
+            <!--<systemProperty>-->
+            <!--<key>BALLERINA_DEV_MODE_COMPILE</key>-->
+            <!--<value>true</value>-->
+            <!--</systemProperty>-->
+            <!--</systemProperties>-->
+            <!--<arguments>-->
+            <!--<argument>false</argument>-->
+            <!--<argument>${project.parent.basedir}/</argument>-->
+            <!--<argument>${project.build.directory}/generated-balo/repo/wso2</argument>-->
+            <!--<argument>${project.build.directory}</argument>-->
+            <!--<argument>${project.version}</argument>-->
+            <!--<argument>false</argument>-->
+            <!--</arguments>-->
+            <!--<mainClass>org.ballerinalang.stdlib.utils.GenerateBalo</mainClass>-->
+            <!--</configuration>-->
+            <!--</execution>-->
+            <!--</executions>-->
             <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -341,7 +390,7 @@
                     <!-- Since  balo is needed by tests, here it is copied to target/lib where other balos
                     are copied to -->
                     <execution>
-                        <id>copy-ftp-balo</id>
+                        <!--<id>copy-ftp-balo</id>-->
                         <phase>compile</phase>
                         <goals>
                             <goal>copy-resources</goal>
@@ -360,6 +409,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.3</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -368,18 +418,49 @@
                         </goals>
                         <configuration>
                             <finalName>wso2-ftp-module-${project.version}</finalName>
-                            <artifactSet>
-                                <includes>
-                                    <include>org.ballerinalang:wso2-ftp</include>
-                                    <include>org.wso2.transport.file:org.wso2.transport.remote-file-system</include>
-                                    <include>com.jcraft:jsch</include>
-                                    <include>commons-net:commons-net</include>
-                                    <include>org.wso2.org.apache.commons:commons-vfs2</include>
-                                </includes>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <!--<minimizeJar>true</minimizeJar>-->
+                            <!--                            <artifactSet>-->
+                            <!--                                <includes>-->
+                            <!--                                    <include>org.ballerinalang:wso2-ftp</include>-->
+                            <!--                                    <include>org.wso2.transport.file:org.wso2.transport.remote-file-system</include>-->
+                            <!--                                    <include>com.jcraft:jsch</include>-->
+                            <!--&lt;!&ndash;                                    <include>commons-net:commons-net</include>&ndash;&gt;-->
+                            <!--&lt;!&ndash;                                    <include>org.wso2.org.apache.commons:commons-vfs2</include>&ndash;&gt;-->
+                            <!--                                </includes>-->
+                            <!--                                <excludes>-->
+                            <!--                                    <exclude>org.slf4j:slf4-api</exclude>-->
+                            <!--                                    <exclude>org.slf4j:slf4-simple</exclude>-->
+                            <!--                                    <exclude>META-INF/*.SF</exclude>-->
+                            <!--                                    <exclude>META-INF/*.DSA</exclude>-->
+                            <!--                                    <exclude>META-INF/*.RSA</exclude>-->
+                            <!--                                </excludes>-->
+                            <!--                            </artifactSet>-->
+                            <filters>
+                                <filter>
+                                    <!--                                    <artifact>org.ballerinalang:wso2-ftp</artifact>-->
+                                    <!--                                    <artifact>org.wso2.transport.file:org.wso2.transport.remote-file-system</artifact>-->
+                                    <!--                                    <artifact>com.jcraft:jsch</artifact>-->
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <!--<finalName>wso2-ftp-module-${project.version}</finalName>-->
+                            <!--<artifactSet>-->
+                            <!--<includes>-->
+                            <!--<include>org.ballerinalang:wso2-ftp</include>-->
+                            <!--<include>org.wso2.transport.file:org.wso2.transport.remote-file-system</include>-->
 
-                            </artifactSet>
+                            <!--</includes>-->
+
+                            <!--</artifactSet>-->
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
                                     <resources>
                                         <resource>installation-scripts/install.bat</resource>
                                         <resource>installation-scripts/install.sh</resource>
@@ -393,13 +474,14 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
 
     <properties>
         <!-- Path to the ballerina source directory -->
         <ballerina.source.directory>
-            ${project.build.directory}/../src/main/ballerina
+            ${project.parent.basedir}/
         </ballerina.source.directory>
         <package.repository.provider.class>
             org.ballerinalang.net.fs.repository.BallerinaBuiltinPackageRepository
@@ -407,7 +489,7 @@
 
         <!-- Path to the generated natives ballerina files temp directory -->
         <generated.ballerina.source.directory>
-            ${project.build.directory}/../src/main/ballerina
+            ${project.parent.basedir}/
         </generated.ballerina.source.directory>
         <mavan.findbugsplugin.exclude.file>findbugs-exclude.xml</mavan.findbugsplugin.exclude.file>
     </properties>
