@@ -1,0 +1,15 @@
+[project]
+org-name= "wso2"
+version= "0.1.0"
+
+[dependencies]
+
+[platform]
+target = "java8"
+
+    [[platform.libraries]]
+    module = "utils/wso2-ftp"
+    path = "./utils/wso2-ftp/target/wso2-ftp-module-0.99.3-SNAPSHOT.jar"
+    artifactId = "wso2-ftp"
+    version = "0.99.3-SNAPSHOT"
+    groupId = "org.ballerinalang"

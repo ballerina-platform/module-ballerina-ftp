@@ -23,7 +23,7 @@
     <artifactId>ftp-connector-parent</artifactId>
     <packaging>pom</packaging>
     <version>0.99.3-SNAPSHOT</version>
-    <name>Ballerina - FTP Connector ParentParent</name>
+    <name>Ballerina - FTP Connector Parent</name>
 
     <url>https://ballerina.io/</url>
 
@@ -34,8 +34,9 @@
         <tag>HEAD</tag>
     </scm>
     <modules>
-        <module>component</module>
+        <module>utils/wso2-ftp</module>
     </modules>
+
     <profiles>
         <profile>
             <id>default</id>
@@ -43,7 +44,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <modules>
-                <module>component</module>
+                <module>utils/wso2-ftp</module>
             </modules>
         </profile>
         <profile>
@@ -87,6 +88,7 @@
             </build>
         </profile>
     </profiles>
+
     <repositories>
         <repository>
             <id>wso2.releases</id>
@@ -110,7 +112,18 @@
                 <enabled>false</enabled>
             </releases>
         </repository>
+        <repository>
+            <id>wso2-nexus</id>
+            <name>WSO2 internal Repository</name>
+            <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>ignore</checksumPolicy>
+            </releases>
+        </repository>
     </repositories>
+
     <pluginRepositories>
         <pluginRepository>
             <id>wso2.releases</id>
@@ -145,6 +158,7 @@
             </releases>
         </pluginRepository>
     </pluginRepositories>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -157,11 +171,11 @@
                 <artifactId>jsch</artifactId>
                 <version>${jsch.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-builtin</artifactId>
-                <version>${ballerina.version}</version>
-            </dependency>
+            <!--<dependency>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>ballerina-builtin</artifactId>-->
+                <!--<version>${ballerina.version}</version>-->
+            <!--</dependency>-->
             <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-core</artifactId>
@@ -179,47 +193,57 @@
             </dependency>
             <dependency>
                 <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-io</artifactId>
+                <artifactId>ballerina-utils</artifactId>
+                <version>${ballerina.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ballerinalang</groupId>
+                <artifactId>ballerina-runtime</artifactId>
                 <version>${ballerina.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-io</artifactId>
                 <version>${ballerina.version}</version>
-                <type>zip</type>
-                <classifier>ballerina-binary-repo</classifier>
             </dependency>
+            <!--<dependency>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>ballerina-io</artifactId>-->
+                <!--<version>${ballerina.version}</version>-->
+                <!--<type>zip</type>-->
+                <!--<classifier>ballerina-binary-repo</classifier>-->
+            <!--</dependency>-->
             <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-task</artifactId>
                 <version>${ballerina.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-task</artifactId>
-                <version>${ballerina.version}</version>
-                <type>zip</type>
-                <classifier>ballerina-binary-repo</classifier>
-            </dependency>
+            <!--<dependency>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>ballerina-task</artifactId>-->
+                <!--<version>${ballerina.version}</version>-->
+                <!--<type>zip</type>-->
+                <!--<classifier>ballerina-binary-repo</classifier>-->
+            <!--</dependency>-->
+            <!--<dependency>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>ballerina-runtime-api</artifactId>-->
+                <!--<version>${ballerina.version}</version>-->
+                <!--<type>zip</type>-->
+                <!--<classifier>ballerina-binary-repo</classifier>-->
+            <!--</dependency>-->
             <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-runtime-api</artifactId>
                 <version>${ballerina.version}</version>
-                <type>zip</type>
-                <classifier>ballerina-binary-repo</classifier>
             </dependency>
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-runtime-api</artifactId>
-                <version>${ballerina.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>ballerina-log-api</artifactId>
-                <version>${ballerina.version}</version>
-                <type>zip</type>
-                <classifier>ballerina-binary-repo</classifier>
-            </dependency>
+            <!--<dependency>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>ballerina-log-api</artifactId>-->
+                <!--<version>${ballerina.version}</version>-->
+                <!--<type>zip</type>-->
+                <!--<classifier>ballerina-binary-repo</classifier>-->
+            <!--</dependency>-->
             <dependency>
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-log-api</artifactId>
@@ -253,8 +277,50 @@
                 <version>${slf4j.version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>org.ballerinalang</groupId>
+                <artifactId>lib-creator</artifactId>
+                <version>${ballerina.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ballerinalang</groupId>
+                <artifactId>error</artifactId>
+                <version>${ballerina.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ballerinalang</groupId>
+                <artifactId>error</artifactId>
+                <type>zip</type>
+                <classifier>ballerina-binary-repo</classifier>
+                <version>${ballerina.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ballerinalang</groupId>
+                <artifactId>annotations</artifactId>
+                <version>${ballerina.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ballerinalang</groupId>
+                <artifactId>annotations</artifactId>
+                <type>zip</type>
+                <classifier>ballerina-binary-repo</classifier>
+                <version>${ballerina.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ballerinalang</groupId>
+                <artifactId>internal</artifactId>
+                <version>${ballerina.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ballerinalang</groupId>
+                <artifactId>internal</artifactId>
+                <type>zip</type>
+                <classifier>ballerina-binary-repo</classifier>
+                <version>${ballerina.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
     <build>
         <extensions>
             <extension>
@@ -288,29 +354,29 @@
                     <compilerArgument>-proc:none</compilerArgument>
                 </configuration>
             </plugin>
-            <plugin><!-- Overridden from parent pom to exclude generated sources -->
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <configuration>
-                    <effort>Max</effort>
-                    <threshold>Low</threshold>
-                    <xmlOutput>true</xmlOutput>
-                    <findbugsXmlOutputDirectory>
-                        ${project.build.directory}/findbugs
-                    </findbugsXmlOutputDirectory>
-                    <excludeFilterFile>${maven.findbugsplugin.version.exclude}</excludeFilterFile>
-                </configuration>
-                <version>${maven.findbugsplugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>analyze-compile</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>&lt;!&ndash; Overridden from parent pom to exclude generated sources &ndash;&gt;-->
+                <!--<groupId>org.codehaus.mojo</groupId>-->
+                <!--<artifactId>findbugs-maven-plugin</artifactId>-->
+                <!--<configuration>-->
+                    <!--<effort>Max</effort>-->
+                    <!--<threshold>Low</threshold>-->
+                    <!--<xmlOutput>true</xmlOutput>-->
+                    <!--<findbugsXmlOutputDirectory>-->
+                        <!--${project.build.directory}/findbugs-->
+                    <!--</findbugsXmlOutputDirectory>-->
+                    <!--<excludeFilterFile>${maven.findbugsplugin.version.exclude}</excludeFilterFile>-->
+                <!--</configuration>-->
+                <!--<version>${maven.findbugsplugin.version}</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>analyze-compile</id>-->
+                        <!--<phase>compile</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>check</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <plugin><!-- Overridden from parent pom to exclude generated sources -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -367,26 +433,26 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>docerina-maven-plugin</artifactId>
-                <version>${docerina.maven.plugin.version}</version>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.ballerinalang</groupId>-->
+                <!--<artifactId>docerina-maven-plugin</artifactId>-->
+                <!--<version>${docerina.maven.plugin.version}</version>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-remote-resources-plugin</artifactId>
                 <version>${maven.remote.resource.plugin.version}</version>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>properties-maven-plugin</artifactId>
-                <version>${maven.properties.plugin.version}</version>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>${maven.exec.plugin.version}</version>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.codehaus.mojo</groupId>-->
+                <!--<artifactId>properties-maven-plugin</artifactId>-->
+                <!--<version>${maven.properties.plugin.version}</version>-->
+            <!--</plugin>-->
+            <!--<plugin>-->
+                <!--<groupId>org.codehaus.mojo</groupId>-->
+                <!--<artifactId>exec-maven-plugin</artifactId>-->
+                <!--<version>${maven.exec.plugin.version}</version>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -396,6 +462,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>${maven.shade.plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
             </plugin>
         </plugins>
     </build>
@@ -412,7 +483,7 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <ballerina.version>0.991.0</ballerina.version>
+        <ballerina.version>1.0.0-beta-SNAPSHOT</ballerina.version>
         <docerina.version>${ballerina.version}</docerina.version>
         <file.transport.version>6.0.55</file.transport.version>
         <slf4j.version>1.7.22</slf4j.version>
@@ -440,7 +511,7 @@
         <commons-net.version>3.6</commons-net.version>
 
         <project.scm.id>my-scm-server</project.scm.id>
-        <maven.wagon.ssh.version>2.1</maven.wagon.ssh.version>
+        <maven.wagon.ssh.version>2.2</maven.wagon.ssh.version>
         <maven.release.plugin.version>2.5.3</maven.release.plugin.version>
         <maven.deploy.plugin.version>2.8.2</maven.deploy.plugin.version>
         <maven.properties.plugin.version>1.0.0</maven.properties.plugin.version>
