@@ -20,8 +20,8 @@ package org.ballerinalang.ftp.client.actions;
 import org.ballerinalang.ftp.util.BallerinaFTPException;
 import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
+import org.ballerinalang.jvm.BRuntime;
 import org.ballerinalang.jvm.BallerinaValues;
-import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.channels.base.readers.ChannelReader;
@@ -47,6 +47,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static org.ballerinalang.jvm.util.BLangConstants.ORG_NAME_SEPARATOR;
 
@@ -57,9 +58,8 @@ public class Get extends AbstractFtpAction {
 
     private static final Logger log = LoggerFactory.getLogger("ballerina");
 
-    public static void get(ObjectValue clientConnector, String path) throws BallerinaFTPException {
-//        BMap<String, BValue> clientConnector = (BMap<String, BValue>) context.getRefArgument(0);
-//        String path = context.getStringArgument(0);
+    public static ObjectValue get(ObjectValue clientConnector, String path) throws BallerinaFTPException {
+
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
         String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
@@ -71,29 +71,32 @@ public class Get extends AbstractFtpAction {
         Map<String, String> propertyMap = new HashMap<>(prop);
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
 
-        FTPReadClientConnectorListener connectorListener = new FTPReadClientConnectorListener();
+        CompletableFuture<Object> future = BRuntime.markAsync();
+        FTPReadClientConnectorListener connectorListener = new FTPReadClientConnectorListener(future);
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-//            context.setReturnValues(FTPUtil.createError(context, e.getMessage()));
             log.error(e.getMessage(), e);
             throw new BallerinaFTPException(e.getMessage());
         }
         connector.send(null, FtpAction.GET);
+        return null;
+
     }
 
     private static class FTPReadClientConnectorListener extends FTPClientConnectorListener {
 
         private static final Logger log = LoggerFactory.getLogger("ballerina");
-        //        private Context context;
-        private static final String PACKAGE_INFO = "ballerina" + ORG_NAME_SEPARATOR + "io";
-        private static final String STRUCT_INFO = "ReadableByteChannel";
+        private static final String PACKAGE_NAME = "ballerina" + ORG_NAME_SEPARATOR + "io";
+        private static final String OBJECT_NAME = "ReadableByteChannel";
+        private CompletableFuture<Object> future;
 
-        FTPReadClientConnectorListener() {
-//            super(context);
-//            this.context = context;
+        FTPReadClientConnectorListener(CompletableFuture<Object> future) {
+
+            super(future);
+            this.future = future;
         }
 
         @Override
@@ -103,27 +106,18 @@ public class Get extends AbstractFtpAction {
                 final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
                 ByteChannel byteChannel = new ReadByteChannel(in);
                 Channel channel = new FTPGetAbstractChannel(byteChannel);
-                MapValue<String, Object> channelStruct = getBStruct();
+                ObjectValue channelStruct = BallerinaValues.createObjectValue(PACKAGE_NAME, OBJECT_NAME);
                 channelStruct.addNativeData(IOConstants.BYTE_CHANNEL_NAME, channel);
-//                getContext().setReturnValues(channelStruct);
+                future.complete(channelStruct);
             }
             return true;
         }
 
         @Override
         public void onError(Throwable throwable) {
-//            getContext().setReturnValues(FTPUtil.createError(context, throwable.getMessage()));
-            log.error(throwable.getMessage(), throwable);
-        }
 
-        private MapValue<String, Object> getBStruct() {
-//            PackageInfo timePackageInfo = getContext().getProgramFile().getPackageInfo("ballerina/io");
-////            log.info("package: " + getContext().getProperty("ballerina/io"));
-//            final StructureTypeInfo structInfo = timePackageInfo.getStructInfo("ReadableByteChannel");
-////            BallerinaValues.createRecord(structInfo);
-//            return BLangVMStructs.createBStruct(structInfo);
-//            return null;
-            return BallerinaValues.createRecordValue(PACKAGE_INFO, STRUCT_INFO);
+            log.error(throwable.getMessage(), throwable);
+            future.complete(FTPUtil.createError(throwable.getMessage()));
         }
     }
 

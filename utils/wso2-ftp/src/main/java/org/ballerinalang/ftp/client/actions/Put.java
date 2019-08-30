@@ -20,6 +20,7 @@ package org.ballerinalang.ftp.client.actions;
 import org.ballerinalang.ftp.util.BallerinaFTPException;
 import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
+import org.ballerinalang.jvm.BRuntime;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
@@ -34,6 +35,7 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * FTP Put operation.
@@ -59,7 +61,8 @@ public class Put extends AbstractFtpAction {
         Map<String, String> propertyMap = new HashMap<>(prop);
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
 
-        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener();
+        CompletableFuture<Object> future = BRuntime.markAsync();
+        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(future);
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
@@ -69,5 +72,6 @@ public class Put extends AbstractFtpAction {
             throw new BallerinaFTPException(e.getMessage());
         }
         connector.send(message, FtpAction.PUT);
+        future.complete(null);
     }
 }

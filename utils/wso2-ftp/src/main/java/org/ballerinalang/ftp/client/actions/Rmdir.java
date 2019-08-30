@@ -36,13 +36,13 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * FTP delete file operation.
+ * FTP remove directory operation.
  */
-public class Delete extends AbstractFtpAction {
+public class Rmdir extends AbstractFtpAction {
 
-    private static final Logger log = LoggerFactory.getLogger("ballerina");
+    private static final Logger log = LoggerFactory.getLogger(Rmdir.class);
 
-    public static void delete(ObjectValue clientConnector, String path) throws BallerinaFTPException {
+    public static void rmdir(ObjectValue clientConnector, String path) throws BallerinaFTPException {
 
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
@@ -64,7 +64,7 @@ public class Delete extends AbstractFtpAction {
             log.error(e.getMessage(), e);
             throw new BallerinaFTPException(e.getMessage());
         }
-        connector.send(null, FtpAction.DELETE);
+        connector.send(null, FtpAction.RMDIR);
         future.complete(null);
     }
 }

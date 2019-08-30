@@ -36,23 +36,27 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * FTP delete file operation.
+ * FTP Rename operation.
  */
-public class Delete extends AbstractFtpAction {
+public class Rename extends AbstractFtpAction {
 
-    private static final Logger log = LoggerFactory.getLogger("ballerina");
+    private static final Logger log = LoggerFactory.getLogger(Rename.class);
 
-    public static void delete(ObjectValue clientConnector, String path) throws BallerinaFTPException {
+    public static void rename(ObjectValue clientConnector, String origin, String destination)
+            throws BallerinaFTPException {
 
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
         String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
         int port = (int) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
         String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
-        String url = FTPUtil.createUrl(protocol, host, port, username, password, path);
         Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
+
+        //Create property map to send to transport.
         Map<String, String> propertyMap = new HashMap<>(prop);
-        propertyMap.put(FtpConstants.PROPERTY_URI, url);
+        propertyMap.put(FtpConstants.PROPERTY_URI, FTPUtil.createUrl(protocol, host, port, username, password, origin));
+        propertyMap.put(FtpConstants.PROPERTY_DESTINATION, FTPUtil.createUrl(protocol, host, port, username, password,
+                destination));
 
         CompletableFuture<Object> future = BRuntime.markAsync();
         FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(future);
@@ -64,7 +68,7 @@ public class Delete extends AbstractFtpAction {
             log.error(e.getMessage(), e);
             throw new BallerinaFTPException(e.getMessage());
         }
-        connector.send(null, FtpAction.DELETE);
+        connector.send(null, FtpAction.RENAME);
         future.complete(null);
     }
 }

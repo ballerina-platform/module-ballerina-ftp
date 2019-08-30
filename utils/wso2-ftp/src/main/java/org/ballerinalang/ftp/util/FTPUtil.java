@@ -19,7 +19,6 @@
 package org.ballerinalang.ftp.util;
 
 import org.ballerinalang.connector.api.BallerinaConnectorException;
-import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.values.ErrorValue;
 import org.ballerinalang.jvm.values.MapValue;
 import org.slf4j.Logger;
@@ -62,15 +61,12 @@ public class FTPUtil {
     /**
      * Creates an error message.
      *
-     * @param strand corresponding jvm strand.
      * @param errMsg the cause for the error.
      * @return an error which will be propagated to ballerina user.
      */
-    public static ErrorValue createError(Strand strand, String errMsg) {
-//        MapValue<String, Object> ftpErrorRecord = BLangConnectorSPIUtil.createBStruct
-//          (context, FTP_PACKAGE_NAME, FTP_ERROR);
-//        ftpErrorRecord.put("message", errMsg);
-        return new ErrorValue(FTP_ERROR_CODE, "");
+    public static ErrorValue createError(String errMsg) {
+
+        return new ErrorValue(FTP_ERROR_CODE, errMsg);
     }
 
     /**

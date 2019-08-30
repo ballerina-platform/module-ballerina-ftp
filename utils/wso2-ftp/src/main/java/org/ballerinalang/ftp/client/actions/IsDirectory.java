@@ -20,6 +20,7 @@ package org.ballerinalang.ftp.client.actions;
 import org.ballerinalang.ftp.util.BallerinaFTPException;
 import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
+import org.ballerinalang.jvm.BRuntime;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * FTP isDirectory operation.
@@ -53,7 +55,8 @@ public class IsDirectory extends AbstractFtpAction {
         Map<String, String> propertyMap = new HashMap<>(prop);
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
 
-        FTPIsDirectoryListener connectorListener = new FTPIsDirectoryListener();
+        CompletableFuture<Object> future = BRuntime.markAsync();
+        FTPIsDirectoryListener connectorListener = new FTPIsDirectoryListener(future);
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
@@ -63,42 +66,35 @@ public class IsDirectory extends AbstractFtpAction {
             throw new BallerinaFTPException(e.getMessage());
         }
         connector.send(null, FtpAction.ISDIR);
-        return connectorListener.getIsDirectory();
+        return false;
     }
 
     private static class FTPIsDirectoryListener extends FTPClientConnectorListener {
 
         private static final Logger log = LoggerFactory.getLogger("ballerina");
 
-        private boolean isDirectory;
+        private CompletableFuture<Object> future;
 
-        FTPIsDirectoryListener() {
+        FTPIsDirectoryListener(CompletableFuture<Object> future) {
 
+            super(future);
+            this.future = future;
         }
 
         @Override
         public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
 
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
-                this.setIsDirectory(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).isDirectory());
+                future.complete(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).isDirectory());
             }
             return true;
         }
 
         @Override
         public void onError(Throwable throwable) {
-//            getContext().setReturnValues(FTPUtil.createError(context, throwable.getMessage()));
+
             log.error(throwable.getMessage(), throwable);
-        }
-
-        public boolean getIsDirectory() {
-
-            return isDirectory;
-        }
-
-        public void setIsDirectory(boolean directory) {
-
-            isDirectory = directory;
+            future.complete(FTPUtil.createError(throwable.getMessage()));
         }
     }
 }

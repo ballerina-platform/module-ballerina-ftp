@@ -15,7 +15,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.ballerinalang.ftp.client.actions;
 
 import org.ballerinalang.ftp.util.BallerinaFTPException;
@@ -30,19 +29,21 @@ import org.wso2.transport.remotefilesystem.client.connector.contract.FtpAction;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
 import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
 import org.wso2.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
+import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * FTP delete file operation.
+ * FTP file size operation.
  */
-public class Delete extends AbstractFtpAction {
+public class Size extends AbstractFtpAction {
 
     private static final Logger log = LoggerFactory.getLogger("ballerina");
 
-    public static void delete(ObjectValue clientConnector, String path) throws BallerinaFTPException {
+    public static int size(ObjectValue clientConnector, String path) throws BallerinaFTPException {
 
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
@@ -53,9 +54,10 @@ public class Delete extends AbstractFtpAction {
         Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
         Map<String, String> propertyMap = new HashMap<>(prop);
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
+        propertyMap.put(FtpConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
 
         CompletableFuture<Object> future = BRuntime.markAsync();
-        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(future);
+        FTPFileSizeListener connectorListener = new FTPFileSizeListener(future);
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
@@ -64,7 +66,36 @@ public class Delete extends AbstractFtpAction {
             log.error(e.getMessage(), e);
             throw new BallerinaFTPException(e.getMessage());
         }
-        connector.send(null, FtpAction.DELETE);
-        future.complete(null);
+        connector.send(null, FtpAction.SIZE);
+        return 0;
+    }
+
+    private static class FTPFileSizeListener extends FTPClientConnectorListener {
+
+        private static final Logger log = LoggerFactory.getLogger("ballerina");
+        private CompletableFuture<Object> future;
+
+        FTPFileSizeListener(CompletableFuture<Object> future) {
+
+            super(future);
+            this.future = future;
+        }
+
+        @Override
+        public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
+
+            if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
+                RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
+                future.complete((int) message.getSize());
+            }
+            return true;
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+
+            log.error(throwable.getMessage(), throwable);
+            future.complete(FTPUtil.createError(throwable.getMessage()));
+        }
     }
 }
