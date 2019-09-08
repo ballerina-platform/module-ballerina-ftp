@@ -20,7 +20,7 @@
 
 import ballerina/io;
 import ballerinax/java;
-//import ballerina/log;
+import ballerina/log;
 
 # Represents an FTP client that intracts with an FTP server.
 public type Client client object {
@@ -34,6 +34,8 @@ public type Client client object {
         map<anydata>|error configMap = map<anydata>.constructFrom(clientConfig);
         if(configMap is map<anydata>){
             error? response = initEndpoint(self, configMap);
+        } else {
+            log:printError("Invalid config provided");
         }
     }
 

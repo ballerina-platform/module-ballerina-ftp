@@ -18,7 +18,6 @@
 
 package org.ballerinalang.ftp.util;
 
-import org.ballerinalang.connector.api.BallerinaConnectorException;
 import org.ballerinalang.jvm.values.ErrorValue;
 import org.ballerinalang.jvm.values.MapValue;
 import org.slf4j.Logger;
@@ -45,14 +44,14 @@ public class FTPUtil {
     }
 
     public static String createUrl(String protocol, String host, int port, String username, String passPhrase,
-                                   String basePath) {
+                                   String basePath) throws BallerinaFTPException {
 
         String userInfo = username + ":" + passPhrase;
         URI uri = null;
         try {
             uri = new URI(protocol, userInfo, host, port, basePath, null, null);
         } catch (URISyntaxException e) {
-            throw new BallerinaConnectorException("Error occurred while constructing a URI from host: " + host +
+            throw new BallerinaFTPException("Error occurred while constructing a URI from host: " + host +
                     ", port: " + port + ", username: " + username + " and basePath: " + basePath + e.getMessage(), e);
         }
         return uri.toString();

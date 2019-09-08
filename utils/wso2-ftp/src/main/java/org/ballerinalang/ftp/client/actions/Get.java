@@ -22,12 +22,10 @@ import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
 import org.ballerinalang.jvm.BRuntime;
 import org.ballerinalang.jvm.BallerinaValues;
+import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
-import org.ballerinalang.stdlib.io.channels.base.readers.ChannelReader;
-import org.ballerinalang.stdlib.io.channels.base.writers.ChannelWriter;
 import org.ballerinalang.stdlib.io.utils.BallerinaIOException;
-import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
@@ -50,6 +48,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static org.ballerinalang.jvm.util.BLangConstants.ORG_NAME_SEPARATOR;
+
+//import org.ballerinalang.stdlib.io.channels.base.readers.ChannelReader;
+//import org.ballerinalang.stdlib.io.channels.base.writers.ChannelWriter;
 
 /**
  * FTP Get operation.
@@ -103,12 +104,18 @@ public class Get extends AbstractFtpAction {
         public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
 
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
-                final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
-                ByteChannel byteChannel = new ReadByteChannel(in);
-                Channel channel = new FTPGetAbstractChannel(byteChannel);
-                ObjectValue channelStruct = BallerinaValues.createObjectValue(PACKAGE_NAME, OBJECT_NAME);
-                channelStruct.addNativeData(IOConstants.BYTE_CHANNEL_NAME, channel);
-                future.complete(channelStruct);
+                try {
+                    final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
+                    ByteChannel byteChannel = new ReadByteChannel(in);
+                    Channel channel = new FTPGetAbstractChannel(byteChannel);
+
+                    ObjectValue channelStruct = BallerinaValues.createObjectValue(
+                            new BPackage("ballerina", "io"), OBJECT_NAME, channel);
+//                    channelStruct.addNativeData(IOConstants.BYTE_CHANNEL_NAME, channel);
+                    future.complete(channelStruct);
+                } catch (BallerinaIOException e) {
+                    log.error(e.getMessage());
+                }
             }
             return true;
         }
@@ -122,31 +129,25 @@ public class Get extends AbstractFtpAction {
     }
 
     /**
-     * This class will use to concrete implementation of the {@link Channel}.
+     * This class is the concrete implementation of the {@link Channel}.
      */
     private static class FTPGetAbstractChannel extends Channel {
 
         FTPGetAbstractChannel(ByteChannel channel) throws BallerinaIOException {
 
-            super(channel, new ChannelReader(), new ChannelWriter());
+            super(channel);
         }
 
         @Override
-        public void transfer(int i, int i1, WritableByteChannel writableByteChannel) throws BallerinaIOException {
+        public void transfer(int i, int i1, WritableByteChannel writableByteChannel) {
 
-            throw new BallerinaIOException("Unsupported operation.");
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public Channel getChannel() {
 
             return this;
-        }
-
-        @Override
-        public boolean isSelectable() {
-
-            return false;
         }
 
         @Override

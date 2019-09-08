@@ -56,3 +56,13 @@ public function isDirectory(Client clientEndpoint, handle path) returns boolean|
     class: "org.ballerinalang.ftp.client.actions.IsDirectory"
 } external;
 
+public function poll(ListenerConfig config) returns error? = @java:Method{
+    name: "poll",
+    class: "org.ballerinalang.ftp.server.FTPListenerHelper"
+} external;
+
+public function register(Listener listenerEndpoint, ListenerConfig config, service ftpService, handle name) returns handle|error = @java:Method{
+    name: "register",
+    class: "org.ballerinalang.ftp.server.FTPListenerHelper"
+} external;
+
