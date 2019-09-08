@@ -18,7 +18,7 @@
 
 package org.ballerinalang.ftp.server;
 
-import org.ballerinalang.bre.bvm.CallableUnitCallback;
+//import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.model.values.BError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,16 +26,14 @@ import org.slf4j.LoggerFactory;
 /**
  * {@code FTPCallableUnitCallback} is the responsible for acting on notifications received from Ballerina side.
  */
-public class FTPCallableUnitCallback implements CallableUnitCallback {
+public class FTPCallableUnitCallback {
 
     private static final Logger log = LoggerFactory.getLogger(FTPCallableUnitCallback.class);
 
-    @Override
     public void notifySuccess() {
         log.debug("File Listener: event deliver successfully.");
     }
 
-    @Override
     public void notifyFailure(BError error) {
         log.debug("File Listener: event deliver failed.");
     }

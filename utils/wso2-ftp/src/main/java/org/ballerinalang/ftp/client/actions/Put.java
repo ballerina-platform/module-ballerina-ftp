@@ -20,6 +20,7 @@ package org.ballerinalang.ftp.client.actions;
 import org.ballerinalang.ftp.util.BallerinaFTPException;
 import org.ballerinalang.ftp.util.FTPUtil;
 import org.ballerinalang.ftp.util.FtpConstants;
+import org.ballerinalang.jvm.BRuntime;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
@@ -32,8 +33,10 @@ import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorEx
 import org.wso2.transport.remotefilesystem.impl.RemoteFileSystemConnectorFactoryImpl;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * FTP Put operation.
@@ -45,29 +48,32 @@ public class Put extends AbstractFtpAction {
     public static void put(ObjectValue clientConnector, String path, ObjectValue sourceChannel)
             throws BallerinaFTPException {
 
-        String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
-        String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
-        String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
-        int port = (int) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
-        String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
-        String url = FTPUtil.createUrl(protocol, host, port, username, password, path);
-
-        Channel byteChannel = (Channel) sourceChannel.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
-        RemoteFileSystemMessage message = new RemoteFileSystemMessage(byteChannel.getInputStream());
-
-        Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
-        Map<String, String> propertyMap = new HashMap<>(prop);
-        propertyMap.put(FtpConstants.PROPERTY_URI, url);
-
-        FTPClientConnectorListener connectorListener = new FTPClientConnectorListener();
-        RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-        VFSClientConnector connector;
         try {
-            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
-        } catch (RemoteFileSystemConnectorException e) {
+            String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
+            String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
+            String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
+            int port = (int) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
+            String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
+            String url = FTPUtil.createUrl(protocol, host, port, username, password, path);
+
+            Channel byteChannel = (Channel) sourceChannel.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
+            RemoteFileSystemMessage message = new RemoteFileSystemMessage(byteChannel.getInputStream());
+
+            Map<String, String> prop = (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP);
+            Map<String, String> propertyMap = new HashMap<>(prop);
+            propertyMap.put(FtpConstants.PROPERTY_URI, url);
+
+            CompletableFuture<Object> future = BRuntime.markAsync();
+            FTPClientConnectorListener connectorListener = new FTPClientConnectorListener(future);
+            RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
+
+            VFSClientConnector connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap,
+                    connectorListener);
+            connector.send(message, FtpAction.PUT);
+            future.complete(null);
+        } catch (RemoteFileSystemConnectorException | IOException e) {
             log.error(e.getMessage(), e);
             throw new BallerinaFTPException(e.getMessage());
         }
-        connector.send(message, FtpAction.PUT);
     }
 }

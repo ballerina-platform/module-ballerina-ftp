@@ -17,10 +17,13 @@
  */
 package org.ballerinalang.ftp.client.actions;
 
+import org.ballerinalang.ftp.util.FTPUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * {@code AbstractFtpAction} is the base class for all FTP Connector Actions.
@@ -32,34 +35,38 @@ abstract class AbstractFtpAction {
      */
     protected static class FTPClientConnectorListener implements RemoteFileSystemListener {
 
-        private static final Logger log = LoggerFactory.getLogger(FTPClientConnectorListener.class);
-//        private Context context;
+        private static final Logger log = LoggerFactory.getLogger("ballerina");
+        private CompletableFuture<Object> future;
 
-        FTPClientConnectorListener() {
-//            this.context = context;
+        FTPClientConnectorListener(CompletableFuture<Object> future) {
+
+            this.future = future;
         }
-//
-//        public Context getContext() {
-//            return context;
-//        }
+
+        public CompletableFuture<Object> getFuture() {
+
+            return future;
+        }
 
         @Override
         public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
             // This default implementation handles the situation where no response is returned from the transport side.
             // If there is any response coming from transport then it specifically needs to be handled from the relevant
             // action class by overriding this method.
-//            context.setReturnValues(null);
+            future.complete(null);
             return true;
         }
 
         @Override
         public void onError(Throwable throwable) {
-//            context.setReturnValues(FTPUtil.createError(context, throwable.getMessage()));
+
             log.error(throwable.getMessage(), throwable);
+            future.complete(FTPUtil.createError(throwable.getMessage()));
         }
 
         @Override
         public void done() {
+
         }
     }
 }

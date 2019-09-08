@@ -58,7 +58,7 @@ public class InitEndpoint {
                 password = basicAuth.getStringValue(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
             }
         }
-        logger.info("user: " + username + "--" + password);
+        logger.info("user: {} -- {}", username, password);
 
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME, username);
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD, password);
@@ -70,7 +70,7 @@ public class InitEndpoint {
         ftpConfig.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(false));
         ftpConfig.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
         clientEndpoint.addNativeData(FtpConstants.PROPERTY_MAP, ftpConfig);
-        logger.info("clientEP: " + clientEndpoint.getNativeData());
+        logger.info("clientEP: {}", clientEndpoint.getNativeData());
         //context.setReturnValues();
 //        return new HandleValue("");
     }

@@ -18,8 +18,6 @@
 
 package org.ballerinalang.ftp.util;
 
-import org.ballerinalang.connector.api.BallerinaConnectorException;
-import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.values.ErrorValue;
 import org.ballerinalang.jvm.values.MapValue;
 import org.slf4j.Logger;
@@ -46,14 +44,14 @@ public class FTPUtil {
     }
 
     public static String createUrl(String protocol, String host, int port, String username, String passPhrase,
-                                   String basePath) {
+                                   String basePath) throws BallerinaFTPException {
 
         String userInfo = username + ":" + passPhrase;
         URI uri = null;
         try {
             uri = new URI(protocol, userInfo, host, port, basePath, null, null);
         } catch (URISyntaxException e) {
-            throw new BallerinaConnectorException("Error occurred while constructing a URI from host: " + host +
+            throw new BallerinaFTPException("Error occurred while constructing a URI from host: " + host +
                     ", port: " + port + ", username: " + username + " and basePath: " + basePath + e.getMessage(), e);
         }
         return uri.toString();
@@ -62,15 +60,12 @@ public class FTPUtil {
     /**
      * Creates an error message.
      *
-     * @param strand corresponding jvm strand.
      * @param errMsg the cause for the error.
      * @return an error which will be propagated to ballerina user.
      */
-    public static ErrorValue createError(Strand strand, String errMsg) {
-//        MapValue<String, Object> ftpErrorRecord = BLangConnectorSPIUtil.createBStruct
-//          (context, FTP_PACKAGE_NAME, FTP_ERROR);
-//        ftpErrorRecord.put("message", errMsg);
-        return new ErrorValue(FTP_ERROR_CODE, "");
+    public static ErrorValue createError(String errMsg) {
+
+        return new ErrorValue(FTP_ERROR_CODE, errMsg);
     }
 
     /**
