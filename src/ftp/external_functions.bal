@@ -46,7 +46,7 @@ public function size(Client clientEndpoint, handle path) returns int|error = @ja
     class: "org.wso2.ei.ftp.client.FTPClient"
 } external;
 
-public function list(Client clientEndpoint, handle path) returns string[]|error = @java:Method{
+public function list(Client clientEndpoint, handle path) returns FileInfo[]|error = @java:Method{
     name: "list",
     class: "org.wso2.ei.ftp.client.FTPClient"
 } external;

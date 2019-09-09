@@ -22,13 +22,13 @@ import org.ballerinalang.jvm.BRuntime;
 import org.ballerinalang.jvm.BallerinaValues;
 import org.ballerinalang.jvm.types.BArrayType;
 import org.ballerinalang.jvm.types.BPackage;
-import org.ballerinalang.jvm.types.BType;
 import org.ballerinalang.jvm.types.BTypes;
 import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.ei.ftp.util.FTPUtil;
 import org.wso2.ei.ftp.util.FtpConstants;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.FileInfo;
@@ -72,7 +72,7 @@ public class FTPListener implements RemoteFileSystemListener {
                 FtpConstants.FTP_SERVER_EVENT);
 
         // For newly added files
-        ArrayValue addedFiles = new ArrayValue(new BArrayType(getFileInfoType()));
+        ArrayValue addedFiles = new ArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
         int i = 0;
         for (FileInfo info : fileSystemEvent.getAddedFiles()) {
             Map<String, Object> fileInfoParams = new HashMap<>();
@@ -107,12 +107,5 @@ public class FTPListener implements RemoteFileSystemListener {
     public void done() {
 
         log.debug("Successfully finished the action.");
-    }
-
-    private BType getFileInfoType() {
-        MapValue<String, Object> fileInfoStruct = BallerinaValues.createRecordValue(
-                new BPackage(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME, FtpConstants.FTP_MODULE_VERSION),
-                FtpConstants.FTP_FILE_INFO);
-        return fileInfoStruct.getType();
     }
 }

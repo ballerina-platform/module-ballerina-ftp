@@ -18,12 +18,20 @@
 
 package org.wso2.ei.ftp.client;
 
+import org.apache.commons.vfs2.FileSystemException;
 import org.ballerinalang.jvm.BallerinaValues;
+import org.ballerinalang.jvm.types.BArrayType;
 import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.jvm.values.ArrayValue;
+import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.wso2.ei.ftp.util.FTPUtil;
+import org.wso2.ei.ftp.util.FtpConstants;
+import org.wso2.transport.remotefilesystem.message.FileInfo;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
@@ -34,6 +42,8 @@ import java.nio.channels.ByteChannel;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -44,6 +54,8 @@ class FTPClientHelper {
     private static final String READABLE_BYTE_CHANNEL = "ReadableByteChannel";
     private static final String PACKAGE_BALLERINA = "ballerina";
     private static final String PACKAGE_IO = "io";
+
+    private static final Logger log = LoggerFactory.getLogger(PACKAGE_BALLERINA);
 
     private FTPClientHelper() {
         // private constructor
@@ -85,7 +97,45 @@ class FTPClientHelper {
 
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
-            future.complete(new ArrayValue(message.getChildNames()));
+            Map<String, FileInfo> childrenInfo = message.getChildrenInfo();
+            ArrayValue arrayValue = new ArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
+
+            int i = 0;
+            for (Map.Entry<String, FileInfo> entry : childrenInfo.entrySet()) {
+                Map<String, Object> fileInfoParams = new HashMap<>();
+                FileInfo fileInfo = entry.getValue();
+                fileInfoParams.put("path", fileInfo.getPath());
+                fileInfoParams.put("size", fileInfo.getFileSize());
+                fileInfoParams.put("lastModifiedTimestamp", fileInfo.getLastModifiedTime());
+                fileInfoParams.put("name", fileInfo.getBaseName());
+                fileInfoParams.put("isFolder", fileInfo.isFolder());
+                fileInfoParams.put("isFile", fileInfo.isFile());
+                fileInfoParams.put("extension", fileInfo.getFileName().getExtension());
+                fileInfoParams.put("publicURIString", fileInfo.getPublicURIString());
+                fileInfoParams.put("fileType", fileInfo.getFileType().getName());
+                fileInfoParams.put("isAttached", fileInfo.isAttached());
+                fileInfoParams.put("isContentOpen", fileInfo.isContentOpen());
+                fileInfoParams.put("isExecutable", fileInfo.isExecutable());
+                fileInfoParams.put("isHidden", fileInfo.isHidden());
+                fileInfoParams.put("isReadable", fileInfo.isReadable());
+                fileInfoParams.put("isWritable", fileInfo.isWritable());
+                fileInfoParams.put("depth", fileInfo.getFileName().getDepth());
+                fileInfoParams.put("scheme", fileInfo.getFileName().getScheme());
+                fileInfoParams.put("uri", fileInfo.getFileName().getURI());
+                fileInfoParams.put("rootURI", fileInfo.getFileName().getRootURI());
+                fileInfoParams.put("friendlyURI", fileInfo.getFileName().getFriendlyURI());
+                try {
+                    fileInfoParams.put("pathDecoded", fileInfo.getFileName().getPathDecoded());
+                } catch (FileSystemException e) {
+                    log.error("Error while evaluating the pathDecoded value.", e);
+                }
+
+                final MapValue<String, Object> ballerinaFileInfo = BallerinaValues.createRecordValue(
+                        new BPackage(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
+                                FtpConstants.FTP_MODULE_VERSION), FtpConstants.FTP_FILE_INFO, fileInfoParams);
+                arrayValue.add(i++, ballerinaFileInfo);
+            }
+            future.complete(arrayValue);
         }
         return true;
     }

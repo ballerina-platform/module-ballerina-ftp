@@ -18,6 +18,9 @@
 
 package org.wso2.ei.ftp.util;
 
+import org.ballerinalang.jvm.BallerinaValues;
+import org.ballerinalang.jvm.types.BPackage;
+import org.ballerinalang.jvm.types.BType;
 import org.ballerinalang.jvm.values.ErrorValue;
 import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
@@ -124,5 +127,12 @@ public class FTPUtil {
                     Integer.MAX_VALUE, name, Integer.MAX_VALUE);
             return Integer.MAX_VALUE;
         }
+    }
+
+    public static BType getFileInfoType() {
+        MapValue<String, Object> fileInfoStruct = BallerinaValues.createRecordValue(
+                new BPackage(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME, FtpConstants.FTP_MODULE_VERSION),
+                FtpConstants.FTP_FILE_INFO);
+        return fileInfoStruct.getType();
     }
 }

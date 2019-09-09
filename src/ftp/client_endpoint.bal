@@ -129,9 +129,9 @@ public type Client client object {
     #
     # + path - The direcotry path
     # + return - An array of file names or an `error` if failed to establish communication with the FTP server
-    public remote function list(string path) returns string[]|error {
+    public remote function list(string path) returns FileInfo[]|error {
         handle resourcePath = java:fromString(path);
-        string[]|error response = list(self, resourcePath);
+        FileInfo[]|error response = list(self, resourcePath);
         return response;
     }
 
