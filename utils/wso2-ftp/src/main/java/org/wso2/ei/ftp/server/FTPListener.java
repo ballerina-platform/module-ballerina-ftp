@@ -47,7 +47,7 @@ public class FTPListener implements RemoteFileSystemListener {
     private final BRuntime runtime;
     private final ObjectValue service;
 
-    public FTPListener(BRuntime runtime, ObjectValue service) {
+    FTPListener(BRuntime runtime, ObjectValue service) {
 
         this.runtime = runtime;
         this.service = service;

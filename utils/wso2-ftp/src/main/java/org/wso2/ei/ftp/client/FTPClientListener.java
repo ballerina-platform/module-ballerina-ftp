@@ -36,8 +36,8 @@ public class FTPClientListener implements RemoteFileSystemListener {
     private CompletableFuture<Object> future;
     private Function<RemoteFileSystemBaseMessage, Boolean> function;
 
-    public FTPClientListener(CompletableFuture<Object> future,
-                             Function<RemoteFileSystemBaseMessage, Boolean> function) {
+    FTPClientListener(CompletableFuture<Object> future,
+                      Function<RemoteFileSystemBaseMessage, Boolean> function) {
 
         this.future = future;
         this.function = function;
