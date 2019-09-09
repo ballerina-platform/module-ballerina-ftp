@@ -146,9 +146,12 @@ public function testGetFileSize() {
     dependsOn: ["testGetFileSize"]
 }
 public function testListFiles() {
-    string[]|error response = clientEP -> list("/home/in");
-    if(response is string[]){
-        log:printInfo("List of directories: " + response[0] + ", " + response[1]);
+    FileInfo[]|error response = clientEP -> list("/home/in");
+    if (response is FileInfo[]) {
+        log:printInfo("List of files/directories: ");
+        foreach var fileInfo in response {
+            log:printInfo(fileInfo.toString());
+        }
     } else {
         log:printError(response.reason().toString());
     }
