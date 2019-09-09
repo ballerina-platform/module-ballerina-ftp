@@ -1,0 +1,19 @@
+[project]
+org-name= "wso2"
+version= "0.2.0"
+license= ["Apache-2.0"]
+authors= ["WSO2"]
+keywords= ["ftp"]
+repository= "https://github.com/wso2-ballerina/module-ftp"
+
+[dependencies]
+
+[platform]
+target = "java8"
+
+    [[platform.libraries]]
+    module = "utils/wso2-ftp"
+    path = "./utils/wso2-ftp/target/wso2-ftp-module-0.99.3.jar"
+    artifactId = "wso2-ftp"
+    version = "0.99.3"
+    groupId = "org.wso2.ei"

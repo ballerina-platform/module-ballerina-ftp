@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/wso2-ballerina/module-ftp.svg?branch=master)](https://travis-ci.org/wso2-ballerina/module-ftp)
-
 ## Module Overview
 
 The `wso2/ftp` module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection 
