@@ -88,20 +88,17 @@ public type Listener object {
     }
 
     public function register(service ftpService, string? name) returns error? {
-        //map<anydata>|error configMap = map<anydata>.constructFrom(self.config);
         error? response = ();
-
-        log:printInfo("name: "+name.toString());
-        //if(configMap is map<ListenerConfig>){
-            handle serviceName = java:fromString("test");
-            //handle nameHandle = java:fromString(name);
-            handle|error result = register(self, self.config,  ftpService, serviceName);
-            if(result is handle){
-                self.config.serverConnector = result;
-            } else {
-                response = result;
-            }
-        //}
+        handle serviceName = java:fromString("");
+        if(name is string){
+            serviceName = java:fromString(name);
+        }
+        handle|error result = register(self, self.config,  ftpService, serviceName);
+        if(result is handle){
+            self.config.serverConnector = result;
+        } else {
+            response = result;
+        }
         return response;
     }
 };
