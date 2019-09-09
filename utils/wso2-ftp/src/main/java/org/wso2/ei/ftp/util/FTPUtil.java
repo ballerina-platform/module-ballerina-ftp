@@ -33,6 +33,10 @@ public class FTPUtil {
 
     private static final String FTP_ERROR_CODE = "{wso2/ftp}FTPError";
 
+    private FTPUtil() {
+        // private constructor
+    }
+
     public static boolean notValidProtocol(String url) {
 
         return !url.startsWith("ftp") && !url.startsWith("sftp") && !url.startsWith("ftps");
@@ -108,7 +112,7 @@ public class FTPUtil {
      * @param logger  the logger to log errors
      * @return the int value from the given long value
      */
-    public static int getIntFromLong(long longVal, String name, Logger logger) {
+    private static int getIntFromLong(long longVal, String name, Logger logger) {
 
         if (longVal <= 0) {
             return -1;

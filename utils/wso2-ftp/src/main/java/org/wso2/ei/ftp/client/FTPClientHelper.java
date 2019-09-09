@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Contains helper methods to invoke FTP actions
  */
-public class FTPClientHelper {
+class FTPClientHelper {
 
     private static final String READABLE_BYTE_CHANNEL = "ReadableByteChannel";
     private static final String PACKAGE_BALLERINA = "ballerina";

@@ -25,6 +25,10 @@ import org.wso2.transport.remotefilesystem.Constants;
  */
 public class FtpConstants {
 
+    private FtpConstants() {
+        // private constructor
+    }
+
     public static final String PROPERTY_URI = Constants.URI;
     public static final String PROPERTY_DESTINATION = Constants.DESTINATION;
     public static final String FTP_PASSIVE_MODE = Constants.PASSIVE_MODE;

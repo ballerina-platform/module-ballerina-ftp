@@ -80,11 +80,8 @@ public type Listener object {
     }
 
     public function poll() returns error? {
-        //map<anydata>|error configMap = map<anydata>.constructFrom(self.config);
-        //if(configMap is map<ListenerConfig>){
-            error? response = poll(self.config);
-            return response;
-        //}
+        error? response = poll(self.config);
+        return response;
     }
 
     public function register(service ftpService, string? name) returns error? {
