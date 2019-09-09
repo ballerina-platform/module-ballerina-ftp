@@ -1,6 +1,10 @@
 [project]
 org-name= "wso2"
 version= "0.2.0"
+license= ["Apache-2.0"]
+authors= ["WSO2"]
+keywords= ["ftp"]
+repository= "https://github.com/wso2-ballerina/module-ftp"
 
 [dependencies]
 
