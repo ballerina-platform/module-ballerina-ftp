@@ -56,12 +56,11 @@ public class FTPListener implements RemoteFileSystemListener {
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
 
-        log.info("Executing on message method -------------");
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             MapValue<String, Object> parameters = getSignatureParameters(event);
-            log.info("Executing on message -------------");
-            runtime.invokeMethodSync(service, service.getType().getAttachedFunctions()[0].getName(), parameters, true);
+            runtime.invokeMethodSync(service, service.getType().getAttachedFunctions()[0].getName(),
+                    parameters, true);
         }
         return true;
     }

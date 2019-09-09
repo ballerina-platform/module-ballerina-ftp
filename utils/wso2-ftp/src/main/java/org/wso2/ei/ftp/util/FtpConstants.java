@@ -35,7 +35,7 @@ public class FtpConstants {
     public static final String BALLERINA_BUILTIN = "ballerina/builtin";
     public static final String FTP_ORG_NAME = "wso2";
     public static final String FTP_MODULE_NAME = "ftp";
-    public static final String FTP_MODULE_VERSION = "0.1.0";
+    public static final String FTP_MODULE_VERSION = "0.2.0";
     public static final String FTP_SERVER_EVENT = "WatchEvent";
     public static final String FTP_FILE_INFO = "FileInfo";
     public static final String FTP_SERVER_CONNECTOR = "serverConnector";

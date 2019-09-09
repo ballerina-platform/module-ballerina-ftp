@@ -54,6 +54,9 @@ public class FTPListenerHelper {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
             final FTPListener listener = new FTPListener(BRuntime.getCurrentRuntime(), service);
+            if (name == null || name.isEmpty()) {
+                name = service.getType().getName();
+            }
             RemoteFileSystemServerConnector serverConnector = fileSystemConnectorFactory
                     .createServerConnector(name, paramMap, listener);
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);

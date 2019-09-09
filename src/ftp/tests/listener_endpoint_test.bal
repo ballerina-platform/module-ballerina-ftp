@@ -52,6 +52,6 @@ service ftpServerConnector on remoteServer {
 @test:Config{
 }
 public function testAddedFileCount() {
-    log:printInfo("added: "+addedFileCount.toString());
+    log:printInfo("Added file count: "+addedFileCount.toString());
     test:assertEquals(3, addedFileCount);
 }

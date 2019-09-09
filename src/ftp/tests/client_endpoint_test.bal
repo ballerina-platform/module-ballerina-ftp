@@ -49,11 +49,18 @@ function initServer() returns boolean {
 public function testReadContent() {
     io:ReadableByteChannel|error response = clientEP -> get(filePath);
     if(response is io:ReadableByteChannel){
-        log:printInfo("Initial content in file: " + response.read(20).toString());
+        io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(response, "utf-8");
+        if (characters is io:ReadableCharacterChannel) {
+            string|error content = characters.read(20);
+            if(content is string){
+                log:printInfo("Initial content in file: " + content);
+            } else {
+                log:printError("Error in retrieving content", content);
+            }
+        }
     } else {
-        log:printError(response.reason().toString());
+        log:printError("Error in retrieving content", response);
     }
-
     log:printInfo("Executed Get operation");
 }
 

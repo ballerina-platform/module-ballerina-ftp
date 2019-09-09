@@ -1,27 +1,101 @@
-## Module overview
-The `wso2/ftp` module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection to a remote location. 
+## Module Overview
+
+The `wso2/ftp` module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection 
+to a remote location.
+
+The following sections provide you details on how to use the FTP connector.
+
+- [Compatibility](#compatibility)
+- [Feature Overview](#feature-overview)
+- [Getting Started](#getting-started)
+- [Samples](#samples)
+
+## Compatibility
+
+| Ballerina Language Version  |
+|:---------------------------:|
+|  1.0.0                     |
+
+## Feature Overview
 
 ### FTP Client
-`ftp:Client` connects to an FTP server and performs various operations on the files. It supports `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`,  `rename`, `size`, and `list` operations.
+The `ftp:Client` connects to an FTP server and performs various operations on the files. Currently, it supports the 
+generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`,  `rename`, `size`, and
+ `list`.
 
-An FTP client endpoint is defined using the parameters `protocol`, `host` and optionally, `port` and `secureSocket`.  Authentication configuration can be configured using the `secureSocket` parameter for basicAuth, private key, or TrustStore/Keystore.
+An FTP client endpoint is defined using the parameters `protocol` and `host`, and optionally the `port` and 
+`secureSocket`. Authentication configuration can be configured using the `secureSocket` parameter for basicAuth, 
+private key, or TrustStore/Keystore.
 
 ### FTP Listener
-`ftp:Listener` is used to listen to a remote FTP location and trigger an event of type `WatchEvent` when new files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added and/or deleted.
+The `ftp:Listener` is used to listen to a remote FTP location and trigger an event of `WatchEvent` type, when new 
+files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added 
+and/or deleted.
 
-An FTP listener endpoint is defined using the parameters `protocol`, `host`, and  `path` are mandatory parameters.  Authentication configuration can be done using `secureSocket` and polling interval can be configured using `pollingInterval`. Default polling interval is 60 seconds.
+An FTP listener endpoint is defined using the mandatory parameters `protocol`, `host` and  `path`. Authentication 
+configuration can be done using `secureSocket` and polling interval can be configured using `pollingInterval`. 
+Default polling interval is 60 seconds.
 
+The `fileNamePattern` parameter can be used to define the type of files the FTP listener endpoint will listen to. 
+For instance, if the listener should get invoked for text files, the value `(.*).txt` can be given for the config.
+
+## Getting Started
+
+### Prerequisites
+Download and install [Ballerina](https://ballerinalang.org/downloads/).
+
+### Pull the Module
+You can pull the FTP module from Ballerina Central using the command:
+```ballerina
+$ ballerina pull wso2/ftp
+```
 
 ## Samples
 
-### Obtaining the credentials to run the Sample
-
-1. Install and configure an FTP Server. 
-For more information, see [Installing an FTP Server](https://www.unixmen.com/install-configure-ftp-server-ubuntu/).
-2. Obtain the `ftpUsername`, `ftpPassword`, `ftpServer` and `ftpPort`.
-Then enter the credentials in the FTP client config as below:
+### FTP Listener Sample
+The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and 
+periodically notify the file addition and deletion.
 
 ```ballerina
+import wso2/ftp;
+import ballerina/log;
+
+listener ftp:Listener remoteServer = new({
+    protocol: ftp:FTP,
+    host: "<The FTP host>",
+    secureSocket: {
+        basicAuth: {
+            username: "<The FTP username>",
+            password: "<The FTP passowrd>"
+        }
+    },
+    port: <The FTP port>,
+    path: "<The remote FTP direcotry location>",
+    pollingInterval: <Polling interval>,
+    fileNamePattern: "<File type>"
+});
+
+service ftpServerConnector on remoteServer {
+    resource function fileResource(WatchEvent m) {
+
+        foreach FileInfo v1 in m.addedFiles {
+            log:printInfo("Added file path: " + v1.path);
+        }
+        foreach string v1 in m.deletedFiles {
+            log:printInfo("Deleted file path: " + v1);
+        }
+    }
+}
+```
+
+### FTP Client Sample
+The FTP Client Connector can be used to connect to an FTP server and perform I/O operations.
+
+```ballerina
+import wso2/ftp;
+import ballerina/io;
+import ballerina/log;
+
 ftp:ClientEndpointConfig ftpConfig = {
     protocol: ftp:FTP,
     host: "<The FTP host>",
@@ -34,103 +108,63 @@ ftp:ClientEndpointConfig ftpConfig = {
     }
 };
 ftp:Client ftpClient = new(ftpConfig);
-```
-### Sample FTP Client operations 
-
-```ballerina
-// Make a directory in the remote FTP location.
-var dirCreErr = ftpClient->mkdir("<The directory path>");
-if (dirCreErr is error) {
-    io:println("An error occured.", dirCreErr);
-    return;
-}
-
-// Add a file to the FTP location.
-io:ReadableByteChannel summaryChannel = io:openReadableFile("<The local data source path>");
-var filePutErr = ftpClient->put("<The resource path>", summaryChannel);    
-if (filePutErr is error) {
-    io:println("An error occured.", filePutErr);
-    return;
-}
-
-// List the files in the FTP location.
-var listResult = ftpClient->list("<The resource path>");
-if (listResult is string[]) {
-    foreach string file in listResult {
-        io:println("File: " + file);
+    
+public function main() {
+    // To create a folder in remote server.
+    error? dirCreErr = ftpClient->mkdir("<The directory path>");
+    if (dirCreErr is error) {
+        log:printError("Error occured in creating directory.", dirCreErr);
+        return;
     }
-} else {
-    io:println("An error occured.", listResult);
-    return;
-}
-
-// Read the size of a file in the FTP location.
-var size = ftpClient->size("<The resource path>");
-if (size is int) {
-    io:println("File size: ", size);
-} else {
-    io:println("An error occured.", size);
-    return;
-}
-
-// Download a file from the FTP location.
-var getResult = ftpClient->get("<The json file path>");
-if (getResult is io:ReadableByteChannel) {
-    io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResult, "utf-8");
-    if (characters is io:ReadableCharacterChannel) {
-        var stock = characters.readJson();
-        if (stock is json) {
-            io:println("File content: ", stock);
-        } else {
-            io:println("An error occured.", stock);
+    
+    // Upload file to a remote server.
+    io:ReadableByteChannel|error summaryChannel = io:openReadableFile("<The local data source path>");
+    if(summaryChannel is io:ReadableByteChannel){
+        error? filePutErr = ftpClient->put("<The resource path>", summaryChannel);   
+        if(filePutErr is error) {
+            log:printError("Error occured in uploading content.", filePutErr);
             return;
         }
-        var closeResult = characters.close();
     }
-} else {
-    io:println("An error occured.", getResult );
-    return;
-}
-
-// Rename or move remote file to a another remote location in a same FTP server.
-error? renameErr = ftpClient->rename("<The source file path>", "<The destination file path>");
-
-// Delete a file in the FTP location.
-error? fileDelCreErr = ftpClient->delete("<The resource path>");
-
-// Delete a directory in the FTP location.
-var result = ftpClient->rmdir("<The directory path>");
-if (result is error) {
-    io:println("An error occured.", result); 
-}
-   
-```
-### Sample FTP Listener endpoint
-```ballerina
-listener ftp:Listener remoteServer = new ({
-    protocol: ftp:FTP,
-    host: "<The FTP host>",
-    port: <The FTP port>,
-    secureSocket: {
-        basicAuth: {
-            username: "<The FTP username>",
-            password: "<The FTP passowrd>"
+    
+    // Get the size of a remote file.
+    var size = ftpClient->size("<The resource path>");
+    if (size is int) {
+        log:printInfo("File size: " + size.toString());
+    } else {
+        log:printError("Error occured in retrieving size.", size);
+        return;
+    }
+    
+    // Read content of a remote file.
+    var getResult = ftpClient->get("<The file path>");
+    if (getResult is io:ReadableByteChannel) {
+        io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResult, "utf-8");
+        if (characters is io:ReadableCharacterChannel) {
+            var output = characters.read(<No of characters to read>);
+            if (output is string) {
+                log:printInfo("File content: "+ output);
+            } else {
+                log:printError("Error occured in retrieving content.", output);
+                return;
+            }
+            var closeResult = characters.close();
         }
-    },
-    path: "<The remote FTP direcotry location>"
-});
-```
-### Sample service for the FTP Listener endpoint
-```ballerina
-service monitor on remoteServer {
-    resource function fileResource(ftp:WatchEvent m) {
-        foreach ftp:FileInfo v1 in m.addedFiles {
-            log:printInfo("Added file path: " + v1.path);
-        }
-        
-        foreach string v2 in m.deletedFiles {
-            log:printInfo("Deleted file path: " + v2);
-        }
+    } else {
+        log:printError("Error occured in retrieving content.", getResult);
+        return;
+    }
+    
+    // Rename or move remote file to a another remote location in a same FTP server.
+    error? renameErr = ftpClient->rename("<The source file path>", "<The destination file path>");
+    
+    // Delete remote file.
+    error? fileDelCreErr = ftpClient->delete("<The resource path>");
+    
+    // Remove directory from remote server.
+    var result = ftpClient->rmdir("<The directory path>");
+    if (result is error) {
+        io:println("Error occured in removing directory.", result); 
     }
 }
 ```

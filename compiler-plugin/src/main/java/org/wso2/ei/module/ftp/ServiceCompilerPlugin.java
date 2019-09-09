@@ -46,6 +46,7 @@ import java.util.List;
 public class ServiceCompilerPlugin extends AbstractTransportCompilerPlugin {
 
     private DiagnosticLog dlog = null;
+    private static final String FTP_SERVER_EVENT = "WatchEvent";
 
     @Override
     public void init(DiagnosticLog diagnosticLog) {
@@ -57,7 +58,7 @@ public class ServiceCompilerPlugin extends AbstractTransportCompilerPlugin {
     public void process(ServiceNode serviceNode, List<AnnotationAttachmentNode> annotations) {
 
         List<BLangFunction> resources = (List<BLangFunction>) serviceNode.getResources();
-        if (resources.size() == 0) {
+        if (resources.isEmpty()) {
             dlog.logDiagnostic(Diagnostic.Kind.ERROR, serviceNode.getPosition(),
                     "No resources define for service: " + serviceNode.getName().getValue());
         } else if (resources.size() >= 2) {
@@ -66,7 +67,6 @@ public class ServiceCompilerPlugin extends AbstractTransportCompilerPlugin {
         }
         if (resources.size() == 1) {
             final List<BLangSimpleVariable> parameters = resources.get(0).getParameters();
-            String FTP_SERVER_EVENT = "WatchEvent";
 
             if (parameters.size() != 1) {
                 dlog.logDiagnostic(Diagnostic.Kind.ERROR, resources.get(0).getPosition(),
