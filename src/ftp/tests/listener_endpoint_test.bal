@@ -1,15 +1,35 @@
+// Copyright (c) 2019 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+//
+// WSO2 Inc. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 import ballerina/log;
+import ballerina/test;
+
+int addedFileCount = 0;
+int deletedFileCount = 0;
 
 listener Listener remoteServer = new({
     protocol: FTP,
-    host: "192.168.112.16",
+    host: "127.0.0.1",
     secureSocket: {
         basicAuth: {
-            username: "ftp-user",
-            password: "ftp123"
+            username: "wso2",
+            password: "wso2123"
         }
     },
-    port: 21,
+    port: 21212,
     path: "/home/in",
     pollingInterval: 2000,
     fileNamePattern: "(.*).txt"
@@ -17,28 +37,21 @@ listener Listener remoteServer = new({
 
 service ftpServerConnector on remoteServer {
     resource function fileResource(WatchEvent m) {
-        log:printInfo("In service resource");
-        log:printInfo("Files: "+ m.addedFiles.toString());
-        log:printInfo("Files: "+ m.deletedFiles.toString());
-
-        int i =0;
-        log:printInfo("Length: "+m.addedFiles.length().toString());
-        while(i < m.addedFiles.length()){
-            log:printInfo("i: "+i.toString());
-            FileInfo file = m.addedFiles[i];
-            log:printInfo("New: " + file.toString());
-            log:printInfo("File: "+ file.path);
-            i = i+1;
-        }
+        addedFileCount = <@untainted> m.addedFiles.length();
+        deletedFileCount = <@untainted> m.deletedFiles.length();
 
         foreach FileInfo v1 in m.addedFiles {
             log:printInfo("Added file path: " + v1.path);
         }
-        log:printInfo("Length: " + m.addedFiles.length().toString());
-        //noOfFilesAdded = <@untainted> m.addedFiles.length();
         foreach string v1 in m.deletedFiles {
             log:printInfo("Deleted file path: " + v1);
         }
-        log:printInfo("Length: " + m.deletedFiles.length().toString());
     }
+}
+
+@test:Config{
+}
+public function testAddedFileCount() {
+    log:printInfo("added: "+addedFileCount.toString());
+    test:assertEquals(3, addedFileCount);
 }

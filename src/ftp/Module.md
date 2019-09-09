@@ -1,25 +1,25 @@
 ## Module overview
 The `wso2/ftp` module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection to a remote location. 
 
-### FTP client
+### FTP Client
 `ftp:Client` connects to an FTP server and performs various operations on the files. It supports `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`,  `rename`, `size`, and `list` operations.
 
-An FTP client endpoint is defined using these parameters: `protocol`, `host` and optionally, `port` and `secureSocket`.  Authentication configuration can be configured using the secureSocket parameter for basicAuth, private key, or TrustStore/Keystore.
+An FTP client endpoint is defined using the parameters `protocol`, `host` and optionally, `port` and `secureSocket`.  Authentication configuration can be configured using the `secureSocket` parameter for basicAuth, private key, or TrustStore/Keystore.
 
-### FTP listener
-`ftp:Listener` is used to listen to a remote FTP location and trigger an event of type `WatchEvent` when new files are added/deleted to the directory. The `fileResource` function is invoked when a new file is added and/or deleted.
+### FTP Listener
+`ftp:Listener` is used to listen to a remote FTP location and trigger an event of type `WatchEvent` when new files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added and/or deleted.
 
-An FTP listener endpoint is defined using these parameters: `protocol`, `host`, and  `path` are mandatory parameters.  Authentication configuration can be done using `secureSocket` and polling interval can be configure using `pollingInterval`. Default polling interval is 60 seconds.
+An FTP listener endpoint is defined using the parameters `protocol`, `host`, and  `path` are mandatory parameters.  Authentication configuration can be done using `secureSocket` and polling interval can be configured using `pollingInterval`. Default polling interval is 60 seconds.
 
 
 ## Samples
 
-### Obtaining the credentials to Run the Sample
+### Obtaining the credentials to run the Sample
 
-1. Install and configure FTP Server. For more information, see [https://www.unixmen.com/install-configure-ftp-server-ubuntu/](https://www.unixmen.com/install-configure-ftp-server-ubuntu/)
-2. obtain ftpUsername, ftpPassword, ftpServer, ftpPort
-.
-You can now enter the credentials in the FTP client config:
+1. Install and configure an FTP Server. 
+For more information, see [Installing an FTP Server](https://www.unixmen.com/install-configure-ftp-server-ubuntu/).
+2. Obtain the `ftpUsername`, `ftpPassword`, `ftpServer` and `ftpPort`.
+Then enter the credentials in the FTP client config as below:
 
 ```ballerina
 ftp:ClientEndpointConfig ftpConfig = {
@@ -35,8 +35,7 @@ ftp:ClientEndpointConfig ftpConfig = {
 };
 ftp:Client ftpClient = new(ftpConfig);
 ```
-### Sample FTP client operations
-All of the following operations return `FTPClientError` in case of an error. 
+### Sample FTP Client operations 
 
 ```ballerina
 // Make a directory in the remote FTP location.
@@ -46,7 +45,7 @@ if (dirCreErr is error) {
     return;
 }
 
-//Add a file to the FTP location.
+// Add a file to the FTP location.
 io:ReadableByteChannel summaryChannel = io:openReadableFile("<The local data source path>");
 var filePutErr = ftpClient->put("<The resource path>", summaryChannel);    
 if (filePutErr is error) {
@@ -106,7 +105,7 @@ if (result is error) {
 }
    
 ```
-### Sample FTP listener endpoint
+### Sample FTP Listener endpoint
 ```ballerina
 listener ftp:Listener remoteServer = new ({
     protocol: ftp:FTP,
@@ -121,7 +120,7 @@ listener ftp:Listener remoteServer = new ({
     path: "<The remote FTP direcotry location>"
 });
 ```
-### Sample service for the FTP listener endpoint
+### Sample service for the FTP Listener endpoint
 ```ballerina
 service monitor on remoteServer {
     resource function fileResource(ftp:WatchEvent m) {
