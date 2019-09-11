@@ -19,3 +19,4 @@ script:
   - mvn clean install -DskipTests=true
   - ballerina --version
   - ballerina build -c --skip-tests ftp
+  
