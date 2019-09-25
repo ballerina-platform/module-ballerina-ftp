@@ -150,8 +150,8 @@ public type Client client object {
 # + secureSocket - Authenthication options
 public type ClientEndpointConfig record {|
     Protocol protocol = FTP;
-    string host = "";
-    int? port = -1;
+    string host = "127.0.0.1";
+    int? port = 21;
     SecureSocket? secureSocket = ();
 |};
 
