@@ -50,37 +50,23 @@ public type Client client object {
         return response;
     }
 
-    # The `delete()` function can be used to delete a file from an FTP server.
+    # The `append()` function can be used to append content to an existing file in an FTP server.
+    # A new file is created if the file does not exist.
     #
     # + path - The resource path
-    # + return -  An `error` if failed to establish communication with the FTP server
-    public remote function delete(string path) returns error? {
-        handle resourcePath = java:fromString(path);
-        error? response = delete(self, resourcePath);
-        return response;
+    # + content - Content to be written to the file in server
+    # + return - An `error` if failed to establish communication with the FTP server
+    public remote function append(string path, io:ReadableByteChannel|string|xml|json content) returns error? {
+        return append(self, getInputContent(path, content));
     }
 
     # The `put()` function can be used to add a file to an FTP server.
     #
     # + path - The resource path
-    # + byteChannel - A ReadableByteChannel that represents the local data source
+    # + content - Content to be written to the file in server
     # + return - An `error` if failed to establish communication with the FTP server
-    public remote function put(string path, io:ReadableByteChannel byteChannel) returns error? {
-        handle resourcePath = java:fromString(path);
-        error? response = put(self, resourcePath, byteChannel);
-        return response;
-    }
-
-    # The `append()` function can be used to append content to an existing file in an FTP server.
-    # A new file is created if the file does not exist.
-    #
-    # + path - The resource path
-    # + byteChannel - A ReadableByteChannel that represents the local data source
-    # + return - An `error` if failed to establish communication with the FTP server
-    public remote function append(string path, io:ReadableByteChannel byteChannel) returns error? {
-        handle resourcePath = java:fromString(path);
-        error? response = append(self, resourcePath, byteChannel);
-        return response;
+    public remote function put(string path, io:ReadableByteChannel|string|xml|json content) returns error? {
+        return put(self, getInputContent(path, content));
     }
 
     # The `mkdir()` function can be used to create a new direcotry in an FTP server.
@@ -144,6 +130,16 @@ public type Client client object {
         boolean|error response = isDirectory(self, resourcePath);
         return response;
     }
+
+    # The `delete()` function can be used to delete a file from an FTP server.
+    #
+    # + path - The resource path
+    # + return -  An `error` if failed to establish communication with the FTP server
+    public remote function delete(string path) returns error? {
+        handle resourcePath = java:fromString(path);
+        error? response = delete(self, resourcePath);
+        return response;
+    }
 };
 
 # Configuration for FTP client endpoint.
@@ -158,4 +154,23 @@ public type ClientEndpointConfig record {|
     int? port = -1;
     SecureSocket? secureSocket = ();
 |};
+
+function getInputContent(string path, io:ReadableByteChannel|string|xml|json content) returns InputContent{
+    InputContent inputContent = {
+        filePath: path
+    };
+
+    if(content is io:ReadableByteChannel){
+        inputContent.isFile = true;
+        inputContent.fileContent = content;
+    } else if(content is string){
+        inputContent.textContent = content;
+    } else if(content is json){
+        inputContent.textContent = content.toJsonString();
+    } else {
+        inputContent.textContent = content.toString();
+    }
+
+    return inputContent;
+}
 

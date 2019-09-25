@@ -80,8 +80,7 @@ public type Listener object {
     }
 
     public function poll() returns error? {
-        error? response = poll(self.config);
-        return response;
+        return poll(self.config);
     }
 
     public function register(service ftpService, string? name) returns error? {
@@ -123,7 +122,7 @@ public type Listener object {
 public type ListenerConfig record {|
     Protocol protocol = FTP;
     string host = "";
-    int port = -1;
+    int port = 21;
     SecureSocket? secureSocket = ();
     string path = "";
     string fileNamePattern = "";

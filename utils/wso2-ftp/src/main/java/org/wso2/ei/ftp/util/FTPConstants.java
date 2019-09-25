@@ -23,9 +23,9 @@ import org.wso2.transport.remotefilesystem.Constants;
 /**
  * Constants for FTP operations
  */
-public class FtpConstants {
+public class FTPConstants {
 
-    private FtpConstants() {
+    private FTPConstants() {
         // private constructor
     }
 
@@ -48,11 +48,17 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_HOST = "host";
     public static final String ENDPOINT_CONFIG_PORT = "port";
     public static final String ENDPOINT_CONFIG_USERNAME = "username";
-    public static final String ENDPOINT_CONFIG_PASSWORD = "password";
+    public static final String ENDPOINT_CONFIG_PASS_KEY = "password";
     public static final String ENDPOINT_CONFIG_PATH = "path";
     public static final String ENDPOINT_CONFIG_FILE_PATTERN = "fileNamePattern";
     public static final String ENDPOINT_CONFIG_FILE_PATH = "path";
     public static final String ENDPOINT_CONFIG_SECURE_SOCKET = "secureSocket";
     public static final String ENDPOINT_CONFIG_BASIC_AUTH = "basicAuth";
     public static final String ENDPOINT_CONFIG_PRIVATE_KEY = "privateKey";
+
+    public static final String INPUT_CONTENT_FILE_PATH_KEY = "filePath";
+    public static final String INPUT_CONTENT_IS_FILE_KEY = "isFile";
+    public static final String INPUT_CONTENT_FILE_CONTENT_KEY = "fileContent";
+    public static final String INPUT_CONTENT_TEXT_CONTENT_KEY = "textContent";
+
 }

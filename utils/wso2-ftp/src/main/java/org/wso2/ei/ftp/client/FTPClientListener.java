@@ -32,7 +32,7 @@ import java.util.function.Function;
  */
 public class FTPClientListener implements RemoteFileSystemListener {
 
-    private static final Logger logger = LoggerFactory.getLogger("ballerina");
+    private static final Logger log = LoggerFactory.getLogger(FTPClientListener.class);
     private CompletableFuture<Object> future;
     private Function<RemoteFileSystemBaseMessage, Boolean> function;
 
@@ -52,7 +52,7 @@ public class FTPClientListener implements RemoteFileSystemListener {
     @Override
     public void onError(Throwable throwable) {
 
-        logger.error(throwable.getMessage(), throwable);
+        log.error(throwable.getMessage(), throwable);
         future.complete(FTPUtil.createError(throwable.getMessage()));
     }
 

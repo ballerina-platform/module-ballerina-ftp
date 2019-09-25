@@ -20,10 +20,12 @@ import ballerina/log;
 import ballerinax/java;
 
 
-string filePath = "/home/in/file1.txt";
+string filePath = "/home/in/test1.txt";
+string newFilePath = "/home/in/test2.txt";
 string appendFilePath = "src/ftp/tests/resources/file1.txt";
 string putFilePath = "src/ftp/tests/resources/file2.txt";
 
+// Create the config to access mock FTP server
 ClientEndpointConfig config = {
         protocol: FTP,
         host: "127.0.0.1",
@@ -31,9 +33,10 @@ ClientEndpointConfig config = {
         secureSocket: {basicAuth: {username: "wso2", password: "wso2123"}}
 };
 
-boolean startedServer = initServer();
 Client clientEP = new(config);
 
+// Start mock FTP server
+boolean startedServer = initServer();
 
 function initServer() returns boolean {
     map<anydata>|error configMap = map<anydata>.constructFrom(config);
@@ -57,6 +60,7 @@ public function testReadContent() {
             } else {
                 log:printError("Error in retrieving content", content);
             }
+            var closeResult = characters.close();
         }
     } else {
         log:printError("Error in retrieving content", response);
@@ -81,19 +85,63 @@ public function testAppendContent() {
 @test:Config{
     dependsOn: ["testAppendContent"]
 }
-public function testPutContent() {
+public function testPutFileContent() {
     io:ReadableByteChannel|error byteChannelToPut = io:openReadableFile(putFilePath);
+
     if(byteChannelToPut is io:ReadableByteChannel){
-        error? response = clientEP -> put(filePath, byteChannelToPut);
+        error? response = clientEP -> put(newFilePath, byteChannelToPut);
         if(response is error) {
-            log:printError(response.reason().toString());
+            log:printError("Error in put operation", response);
         }
+        log:printInfo("Executed Put operation.");
+    } else {
+        log:printInfo("Error in reading input file");
+    }
+}
+
+@test:Config{
+    dependsOn: ["testPutFileContent"]
+}
+public function testPutTextContent() {
+    string textToPut = "Sample text content";
+    error? response = clientEP -> put(filePath, textToPut);
+    if(response is error) {
+        log:printError("Error in put operation", response);
     }
     log:printInfo("Executed Put operation.");
 }
 
 @test:Config{
-    dependsOn: ["testPutContent"]
+    dependsOn: ["testPutTextContent"]
+}
+public function testPutJsonContent() {
+    json jsonToPut = { name: "Anne", age: 20 };
+    error? response = clientEP -> put(filePath, jsonToPut);
+    if(response is error) {
+        log:printError("Error in put operation", response);
+    }
+    log:printInfo("Executed Put operation.");
+}
+
+@test:Config{
+    dependsOn: ["testPutJsonContent"]
+}
+public function testPutXMLContent() {
+    xml xmlToPut = xml `<note>
+                              <to>A</to>
+                              <from>B</from>
+                              <heading>Memo</heading>
+                              <body>Memo content</body>
+                          </note>`;
+    error? response = clientEP -> put(filePath, xmlToPut);
+    if(response is error) {
+        log:printError("Error in put operation", response);
+    }
+    log:printInfo("Executed Put operation.");
+}
+
+@test:Config{
+    dependsOn: ["testPutXMLContent"]
 }
 public function testIsDirectory() {
     boolean|error response = clientEP -> isDirectory("/home/in");

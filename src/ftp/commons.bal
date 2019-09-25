@@ -14,17 +14,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Represents the set of protocols supported by the FTP listener and client.
+import ballerina/io;
+
+# Represents the set of protocols supported by the FTP listener and client
 public type Protocol "ftp"|"sftp"|"ftps";
 
-# Underlying communication happen using FTP.
+# Underlying communication happens using FTP
 public const FTP = "ftp";
-# Underlying communication happen using SFTP.
+# Underlying communication happens using SFTP
 public const SFTP = "sftp";
-# Underlying communication happen using FTPS.
+# Underlying communication happens using FTPS
 public const FTPS = "ftps";
 
-# A record for providing `Truststore` related configurations.
+# A record for providing `Truststore` related configurations
 #
 # + path - Path to the truststore file
 # + password - Truststore password
@@ -33,7 +35,7 @@ public type TrustStore record {|
     string? password = ();
 |};
 
-# A record for providing `Keystore` related configurations.
+# A record for providing `Keystore` related configurations
 #
 # + path - Path to the keystore file
 # + password - Keystore password
@@ -42,7 +44,7 @@ public type KeyStore record {|
     string? password = ();
 |};
 
-# A record for providing `PrivateKey` related configurations.
+# A record for providing `PrivateKey` related configurations
 #
 # + path - Path to the private key file
 # + password - Private key password
@@ -51,7 +53,7 @@ public type PrivateKey record {|
     string? password = ();
 |};
 
-# A record for providing `BasicAuth` related configurations.
+# A record for providing `BasicAuth` related configurations
 #
 # + username - Username of the user
 # + password - Password of the user
@@ -60,7 +62,7 @@ public type BasicAuth record {|
     string? password = ();
 |};
 
-# Provides configurations for facilitating secure communication with a remote FTP server.
+# Provides configurations for facilitating secure communication with a remote FTP server
 #
 # + trustStore - Configures the truststore to be used
 # + keyStore - Configures the keystore to be used
@@ -71,4 +73,17 @@ public type SecureSocket record {|
     KeyStore? keyStore = ();
     BasicAuth? basicAuth = ();
     PrivateKey? privateKey = ();
+|};
+
+# Provides configuration for the input given for FTP `put` and `append` operations
+#
+# + filePath - Path of the file to create/append to
+# + isFile - True if input type is a file
+# + fileContent - The content read from the input file, if the input is a file
+# + textContent - The input content, for other input types
+public type InputContent record{|
+    string filePath;
+    boolean isFile = false;
+    io:ReadableByteChannel? fileContent = ();
+    string? textContent = ();
 |};
