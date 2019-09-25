@@ -28,8 +28,8 @@ import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.ei.ftp.util.BallerinaFTPException;
+import org.wso2.ei.ftp.util.FTPConstants;
 import org.wso2.ei.ftp.util.FTPUtil;
-import org.wso2.ei.ftp.util.FtpConstants;
 
 import java.util.concurrent.TimeUnit;
 
@@ -47,15 +47,15 @@ public class MockFTPServer {
 
     public static void initServer(MapValue<Object, Object> config) throws BallerinaFTPException {
 
-        int port = FTPUtil.getIntFromConfig(config, FtpConstants.ENDPOINT_CONFIG_PORT, logger);
-        final MapValue secureSocket = config.getMapValue(FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
+        int port = FTPUtil.extractPortValue(config, FTPConstants.ENDPOINT_CONFIG_PORT, logger);
+        final MapValue secureSocket = config.getMapValue(FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
         String username = null;
         String password = null;
         if (secureSocket != null) {
-            final MapValue basicAuth = secureSocket.getMapValue(FtpConstants.ENDPOINT_CONFIG_BASIC_AUTH);
+            final MapValue basicAuth = secureSocket.getMapValue(FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH);
             if (basicAuth != null) {
-                username = basicAuth.getStringValue(FtpConstants.ENDPOINT_CONFIG_USERNAME);
-                password = basicAuth.getStringValue(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
+                username = basicAuth.getStringValue(FTPConstants.ENDPOINT_CONFIG_USERNAME);
+                password = basicAuth.getStringValue(FTPConstants.ENDPOINT_CONFIG_PASS_KEY);
             }
         }
 
@@ -71,9 +71,9 @@ public class MockFTPServer {
         ftpServer.addUserAccount(new UserAccount(username, password, rootFolder));
         FileSystem fileSystem = new UnixFakeFileSystem();
         fileSystem.add(new DirectoryEntry(rootFolder));
-        fileSystem.add(new FileEntry("/home/in/file1.txt", content));
-        fileSystem.add(new FileEntry("/home/in/file2.txt", content));
-        fileSystem.add(new FileEntry("/home/in/file3.txt", content));
+        fileSystem.add(new FileEntry("/home/in/test1.txt", content));
+        fileSystem.add(new FileEntry("/home/in/test2.txt", content));
+        fileSystem.add(new FileEntry("/home/in/test3.txt", content));
         fileSystem.add(new DirectoryEntry("/home/in/folder1"));
         fileSystem.add(new DirectoryEntry("/home/in/folder1/subfolder1"));
         fileSystem.add(new DirectoryEntry("/home/in/childDirectory"));

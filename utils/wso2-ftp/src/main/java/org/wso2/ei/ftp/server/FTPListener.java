@@ -28,8 +28,8 @@ import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.ei.ftp.util.FTPConstants;
 import org.wso2.ei.ftp.util.FTPUtil;
-import org.wso2.ei.ftp.util.FtpConstants;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.FileInfo;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
@@ -43,7 +43,7 @@ import java.util.Map;
  */
 public class FTPListener implements RemoteFileSystemListener {
 
-    private static final Logger log = LoggerFactory.getLogger("ballerina");
+    private static final Logger log = LoggerFactory.getLogger(FTPListener.class);
     private final BRuntime runtime;
     private final ObjectValue service;
 
@@ -68,8 +68,8 @@ public class FTPListener implements RemoteFileSystemListener {
     private MapValue<String, Object> getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
 
         MapValue<String, Object> watchEventStruct = BallerinaValues.createRecordValue(
-                new BPackage(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME, FtpConstants.FTP_MODULE_VERSION),
-                FtpConstants.FTP_SERVER_EVENT);
+                new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
+                FTPConstants.FTP_SERVER_EVENT);
 
         // For newly added files
         ArrayValue addedFiles = new ArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
@@ -81,8 +81,8 @@ public class FTPListener implements RemoteFileSystemListener {
             fileInfoParams.put("lastModifiedTimestamp", info.getLastModifiedTime());
 
             final MapValue<String, Object> fileInfo = BallerinaValues.createRecordValue(
-                    new BPackage(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
-                    FtpConstants.FTP_MODULE_VERSION), FtpConstants.FTP_FILE_INFO, fileInfoParams);
+                    new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
+                    FTPConstants.FTP_MODULE_VERSION), FTPConstants.FTP_FILE_INFO, fileInfoParams);
             addedFiles.add(i++, fileInfo);
         }
 

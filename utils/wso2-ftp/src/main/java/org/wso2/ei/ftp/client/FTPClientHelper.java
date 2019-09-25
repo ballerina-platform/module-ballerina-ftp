@@ -29,8 +29,8 @@ import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.ei.ftp.util.FTPConstants;
 import org.wso2.ei.ftp.util.FTPUtil;
-import org.wso2.ei.ftp.util.FtpConstants;
 import org.wso2.transport.remotefilesystem.message.FileInfo;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
@@ -55,7 +55,7 @@ class FTPClientHelper {
     private static final String PACKAGE_BALLERINA = "ballerina";
     private static final String PACKAGE_IO = "io";
 
-    private static final Logger log = LoggerFactory.getLogger(PACKAGE_BALLERINA);
+    private static final Logger log = LoggerFactory.getLogger(FTPClientHelper.class);
 
     private FTPClientHelper() {
         // private constructor
@@ -131,8 +131,8 @@ class FTPClientHelper {
                 }
 
                 final MapValue<String, Object> ballerinaFileInfo = BallerinaValues.createRecordValue(
-                        new BPackage(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
-                                FtpConstants.FTP_MODULE_VERSION), FtpConstants.FTP_FILE_INFO, fileInfoParams);
+                        new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
+                                FTPConstants.FTP_MODULE_VERSION), FTPConstants.FTP_FILE_INFO, fileInfoParams);
                 arrayValue.add(i++, ballerinaFileInfo);
             }
             future.complete(arrayValue);

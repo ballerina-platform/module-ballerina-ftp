@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Utils class for FTP client operations.
@@ -45,18 +47,39 @@ public class FTPUtil {
         return !url.startsWith("ftp") && !url.startsWith("sftp") && !url.startsWith("ftps");
     }
 
-    public static boolean validProtocol(String url) {
-
-        return url.startsWith("ftp://") || url.startsWith("sftp://") || url.startsWith("ftps://");
-    }
-
     public static String createUrl(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
 
-        String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
-        String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASSWORD);
-        String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
-        int port = (int) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
-        String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
+        String username = (String) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_USERNAME);
+        String password = (String) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_PASS_KEY);
+        String host = (String) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_HOST);
+        int port = (int) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_PORT);
+        String protocol = (String) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_PROTOCOL);
+
+        return createUrl(protocol, host, port, username, password, filePath);
+    }
+
+    public static String createUrl(MapValue config, Logger logger) throws BallerinaFTPException {
+
+        final String filePath = config.getStringValue(FTPConstants.ENDPOINT_CONFIG_PATH);
+        String protocol = config.getStringValue(FTPConstants.ENDPOINT_CONFIG_PROTOCOL);
+        final String host = config.getStringValue(FTPConstants.ENDPOINT_CONFIG_HOST);
+        int port = extractPortValue(config, FTPConstants.ENDPOINT_CONFIG_PORT, logger);
+
+        final MapValue secureSocket = config.getMapValue(FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
+        String username = null;
+        String password = null;
+        if (secureSocket != null) {
+            final MapValue basicAuth = secureSocket.getMapValue(FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH);
+            if (basicAuth != null) {
+                username = basicAuth.getStringValue(FTPConstants.ENDPOINT_CONFIG_USERNAME);
+                password = basicAuth.getStringValue(FTPConstants.ENDPOINT_CONFIG_PASS_KEY);
+            }
+        }
+        return createUrl(protocol, host, port, username, password, filePath);
+    }
+
+    private static String createUrl(String protocol, String host, int port, String username, String password,
+                                    String filePath) throws BallerinaFTPException {
 
         String userInfo = username + ":" + password;
         URI uri = null;
@@ -69,18 +92,22 @@ public class FTPUtil {
         return uri.toString();
     }
 
-    public static String createUrl(String protocol, String host, int port, String username, String password,
-                                   String filePath) throws BallerinaFTPException {
-
-        String userInfo = username + ":" + password;
-        URI uri = null;
-        try {
-            uri = new URI(protocol, userInfo, host, port, filePath, null, null);
-        } catch (URISyntaxException e) {
-            throw new BallerinaFTPException("Error occurred while constructing a URI from host: " + host +
-                    ", port: " + port + ", username: " + username + " and basePath: " + filePath + e.getMessage(), e);
+    public static Map<String, String> getAuthMap(MapValue config) {
+        final MapValue secureSocket = config.getMapValue(FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
+        String username = null;
+        String password = null;
+        if (secureSocket != null) {
+            final MapValue basicAuth = secureSocket.getMapValue(FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH);
+            if (basicAuth != null) {
+                username = basicAuth.getStringValue(FTPConstants.ENDPOINT_CONFIG_USERNAME);
+                password = basicAuth.getStringValue(FTPConstants.ENDPOINT_CONFIG_PASS_KEY);
+            }
         }
-        return uri.toString();
+        Map<String, String> authMap = new HashMap<>();
+        authMap.put(FTPConstants.ENDPOINT_CONFIG_USERNAME, username);
+        authMap.put(FTPConstants.ENDPOINT_CONFIG_PASS_KEY, password);
+
+        return authMap;
     }
 
     /**
@@ -102,7 +129,7 @@ public class FTPUtil {
      * @param logger the logger to log errors
      * @return the relevant int value from the config
      */
-    public static int getIntFromConfig(MapValue config, String key, Logger logger) {
+    public static int extractPortValue(MapValue config, String key, Logger logger) {
 
         return getIntFromLong(config.getIntValue(key), key, logger);
     }
@@ -131,8 +158,8 @@ public class FTPUtil {
 
     public static BType getFileInfoType() {
         MapValue<String, Object> fileInfoStruct = BallerinaValues.createRecordValue(
-                new BPackage(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME, FtpConstants.FTP_MODULE_VERSION),
-                FtpConstants.FTP_FILE_INFO);
+                new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
+                FTPConstants.FTP_FILE_INFO);
         return fileInfoStruct.getType();
     }
 }
