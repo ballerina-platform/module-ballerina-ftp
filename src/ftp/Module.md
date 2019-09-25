@@ -1,3 +1,5 @@
+Connects to an FTP server using Ballerina.
+
 ## Module Overview
 
 The `wso2/ftp` module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection 
