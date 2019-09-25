@@ -121,7 +121,7 @@ public type Listener object {
 # + serverConnector - Server connector for service
 public type ListenerConfig record {|
     Protocol protocol = FTP;
-    string host = "";
+    string host = "127.0.0.1";
     int port = 21;
     SecureSocket? secureSocket = ();
     string path = "";
