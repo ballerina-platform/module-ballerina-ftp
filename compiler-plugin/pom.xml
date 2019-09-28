@@ -6,10 +6,14 @@
         <groupId>org.wso2.ei</groupId>
         <artifactId>module-ftp</artifactId>
         <version>0.100.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>ftp-compiler-plugin</artifactId>
-    <version>0.100.0</version>
+
+    <packaging>jar</packaging>
+    <name>FTP Module - Compiler Validation Utility</name>
+    <url>https://ballerina.io/</url>
 
     <dependencies>
         <dependency>
@@ -20,6 +24,12 @@
         <dependency>
             <groupId>org.ballerinalang</groupId>
             <artifactId>ballerina-runtime</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.ei</groupId>
+            <artifactId>ftp-utils</artifactId>
+            <version>0.100.0</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

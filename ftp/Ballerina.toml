@@ -12,8 +12,8 @@ repository= "https://github.com/wso2-ballerina/module-ftp"
 target = "java8"
 
     [[platform.libraries]]
-    module = "utils/wso2-ftp"
-    path = "./utils/wso2-ftp/target/wso2-ftp-module-0.100.0.jar"
+    module = "utils/ftp-utils"
+    path = "../ftp-utils/target/ftp-utils-module-0.100.0.jar"
     artifactId = "wso2-ftp"
     version = "0.100.0"
     groupId = "org.wso2.ei"
