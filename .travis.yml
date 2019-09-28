@@ -17,6 +17,6 @@ script:
   - sudo dpkg -i ballerina-linux-installer-x64-1.0.0.deb
   - sudo apt-get install -f
   - mvn clean install -DskipTests=true
+  - cd ftp
   - ballerina --version
   - ballerina build -c --skip-tests ftp
-  
