@@ -28,8 +28,9 @@
     <url>https://ballerina.io/</url>
 
     <modules>
-        <module>utils/wso2-ftp</module>
+        <module>ftp-utils</module>
         <module>compiler-plugin</module>
+        <module>ftp</module>
     </modules>
 
     <scm>
@@ -45,9 +46,6 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
-            <modules>
-                <module>utils/wso2-ftp</module>
-            </modules>
         </profile>
         <profile>
             <id>wso2-release</id>
