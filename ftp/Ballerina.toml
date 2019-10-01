@@ -1,6 +1,6 @@
 [project]
 org-name= "wso2"
-version= "0.3.0"
+version= "0.3.1"
 license= ["Apache-2.0"]
 authors= ["WSO2"]
 keywords= ["ftp"]
@@ -13,7 +13,7 @@ target = "java8"
 
     [[platform.libraries]]
     module = "utils/ftp-utils"
-    path = "../ftp-utils/target/ftp-utils-module-0.100.0.jar"
+    path = "../ftp-utils/target/ftp-utils-module-0.3.1-SNAPSHOT.jar"
     artifactId = "wso2-ftp"
-    version = "0.100.0"
+    version = "0.3.1-SNAPSHOT"
     groupId = "org.wso2.ei"
