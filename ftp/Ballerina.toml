@@ -13,7 +13,7 @@ target = "java8"
 
     [[platform.libraries]]
     module = "utils/ftp-utils"
-    path = "../ftp-utils/target/ftp-utils-module-0.3.1-SNAPSHOT.jar"
+    path = "../ftp-utils/target/ftp-utils-module-0.3.1.jar"
     artifactId = "wso2-ftp"
-    version = "0.3.1-SNAPSHOT"
+    version = "0.3.1"
     groupId = "org.wso2.ei"

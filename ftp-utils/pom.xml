@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.wso2.ei</groupId>
         <artifactId>module-ftp</artifactId>
-        <version>0.3.1-SNAPSHOT</version>
+        <version>0.3.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <version>0.3.1-SNAPSHOT</version>
+    <version>0.3.1</version>
     <artifactId>ftp-utils</artifactId>
     <packaging>jar</packaging>
     <name>FTP Module - Java utility library</name>
@@ -56,7 +56,7 @@
         <dependency>
             <groupId>org.mockftpserver</groupId>
             <artifactId>MockFtpServer</artifactId>
-            <scope>test</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -66,11 +66,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockftpserver</groupId>
-            <artifactId>MockFtpServer</artifactId>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 
