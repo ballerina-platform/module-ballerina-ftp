@@ -58,8 +58,8 @@ public type PrivateKey record {|
 # + username - Username of the user
 # + password - Password of the user
 public type BasicAuth record {|
-    string? username = ();
-    string? password = ();
+    string username;
+    string password;
 |};
 
 # Provides configurations for facilitating secure communication with a remote FTP server

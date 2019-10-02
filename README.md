@@ -14,9 +14,9 @@ The following sections provide you details on how to use the FTP connector.
 
 ## Compatibility
 
-| Ballerina Language Version  |
-|:---------------------------:|
-|  1.0.0                     |
+|                             |           Version           |
+|:---------------------------:|:---------------------------:|
+| Ballerina Language          |            1.0.1            |
 
 ## Feature Overview
 
@@ -59,8 +59,8 @@ The FTP Listener can be used to listen to a remote directory. It will keep liste
 periodically notify the file addition and deletion.
 
 ```ballerina
-import wso2/ftp;
 import ballerina/log;
+import wso2/ftp;
 
 listener ftp:Listener remoteServer = new({
     protocol: ftp:FTP,
@@ -78,13 +78,13 @@ listener ftp:Listener remoteServer = new({
 });
 
 service ftpServerConnector on remoteServer {
-    resource function fileResource(WatchEvent m) {
+    resource function onFileChange(ftp:WatchEvent fileEvent) {
 
-        foreach FileInfo v1 in m.addedFiles {
-            log:printInfo("Added file path: " + v1.path);
+        foreach ftp:FileInfo addedFile in fileEvent.addedFiles {
+            log:printInfo("Added file path: " + addedFile.path);
         }
-        foreach string v1 in m.deletedFiles {
-            log:printInfo("Deleted file path: " + v1);
+        foreach string deletedFile in fileEvent.deletedFiles {
+            log:printInfo("Deleted file path: " + deletedFile);
         }
     }
 }
@@ -94,10 +94,12 @@ service ftpServerConnector on remoteServer {
 The FTP Client Connector can be used to connect to an FTP server and perform I/O operations.
 
 ```ballerina
-import wso2/ftp;
-import ballerina/io;
 import ballerina/log;
+import ballerina/io;
+import wso2/ftp;
 
+
+// Define FTP client configuration
 ftp:ClientEndpointConfig ftpConfig = {
     protocol: ftp:FTP,
     host: "<The FTP host>",
@@ -109,64 +111,79 @@ ftp:ClientEndpointConfig ftpConfig = {
         }
     }
 };
+
+// Create FTP client
 ftp:Client ftpClient = new(ftpConfig);
     
 public function main() {
-    // To create a folder in remote server.
-    error? dirCreErr = ftpClient->mkdir("<The directory path>");
-    if (dirCreErr is error) {
-        log:printError("Error occured in creating directory.", dirCreErr);
+    // Create a folder in remote server
+    error? mkdirResponse = ftpClient->mkdir("<The directory path>");
+    if (mkdirResponse is error) {
+        log:printError("Error occured in creating directory", mkdirResponse);
         return;
     }
     
-    // Upload file to a remote server.
+    // Upload file to a remote server
     io:ReadableByteChannel|error summaryChannel = io:openReadableFile("<The local data source path>");
     if(summaryChannel is io:ReadableByteChannel){
-        error? filePutErr = ftpClient->put("<The resource path>", summaryChannel);   
-        if(filePutErr is error) {
-            log:printError("Error occured in uploading content.", filePutErr);
+        error? putResponse = ftpClient->put("<The resource path>", summaryChannel);   
+        if(putResponse is error) {
+            log:printError("Error occured in uploading content", putResponse);
             return;
         }
     }
     
-    // Get the size of a remote file.
-    var size = ftpClient->size("<The resource path>");
-    if (size is int) {
-        log:printInfo("File size: " + size.toString());
+    // Get the size of a remote file
+    var sizeResponse = ftpClient->size("<The resource path>");
+    if (sizeResponse is int) {
+        log:printInfo("File size: " + sizeResponse.toString());
     } else {
-        log:printError("Error occured in retrieving size.", size);
+        log:printError("Error occured in retrieving size", sizeResponse);
         return;
     }
     
-    // Read content of a remote file.
-    var getResult = ftpClient->get("<The file path>");
-    if (getResult is io:ReadableByteChannel) {
-        io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResult, "utf-8");
+    // Read content of a remote file
+    var getResponse = ftpClient->get("<The file path>");
+    if (getResponse is io:ReadableByteChannel) {
+        io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResponse, "utf-8");
         if (characters is io:ReadableCharacterChannel) {
             var output = characters.read(<No of characters to read>);
             if (output is string) {
-                log:printInfo("File content: "+ output);
+                log:printInfo("File content: " + output);
             } else {
-                log:printError("Error occured in retrieving content.", output);
+                log:printError("Error occured in retrieving content", output);
                 return;
             }
             var closeResult = characters.close();
+            if (closeResult is error) {
+                log:printError("Error occurred while closing the channel", closeResult);
+                return;
+            }
         }
     } else {
-        log:printError("Error occured in retrieving content.", getResult);
+        log:printError("Error occured in retrieving content", getResponse);
         return;
     }
     
-    // Rename or move remote file to a another remote location in a same FTP server.
-    error? renameErr = ftpClient->rename("<The source file path>", "<The destination file path>");
+    // Rename or move remote file to a another remote location in a same FTP server
+    error? renameResponse = ftpClient->rename("<The source file path>", "<The destination file path>");
+    if (renameResponse is error) {
+        log:printError("Error occurred while renaming the file", renameResponse);
+        return;
+    }
     
-    // Delete remote file.
-    error? fileDelCreErr = ftpClient->delete("<The resource path>");
+    // Delete remote file
+    error? deleteResponse = ftpClient->delete("<The resource path>");
+    if (deleteResponse is error) {
+        log:printError("Error occurred while deleting a file", deleteResponse);
+        return;
+    }
     
-    // Remove directory from remote server.
-    var result = ftpClient->rmdir("<The directory path>");
-    if (result is error) {
-        io:println("Error occured in removing directory.", result); 
+    // Remove directory from remote server
+    var rmdirResponse = ftpClient->rmdir("<The directory path>");
+    if (rmdirResponse is error) {
+        io:println("Error occured in removing directory.", rmdirResponse); 
+        return;
     }
 }
 ```

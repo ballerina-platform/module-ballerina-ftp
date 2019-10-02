@@ -16,14 +16,15 @@
 
 import ballerina/log;
 import ballerina/task;
-import ballerinax/java;
 import ballerina/lang.'object as lang;
+import ballerinax/java;
 
 # Represents a service listener that monitors the FTP location.
 public type Listener object {
 
     *lang:Listener;
 
+    private handle EMPTY_JAVA_STRING = java:fromString("");
     private ListenerConfig config = {};
     private task:Scheduler? appointment = ();
     private handle? serverConnector = ();
@@ -53,7 +54,7 @@ public type Listener object {
     }
 
     public function __gracefulStop() returns error? {
-
+        check self.stop();
     }
 
     function start() returns error? {
@@ -70,6 +71,7 @@ public type Listener object {
             check appointment.attach(appointmentService, attachment = self);
             check appointment.start();
         }
+        log:printInfo("Listening to remote server at " + self.config.host + "...");
     }
 
     function stop() returns error? {
@@ -77,6 +79,7 @@ public type Listener object {
         if (appointment is task:Scheduler) {
             check appointment.stop();
         }
+        log:printInfo("Stopped listening to remote server at " + self.config.host);
     }
 
     public function poll() returns error? {
@@ -85,7 +88,7 @@ public type Listener object {
 
     public function register(service ftpService, string? name) returns error? {
         error? response = ();
-        handle serviceName = java:fromString("");
+        handle serviceName = self.EMPTY_JAVA_STRING;
         if(name is string){
             serviceName = java:fromString(name);
         }
@@ -124,8 +127,8 @@ public type ListenerConfig record {|
     string host = "127.0.0.1";
     int port = 21;
     SecureSocket? secureSocket = ();
-    string path = "";
-    string fileNamePattern = "";
+    string path = "/home";
+    string fileNamePattern = "(.*).txt";
     int pollingInterval = 60000;
     string? cronExpression = ();
     handle? serverConnector = ();

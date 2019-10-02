@@ -36,15 +36,15 @@ listener Listener remoteServer = new({
 });
 
 service ftpServerConnector on remoteServer {
-    resource function fileResource(WatchEvent m) {
-        addedFileCount = <@untainted> m.addedFiles.length();
-        deletedFileCount = <@untainted> m.deletedFiles.length();
+    resource function onFileChange(WatchEvent event) {
+        addedFileCount = <@untainted> event.addedFiles.length();
+        deletedFileCount = <@untainted> event.deletedFiles.length();
 
-        foreach FileInfo v1 in m.addedFiles {
-            log:printInfo("Added file path: " + v1.path);
+        foreach FileInfo addedFile in event.addedFiles {
+            log:printInfo("Added file path: " + addedFile.path);
         }
-        foreach string v1 in m.deletedFiles {
-            log:printInfo("Deleted file path: " + v1);
+        foreach string deletedFile in event.deletedFiles {
+            log:printInfo("Deleted file path: " + deletedFile);
         }
     }
 }
@@ -52,6 +52,6 @@ service ftpServerConnector on remoteServer {
 @test:Config{
 }
 public function testAddedFileCount() {
-    log:printInfo("Added file count: "+addedFileCount.toString());
+    log:printInfo("Added file count: " + addedFileCount.toString());
     test:assertEquals(3, addedFileCount);
 }

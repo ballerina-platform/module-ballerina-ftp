@@ -20,41 +20,45 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>module-ftp</artifactId>
         <groupId>org.wso2.ei</groupId>
+        <artifactId>module-ftp</artifactId>
         <version>0.3.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>ftp</artifactId>
+    <artifactId>ftp-compiler-plugin</artifactId>
     <version>0.3.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <name>FTP Module - Ballerina Implementation</name>
+    <packaging>jar</packaging>
+    <name>FTP Module - Compiler Validation Utility</name>
     <url>https://ballerina.io/</url>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>ballerina-lang</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>ballerina-runtime</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.ei</groupId>
+            <artifactId>ftp-utils</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
     <build>
-        <sourceDirectory>src</sourceDirectory>
+        <finalName>compiler-plugin-ftp-${module.ftp.version}</finalName>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>ballerina-build</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <executable>ballerina</executable>
-                    <arguments>
-                        <argument>build</argument>
-                        <argument>-c</argument>
-                        <argument>-a</argument>
-                    </arguments>
+                    <compilerArgument>-proc:none</compilerArgument>
                 </configuration>
             </plugin>
         </plugins>
