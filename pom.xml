@@ -24,7 +24,7 @@
     <groupId>org.wso2.ei</groupId>
     <artifactId>module-ftp</artifactId>
     <packaging>pom</packaging>
-    <version>0.3.1-SNAPSHOT</version>
+    <version>0.3.1</version>
     <name>Ballerina - FTP Module Parent</name>
 
     <url>https://ballerina.io/</url>
