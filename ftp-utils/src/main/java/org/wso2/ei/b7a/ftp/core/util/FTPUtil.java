@@ -28,10 +28,18 @@ import org.ballerinalang.jvm.values.ObjectValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Utils class for FTP client operations.
@@ -96,6 +104,7 @@ public class FTPUtil {
     }
 
     public static Map<String, String> getAuthMap(MapValue config) {
+
         final MapValue secureSocket = config.getMapValue(FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
         String username = null;
         String password = null;
@@ -157,5 +166,41 @@ public class FTPUtil {
                 new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
                 FTPConstants.FTP_FILE_INFO);
         return fileInfoStruct.getType();
+    }
+
+    public static ByteArrayInputStream compress(InputStream inputStream, String targetFilePath) {
+
+        String fileName = new File(targetFilePath).getName();
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
+
+        try {
+
+            zipOutputStream.putNextEntry(new ZipEntry(fileName));
+            byte[] buffer = new byte[1000];
+            int len;
+            while ((len = bufferedInputStream.read(buffer)) > 0) {
+                zipOutputStream.write(buffer, 0, len);
+            }
+            return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+
+        } catch (IOException ex) {
+            log.error("The file does not exist");
+        } finally {
+            try {
+                bufferedInputStream.close();
+                zipOutputStream.closeEntry();
+                zipOutputStream.close();
+            } catch (IOException e) {
+                log.error("Error in closing stream");
+            }
+        }
+        return null;
+    }
+
+    public static String getCompressedFileName(String fileName) {
+
+        return fileName.substring(0, fileName.lastIndexOf('.')).concat(".zip");
     }
 }

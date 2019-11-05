@@ -24,6 +24,8 @@ import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.ei.b7a.ftp.core.util.BallerinaFTPException;
 import org.wso2.ei.b7a.ftp.core.util.FTPConstants;
 import org.wso2.ei.b7a.ftp.core.util.FTPUtil;
@@ -45,6 +47,8 @@ import java.util.concurrent.CompletableFuture;
  * Contains functionality of FTP client
  */
 public class FTPClient {
+
+    private static final Logger log = LoggerFactory.getLogger(FTPClient.class);
 
     private FTPClient() {
         // private constructor
@@ -135,24 +139,33 @@ public class FTPClient {
     public static void put(ObjectValue clientConnector, MapValue<Object, Object> inputContent)
             throws BallerinaFTPException {
 
+        Map<String, String> propertyMap = new HashMap<>(
+                (Map<String, String>) clientConnector.getNativeData(FTPConstants.PROPERTY_MAP));
+        boolean isFile = inputContent.getBooleanValue(FTPConstants.INPUT_CONTENT_IS_FILE_KEY);
+        boolean compressInput = inputContent.getBooleanValue(FTPConstants.INPUT_CONTENT_COMPRESS_INPUT_KEY);
+        InputStream stream = FTPClientHelper.getUploadStream(inputContent, isFile);
+        RemoteFileSystemMessage message;
+        ByteArrayInputStream compressedStream = null;
+
         try {
-
-            String url = FTPUtil.createUrl(clientConnector,
-                    inputContent.getStringValue(FTPConstants.INPUT_CONTENT_FILE_PATH_KEY));
-            Map<String, String> propertyMap = new HashMap<>(
-                    (Map<String, String>) clientConnector.getNativeData(FTPConstants.PROPERTY_MAP));
-            propertyMap.put(FTPConstants.PROPERTY_URI, url);
-
-            boolean isFile = inputContent.getBooleanValue(FTPConstants.INPUT_CONTENT_IS_FILE_KEY);
-            RemoteFileSystemMessage message;
-            if (isFile) {
-                ObjectValue fileContent = inputContent.getObjectValue(FTPConstants.INPUT_CONTENT_FILE_CONTENT_KEY);
-                Channel byteChannel = (Channel) fileContent.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
-                message = new RemoteFileSystemMessage(byteChannel.getInputStream());
+            if (stream != null) {
+                if (compressInput) {
+                    compressedStream = FTPUtil.compress(stream,
+                            inputContent.getStringValue(FTPConstants.INPUT_CONTENT_FILE_PATH_KEY));
+                    if (compressedStream != null) {
+                        message = FTPClientHelper.getCompressedMessage(clientConnector,
+                                inputContent.getStringValue(FTPConstants.INPUT_CONTENT_FILE_PATH_KEY),
+                                propertyMap, compressedStream);
+                    } else {
+                        throw new BallerinaFTPException("Error in compressing file");
+                    }
+                } else {
+                    message = FTPClientHelper.getUncompressedMessage(clientConnector,
+                            inputContent.getStringValue(FTPConstants.INPUT_CONTENT_FILE_PATH_KEY),
+                            propertyMap, stream);
+                }
             } else {
-                String textContent = inputContent.getStringValue(FTPConstants.INPUT_CONTENT_TEXT_CONTENT_KEY);
-                InputStream stream = new ByteArrayInputStream(textContent.getBytes());
-                message = new RemoteFileSystemMessage(stream);
+                throw new BallerinaFTPException("Error in reading file");
             }
 
             CompletableFuture<Object> future = BRuntime.markAsync();
@@ -164,8 +177,19 @@ public class FTPClient {
                     connectorListener);
             connector.send(message, FtpAction.PUT);
             future.complete(null);
-        } catch (RemoteFileSystemConnectorException | IOException e) {
+        } catch (RemoteFileSystemConnectorException e) {
             throw new BallerinaFTPException(e.getMessage());
+        } finally {
+            try {
+                if (stream != null) {
+                    stream.close();
+                }
+                if (compressedStream != null) {
+                    compressedStream.close();
+                }
+            } catch (IOException e) {
+                log.error("Error in closing stream");
+            }
         }
     }
 
