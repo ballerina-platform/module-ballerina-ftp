@@ -22,7 +22,7 @@ The following sections provide you details on how to use the FTP connector.
 
 ### FTP Client
 The `ftp:Client` connects to an FTP server and performs various operations on the files. Currently, it supports the 
-generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`,  `rename`, `size`, and
+generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and
  `list`.
 
 An FTP client endpoint is defined using the parameters `protocol` and `host`, and optionally the `port` and 
@@ -39,7 +39,7 @@ configuration can be done using `secureSocket` and polling interval can be confi
 Default polling interval is 60 seconds.
 
 The `fileNamePattern` parameter can be used to define the type of files the FTP listener endpoint will listen to. 
-For instance, if the listener should get invoked for text files, the value `(.*).txt` can be given for the config.
+For instance, if the listener gets invoked for text files, the value `(.*).txt` can be given for the config.
 
 ## Getting Started
 
@@ -56,7 +56,7 @@ $ ballerina pull wso2/ftp
 
 ### FTP Listener Sample
 The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and 
-periodically notify the file addition and deletion.
+periodically notify on file addition and deletion.
 
 ```ballerina
 import ballerina/log;
