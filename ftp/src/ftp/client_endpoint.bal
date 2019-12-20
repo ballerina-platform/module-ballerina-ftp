@@ -62,9 +62,11 @@ public type Client client object {
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
+    # + compressInput - True if file should be compressed before uploading
     # + return - An `error` if failed to establish communication with the FTP server
-    public remote function put(string path, io:ReadableByteChannel|string|xml|json content) returns error? {
-        return put(self, getInputContent(path, content));
+    public remote function put(string path, io:ReadableByteChannel|string|xml|json content,
+                                                                boolean compressInput=false) returns error? {
+        return put(self, getInputContent(path, content, compressInput));
     }
 
     # The `mkdir()` function can be used to create a new direcotry in an FTP server.
@@ -146,9 +148,10 @@ public type ClientEndpointConfig record {|
     SecureSocket? secureSocket = ();
 |};
 
-function getInputContent(string path, io:ReadableByteChannel|string|xml|json content) returns InputContent{
+function getInputContent(string path, io:ReadableByteChannel|string|xml|json content, boolean compressInput=false) returns InputContent{
     InputContent inputContent = {
-        filePath: path
+        filePath: path,
+        compressInput: compressInput
     };
 
     if(content is io:ReadableByteChannel){

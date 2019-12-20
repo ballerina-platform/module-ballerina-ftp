@@ -81,9 +81,11 @@ public type SecureSocket record {|
 # + isFile - True if input type is a file
 # + fileContent - The content read from the input file, if the input is a file
 # + textContent - The input content, for other input types
+# + compressInput - If true, input will be compressed before upload
 public type InputContent record{|
     string filePath;
     boolean isFile = false;
     io:ReadableByteChannel? fileContent = ();
     string? textContent = ();
+    boolean compressInput = false;
 |};

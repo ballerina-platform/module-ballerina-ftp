@@ -29,12 +29,14 @@ import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.ei.b7a.ftp.core.util.BallerinaFTPException;
 import org.wso2.ei.b7a.ftp.core.util.FTPConstants;
 import org.wso2.ei.b7a.ftp.core.util.FTPUtil;
 import org.wso2.transport.remotefilesystem.message.FileInfo;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -150,26 +152,76 @@ class FTPClientHelper {
         return true;
     }
 
+    static InputStream getUploadStream(MapValue<Object, Object> inputContent, boolean isFile) {
+
+        if (isFile) {
+            try {
+                ObjectValue fileContent = inputContent.getObjectValue(FTPConstants.INPUT_CONTENT_FILE_CONTENT_KEY);
+                Channel byteChannel = (Channel) fileContent.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
+                return byteChannel.getInputStream();
+            } catch (IOException e) {
+                log.error("Error in reading input from file");
+                return null;
+            }
+        } else {
+            String textContent = inputContent.getStringValue(FTPConstants.INPUT_CONTENT_TEXT_CONTENT_KEY);
+            return new ByteArrayInputStream(textContent.getBytes());
+        }
+    }
+
+    static RemoteFileSystemMessage getUncompressedMessage(ObjectValue clientConnector, String filePath,
+                                                          Map<String, String> propertyMap, InputStream stream) {
+
+        try {
+            String url = FTPUtil.createUrl(clientConnector, filePath);
+            propertyMap.put(FTPConstants.PROPERTY_URI, url);
+            return new RemoteFileSystemMessage(stream);
+        } catch (BallerinaFTPException e) {
+            log.error(e.getMessage());
+            return null;
+        }
+    }
+
+    static RemoteFileSystemMessage getCompressedMessage(ObjectValue clientConnector, String filePath,
+                                                        Map<String, String> propertyMap,
+                                                        ByteArrayInputStream compressedStream) {
+
+        try {
+            String compressedFilePath = FTPUtil.getCompressedFileName(filePath);
+            String url = FTPUtil.createUrl(clientConnector, compressedFilePath);
+            propertyMap.put(FTPConstants.PROPERTY_URI, url);
+            return new RemoteFileSystemMessage(compressedStream);
+        } catch (BallerinaFTPException e) {
+            log.error(e.getMessage());
+            return null;
+        }
+    }
+
     /**
      * Concrete implementation of the {@link Channel}
      */
     private static class FTPChannel extends Channel {
+
         FTPChannel(ByteChannel channel) {
+
             super(channel);
         }
 
         @Override
         public void transfer(int i, int i1, WritableByteChannel writableByteChannel) {
+
             throw new UnsupportedOperationException();
         }
 
         @Override
         public Channel getChannel() {
+
             return this;
         }
 
         @Override
         public boolean remaining() {
+
             return false;
         }
     }
@@ -178,31 +230,37 @@ class FTPClientHelper {
      * Create ByteChannel by encapsulating InputStream which comes from transport layer
      */
     private static class FTPByteChannel implements ByteChannel {
+
         private InputStream inputStream;
         private ReadableByteChannel inputChannel;
 
         FTPByteChannel(InputStream inputStream) {
+
             this.inputStream = inputStream;
             this.inputChannel = Channels.newChannel(inputStream);
         }
 
         @Override
         public int read(ByteBuffer dst) throws IOException {
+
             return inputChannel.read(dst);
         }
 
         @Override
         public int write(ByteBuffer src) {
+
             return 0;
         }
 
         @Override
         public boolean isOpen() {
+
             return inputChannel.isOpen();
         }
 
         @Override
         public void close() throws IOException {
+
             inputChannel.close();
             inputStream.close();
         }

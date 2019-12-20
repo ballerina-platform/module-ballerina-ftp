@@ -125,14 +125,25 @@ public function main() {
     
     // Upload file to a remote server
     io:ReadableByteChannel|error summaryChannel = io:openReadableFile("<The local data source path>");
-    if(summaryChannel is io:ReadableByteChannel){
+    if (summaryChannel is io:ReadableByteChannel) {
         error? putResponse = ftpClient->put("<The resource path>", summaryChannel);   
-        if(putResponse is error) {
+        if (putResponse is error) {
             log:printError("Error occured in uploading content", putResponse);
             return;
         }
     }
-    
+
+    // Compress and upload file to a remote server
+    io:ReadableByteChannel|error inputChannel = io:openReadableFile("<Local data source path>");
+    if (inputChannel is io:ReadableByteChannel) {
+        // Set the optional boolean flag as 'true' to compress before uploading
+        error? compressedPutResponse = ftpClient->put("<Resource path>", inputChannel, true);   
+        if (compressedPutResponse is error) {
+            log:printError("Error occured in uploading content", compressedPutResponse);
+            return;
+        }
+    }
+
     // Get the size of a remote file
     var sizeResponse = ftpClient->size("<The resource path>");
     if (sizeResponse is int) {

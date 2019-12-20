@@ -60,5 +60,6 @@ public class FTPConstants {
     public static final String INPUT_CONTENT_IS_FILE_KEY = "isFile";
     public static final String INPUT_CONTENT_FILE_CONTENT_KEY = "fileContent";
     public static final String INPUT_CONTENT_TEXT_CONTENT_KEY = "textContent";
+    public static final String INPUT_CONTENT_COMPRESS_INPUT_KEY = "compressInput";
 
 }
