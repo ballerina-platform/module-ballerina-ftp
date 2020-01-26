@@ -22,9 +22,10 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.ballerinalang.jvm.BallerinaValues;
 import org.ballerinalang.jvm.types.BArrayType;
 import org.ballerinalang.jvm.types.BPackage;
-import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
+import org.ballerinalang.jvm.values.api.BArray;
+import org.ballerinalang.jvm.values.api.BValueCreator;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.slf4j.Logger;
@@ -100,7 +101,7 @@ class FTPClientHelper {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
             Map<String, FileInfo> childrenInfo = message.getChildrenInfo();
-            ArrayValue arrayValue = new ArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
+            BArray arrayValue = BValueCreator.createArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
 
             int i = 0;
             for (Map.Entry<String, FileInfo> entry : childrenInfo.entrySet()) {
