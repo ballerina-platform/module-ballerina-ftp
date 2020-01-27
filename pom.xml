@@ -24,7 +24,7 @@
     <groupId>org.wso2.ei</groupId>
     <artifactId>module-ftp</artifactId>
     <packaging>pom</packaging>
-    <version>0.3.1</version>
+    <version>0.4.0</version>
     <name>Ballerina - FTP Module Parent</name>
 
     <url>https://ballerina.io/</url>
@@ -190,8 +190,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <ballerina.version>1.0.0</ballerina.version>
-        <module.ftp.version>0.3.1</module.ftp.version>
+        <ballerina.version>1.1.0</ballerina.version>
+        <module.ftp.version>0.4.0</module.ftp.version>
 
         <file.transport.version>6.0.57</file.transport.version>
         <jsch.version>0.1.54</jsch.version>

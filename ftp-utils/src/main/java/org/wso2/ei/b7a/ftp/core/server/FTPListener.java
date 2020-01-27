@@ -23,9 +23,10 @@ import org.ballerinalang.jvm.BallerinaValues;
 import org.ballerinalang.jvm.types.BArrayType;
 import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.jvm.types.BTypes;
-import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
+import org.ballerinalang.jvm.values.api.BArray;
+import org.ballerinalang.jvm.values.api.BValueCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.ei.b7a.ftp.core.util.FTPConstants;
@@ -75,7 +76,7 @@ public class FTPListener implements RemoteFileSystemListener {
         List<String> deletedFileList = fileSystemEvent.getDeletedFiles();
 
         // For newly added files
-        ArrayValue addedFiles = new ArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
+        BArray addedFiles = BValueCreator.createArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
 
         for (int i = 0; i < addedFileList.size(); i++) {
             FileInfo info = addedFileList.get(i);
@@ -91,7 +92,7 @@ public class FTPListener implements RemoteFileSystemListener {
         }
 
         // For deleted files
-        ArrayValue deletedFiles = new ArrayValue(BTypes.typeString);
+        BArray deletedFiles = BValueCreator.createArrayValue(new BArrayType(BTypes.typeString));
         for (int i = 0; i < deletedFileList.size(); i++) {
             deletedFiles.add(i, deletedFileList.get(i));
         }
