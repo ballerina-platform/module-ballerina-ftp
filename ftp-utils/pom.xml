@@ -119,6 +119,16 @@
                                     </excludes>
                                 </filter>
                             </filters>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.ballerinalang:ballerina-runtime</exclude>
+                                    <exclude>org.ballerinalang:ballerina-lang</exclude>
+                                    <exclude>org.ballerinalang:ballerina-io</exclude>
+                                    <exclude>org.mockftpserver:MockFtpServer</exclude>
+                                    <exclude>org.slf4j:slf4j-api</exclude>
+                                    <exclude>org.slf4j:slf4j-log4j12</exclude>
+                                </excludes>
+                            </artifactSet>
                         </configuration>
                     </execution>
                 </executions>
