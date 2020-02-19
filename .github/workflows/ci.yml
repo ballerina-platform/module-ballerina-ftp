@@ -1,0 +1,16 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Ballerina Build
+      uses: ballerina-platform/ballerina-action/@1.1.1
+      with:
+        args: 
+          build -a -c
