@@ -10,6 +10,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Ballerina Install
-      uses: ballerina-platform/ballerina-action/@1.1.1
-    - run: mvn clean install
+      uses: ballerina-platform/ballerina-action/@master
+    - run: mvn clean install -pl !ftp
     
