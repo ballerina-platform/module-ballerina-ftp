@@ -15,5 +15,5 @@ jobs:
       uses: ballerina-platform/ballerina-action/@master
       with:
         args:
-          build -a -c
+          build -a -c --sourceroot ftp
     
