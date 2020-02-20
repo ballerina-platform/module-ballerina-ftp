@@ -12,4 +12,5 @@ jobs:
     - name: Ballerina Install
       uses: ballerina-platform/ballerina-action/@master
     - run: mvn clean install -pl !ftp
+    - run: pwd
     
