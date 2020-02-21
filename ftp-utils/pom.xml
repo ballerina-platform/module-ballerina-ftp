@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.wso2.ei</groupId>
         <artifactId>module-ftp</artifactId>
-        <version>0.4.2</version>
+        <version>0.4.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <version>0.4.2</version>
+    <version>0.4.3</version>
     <artifactId>ftp-utils</artifactId>
     <packaging>jar</packaging>
     <name>FTP Module - Java utility library</name>
@@ -121,12 +121,22 @@
                             </filters>
                             <artifactSet>
                                 <excludes>
-                                    <exclude>org.ballerinalang:ballerina-runtime</exclude>
-                                    <exclude>org.ballerinalang:ballerina-lang</exclude>
-                                    <exclude>org.ballerinalang:ballerina-io</exclude>
-                                    <exclude>org.mockftpserver:MockFtpServer</exclude>
+                                    <exclude>org.ballerinalang:*</exclude>
                                     <exclude>org.slf4j:slf4j-api</exclude>
                                     <exclude>org.slf4j:slf4j-log4j12</exclude>
+                                    <exclude>org.awaitility:awaitility</exclude>
+                                    <exclude>io.opentracing:*</exclude>
+                                    <exclude>io.netty:*</exclude>
+                                    <exclude>org.hamcrest:*</exclude>
+                                    <exclude>org.apache.ws.commons.axiom:*</exclude>
+                                    <exclude>jaxen:jaxen</exclude>
+                                    <exclude>com.moandjiezana.toml:toml4j</exclude>
+                                    <exclude>org.apache.geronimo.specs:*</exclude>
+                                    <exclude>com.google.code.gson:gson</exclude>
+                                    <exclude>org.codehaus.woodstox:*</exclude>
+                                    <exclude>org.wso2.orbit.org.antlr:antlr4-runtime</exclude>
+                                    <exclude>org.apache.james:apache-mime4j-core</exclude>
+                                    <exclude>org.objenesis:objenesis</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
