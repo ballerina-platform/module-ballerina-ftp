@@ -1,0 +1,18 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    -  run: mvn clean install -pl !ftp
+    -  run: cd ftp
+    - name: Ballerina Build
+      uses: ballerina-platform/ballerina-action/@master
+      with:
+        args:
+          build -a -c --sourceroot ftp
