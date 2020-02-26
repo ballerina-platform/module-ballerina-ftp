@@ -1,6 +1,8 @@
 name: Deployment
 
-on: [release]
+on:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -20,7 +22,7 @@ jobs:
       uses: ballerina-platform/ballerina-action/@master
       with:
         args: 
-          push
+          push -a
       env:
         WORKING_DIR: ./ftp
         BALLERINA_CENTRAL_ACCESS_TOKEN: ${{ secrets.BALLERINA_CENTRAL_ACCESS_TOKEN }}
