@@ -17,7 +17,7 @@
 import ballerina/log;
 import ballerina/task;
 import ballerina/lang.'object as lang;
-import ballerinax/java;
+import ballerina/java;
 
 # Represents a service listener that monitors the FTP location.
 public type Listener object {
@@ -50,7 +50,7 @@ public type Listener object {
     }
 
     public function __immediateStop() returns error? {
-
+        check self.stop();
     }
 
     public function __gracefulStop() returns error? {
@@ -68,7 +68,7 @@ public type Listener object {
         }
         var appointment = self.appointment;
         if (appointment is task:Scheduler) {
-            check appointment.attach(appointmentService, attachment = self);
+            check appointment.attach(appointmentService, self);
             check appointment.start();
         }
         log:printInfo("Listening to remote server at " + self.config.host + "...");
@@ -102,14 +102,14 @@ public type Listener object {
     }
 };
 
-    service appointmentService = service {
-        resource function onTrigger(Listener l) {
-            var result = l.poll();
-            if (result is error) {
-                log:printError("Error while executing poll function", err = result);
-            }
+service appointmentService = service {
+    resource function onTrigger(Listener l) {
+        var result = l.poll();
+        if (result is error) {
+            log:printError("Error while executing poll function", result);
         }
-    };
+    }
+};
 
 # Configuration for FTP listener endpoint.
 #

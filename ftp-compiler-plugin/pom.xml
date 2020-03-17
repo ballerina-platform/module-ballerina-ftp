@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.wso2.ei</groupId>
         <artifactId>module-ftp</artifactId>
-        <version>0.4.3</version>
+        <version>0.5.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>ftp-compiler-plugin</artifactId>
-    <version>0.4.3</version>
+    <version>0.5.0</version>
     <packaging>jar</packaging>
     <name>FTP Module - Compiler Validation Utility</name>
     <url>https://ballerina.io/</url>
