@@ -20,6 +20,7 @@ package org.wso2.ei.b7a.ftp.core.util;
 
 import org.ballerinalang.jvm.BallerinaErrors;
 import org.ballerinalang.jvm.BallerinaValues;
+import org.ballerinalang.jvm.StringUtils;
 import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.jvm.types.BType;
 import org.ballerinalang.jvm.values.ErrorValue;
@@ -130,8 +131,7 @@ public class FTPUtil {
      * @return an error which will be propagated to ballerina user.
      */
     public static ErrorValue createError(String error, String details) {
-
-        return BallerinaErrors.createError(error, details);
+        return BallerinaErrors.createError(StringUtils.fromString(error), details);
     }
 
     /**
