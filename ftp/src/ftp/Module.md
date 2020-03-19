@@ -2,8 +2,8 @@ Connects to an FTP server using Ballerina.
 
 ## Module Overview
 
-The `wso2/ftp` module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection 
-to a remote location.
+The `ballerina/ftp` module provides an FTP client and an FTP server listener implementation to facilitate an FTP
+ connection to a remote location.
 
 **FTP Client**
 
@@ -32,7 +32,7 @@ For instance, if the listener gets invoked for text files, the value `(.*).txt` 
 
 |                             |           Version           |
 |:---------------------------:|:---------------------------:|
-| Ballerina Language          |            1.1.2            |
+| Ballerina Language          |            1.2.x            |
 
 ## Samples
 
@@ -42,8 +42,8 @@ The FTP Listener can be used to listen to a remote directory. It will keep liste
 periodically notify on file addition and deletion.
 
 ```ballerina
+import ballerina/ftp;
 import ballerina/log;
-import wso2/ftp;
 
 listener ftp:Listener remoteServer = new({
     protocol: ftp:FTP,
@@ -78,10 +78,9 @@ service ftpServerConnector on remoteServer {
 The FTP Client Connector can be used to connect to an FTP server and perform I/O operations.
 
 ```ballerina
-import ballerina/log;
+import ballerina/ftp;
 import ballerina/io;
-import wso2/ftp;
-
+import ballerina/log;
 
 // Define FTP client configuration
 ftp:ClientEndpointConfig ftpConfig = {

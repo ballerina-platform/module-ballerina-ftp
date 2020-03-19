@@ -37,9 +37,9 @@ public class FTPConstants {
     public static final String USER_DIR_IS_ROOT = Constants.USER_DIR_IS_ROOT;
     public static final String AVOID_PERMISSION_CHECK = Constants.AVOID_PERMISSION_CHECK;
     public static final String PROPERTY_MAP = "map";
-    public static final String FTP_ORG_NAME = "wso2";
+    public static final String FTP_ORG_NAME = "ballerina";
     public static final String FTP_MODULE_NAME = "ftp";
-    public static final String FTP_MODULE_VERSION = "0.4.3";
+    public static final String FTP_MODULE_VERSION = "0.5.0";
     public static final String FTP_LISTENER = "Listener";
     public static final String FTP_SERVER_EVENT = "WatchEvent";
     public static final String FTP_FILE_INFO = "FileInfo";

@@ -1,10 +1,10 @@
 [project]
-org-name= "wso2"
-version= "0.4.3"
+org-name= "ballerina"
+version= "0.5.0"
 license= ["Apache-2.0"]
-authors= ["WSO2"]
+authors= ["Ballerina"]
 keywords= ["ftp"]
-repository= "https://github.com/wso2-ballerina/module-ftp"
+repository= "https://github.com/ballerina-platform/module-ftp"
 
 [dependencies]
 
@@ -13,7 +13,7 @@ target = "java8"
 
     [[platform.libraries]]
     module = "utils/ftp-utils"
-    path = "../ftp-utils/target/ftp-utils-module-0.4.3.jar"
+    path = "../ftp-utils/target/ftp-utils-module-0.5.0.jar"
     artifactId = "wso2-ftp"
-    version = "0.4.3"
+    version = "0.5.0"
     groupId = "org.wso2.ei"

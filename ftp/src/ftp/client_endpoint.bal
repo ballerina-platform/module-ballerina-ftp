@@ -18,7 +18,7 @@
 
 import ballerina/io;
 import ballerina/log;
-import ballerinax/java;
+import ballerina/java;
 
 
 # Represents an FTP client that intracts with an FTP server
