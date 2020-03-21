@@ -16,5 +16,5 @@ jobs:
       with:
         args:
           build -a -c --sourceroot ftp
-        env:
+      env:
           JAVA_OPTS: -DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true
