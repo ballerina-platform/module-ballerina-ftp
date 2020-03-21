@@ -17,7 +17,7 @@ jobs:
       uses: ballerina-platform/ballerina-action/@master
       with:
         args:
-          build -a -c --sourceroot ftp
+          build -a -c --skip-tests --sourceroot ftp
       env:
           JAVA_OPTS: -DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true
     - name: Ballerina Push
