@@ -190,7 +190,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <ballerina.version>1.2.0-SNAPSHOT</ballerina.version>
+        <ballerina.version>1.2.0</ballerina.version>
         <module.ftp.version>0.5.0</module.ftp.version>
 
         <file.transport.version>6.0.57</file.transport.version>

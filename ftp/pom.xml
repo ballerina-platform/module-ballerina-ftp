@@ -54,6 +54,7 @@
                         <argument>build</argument>
                         <argument>-c</argument>
                         <argument>-a</argument>
+                        <argument>--skip-tests</argument>
                     </arguments>
                 </configuration>
             </plugin>
