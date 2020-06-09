@@ -1,7 +1,7 @@
 org_name = "wso2"
 version = "0.4.3"
 lockfile_version = "1.0.0"
-ballerina_version = "1.1.2"
+ballerina_version = "1.1.4"
 
 [[imports."wso2/ftp:0.4.3"]]
 org_name = "ballerinax"
