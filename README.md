@@ -16,7 +16,7 @@ The following sections provide you details on how to use the FTP connector.
 
 |                             |           Version           |
 |:---------------------------:|:---------------------------:|
-| Ballerina Language          |            1.1.2            |
+| Ballerina Language          |            1.1.4            |
 
 ## Feature Overview
 
