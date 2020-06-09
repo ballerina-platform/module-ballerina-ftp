@@ -19,7 +19,6 @@
 package org.wso2.ei.b7a.ftp.core.client;
 
 import org.ballerinalang.jvm.BRuntime;
-import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
@@ -29,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.wso2.ei.b7a.ftp.core.util.BallerinaFTPException;
 import org.wso2.ei.b7a.ftp.core.util.FTPConstants;
 import org.wso2.ei.b7a.ftp.core.util.FTPUtil;
+import org.wso2.transport.remotefilesystem.Constants;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
 import org.wso2.transport.remotefilesystem.client.connector.contract.FtpAction;
 import org.wso2.transport.remotefilesystem.client.connector.contract.VFSClientConnector;
@@ -54,7 +54,7 @@ public class FTPClient {
         // private constructor
     }
 
-    public static void initClientEndpoint(ObjectValue clientEndpoint, MapValue<Object, Object> config)
+    public static Object initClientEndpoint(ObjectValue clientEndpoint, MapValue<Object, Object> config)
             throws BallerinaFTPException {
 
         String protocol = config.getStringValue(FTPConstants.ENDPOINT_CONFIG_PROTOCOL);
@@ -72,14 +72,29 @@ public class FTPClient {
         clientEndpoint.addNativeData(FTPConstants.ENDPOINT_CONFIG_PORT,
                 FTPUtil.extractPortValue(config.getIntValue(FTPConstants.ENDPOINT_CONFIG_PORT)));
         clientEndpoint.addNativeData(FTPConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
-        Map<String, String> ftpConfig = new HashMap<>(3);
+        Map<String, String> ftpConfig = new HashMap<>(5);
+        MapValue secureSocket = config.getMapValue(FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
+        if (secureSocket != null) {
+            final MapValue privateKey = secureSocket.getMapValue(FTPConstants.ENDPOINT_CONFIG_PRIVATE_KEY);
+            if (privateKey != null) {
+                final String privateKeyPath = privateKey.getStringValue(FTPConstants.ENDPOINT_CONFIG_PATH);
+                if (privateKeyPath != null && !privateKeyPath.isEmpty()) {
+                    ftpConfig.put(Constants.IDENTITY, privateKeyPath);
+                    final String privateKeyPassword = privateKey.getStringValue(FTPConstants.ENDPOINT_CONFIG_PASS_KEY);
+                    if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
+                        ftpConfig.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword);
+                    }
+                }
+            }
+        }
         ftpConfig.put(FTPConstants.FTP_PASSIVE_MODE, String.valueOf(true));
         ftpConfig.put(FTPConstants.USER_DIR_IS_ROOT, String.valueOf(false));
         ftpConfig.put(FTPConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
         clientEndpoint.addNativeData(FTPConstants.PROPERTY_MAP, ftpConfig);
+        return null;
     }
 
-    public static ObjectValue get(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
+    public static Object get(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
 
         String url = FTPUtil.createUrl(clientConnector, filePath);
         Map<String, String> propertyMap = new HashMap<>(
@@ -100,7 +115,7 @@ public class FTPClient {
         return null;
     }
 
-    public static void append(ObjectValue clientConnector, MapValue<Object, Object> inputContent)
+    public static Object append(ObjectValue clientConnector, MapValue<Object, Object> inputContent)
             throws BallerinaFTPException {
 
         try {
@@ -134,9 +149,10 @@ public class FTPClient {
         } catch (RemoteFileSystemConnectorException | IOException e) {
             throw new BallerinaFTPException(e.getMessage());
         }
+        return null;
     }
 
-    public static void put(ObjectValue clientConnector, MapValue<Object, Object> inputContent)
+    public static Object put(ObjectValue clientConnector, MapValue<Object, Object> inputContent)
             throws BallerinaFTPException {
 
         Map<String, String> propertyMap = new HashMap<>(
@@ -191,9 +207,10 @@ public class FTPClient {
                 log.error("Error in closing stream");
             }
         }
+        return null;
     }
 
-    public static void delete(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
+    public static Object delete(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
 
         String url = FTPUtil.createUrl(clientConnector, filePath);
         Map<String, String> propertyMap = new HashMap<>(
@@ -212,9 +229,10 @@ public class FTPClient {
         }
         connector.send(null, FtpAction.DELETE);
         future.complete(null);
+        return null;
     }
 
-    public static boolean isDirectory(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
+    public static Object isDirectory(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
 
         String url = FTPUtil.createUrl(clientConnector, filePath);
         Map<String, String> propertyMap = new HashMap<>(
@@ -235,8 +253,7 @@ public class FTPClient {
         return false;
     }
 
-    public static ArrayValue list(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
-
+    public static Object list(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
         String url = FTPUtil.createUrl(clientConnector, filePath);
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FTPConstants.PROPERTY_MAP));
@@ -256,7 +273,7 @@ public class FTPClient {
         return null;
     }
 
-    public static void mkdir(ObjectValue clientConnector, String path) throws BallerinaFTPException {
+    public static Object mkdir(ObjectValue clientConnector, String path) throws BallerinaFTPException {
 
         String url = FTPUtil.createUrl(clientConnector, path);
         Map<String, String> propertyMap = new HashMap<>(
@@ -275,9 +292,10 @@ public class FTPClient {
         }
         connector.send(null, FtpAction.MKDIR);
         future.complete(null);
+        return null;
     }
 
-    public static void rename(ObjectValue clientConnector, String origin, String destination)
+    public static Object rename(ObjectValue clientConnector, String origin, String destination)
             throws BallerinaFTPException {
 
         Map<String, String> propertyMap = new HashMap<>(
@@ -297,9 +315,10 @@ public class FTPClient {
         }
         connector.send(null, FtpAction.RENAME);
         future.complete(null);
+        return null;
     }
 
-    public static void rmdir(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
+    public static Object rmdir(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
 
         String url = FTPUtil.createUrl(clientConnector, filePath);
         Map<String, String> propertyMap = new HashMap<>(
@@ -318,9 +337,10 @@ public class FTPClient {
         }
         connector.send(null, FtpAction.RMDIR);
         future.complete(null);
+        return null;
     }
 
-    public static int size(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
+    public static Object size(ObjectValue clientConnector, String filePath) throws BallerinaFTPException {
 
         String url = FTPUtil.createUrl(clientConnector, filePath);
         Map<String, String> propertyMap = new HashMap<>(
