@@ -70,8 +70,7 @@ public class FTPListener implements RemoteFileSystemListener {
     private MapValue<String, Object> getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
 
         MapValue<String, Object> watchEventStruct = BallerinaValues.createRecordValue(
-                new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
-                FTPConstants.FTP_SERVER_EVENT);
+                new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME), FTPConstants.FTP_SERVER_EVENT);
         List<FileInfo> addedFileList = fileSystemEvent.getAddedFiles();
         List<String> deletedFileList = fileSystemEvent.getDeletedFiles();
 
@@ -86,8 +85,8 @@ public class FTPListener implements RemoteFileSystemListener {
             fileInfoParams.put("lastModifiedTimestamp", info.getLastModifiedTime());
 
             final MapValue<String, Object> fileInfo = BallerinaValues.createRecordValue(
-                    new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
-                    FTPConstants.FTP_MODULE_VERSION), FTPConstants.FTP_FILE_INFO, fileInfoParams);
+                    new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME), FTPConstants.FTP_FILE_INFO,
+                    fileInfoParams);
             addedFiles.add(i, fileInfo);
         }
 
