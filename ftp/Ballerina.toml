@@ -1,6 +1,6 @@
 [project]
 org-name= "ballerina"
-version= "0.5.1"
+version= "0.5.0"
 license= ["Apache-2.0"]
 authors= ["Ballerina"]
 keywords= ["ftp"]
@@ -13,7 +13,7 @@ target = "java8"
 
     [[platform.libraries]]
     module = "utils/ftp-utils"
-    path = "../ftp-utils/target/ftp-utils-module-0.5.1.jar"
+    path = "../ftp-utils/target/ftp-utils-module-0.5.0.jar"
     artifactId = "wso2-ftp"
-    version = "0.5.1"
+    version = "0.5.0"
     groupId = "org.wso2.ei"

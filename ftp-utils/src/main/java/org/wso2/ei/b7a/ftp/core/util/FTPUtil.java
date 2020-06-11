@@ -162,8 +162,9 @@ public class FTPUtil {
      */
     public static BType getFileInfoType() {
 
-        MapValue<String, Object> fileInfoStruct = BallerinaValues.createRecordValue(new BPackage(
-                FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME), FTPConstants.FTP_FILE_INFO);
+        MapValue<String, Object> fileInfoStruct = BallerinaValues.createRecordValue(
+                new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
+                FTPConstants.FTP_FILE_INFO);
         return fileInfoStruct.getType();
     }
 

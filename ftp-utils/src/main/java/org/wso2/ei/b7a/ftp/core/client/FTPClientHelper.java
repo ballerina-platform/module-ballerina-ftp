@@ -134,8 +134,8 @@ class FTPClientHelper {
                 }
 
                 final MapValue<String, Object> ballerinaFileInfo = BallerinaValues.createRecordValue(
-                        new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME),
-                        FTPConstants.FTP_FILE_INFO, fileInfoParams);
+                        new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
+                                FTPConstants.FTP_MODULE_VERSION), FTPConstants.FTP_FILE_INFO, fileInfoParams);
                 arrayValue.add(i++, ballerinaFileInfo);
             }
             future.complete(arrayValue);

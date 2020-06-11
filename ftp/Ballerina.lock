@@ -1,4 +1,4 @@
 org_name = "ballerina"
-version = "0.5.1"
+version = "0.5.0"
 lockfile_version = "1.0.0"
-ballerina_version = "1.2.4"
+ballerina_version = "1.2.0"
