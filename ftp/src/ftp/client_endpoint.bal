@@ -28,13 +28,12 @@ public type Client client object {
     # Gets invoked during object initialization.
     #
     # + clientConfig - Configurations for FTP client endpoint
-    public function __init(ClientEndpointConfig clientConfig) {
+    public function init(ClientEndpointConfig clientConfig) {
         self.config = clientConfig;
-        map<anydata>|error configMap = map<anydata>.constructFrom(clientConfig);
-        if(configMap is map<anydata>){
-            error? response = initEndpoint(self, configMap);
-        } else {
+        error? response = initEndpoint(self, self.config);
+        if (response is error) {
             log:printError("Invalid config provided");
+            panic response;
         }
     }
 

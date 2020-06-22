@@ -20,11 +20,13 @@ package org.wso2.ei.b7a.ftp.core.client;
 
 import org.apache.commons.vfs2.FileSystemException;
 import org.ballerinalang.jvm.BallerinaValues;
+import org.ballerinalang.jvm.StringUtils;
 import org.ballerinalang.jvm.types.BArrayType;
 import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.jvm.values.api.BArray;
+import org.ballerinalang.jvm.values.api.BString;
 import org.ballerinalang.jvm.values.api.BValueCreator;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
@@ -55,9 +57,6 @@ import java.util.concurrent.CompletableFuture;
 class FTPClientHelper {
 
     private static final String READABLE_BYTE_CHANNEL = "ReadableByteChannel";
-    private static final String PACKAGE_BALLERINA = "ballerina";
-    private static final String PACKAGE_IO = "io";
-
     private static final Logger log = LoggerFactory.getLogger(FTPClientHelper.class);
 
     private FTPClientHelper() {
@@ -79,7 +78,8 @@ class FTPClientHelper {
             Channel channel = new FTPChannel(byteChannel);
 
             ObjectValue channelStruct = BallerinaValues.createObjectValue(
-                    new BPackage(PACKAGE_BALLERINA, PACKAGE_IO), READABLE_BYTE_CHANNEL);
+                    new BPackage(FTPConstants.IO_ORG_NAME, FTPConstants.IO_MODULE_NAME, FTPConstants.IO_MODULE_VERSION),
+                    READABLE_BYTE_CHANNEL);
             channelStruct.addNativeData(IOConstants.BYTE_CHANNEL_NAME, channel);
             future.complete(channelStruct);
         }
@@ -133,9 +133,9 @@ class FTPClientHelper {
                     log.error("Error while evaluating the pathDecoded value.", e);
                 }
 
-                final MapValue<String, Object> ballerinaFileInfo = BallerinaValues.createRecordValue(
-                        new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME),
-                        FTPConstants.FTP_FILE_INFO, fileInfoParams);
+                final MapValue<BString, Object> ballerinaFileInfo = BallerinaValues.createRecordValue(
+                        new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
+                                FTPConstants.FTP_MODULE_VERSION), FTPConstants.FTP_FILE_INFO, fileInfoParams);
                 arrayValue.add(i++, ballerinaFileInfo);
             }
             future.complete(arrayValue);
@@ -157,7 +157,8 @@ class FTPClientHelper {
 
         if (isFile) {
             try {
-                ObjectValue fileContent = inputContent.getObjectValue(FTPConstants.INPUT_CONTENT_FILE_CONTENT_KEY);
+                ObjectValue fileContent = inputContent.getObjectValue(StringUtils.fromString(
+                        FTPConstants.INPUT_CONTENT_FILE_CONTENT_KEY));
                 Channel byteChannel = (Channel) fileContent.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
                 return byteChannel.getInputStream();
             } catch (IOException e) {
@@ -165,7 +166,8 @@ class FTPClientHelper {
                 return null;
             }
         } else {
-            String textContent = inputContent.getStringValue(FTPConstants.INPUT_CONTENT_TEXT_CONTENT_KEY);
+            String textContent = (inputContent.getStringValue(StringUtils.fromString(
+                    FTPConstants.INPUT_CONTENT_TEXT_CONTENT_KEY))).getValue();
             return new ByteArrayInputStream(textContent.getBytes());
         }
     }

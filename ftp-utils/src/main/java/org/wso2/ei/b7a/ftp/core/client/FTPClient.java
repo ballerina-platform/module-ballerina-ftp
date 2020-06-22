@@ -19,6 +19,7 @@
 package org.wso2.ei.b7a.ftp.core.client;
 
 import org.ballerinalang.jvm.BRuntime;
+import org.ballerinalang.jvm.StringUtils;
 import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
@@ -57,7 +58,8 @@ public class FTPClient {
     public static Object initClientEndpoint(ObjectValue clientEndpoint, MapValue<Object, Object> config)
             throws BallerinaFTPException {
 
-        String protocol = config.getStringValue(FTPConstants.ENDPOINT_CONFIG_PROTOCOL);
+        String protocol = (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PROTOCOL)))
+                .getValue();
         if (FTPUtil.notValidProtocol(protocol)) {
             throw new BallerinaFTPException("Only FTP, SFTP and FTPS protocols are supported by FTP client.");
         }
@@ -68,19 +70,23 @@ public class FTPClient {
         clientEndpoint.addNativeData(FTPConstants.ENDPOINT_CONFIG_PASS_KEY,
                 authMap.get(FTPConstants.ENDPOINT_CONFIG_PASS_KEY));
         clientEndpoint.addNativeData(FTPConstants.ENDPOINT_CONFIG_HOST,
-                config.getStringValue(FTPConstants.ENDPOINT_CONFIG_HOST));
+                (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_HOST))).getValue());
         clientEndpoint.addNativeData(FTPConstants.ENDPOINT_CONFIG_PORT,
-                FTPUtil.extractPortValue(config.getIntValue(FTPConstants.ENDPOINT_CONFIG_PORT)));
+                FTPUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
+                        FTPConstants.ENDPOINT_CONFIG_PORT))));
         clientEndpoint.addNativeData(FTPConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
         Map<String, String> ftpConfig = new HashMap<>(5);
-        MapValue secureSocket = config.getMapValue(FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
+        MapValue secureSocket = config.getMapValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
         if (secureSocket != null) {
-            final MapValue privateKey = secureSocket.getMapValue(FTPConstants.ENDPOINT_CONFIG_PRIVATE_KEY);
+            final MapValue privateKey = secureSocket.getMapValue(StringUtils.fromString(
+                    FTPConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
             if (privateKey != null) {
-                final String privateKeyPath = privateKey.getStringValue(FTPConstants.ENDPOINT_CONFIG_PATH);
+                final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
+                        FTPConstants.ENDPOINT_CONFIG_PATH))).getValue();
                 if (privateKeyPath != null && !privateKeyPath.isEmpty()) {
                     ftpConfig.put(Constants.IDENTITY, privateKeyPath);
-                    final String privateKeyPassword = privateKey.getStringValue(FTPConstants.ENDPOINT_CONFIG_PASS_KEY);
+                    final String privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
+                            FTPConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
                     if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
                         ftpConfig.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword);
                     }
@@ -119,20 +125,23 @@ public class FTPClient {
             throws BallerinaFTPException {
 
         try {
-            String url = FTPUtil.createUrl(clientConnector,
-                    inputContent.getStringValue(FTPConstants.INPUT_CONTENT_FILE_PATH_KEY));
+            String url = FTPUtil.createUrl(clientConnector, (inputContent.getStringValue(StringUtils.fromString(
+                    FTPConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue());
             Map<String, String> propertyMap = new HashMap<>(
                     (Map<String, String>) clientConnector.getNativeData(FTPConstants.PROPERTY_MAP));
             propertyMap.put(FTPConstants.PROPERTY_URI, url);
 
-            boolean isFile = inputContent.getBooleanValue(FTPConstants.INPUT_CONTENT_IS_FILE_KEY);
+            boolean isFile = inputContent.getBooleanValue(StringUtils.fromString(
+                    FTPConstants.INPUT_CONTENT_IS_FILE_KEY));
             RemoteFileSystemMessage message;
             if (isFile) {
-                ObjectValue fileContent = inputContent.getObjectValue(FTPConstants.INPUT_CONTENT_FILE_CONTENT_KEY);
+                ObjectValue fileContent = inputContent.getObjectValue(StringUtils.fromString(
+                        FTPConstants.INPUT_CONTENT_FILE_CONTENT_KEY));
                 Channel byteChannel = (Channel) fileContent.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
                 message = new RemoteFileSystemMessage(byteChannel.getInputStream());
             } else {
-                String textContent = inputContent.getStringValue(FTPConstants.INPUT_CONTENT_TEXT_CONTENT_KEY);
+                String textContent = (inputContent.getStringValue(StringUtils.fromString(
+                        FTPConstants.INPUT_CONTENT_TEXT_CONTENT_KEY))).getValue();
                 InputStream stream = new ByteArrayInputStream(textContent.getBytes());
                 message = new RemoteFileSystemMessage(stream);
             }
@@ -157,8 +166,9 @@ public class FTPClient {
 
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FTPConstants.PROPERTY_MAP));
-        boolean isFile = inputContent.getBooleanValue(FTPConstants.INPUT_CONTENT_IS_FILE_KEY);
-        boolean compressInput = inputContent.getBooleanValue(FTPConstants.INPUT_CONTENT_COMPRESS_INPUT_KEY);
+        boolean isFile = inputContent.getBooleanValue(StringUtils.fromString(FTPConstants.INPUT_CONTENT_IS_FILE_KEY));
+        boolean compressInput = inputContent.getBooleanValue(StringUtils.fromString(
+                FTPConstants.INPUT_CONTENT_COMPRESS_INPUT_KEY));
         InputStream stream = FTPClientHelper.getUploadStream(inputContent, isFile);
         RemoteFileSystemMessage message;
         ByteArrayInputStream compressedStream = null;
@@ -166,19 +176,19 @@ public class FTPClient {
         try {
             if (stream != null) {
                 if (compressInput) {
-                    compressedStream = FTPUtil.compress(stream,
-                            inputContent.getStringValue(FTPConstants.INPUT_CONTENT_FILE_PATH_KEY));
+                    compressedStream = FTPUtil.compress(stream, (inputContent.getStringValue(StringUtils.fromString(
+                            FTPConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue());
                     if (compressedStream != null) {
-                        message = FTPClientHelper.getCompressedMessage(clientConnector,
-                                inputContent.getStringValue(FTPConstants.INPUT_CONTENT_FILE_PATH_KEY),
+                        message = FTPClientHelper.getCompressedMessage(clientConnector, (inputContent.getStringValue(
+                                StringUtils.fromString(FTPConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(),
                                 propertyMap, compressedStream);
                     } else {
                         throw new BallerinaFTPException("Error in compressing file");
                     }
                 } else {
-                    message = FTPClientHelper.getUncompressedMessage(clientConnector,
-                            inputContent.getStringValue(FTPConstants.INPUT_CONTENT_FILE_PATH_KEY),
-                            propertyMap, stream);
+                    message = FTPClientHelper.getUncompressedMessage(clientConnector, (inputContent.getStringValue(
+                            StringUtils.fromString(FTPConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(), propertyMap,
+                            stream);
                 }
             } else {
                 throw new BallerinaFTPException("Error in reading file");

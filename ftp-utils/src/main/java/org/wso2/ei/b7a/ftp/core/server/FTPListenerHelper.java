@@ -19,6 +19,7 @@
 package org.wso2.ei.b7a.ftp.core.server;
 
 import org.ballerinalang.jvm.BRuntime;
+import org.ballerinalang.jvm.StringUtils;
 import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.wso2.ei.b7a.ftp.core.util.BallerinaFTPException;
@@ -69,17 +70,21 @@ public class FTPListenerHelper {
 
         Map<String, String> params = new HashMap<>(12);
 
-        MapValue secureSocket = serviceEndpointConfig.getMapValue(FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET);
+        MapValue secureSocket = serviceEndpointConfig.getMapValue(StringUtils.fromString(
+                FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
         String url = FTPUtil.createUrl(serviceEndpointConfig);
         params.put(Constants.URI, url);
         addStringProperty(serviceEndpointConfig, params);
         if (secureSocket != null) {
-            final MapValue privateKey = secureSocket.getMapValue(FTPConstants.ENDPOINT_CONFIG_PRIVATE_KEY);
+            final MapValue privateKey = secureSocket.getMapValue(StringUtils.fromString(
+                    FTPConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
             if (privateKey != null) {
-                final String privateKeyPath = privateKey.getStringValue(FTPConstants.ENDPOINT_CONFIG_PATH);
+                final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
+                        FTPConstants.ENDPOINT_CONFIG_PATH))).getValue();
                 if (privateKeyPath != null && !privateKeyPath.isEmpty()) {
                     params.put(Constants.IDENTITY, privateKeyPath);
-                    final String privateKeyPassword = privateKey.getStringValue(FTPConstants.ENDPOINT_CONFIG_PASS_KEY);
+                    final String privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
+                            FTPConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
                     if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
                         params.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword);
                     }
@@ -94,7 +99,8 @@ public class FTPListenerHelper {
 
     private static void addStringProperty(MapValue config, Map<String, String> params) {
 
-        final String value = config.getStringValue(FTPConstants.ENDPOINT_CONFIG_FILE_PATTERN);
+        final String value = (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_FILE_PATTERN)))
+                .getValue();
         if (value != null && !value.isEmpty()) {
             params.put(Constants.FILE_NAME_PATTERN, value);
         }

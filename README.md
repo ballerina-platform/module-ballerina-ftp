@@ -16,7 +16,7 @@ The following sections provide you details on how to use the FTP connector.
 
 |                             |           Version           |
 |:---------------------------:|:---------------------------:|
-| Ballerina Language          |            1.2.x            |
+| Ballerina Language          |      Swan Lake Preview1     |
 
 ## Feature Overview
 

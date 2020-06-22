@@ -39,6 +39,7 @@ public class FTPConstants {
     public static final String PROPERTY_MAP = "map";
     public static final String FTP_ORG_NAME = "ballerina";
     public static final String FTP_MODULE_NAME = "ftp";
+    public static final String FTP_MODULE_VERSION = "0.9.0";
     public static final String FTP_LISTENER = "Listener";
     public static final String FTP_SERVER_EVENT = "WatchEvent";
     public static final String FTP_FILE_INFO = "FileInfo";
@@ -60,5 +61,8 @@ public class FTPConstants {
     public static final String INPUT_CONTENT_FILE_CONTENT_KEY = "fileContent";
     public static final String INPUT_CONTENT_TEXT_CONTENT_KEY = "textContent";
     public static final String INPUT_CONTENT_COMPRESS_INPUT_KEY = "compressInput";
+    public static final String IO_ORG_NAME = "ballerina";
+    public static final String IO_MODULE_NAME = "io";
+    public static final String IO_MODULE_VERSION = "0.5.0";
 
 }

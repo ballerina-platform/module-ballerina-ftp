@@ -26,6 +26,7 @@ import org.ballerinalang.jvm.types.BTypes;
 import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.jvm.values.api.BArray;
+import org.ballerinalang.jvm.values.api.BString;
 import org.ballerinalang.jvm.values.api.BValueCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,17 +61,18 @@ public class FTPListener implements RemoteFileSystemListener {
 
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
-            MapValue<String, Object> parameters = getSignatureParameters(event);
+            MapValue<BString, Object> parameters = getSignatureParameters(event);
             runtime.invokeMethodSync(service, service.getType().getAttachedFunctions()[0].getName(),
                     parameters, true);
         }
         return true;
     }
 
-    private MapValue<String, Object> getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
+    private MapValue<BString, Object> getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
 
-        MapValue<String, Object> watchEventStruct = BallerinaValues.createRecordValue(
-                new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME), FTPConstants.FTP_SERVER_EVENT);
+        MapValue<BString, Object> watchEventStruct = BallerinaValues.createRecordValue(
+                new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
+                FTPConstants.FTP_SERVER_EVENT);
         List<FileInfo> addedFileList = fileSystemEvent.getAddedFiles();
         List<String> deletedFileList = fileSystemEvent.getDeletedFiles();
 
@@ -84,9 +86,9 @@ public class FTPListener implements RemoteFileSystemListener {
             fileInfoParams.put("size", info.getFileSize());
             fileInfoParams.put("lastModifiedTimestamp", info.getLastModifiedTime());
 
-            final MapValue<String, Object> fileInfo = BallerinaValues.createRecordValue(
-                    new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME), FTPConstants.FTP_FILE_INFO,
-                    fileInfoParams);
+            final MapValue<BString, Object> fileInfo = BallerinaValues.createRecordValue(
+                    new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
+                            FTPConstants.FTP_MODULE_VERSION), FTPConstants.FTP_FILE_INFO, fileInfoParams);
             addedFiles.add(i, fileInfo);
         }
 
