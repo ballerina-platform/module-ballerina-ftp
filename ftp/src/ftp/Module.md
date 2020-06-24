@@ -32,7 +32,7 @@ For instance, if the listener gets invoked for text files, the value `(.*).txt` 
 
 |                             |           Version           |
 |:---------------------------:|:---------------------------:|
-| Ballerina Language          |            1.2.x            |
+| Ballerina Language          |      Swan Lake Preview1     |
 
 ## Samples
 

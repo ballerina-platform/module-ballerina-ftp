@@ -29,12 +29,12 @@ public type Listener object {
     private task:Scheduler? appointment = ();
     private handle? serverConnector = ();
 
-    public function __init(ListenerConfig listenerConfig) {
+    public function init(ListenerConfig listenerConfig) {
         self.config = listenerConfig;
     }
 
     public function __start() returns error? {
-        return self.start();
+        return self.'start();
     }
 
     public function __stop() returns error? {
@@ -57,7 +57,7 @@ public type Listener object {
         check self.stop();
     }
 
-    function start() returns error? {
+    function 'start() returns error? {
         var scheduler = self.config.cronExpression;
         if (scheduler is string) {
             task:AppointmentConfiguration config = { appointmentDetails: scheduler };

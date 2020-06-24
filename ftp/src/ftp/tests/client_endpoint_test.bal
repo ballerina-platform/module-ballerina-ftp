@@ -39,12 +39,8 @@ Client clientEP = new(config);
 boolean startedServer = initServer();
 
 function initServer() returns boolean {
-    map<anydata>|error configMap = map<anydata>.constructFrom(config);
-    if(configMap is map<anydata>){
-        error? response = initFtpServer(configMap);
-        return true;
-    }
-    return false;
+    error? response = initFtpServer(config);
+    return !(response is error);
 }
 
 @test:Config{
