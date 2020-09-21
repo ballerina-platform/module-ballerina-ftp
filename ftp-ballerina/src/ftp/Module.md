@@ -64,7 +64,6 @@ if(summaryChannel is io:ReadableByteChannel){
 }
 ```
 
-
 ##### Compressing and uploading a file to a remote server
 
 The following code compresses and uploads a file to a remote FTP server.
