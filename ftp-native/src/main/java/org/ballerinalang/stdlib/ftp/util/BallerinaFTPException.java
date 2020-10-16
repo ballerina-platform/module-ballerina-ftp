@@ -19,7 +19,7 @@
 package org.ballerinalang.stdlib.ftp.util;
 
 /**
- * Exception class for FTP
+ * Exception class for FTP.
  */
 public class BallerinaFTPException extends Exception {
 

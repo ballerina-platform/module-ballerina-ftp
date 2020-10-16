@@ -18,11 +18,11 @@
 
 package org.ballerinalang.stdlib.ftp.client;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.ballerinalang.jvm.api.BalFuture;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.stdlib.ftp.util.FTPUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 
@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 /**
- * Contains implementation of RemoteFileSystemListener
+ * Contains implementation of RemoteFileSystemListener.
  */
 public class FTPClientListener implements RemoteFileSystemListener {
 
@@ -40,10 +40,10 @@ public class FTPClientListener implements RemoteFileSystemListener {
 
     private BalFuture balFuture;
 
-    FTPClientListener(BalFuture BalFuture,
+    FTPClientListener(BalFuture listenerBalFuture,
                       Function<RemoteFileSystemBaseMessage, Boolean> function) {
 
-        this.balFuture = BalFuture;
+        this.balFuture = listenerBalFuture;
         this.function = function;
     }
 

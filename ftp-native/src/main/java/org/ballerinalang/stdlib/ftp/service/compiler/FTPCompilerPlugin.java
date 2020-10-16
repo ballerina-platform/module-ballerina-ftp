@@ -24,18 +24,18 @@ import org.ballerinalang.compiler.plugins.SupportedResourceParamTypes;
 import org.ballerinalang.model.tree.AnnotationAttachmentNode;
 import org.ballerinalang.model.tree.ServiceNode;
 import org.ballerinalang.model.types.TypeKind;
+import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BObjectType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.ballerinalang.compiler.tree.BLangFunction;
 import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
-import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 
 import java.util.List;
 
 /**
- * Abstract Compiler plugin for validating FTP Listener services
+ * Abstract Compiler plugin for validating FTP Listener services.
  */
 @SupportedResourceParamTypes(expectedListenerType = @SupportedResourceParamTypes.Type(
         orgName = FTPConstants.FTP_ORG_NAME,

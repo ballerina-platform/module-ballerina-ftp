@@ -36,3 +36,11 @@ dependencies {
     compile project(":ftp-native")
 }
 
+compileJava {
+    doFirst {
+        options.compilerArgs = [
+                '--module-path', classpath.asPath,
+        ]
+        classpath = files()
+    }
+}

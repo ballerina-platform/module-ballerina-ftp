@@ -146,7 +146,7 @@ public class FTPUtil {
     }
 
     /**
-     * Gives the port value from a given config input
+     * Gives the port value from a given config input.
      *
      * @param longValue the input config value
      * @return the relevant int value from the config
@@ -167,7 +167,7 @@ public class FTPUtil {
     }
 
     /**
-     * Gives record type object for FileInfo record
+     * Gives record type object for FileInfo record.
      *
      * @return FileInfo record type object
      */

@@ -21,7 +21,7 @@ package org.ballerinalang.stdlib.ftp.util;
 import org.wso2.transport.remotefilesystem.Constants;
 
 /**
- * Constants for FTP operations
+ * Constants for FTP operations.
  */
 public class FTPConstants {
 
@@ -63,6 +63,6 @@ public class FTPConstants {
     public static final String INPUT_CONTENT_COMPRESS_INPUT_KEY = "compressInput";
     public static final String IO_ORG_NAME = "ballerina";
     public static final String IO_MODULE_NAME = "io";
-    public static final String IO_MODULE_VERSION = "0.5.0";
+    public static final String IO_MODULE_VERSION = "0.5.1";
 
 }

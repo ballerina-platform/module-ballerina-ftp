@@ -29,10 +29,10 @@ import org.ballerinalang.jvm.api.values.BString;
 import org.ballerinalang.jvm.types.BArrayType;
 import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.jvm.types.BTypes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.stdlib.ftp.util.FTPUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
 import org.wso2.transport.remotefilesystem.message.FileInfo;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * FTP File System connector listener for Ballerina
+ * FTP File System connector listener for Ballerina.
  */
 public class FTPListener implements RemoteFileSystemListener {
 

@@ -3,7 +3,7 @@ org-name = "ballerina"
 version = "@toml.version@"
 
 [platform]
-target = "java8"
+target = "java11"
 
 [dependencies]
 "ballerina/task" = "@stdlib.task.version@"
@@ -44,14 +44,14 @@ target = "java8"
     [[platform.libraries]]
     artifactId = "ftp"
     version = "@project.version@"
-    path = "../ftp-native/build/libs/ftp-native-1.0.0-SNAPSHOT.jar"
+    path = "../ftp-native/build/libs/ftp-native-@project.version@.jar"
     groupId = "ballerina"
     modules = ["ftp"]
 
     [[platform.libraries]]
     artifactId = "ftp"
     version = "@project.version@"
-    path = "../ftp-test-utils/build/libs/ftp-test-utils-1.0.0-SNAPSHOT.jar"
+    path = "../ftp-test-utils/build/libs/ftp-test-utils-@project.version@.jar"
     groupId = "org.ballerinalang.stdlib.ftp"
     modules = ["ftp"]
     scope = "testOnly"

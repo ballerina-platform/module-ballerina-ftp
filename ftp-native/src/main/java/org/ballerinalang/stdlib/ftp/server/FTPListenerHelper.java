@@ -35,7 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Helper class for listener functions
+ * Helper class for listener functions.
  */
 public class FTPListenerHelper {
 

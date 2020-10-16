@@ -19,22 +19,22 @@
 package org.ballerinalang.stdlib.ftp.client;
 
 import org.apache.commons.vfs2.FileSystemException;
-import org.ballerinalang.jvm.api.BalFuture;
-import org.ballerinalang.jvm.types.BArrayType;
-import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.jvm.api.BStringUtils;
 import org.ballerinalang.jvm.api.BValueCreator;
+import org.ballerinalang.jvm.api.BalFuture;
 import org.ballerinalang.jvm.api.values.BArray;
 import org.ballerinalang.jvm.api.values.BMap;
 import org.ballerinalang.jvm.api.values.BObject;
 import org.ballerinalang.jvm.api.values.BString;
+import org.ballerinalang.jvm.types.BArrayType;
+import org.ballerinalang.jvm.types.BPackage;
+import org.ballerinalang.stdlib.ftp.util.BallerinaFTPException;
+import org.ballerinalang.stdlib.ftp.util.FTPConstants;
+import org.ballerinalang.stdlib.ftp.util.FTPUtil;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ballerinalang.stdlib.ftp.util.BallerinaFTPException;
-import org.ballerinalang.stdlib.ftp.util.FTPConstants;
-import org.ballerinalang.stdlib.ftp.util.FTPUtil;
 import org.wso2.transport.remotefilesystem.message.FileInfo;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import org.wso2.transport.remotefilesystem.message.RemoteFileSystemMessage;
@@ -51,7 +51,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Contains helper methods to invoke FTP actions
+ * Contains helper methods to invoke FTP actions.
  */
 class FTPClientHelper {
 
@@ -199,7 +199,7 @@ class FTPClientHelper {
     }
 
     /**
-     * Concrete implementation of the {@link Channel}
+     * Concrete implementation of the {@link Channel}.
      */
     private static class FTPChannel extends Channel {
 
@@ -228,7 +228,7 @@ class FTPClientHelper {
     }
 
     /**
-     * Create ByteChannel by encapsulating InputStream which comes from transport layer
+     * Create ByteChannel by encapsulating InputStream which comes from transport layer.
      */
     private static class FTPByteChannel implements ByteChannel {
 
