@@ -1,0 +1,57 @@
+[project]
+org-name = "ballerina"
+version = "@toml.version@"
+
+[platform]
+target = "java11"
+
+[dependencies]
+"ballerina/task" = "@stdlib.task.version@"
+"ballerina/runtime" = "@stdlib.runtime.version@"
+"ballerina/log" = "@stdlib.log.version@"
+"ballerina/io" = "@stdlib.io.version@"
+
+    [[platform.libraries]]
+    artifactId = "commons-vfs2"
+    version = "2.6.0"
+    path = "./lib/commons-vfs2-2.6.0.jar"
+    groupId = "org.apache.commons"
+
+    [[platform.libraries]]
+    artifactId = "commons-net"
+    version = "3.6"
+    path = "./lib/commons-net-3.6.jar"
+    groupId = "commons-net"
+
+    [[platform.libraries]]
+    artifactId = "testng"
+    version = "6.14.3"
+    path = "./lib/testng-6.14.3.jar"
+    groupId = "org.testng"
+
+    [[platform.libraries]]
+    artifactId = "MockFtpServer"
+    version = "2.7.1"
+    path = "./lib/MockFtpServer-2.7.1.jar"
+    groupId = "org.mockftpserver"
+
+    [[platform.libraries]]
+    artifactId = "org.wso2.transport.remote-file-system"
+    version = "6.0.57"
+    path = "./lib/org.wso2.transport.remote-file-system-6.0.57.jar"
+    groupId = "org.wso2.transport.file"
+
+    [[platform.libraries]]
+    artifactId = "ftp"
+    version = "@project.version@"
+    path = "../ftp-native/build/libs/ftp-native-@project.version@.jar"
+    groupId = "ballerina"
+    modules = ["ftp"]
+
+    [[platform.libraries]]
+    artifactId = "ftp"
+    version = "@project.version@"
+    path = "../ftp-test-utils/build/libs/ftp-test-utils-@project.version@.jar"
+    groupId = "org.ballerinalang.stdlib.ftp"
+    modules = ["ftp"]
+    scope = "testOnly"

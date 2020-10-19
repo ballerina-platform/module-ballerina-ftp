@@ -1,18 +1,15 @@
 # Compiled class file
 *.class
-
 # Log file
 *.log
-
 # BlueJ files
 *.ctxt
-
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
-
 # Package Files #
 *.jar
 *.war
+*.nar
 *.ear
 *.zip
 *.tar.gz
@@ -21,13 +18,18 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-# Ignore everything in this directory
+build
+.gradle/
 target
-.classpath
-.settings
-.project
+# IDEA Files
+.idea/
 *.iml
-*.iws
 *.ipr
-.idea
-.m2
+*.iws
+
+# MacOS
+*.DS_Store
+
+# Ballerina
+velocity.log*
+*Ballerina.lock

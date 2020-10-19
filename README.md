@@ -1,199 +1,73 @@
-[![Build Status](https://travis-ci.org/ballerina-platform/module-ftp.svg?branch=master)](https://travis-ci.org/ballerina-platform/module-ftp)
+Ballerina FTP Library
+=====================
 
-## Module Overview
+  [![Build](https://github.com/ballerina-platform/module-ballerina-ftp/workflows/Build%20master%20branch/badge.svg)](https://github.com/ballerina-platform/module-ballerina-ftp/actions?query=workflow%3ABuild)
+  [![Daily build](https://github.com/ballerina-platform/module-ballerina-ftp/workflows/Daily%20build/badge.svg)](https://github.com/ballerina-platform/module-ballerina-ftp/actions?query=workflow%3A%22Daily+build%22)
+  [![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/module-ballerina-ftp.svg)](https://github.com/ballerina-platform/module-ballerina-ftp/commits/master)
+  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The `ballerina/ftp` module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection 
-to a remote location.
+The ftp library is one of the standard library modules of the<a target="_blank" href="https://ballerina.io/"> Ballerina</a> language.
 
-The following sections provide you details on how to use the FTP connector.
+It provides implementation for file manipulation related operations over network using FTP protocol.
 
-- [Compatibility](#compatibility)
-- [Feature Overview](#feature-overview)
-- [Getting Started](#getting-started)
-- [Samples](#samples)
+For more information go to [The FTP Module](https://ballerina.io/swan-lake/learn/api-docs/ballerina/ftp/index.html).
 
-## Compatibility
+For example demonstrations of the usage, go to [Ballerina By Examples](https://ballerina.io/swan-lake/learn/by-example/).
 
-|                             |           Version           |
-|:---------------------------:|:---------------------------:|
-| Ballerina Language          |      Swan Lake Preview1     |
+## Building from the Source
 
-## Feature Overview
+### Setting Up the Prerequisites
 
-### FTP Client
-The `ftp:Client` connects to an FTP server and performs various operations on the files. Currently, it supports the 
-generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and
- `list`.
+1. Download and install Java SE Development Kit (JDK) version 11 (from one of the following locations).
 
-An FTP client endpoint is defined using the parameters `protocol` and `host`, and optionally the `port` and 
-`secureSocket`. Authentication configuration can be configured using the `secureSocket` parameter for basicAuth, 
-private key, or TrustStore/Keystore.
+   * [Oracle](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html)
 
-### FTP Listener
-The `ftp:Listener` is used to listen to a remote FTP location and trigger an event of `WatchEvent` type, when new 
-files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added 
-and/or deleted.
+   * [OpenJDK](https://adoptopenjdk.net/)
 
-An FTP listener endpoint is defined using the mandatory parameters `protocol`, `host` and  `path`. Authentication 
-configuration can be done using `secureSocket` and polling interval can be configured using `pollingInterval`. 
-Default polling interval is 60 seconds.
+        > **Note:** Set the JAVA_HOME environment variable to the path name of the directory into which you installed JDK.
+     
+### Building the Source
 
-The `fileNamePattern` parameter can be used to define the type of files the FTP listener endpoint will listen to. 
-For instance, if the listener gets invoked for text files, the value `(.*).txt` can be given for the config.
+Execute the commands below to build from source.
 
-## Getting Started
+1. To build the library:
 
-### Prerequisites
-Download and install [Ballerina](https://ballerina.io/downloads/).
+    ```shell script
+        ./gradlew clean build
+    ```
 
-### Pull the Module
-You can pull the FTP module from Ballerina Central using the command:
-```ballerina
-$ ballerina pull ballerina/ftp
-```
+2. To run the unit tests:
 
-## Samples
+    ```shell script
+        ./gradlew clean test
+    ```
 
-### FTP Listener Sample
-The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and 
-periodically notify on file addition and deletion.
+3. To build the module without the tests:
 
-```ballerina
-import ballerina/ftp;
-import ballerina/log;
+    ```shell script
+        ./gradlew clean build -x test
+    ```
 
-listener ftp:Listener remoteServer = new({
-    protocol: ftp:FTP,
-    host: "<The FTP host>",
-    secureSocket: {
-        basicAuth: {
-            username: "<The FTP username>",
-            password: "<The FTP passowrd>"
-        }
-    },
-    port: <The FTP port>,
-    path: "<The remote FTP direcotry location>",
-    pollingInterval: <Polling interval>,
-    fileNamePattern: "<File type>"
-});
+4. To debug the tests:
 
-service ftpServerConnector on remoteServer {
-    resource function onFileChange(ftp:WatchEvent fileEvent) {
+    ```shell script
+        ./gradlew clean test -Pdebug=<port>
+    ```
 
-        foreach ftp:FileInfo addedFile in fileEvent.addedFiles {
-            log:printInfo("Added file path: " + addedFile.path);
-        }
-        foreach string deletedFile in fileEvent.deletedFiles {
-            log:printInfo("Deleted file path: " + deletedFile);
-        }
-    }
-}
-```
+## Contributing to Ballerina
 
-### FTP Client Sample
-The FTP Client Connector can be used to connect to an FTP server and perform I/O operations.
+As an open source project, Ballerina welcomes contributions from the community. 
 
-```ballerina
-import ballerina/ftp;
-import ballerina/io;
-import ballerina/log;
+You can also check for [open issues](https://github.com/ballerina-platform/module-ballerina-ftp/issues) that interest you. We look forward to receiving your contributions.
 
-// Define FTP client configuration
-ftp:ClientEndpointConfig ftpConfig = {
-    protocol: ftp:FTP,
-    host: "<The FTP host>",
-    port: <The FTP port>,
-    secureSocket: {
-        basicAuth: {
-            username: "<The FTP username>",
-            password: "<The FTP passowrd>"
-        }
-    }
-};
+For more information, go to the [contribution guidelines](https://github.com/ballerina-platform/ballerina-lang/blob/master/CONTRIBUTING.md).
 
-// Create FTP client
-ftp:Client ftpClient = new(ftpConfig);
-    
-public function main() {
-    // Create a folder in remote server
-    error? mkdirResponse = ftpClient->mkdir("<The directory path>");
-    if (mkdirResponse is error) {
-        log:printError("Error occured in creating directory", mkdirResponse);
-        return;
-    }
-    
-    // Upload file to a remote server
-    io:ReadableByteChannel|error summaryChannel = io:openReadableFile("<The local data source path>");
-    if (summaryChannel is io:ReadableByteChannel) {
-        error? putResponse = ftpClient->put("<The resource path>", summaryChannel);   
-        if (putResponse is error) {
-            log:printError("Error occured in uploading content", putResponse);
-            return;
-        }
-    }
+## Code of Conduct
 
-    // Compress and upload file to a remote server
-    io:ReadableByteChannel|error inputChannel = io:openReadableFile("<Local data source path>");
-    if (inputChannel is io:ReadableByteChannel) {
-        // Set the optional boolean flag as 'true' to compress before uploading
-        error? compressedPutResponse = ftpClient->put("<Resource path>", inputChannel, true);   
-        if (compressedPutResponse is error) {
-            log:printError("Error occured in uploading content", compressedPutResponse);
-            return;
-        }
-    }
+All contributors are encouraged to read the [Ballerina Code of Conduct](https://ballerina.io/code-of-conduct).
 
-    // Get the size of a remote file
-    var sizeResponse = ftpClient->size("<The resource path>");
-    if (sizeResponse is int) {
-        log:printInfo("File size: " + sizeResponse.toString());
-    } else {
-        log:printError("Error occured in retrieving size", sizeResponse);
-        return;
-    }
-    
-    // Read content of a remote file
-    var getResponse = ftpClient->get("<The file path>");
-    if (getResponse is io:ReadableByteChannel) {
-        io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(getResponse, "utf-8");
-        if (characters is io:ReadableCharacterChannel) {
-            var output = characters.read(<No of characters to read>);
-            if (output is string) {
-                log:printInfo("File content: " + output);
-            } else {
-                log:printError("Error occured in retrieving content", output);
-                return;
-            }
-            var closeResult = characters.close();
-            if (closeResult is error) {
-                log:printError("Error occurred while closing the channel", closeResult);
-                return;
-            }
-        }
-    } else {
-        log:printError("Error occured in retrieving content", getResponse);
-        return;
-    }
-    
-    // Rename or move remote file to a another remote location in a same FTP server
-    error? renameResponse = ftpClient->rename("<The source file path>", "<The destination file path>");
-    if (renameResponse is error) {
-        log:printError("Error occurred while renaming the file", renameResponse);
-        return;
-    }
-    
-    // Delete remote file
-    error? deleteResponse = ftpClient->delete("<The resource path>");
-    if (deleteResponse is error) {
-        log:printError("Error occurred while deleting a file", deleteResponse);
-        return;
-    }
-    
-    // Remove directory from remote server
-    var rmdirResponse = ftpClient->rmdir("<The directory path>");
-    if (rmdirResponse is error) {
-        io:println("Error occured in removing directory.", rmdirResponse); 
-        return;
-    }
-}
-```
+## Useful Links
+
+* Discuss about code changes of the Ballerina project in [ballerina-dev@googlegroups.com](mailto:ballerina-dev@googlegroups.com).
+* Chat live with us via our [Slack channel](https://ballerina.io/community/slack/).
+* Post all technical questions on Stack Overflow with the [#ballerina](https://stackoverflow.com/questions/tagged/ballerina) tag.
