@@ -18,17 +18,17 @@
 
 package org.ballerinalang.stdlib.ftp.server;
 
-import org.ballerinalang.jvm.api.BRuntime;
-import org.ballerinalang.jvm.api.BValueCreator;
-import org.ballerinalang.jvm.api.connector.CallableUnitCallback;
-import org.ballerinalang.jvm.api.values.BArray;
-import org.ballerinalang.jvm.api.values.BError;
-import org.ballerinalang.jvm.api.values.BMap;
-import org.ballerinalang.jvm.api.values.BObject;
-import org.ballerinalang.jvm.api.values.BString;
-import org.ballerinalang.jvm.types.BArrayType;
-import org.ballerinalang.jvm.types.BPackage;
-import org.ballerinalang.jvm.types.BTypes;
+import io.ballerina.runtime.api.Module;
+import io.ballerina.runtime.api.PredefinedTypes;
+import io.ballerina.runtime.api.Runtime;
+import io.ballerina.runtime.api.ValueCreator;
+import io.ballerina.runtime.api.async.Callback;
+import io.ballerina.runtime.api.values.BArray;
+import io.ballerina.runtime.api.values.BError;
+import io.ballerina.runtime.api.values.BMap;
+import io.ballerina.runtime.api.values.BObject;
+import io.ballerina.runtime.api.values.BString;
+import io.ballerina.runtime.types.BArrayType;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.stdlib.ftp.util.FTPUtil;
 import org.slf4j.Logger;
@@ -48,10 +48,10 @@ import java.util.Map;
 public class FTPListener implements RemoteFileSystemListener {
 
     private static final Logger log = LoggerFactory.getLogger(FTPListener.class);
-    private final BRuntime runtime;
+    private final Runtime runtime;
     private final BObject service;
 
-    FTPListener(BRuntime runtime, BObject service) {
+    FTPListener(Runtime runtime, BObject service) {
 
         this.runtime = runtime;
         this.service = service;
@@ -64,7 +64,7 @@ public class FTPListener implements RemoteFileSystemListener {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             BMap<BString, Object> parameters = getSignatureParameters(event);
             runtime.invokeMethodAsync(service, service.getType().getAttachedFunctions()[0].getName(), null,
-                    null, new CallableUnitCallback() {
+                    null, new Callback() {
                 @Override
                 public void notifySuccess() {}
 
@@ -79,14 +79,14 @@ public class FTPListener implements RemoteFileSystemListener {
 
     private BMap<BString, Object> getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
 
-        BMap<BString, Object> watchEventStruct = BValueCreator.createRecordValue(
-                new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
+        BMap<BString, Object> watchEventStruct = ValueCreator.createRecordValue(
+                new Module(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
                 FTPConstants.FTP_SERVER_EVENT);
         List<FileInfo> addedFileList = fileSystemEvent.getAddedFiles();
         List<String> deletedFileList = fileSystemEvent.getDeletedFiles();
 
         // For newly added files
-        BArray addedFiles = BValueCreator.createArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
+        BArray addedFiles = ValueCreator.createArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
 
         for (int i = 0; i < addedFileList.size(); i++) {
             FileInfo info = addedFileList.get(i);
@@ -95,19 +95,19 @@ public class FTPListener implements RemoteFileSystemListener {
             fileInfoParams.put("size", info.getFileSize());
             fileInfoParams.put("lastModifiedTimestamp", info.getLastModifiedTime());
 
-            final BMap<BString, Object> fileInfo = BValueCreator.createRecordValue(
-                    new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
+            final BMap<BString, Object> fileInfo = ValueCreator.createRecordValue(
+                    new Module(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
                             FTPConstants.FTP_MODULE_VERSION), FTPConstants.FTP_FILE_INFO, fileInfoParams);
             addedFiles.add(i, fileInfo);
         }
 
         // For deleted files
-        BArray deletedFiles = BValueCreator.createArrayValue(new BArrayType(BTypes.typeString));
+        BArray deletedFiles = ValueCreator.createArrayValue(new BArrayType(PredefinedTypes.TYPE_STRING));
         for (int i = 0; i < deletedFileList.size(); i++) {
             deletedFiles.add(i, deletedFileList.get(i));
         }
         // WatchEvent
-        return BValueCreator.createRecordValue(watchEventStruct, addedFiles, deletedFiles);
+        return ValueCreator.createRecordValue(watchEventStruct, addedFiles, deletedFiles);
     }
 
     @Override

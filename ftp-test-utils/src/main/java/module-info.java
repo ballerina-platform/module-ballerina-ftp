@@ -18,7 +18,7 @@
 
 module io.ballerina.stdlib.ftp.testutils {
     requires commons.net;
-    requires io.ballerina.jvm;
+    requires io.ballerina.runtime;
     requires io.ballerina.packerina;
     requires io.ballerina.stdlib.ftp;
     requires org.slf4j;
