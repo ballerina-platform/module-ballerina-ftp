@@ -18,10 +18,10 @@
 
 package org.ballerinalang.stdlib.ftp.server;
 
-import org.ballerinalang.jvm.api.BRuntime;
-import org.ballerinalang.jvm.api.BStringUtils;
-import org.ballerinalang.jvm.api.values.BMap;
-import org.ballerinalang.jvm.api.values.BObject;
+import io.ballerina.runtime.api.Runtime;
+import io.ballerina.runtime.api.StringUtils;
+import io.ballerina.runtime.api.values.BMap;
+import io.ballerina.runtime.api.values.BObject;
 import org.ballerinalang.stdlib.ftp.util.BallerinaFTPException;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.stdlib.ftp.util.FTPUtil;
@@ -51,7 +51,7 @@ public class FTPListenerHelper {
         try {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-            final FTPListener listener = new FTPListener(BRuntime.getCurrentRuntime(), service);
+            final FTPListener listener = new FTPListener(Runtime.getCurrentRuntime(), service);
             if (name == null || name.isEmpty()) {
                 name = service.getType().getName();
             }
@@ -71,20 +71,20 @@ public class FTPListenerHelper {
 
         Map<String, String> params = new HashMap<>(12);
 
-        BMap secureSocket = serviceEndpointConfig.getMapValue(BStringUtils.fromString(
+        BMap secureSocket = serviceEndpointConfig.getMapValue(StringUtils.fromString(
                 FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
         String url = FTPUtil.createUrl(serviceEndpointConfig);
         params.put(Constants.URI, url);
         addStringProperty(serviceEndpointConfig, params);
         if (secureSocket != null) {
-            final BMap privateKey = secureSocket.getMapValue(BStringUtils.fromString(
+            final BMap privateKey = secureSocket.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
             if (privateKey != null) {
-                final String privateKeyPath = (privateKey.getStringValue(BStringUtils.fromString(
+                final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
                         FTPConstants.ENDPOINT_CONFIG_PATH))).getValue();
                 if (privateKeyPath != null && !privateKeyPath.isEmpty()) {
                     params.put(Constants.IDENTITY, privateKeyPath);
-                    final String privateKeyPassword = (privateKey.getStringValue(BStringUtils.fromString(
+                    final String privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
                             FTPConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
                     if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
                         params.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword);
@@ -100,7 +100,7 @@ public class FTPListenerHelper {
 
     private static void addStringProperty(BMap config, Map<String, String> params) {
 
-        final String value = (config.getStringValue(BStringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_FILE_PATTERN)))
+        final String value = (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_FILE_PATTERN)))
                 .getValue();
         if (value != null && !value.isEmpty()) {
             params.put(Constants.FILE_NAME_PATTERN, value);

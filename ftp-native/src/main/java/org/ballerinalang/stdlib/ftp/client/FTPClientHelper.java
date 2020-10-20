@@ -18,16 +18,16 @@
 
 package org.ballerinalang.stdlib.ftp.client;
 
+import io.ballerina.runtime.api.Future;
+import io.ballerina.runtime.api.Module;
+import io.ballerina.runtime.api.StringUtils;
+import io.ballerina.runtime.api.ValueCreator;
+import io.ballerina.runtime.api.values.BArray;
+import io.ballerina.runtime.api.values.BMap;
+import io.ballerina.runtime.api.values.BObject;
+import io.ballerina.runtime.api.values.BString;
+import io.ballerina.runtime.types.BArrayType;
 import org.apache.commons.vfs2.FileSystemException;
-import org.ballerinalang.jvm.api.BStringUtils;
-import org.ballerinalang.jvm.api.BValueCreator;
-import org.ballerinalang.jvm.api.BalFuture;
-import org.ballerinalang.jvm.api.values.BArray;
-import org.ballerinalang.jvm.api.values.BMap;
-import org.ballerinalang.jvm.api.values.BObject;
-import org.ballerinalang.jvm.api.values.BString;
-import org.ballerinalang.jvm.types.BArrayType;
-import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.stdlib.ftp.util.BallerinaFTPException;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.stdlib.ftp.util.FTPUtil;
@@ -62,21 +62,21 @@ class FTPClientHelper {
         // private constructor
     }
 
-    static boolean executeGenericAction(BalFuture balFuture) {
+    static boolean executeGenericAction(Future balFuture) {
 
         balFuture.complete(null);
         return true;
     }
 
     static boolean executeGetAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
-                                    BalFuture balFuture) {
+                                    Future balFuture) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
             ByteChannel byteChannel = new FTPByteChannel(in);
             Channel channel = new FTPChannel(byteChannel);
 
-            BObject channelStruct = BValueCreator.createObjectValue(
-                    new BPackage(FTPConstants.IO_ORG_NAME, FTPConstants.IO_MODULE_NAME, FTPConstants.IO_MODULE_VERSION),
+            BObject channelStruct = ValueCreator.createObjectValue(
+                    new Module(FTPConstants.IO_ORG_NAME, FTPConstants.IO_MODULE_NAME, FTPConstants.IO_MODULE_VERSION),
                     READABLE_BYTE_CHANNEL);
             channelStruct.addNativeData(IOConstants.BYTE_CHANNEL_NAME, channel);
             balFuture.complete(channelStruct);
@@ -85,7 +85,7 @@ class FTPClientHelper {
     }
 
     static boolean executeIsDirectoryAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
-                                            BalFuture balFuture) {
+                                            Future balFuture) {
 
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             balFuture.complete(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).isDirectory());
@@ -94,12 +94,12 @@ class FTPClientHelper {
     }
 
     static boolean executeListAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
-                                     BalFuture balFuture) {
+                                     Future balFuture) {
 
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
             Map<String, FileInfo> childrenInfo = message.getChildrenInfo();
-            BArray arrayValue = BValueCreator.createArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
+            BArray arrayValue = ValueCreator.createArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
 
             int i = 0;
             for (Map.Entry<String, FileInfo> entry : childrenInfo.entrySet()) {
@@ -131,8 +131,8 @@ class FTPClientHelper {
                     log.error("Error while evaluating the pathDecoded value.", e);
                 }
 
-                final BMap<BString, Object> ballerinaFileInfo = BValueCreator.createRecordValue(
-                        new BPackage(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
+                final BMap<BString, Object> ballerinaFileInfo = ValueCreator.createRecordValue(
+                        new Module(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
                                 FTPConstants.FTP_MODULE_VERSION), FTPConstants.FTP_FILE_INFO, fileInfoParams);
                 arrayValue.add(i++, ballerinaFileInfo);
             }
@@ -142,7 +142,7 @@ class FTPClientHelper {
     }
 
     static boolean executeSizeAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
-                                     BalFuture balFuture) {
+                                     Future balFuture) {
 
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
@@ -155,7 +155,7 @@ class FTPClientHelper {
 
         if (isFile) {
             try {
-                BObject fileContent = inputContent.getObjectValue(BStringUtils.fromString(
+                BObject fileContent = inputContent.getObjectValue(StringUtils.fromString(
                         FTPConstants.INPUT_CONTENT_FILE_CONTENT_KEY));
                 Channel byteChannel = (Channel) fileContent.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
                 return byteChannel.getInputStream();
@@ -164,7 +164,7 @@ class FTPClientHelper {
                 return null;
             }
         } else {
-            String textContent = (inputContent.getStringValue(BStringUtils.fromString(
+            String textContent = (inputContent.getStringValue(StringUtils.fromString(
                     FTPConstants.INPUT_CONTENT_TEXT_CONTENT_KEY))).getValue();
             return new ByteArrayInputStream(textContent.getBytes());
         }

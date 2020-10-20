@@ -18,7 +18,7 @@
 
 package org.ballerinalang.stdlib.ftp.client;
 
-import org.ballerinalang.jvm.api.BalFuture;
+import io.ballerina.runtime.api.Future;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.stdlib.ftp.util.FTPUtil;
 import org.slf4j.Logger;
@@ -38,12 +38,12 @@ public class FTPClientListener implements RemoteFileSystemListener {
     private CompletableFuture<Object> future;
     private Function<RemoteFileSystemBaseMessage, Boolean> function;
 
-    private BalFuture balFuture;
+    private Future balFuture;
 
-    FTPClientListener(BalFuture listenerBalFuture,
+    FTPClientListener(Future listenerFuture,
                       Function<RemoteFileSystemBaseMessage, Boolean> function) {
 
-        this.balFuture = listenerBalFuture;
+        this.balFuture = listenerFuture;
         this.function = function;
     }
 

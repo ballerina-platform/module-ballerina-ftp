@@ -18,8 +18,8 @@
 
 package org.ballerinalang.stdlib.ftp.testutils.mockServerUtils;
 
-import org.ballerinalang.jvm.api.BStringUtils;
-import org.ballerinalang.jvm.api.values.BMap;
+import io.ballerina.runtime.api.StringUtils;
+import io.ballerina.runtime.api.values.BMap;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
@@ -48,19 +48,19 @@ public class MockFTPServer {
 
     public static void initServer(BMap<Object, Object> config) throws BallerinaFTPException {
 
-        int port = FTPUtil.extractPortValue(config.getIntValue(BStringUtils.fromString(
+        int port = FTPUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                 FTPConstants.ENDPOINT_CONFIG_PORT)));
-        final BMap secureSocket = config.getMapValue(BStringUtils.fromString(
+        final BMap secureSocket = config.getMapValue(StringUtils.fromString(
                 FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
         String username = null;
         String password = null;
         if (secureSocket != null) {
-            final BMap basicAuth = secureSocket.getMapValue(BStringUtils.fromString(
+            final BMap basicAuth = secureSocket.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
-                username = (basicAuth.getStringValue(BStringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))
+                username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))
                         .getValue();
-                password = (basicAuth.getStringValue(BStringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PASS_KEY)))
+                password = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
         }
