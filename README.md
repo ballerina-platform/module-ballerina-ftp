@@ -12,8 +12,6 @@ It provides implementation for file manipulation related operations over network
 
 For more information go to [The FTP Module](https://ballerina.io/swan-lake/learn/api-docs/ballerina/ftp/index.html).
 
-For example demonstrations of the usage, go to [Ballerina By Examples](https://ballerina.io/swan-lake/learn/by-example/).
-
 ## Issues and Projects 
 
 Issues and Projects tabs are disabled for this repository as this is part of the Ballerina Standard Library. To report bugs, request new features, start new discussions, view project boards, etc. please visit Ballerina Standard Library [parent repository](https://github.com/ballerina-platform/ballerina-standard-library). 
