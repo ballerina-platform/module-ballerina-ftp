@@ -102,7 +102,7 @@ public class Listener {
     isolated function 'start() returns error? {
         var scheduler = self.config.cronExpression;
         if (scheduler is string) {
-            task:AppointmentConfiguration config = { appointmentDetails: scheduler };
+            task:AppointmentConfiguration config = { cronExpression: scheduler };
             self.appointment = new(config);
         } else {
             task:TimerConfiguration config = { intervalInMillis: self.config.pollingInterval, initialDelayInMillis: 100};
