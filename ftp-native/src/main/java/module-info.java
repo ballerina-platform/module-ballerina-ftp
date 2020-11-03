@@ -22,6 +22,7 @@ module io.ballerina.stdlib.ftp {
     requires io.ballerina.runtime;
     requires io.ballerina.lang;
     requires io.ballerina.stdlib.io;
+    requires io.ballerina.tools.api;
     requires org.slf4j;
     requires org.wso2.transport.remote.file.system;
     exports org.ballerinalang.stdlib.ftp.client;

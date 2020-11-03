@@ -19,13 +19,13 @@
 
 package org.ballerinalang.stdlib.ftp.service.compiler;
 
+import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 import org.ballerinalang.compiler.plugins.AbstractCompilerPlugin;
 import org.ballerinalang.compiler.plugins.SupportedResourceParamTypes;
 import org.ballerinalang.model.tree.AnnotationAttachmentNode;
 import org.ballerinalang.model.tree.ServiceNode;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
-import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BObjectType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
@@ -63,17 +63,17 @@ public class FTPCompilerPlugin extends AbstractCompilerPlugin {
         @SuppressWarnings("unchecked")
         List<BLangFunction> resources = (List<BLangFunction>) serviceNode.getResources();
         if (resources.isEmpty()) {
-            dlog.logDiagnostic(Diagnostic.Kind.ERROR, serviceNode.getPosition(),
+            dlog.logDiagnostic(DiagnosticSeverity.ERROR, serviceNode.getPosition(),
                     "No resources defined for the service: " + serviceNode.getName().getValue());
         } else if (resources.size() >= 2) {
-            dlog.logDiagnostic(Diagnostic.Kind.ERROR, serviceNode.getPosition(),
+            dlog.logDiagnostic(DiagnosticSeverity.ERROR, serviceNode.getPosition(),
                     "Only one resource allowed for the service: " + serviceNode.getName().getValue());
         }
         if (resources.size() == 1) {
             final List<BLangSimpleVariable> parameters = resources.get(0).getParameters();
 
             if (parameters.size() != 1) {
-                dlog.logDiagnostic(Diagnostic.Kind.ERROR, resources.get(0).getPosition(),
+                dlog.logDiagnostic(DiagnosticSeverity.ERROR, resources.get(0).getPosition(),
                         "Invalid resource signature. A single " + FTPConstants.FTP_SERVER_EVENT
                                 + " parameter is required for the resource signature.");
             }
@@ -82,7 +82,7 @@ public class FTPCompilerPlugin extends AbstractCompilerPlugin {
                 BObjectType event = (BObjectType) type;
                 if (!"ftp".equals(event.tsymbol.pkgID.name.value) || !FTPConstants.FTP_SERVER_EVENT
                         .equals(event.tsymbol.name.value)) {
-                    dlog.logDiagnostic(Diagnostic.Kind.ERROR, parameters.get(0).getPosition(),
+                    dlog.logDiagnostic(DiagnosticSeverity.ERROR, parameters.get(0).getPosition(),
                             "Parameter should be of type - ftp:" + FTPConstants.FTP_SERVER_EVENT);
                 }
             }
