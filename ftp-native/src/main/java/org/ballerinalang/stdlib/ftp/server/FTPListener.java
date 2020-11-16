@@ -21,14 +21,14 @@ package org.ballerinalang.stdlib.ftp.server;
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.PredefinedTypes;
 import io.ballerina.runtime.api.Runtime;
-import io.ballerina.runtime.api.ValueCreator;
 import io.ballerina.runtime.api.async.Callback;
+import io.ballerina.runtime.api.creators.TypeCreator;
+import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
-import io.ballerina.runtime.types.BArrayType;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.stdlib.ftp.util.FTPUtil;
 import org.slf4j.Logger;
@@ -86,7 +86,7 @@ public class FTPListener implements RemoteFileSystemListener {
         List<String> deletedFileList = fileSystemEvent.getDeletedFiles();
 
         // For newly added files
-        BArray addedFiles = ValueCreator.createArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
+        BArray addedFiles = ValueCreator.createArrayValue(TypeCreator.createArrayType(FTPUtil.getFileInfoType()));
 
         for (int i = 0; i < addedFileList.size(); i++) {
             FileInfo info = addedFileList.get(i);
@@ -102,7 +102,7 @@ public class FTPListener implements RemoteFileSystemListener {
         }
 
         // For deleted files
-        BArray deletedFiles = ValueCreator.createArrayValue(new BArrayType(PredefinedTypes.TYPE_STRING));
+        BArray deletedFiles = ValueCreator.createArrayValue(TypeCreator.createArrayType(PredefinedTypes.TYPE_STRING));
         for (int i = 0; i < deletedFileList.size(); i++) {
             deletedFiles.add(i, deletedFileList.get(i));
         }
