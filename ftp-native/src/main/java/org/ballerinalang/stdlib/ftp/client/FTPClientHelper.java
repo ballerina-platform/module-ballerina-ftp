@@ -20,13 +20,13 @@ package org.ballerinalang.stdlib.ftp.client;
 
 import io.ballerina.runtime.api.Future;
 import io.ballerina.runtime.api.Module;
-import io.ballerina.runtime.api.StringUtils;
-import io.ballerina.runtime.api.ValueCreator;
+import io.ballerina.runtime.api.creators.TypeCreator;
+import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
-import io.ballerina.runtime.types.BArrayType;
 import org.apache.commons.vfs2.FileSystemException;
 import org.ballerinalang.stdlib.ftp.util.BallerinaFTPException;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
@@ -99,7 +99,7 @@ class FTPClientHelper {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
             Map<String, FileInfo> childrenInfo = message.getChildrenInfo();
-            BArray arrayValue = ValueCreator.createArrayValue(new BArrayType(FTPUtil.getFileInfoType()));
+            BArray arrayValue = ValueCreator.createArrayValue(TypeCreator.createArrayType(FTPUtil.getFileInfoType()));
 
             int i = 0;
             for (Map.Entry<String, FileInfo> entry : childrenInfo.entrySet()) {

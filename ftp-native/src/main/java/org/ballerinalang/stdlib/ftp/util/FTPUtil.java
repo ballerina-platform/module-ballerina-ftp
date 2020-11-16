@@ -18,16 +18,15 @@
 
 package org.ballerinalang.stdlib.ftp.util;
 
-import io.ballerina.runtime.api.ErrorCreator;
 import io.ballerina.runtime.api.Module;
-import io.ballerina.runtime.api.StringUtils;
-import io.ballerina.runtime.api.ValueCreator;
+import io.ballerina.runtime.api.creators.ErrorCreator;
+import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.Type;
+import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
-import io.ballerina.runtime.types.BAnnotatableType;
-import io.ballerina.runtime.types.BType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,12 +171,12 @@ public class FTPUtil {
      *
      * @return FileInfo record type object
      */
-    public static BType getFileInfoType() {
+    public static Type getFileInfoType() {
 
         BMap<BString, Object> fileInfoStruct = ValueCreator.createRecordValue(new Module(
                 FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
                 FTPConstants.FTP_FILE_INFO);
-        return (BAnnotatableType) fileInfoStruct.getType();
+        return fileInfoStruct.getType();
     }
 
     public static ByteArrayInputStream compress(InputStream inputStream, String targetFilePath) {
