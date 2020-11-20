@@ -21,8 +21,8 @@ import ballerina/java;
 
 string filePath = "/home/in/test1.txt";
 string newFilePath = "/home/in/test2.txt";
-string appendFilePath = "ftp-ballerina/tests/resources/datafiles/file1.txt";
-string putFilePath = "ftp-ballerina/tests/resources/datafiles/file2.txt";
+string appendFilePath = "tests/resources/datafiles/file1.txt";
+string putFilePath = "tests/resources/datafiles/file2.txt";
 
 // Create the config to access mock FTP server
 ClientEndpointConfig config = {
