@@ -15,10 +15,12 @@
 // under the License.
 
 import ballerina/log;
+import ballerina/runtime;
 import ballerina/test;
 
 int addedFileCount = 0;
 int deletedFileCount = 0;
+boolean watchEventReceived = false;
 
 listener Listener remoteServer = new({
     protocol: FTP,
@@ -39,6 +41,7 @@ service ftpServerConnector on remoteServer {
     resource function onFileChange(WatchEvent event) {
         addedFileCount = <@untainted> event.addedFiles.length();
         deletedFileCount = <@untainted> event.deletedFiles.length();
+        watchEventReceived = true;
 
         foreach FileInfo addedFile in event.addedFiles {
             log:printInfo("Added file path: " + addedFile.path);
@@ -52,6 +55,19 @@ service ftpServerConnector on remoteServer {
 @test:Config{
 }
 public function testAddedFileCount() {
-    log:printInfo("Added file count: " + addedFileCount.toString());
-    test:assertEquals(3, addedFileCount);
+    int timeoutInSeconds = 300;
+    // Test fails in 5 minutes if failed to receive watchEvent
+    while (timeoutInSeconds > 0) {
+        if (watchEventReceived) {
+            log:printInfo("Added file count: " + addedFileCount.toString());
+            test:assertEquals(3, addedFileCount);
+            break;
+        } else {
+            runtime:sleep(1000);
+            timeoutInSeconds = timeoutInSeconds - 1;
+        }
+    }
+    if (timeoutInSeconds == 0) {
+        test:assertFail("Failed to receive WatchEvent for 5 minuetes.");
+    }
 }
