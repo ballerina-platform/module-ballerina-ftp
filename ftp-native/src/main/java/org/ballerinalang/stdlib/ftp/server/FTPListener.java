@@ -66,7 +66,7 @@ public class FTPListener implements RemoteFileSystemListener {
             runtime.invokeMethodAsync(service, service.getType().getAttachedFunctions()[0].getName(), null,
                     null, new Callback() {
                 @Override
-                public void notifySuccess() {}
+                public void notifySuccess(Object o) {}
 
                 @Override
                 public void notifyFailure(BError error) {

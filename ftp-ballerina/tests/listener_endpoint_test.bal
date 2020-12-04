@@ -37,8 +37,8 @@ listener Listener remoteServer = new({
     fileNamePattern: "(.*).txt"
 });
 
-service ftpServerConnector on remoteServer {
-    resource function onFileChange(WatchEvent event) {
+service "ftpServerConnector" on remoteServer {
+    remote function onFileChange(WatchEvent event) {
         addedFileCount = <@untainted> event.addedFiles.length();
         deletedFileCount = <@untainted> event.deletedFiles.length();
         watchEventReceived = true;

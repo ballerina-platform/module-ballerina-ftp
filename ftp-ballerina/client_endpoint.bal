@@ -46,7 +46,7 @@ public client class Client {
     # + return - A ReadableByteChannel that represents the data source to the
     #            resource or an `error` if failed to establish communication
     #            with the FTP server or read the resource
-    public remote isolated function get(string path) returns io:ReadableByteChannel|error {
+    remote isolated function get(string path) returns io:ReadableByteChannel|error {
         handle resourcePath = java:fromString(path);
         return get(self, resourcePath);
     }
@@ -61,7 +61,7 @@ public client class Client {
     # + content - Content to be written to the file in server
     # + return - An `error` if failed to establish communication with the FTP
     #            server
-    public remote isolated function append(string path, io:ReadableByteChannel|string|xml|json content) returns error? {
+    remote isolated function append(string path, io:ReadableByteChannel|string|xml|json content) returns error? {
         return append(self, getInputContent(path, content));
     }
 
@@ -75,7 +75,7 @@ public client class Client {
     # + compressInput - True if file should be compressed before uploading
     # + return - An `error` if failed to establish communication with the FTP
     #            server
-    public remote isolated function put(string path, io:ReadableByteChannel|string|xml|json content,
+    remote isolated function put(string path, io:ReadableByteChannel|string|xml|json content,
                                                                 boolean compressInput=false) returns error? {
         return put(self, getInputContent(path, content, compressInput));
     }
@@ -89,7 +89,7 @@ public client class Client {
     # + path - The directory path
     # + return - An `error` if failed to establish communication with the FTP
     #            server
-    public remote isolated function mkdir(string path) returns error? {
+    remote isolated function mkdir(string path) returns error? {
         handle resourcePath = java:fromString(path);
         return mkdir(self, resourcePath);
     }
@@ -103,7 +103,7 @@ public client class Client {
     # + path - The directory path
     # + return - An `error` if failed to establish communication with the FTP
     #            server
-    public remote isolated function rmdir(string path) returns error? {
+    remote isolated function rmdir(string path) returns error? {
         handle resourcePath = java:fromString(path);
         return rmdir(self, resourcePath);
     }
@@ -118,7 +118,7 @@ public client class Client {
     # + destination - The destination file location
     # + return - An `error` if failed to establish communication with the FTP
     #            server
-    public remote isolated function rename(string origin, string destination) returns error? {
+    remote isolated function rename(string origin, string destination) returns error? {
         handle originPath = java:fromString(origin);
         handle destinationPath = java:fromString(destination);
         return rename(self, originPath, destinationPath);
@@ -132,7 +132,7 @@ public client class Client {
     # + path - The resource path
     # + return - The file size in bytes or an `error` if failed to establish
     #            communication with the FTP server
-    public remote isolated function size(string path) returns int|error {
+    remote isolated function size(string path) returns int|error {
         handle resourcePath = java:fromString(path);
         return size(self, resourcePath);
     }
@@ -146,7 +146,7 @@ public client class Client {
     # + path - The direcotry path
     # + return - An array of file names or an `error` if failed to establish
     #            communication with the FTP server
-    public remote isolated function list(string path) returns FileInfo[]|error {
+    remote isolated function list(string path) returns FileInfo[]|error {
         handle resourcePath = java:fromString(path);
         return list(self, resourcePath);
     }
@@ -160,7 +160,7 @@ public client class Client {
     # + path - The resource path
     # + return - true if given resource is a direcotry or an `error` if failed
     #            to establish communication with the FTP server
-    public remote isolated function isDirectory(string path) returns boolean|error {
+    remote isolated function isDirectory(string path) returns boolean|error {
         handle resourcePath = java:fromString(path);
         return isDirectory(self, resourcePath);
     }
@@ -173,7 +173,7 @@ public client class Client {
     # + path - The resource path
     # + return -  An `error` if failed to establish communication with the FTP
     #             server
-    public remote isolated function delete(string path) returns error? {
+    remote isolated function delete(string path) returns error? {
         handle resourcePath = java:fromString(path);
         return delete(self, resourcePath);
     }

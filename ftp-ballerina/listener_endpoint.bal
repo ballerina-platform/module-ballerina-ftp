@@ -16,13 +16,10 @@
 
 import ballerina/log;
 import ballerina/task;
-import ballerina/lang.'object as lang;
 import ballerina/java;
 
 # Represents a service listener that monitors the FTP location.
 public class Listener {
-
-    *lang:Listener;
 
     private handle EMPTY_JAVA_STRING = java:fromString("");
     private ListenerConfig config = {};
@@ -38,12 +35,12 @@ public class Listener {
 
     # Starts the `ftp:Listener`.
     # ```ballerina
-    # error? response = listener->__start();
+    # error? response = listener->start();
     # ```
     #
     # + return - () or else `error` upon failure to start the listener
-    public isolated function __start() returns error? {
-        return self.'start();
+    public isolated function 'start() returns error? {
+        return self.internalStart();
     }
 
     # Stops the `ftp:Listener`.
@@ -58,48 +55,50 @@ public class Listener {
 
     # Binds a service to the `ftp:Listener`.
     # ```ballerina
-    # error? response = listener->__attach(service1);
+    # error? response = listener->attach(service1);
     # ```
     #
     # + s - Service to be detached from the listener
     # + name - Name of the service to be detached from the listener
     # + return - `()` or else a `error` upon failure to register the listener
-    public isolated function __attach(service s, string? name) returns error? {
-        return self.register(s, name);
+    public isolated function attach(service object {} s, string[]|string? name = ()) returns error? {
+        if (name is string?) {
+            return self.register(s, name);
+        }
     }
 
     # Stops consuming messages and detaches the service from the `ftp:Listener`.
     # ```ballerina
-    # error? response = listener->__detach(service1);
+    # error? response = listener->detach(service1);
     # ```
     #
     # + s - Service to be detached from the listener
     # + return - `()` or else a `error` upon failure to detach the service
-    public isolated function __detach(service s) returns error? {
+    public isolated function detach(service object {} emailService) returns error? {
 
     }
 
     # Stops the `ftp:Listener` forcefully.
     # ```ballerina
-    # error? response = listener->__immediateStop();
+    # error? response = listener->immediateStop();
     # ```
     #
     # + return - `()` or else a `error` upon failure to stop the listener
-    public isolated function __immediateStop() returns error? {
+    public isolated function immediateStop() returns error? {
         check self.stop();
     }
 
     # Stops the `ftp:Listener` gracefully.
     # ```ballerina
-    # error? response = listener->__gracefulStop();
+    # error? response = listener->gracefulStop();
     # ```
     #
     # + return - () or else `error` upon failure to stop the listener
-    public isolated function __gracefulStop() returns error? {
+    public isolated function gracefulStop() returns error? {
         check self.stop();
     }
 
-    isolated function 'start() returns error? {
+    isolated function internalStart() returns error? {
         var scheduler = self.config.cronExpression;
         if (scheduler is string) {
             task:AppointmentConfiguration config = { cronExpression: scheduler };
@@ -145,7 +144,7 @@ public class Listener {
     # + name - Name of the FTP service
     # + return - An `error` if failed to establish communication with the FTP
     #            server
-    public isolated function register(service ftpService, string? name) returns error? {
+    public isolated function register(service object {} ftpService, string? name) returns error? {
         error? response = ();
         handle serviceName = self.EMPTY_JAVA_STRING;
         if(name is string){
@@ -161,8 +160,8 @@ public class Listener {
     }
 }
 
-final service appointmentService = service {
-    resource isolated function onTrigger(Listener l) {
+final service isolated object{} appointmentService = service object {
+    remote isolated function onTrigger(Listener l) {
         var result = l.poll();
         if (result is error) {
             log:printError("Error while executing poll function", result);

@@ -77,7 +77,7 @@ isolated function poll(ListenerConfig config) returns error? = @java:Method{
     'class: "org.ballerinalang.stdlib.ftp.server.FTPListenerHelper"
 } external;
 
-isolated function register(Listener listenerEndpoint, ListenerConfig config, service ftpService, handle name)
+isolated function register(Listener listenerEndpoint, ListenerConfig config, service object {} ftpService, handle name)
     returns handle|error = @java:Method{
     name: "register",
     'class: "org.ballerinalang.stdlib.ftp.server.FTPListenerHelper"
