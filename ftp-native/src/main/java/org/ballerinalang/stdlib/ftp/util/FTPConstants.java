@@ -63,6 +63,6 @@ public class FTPConstants {
     public static final String INPUT_CONTENT_COMPRESS_INPUT_KEY = "compressInput";
     public static final String IO_ORG_NAME = "ballerina";
     public static final String IO_MODULE_NAME = "io";
-    public static final String IO_MODULE_VERSION = "0.5.3";
+    public static final String IO_MODULE_VERSION = "0.5.4";
 
 }
