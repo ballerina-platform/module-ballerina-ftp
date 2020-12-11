@@ -43,7 +43,7 @@ The following code creates a directory in the remote FTP server.
 ```ballerina
 error? mkdirResponse = ftpClient->mkdir("<The directory path>");
 if (mkdirResponse is error) {
-    log:printError("Error occured in creating directory", mkdirResponse);
+    log:printError("Error occured in creating directory", err = mkdirResponse);
     return;
 }
 ```
@@ -58,7 +58,7 @@ io:ReadableByteChannel|error summaryChannel
 if(summaryChannel is io:ReadableByteChannel){
     error? putResponse = ftpClient->put("<The resource path>", summaryChannel);   
     if(putResponse is error) {
-        log:printError("Error occured in uploading content", putResponse);
+        log:printError("Error occured in uploading content", err = putResponse);
         return;
     }
 }
@@ -77,7 +77,7 @@ if (inputChannel is io:ReadableByteChannel) {
         inputChannel, true);   
     if (compressedPutResponse is error) {
         log:printError("Error occured in uploading content",
-            compressedPutResponse);
+            err = compressedPutResponse);
         return;
     }
 }
@@ -90,9 +90,9 @@ The following code get and size of a file of a file in remote FTP server.
 ```ballerina
 var sizeResponse = ftpClient->size("<The resource path>");
 if (sizeResponse is int) {
-    log:printInfo("File size: " + sizeResponse.toString());
+    log:print("File size: " + sizeResponse.toString());
 } else {
-    log:printError("Error occured in retrieving size", sizeResponse);
+    log:printError("Error occured in retrieving size", err = sizeResponse);
     return;
 }
 ```
@@ -109,20 +109,20 @@ if (getResponse is io:ReadableByteChannel) {
     if (characters is io:ReadableCharacterChannel) {
         var output = characters.read(<No of characters to read>);
         if (output is string) {
-            log:printInfo("File content: " + output);
+            log:print("File content: " + output);
         } else {
-            log:printError("Error occured in retrieving content", output);
+            log:printError("Error occured in retrieving content", err = output);
             return;
         }
         var closeResult = characters.close();
         if (closeResult is error) {
             log:printError("Error occurred while closing the channel",
-                closeResult);
+                err = closeResult);
             return;
         }
     }
 } else {
-    log:printError("Error occured in retrieving content", getResponse);
+    log:printError("Error occured in retrieving content", err = getResponse);
     return;
 }
 ```
@@ -135,7 +135,7 @@ The following rename or move remote a file to another location in the same remot
 error? renameResponse = ftpClient->rename("<The source file path>",
     "<The destination file path>");
 if (renameResponse is error) {
-    log:printError("Error occurred while renaming the file", renameResponse);
+    log:printError("Error occurred while renaming the file", err = renameResponse);
     return;
 }
 ```
@@ -147,7 +147,7 @@ The following delete a remote file in a remote FTP server.
 ```ballerina
 error? deleteResponse = ftpClient->delete("<The resource path>");
 if (deleteResponse is error) {
-    log:printError("Error occurred while deleting a file", deleteResponse);
+    log:printError("Error occurred while deleting a file", err = deleteResponse);
     return;
 }
 ```
@@ -205,10 +205,10 @@ service ftpServerConnector on remoteServer {
     resource function onFileChange(ftp:WatchEvent fileEvent) {
 
         foreach ftp:FileInfo addedFile in fileEvent.addedFiles {
-            log:printInfo("Added file path: " + addedFile.path);
+            log:print("Added file path: " + addedFile.path);
         }
         foreach string deletedFile in fileEvent.deletedFiles {
-            log:printInfo("Deleted file path: " + deletedFile);
+            log:print("Deleted file path: " + deletedFile);
         }
     }
 }

@@ -44,10 +44,10 @@ service "ftpServerConnector" on remoteServer {
         watchEventReceived = true;
 
         foreach FileInfo addedFile in event.addedFiles {
-            log:printInfo("Added file path: " + addedFile.path);
+            log:print("Added file path: " + addedFile.path);
         }
         foreach string deletedFile in event.deletedFiles {
-            log:printInfo("Deleted file path: " + deletedFile);
+            log:print("Deleted file path: " + deletedFile);
         }
     }
 }
@@ -59,7 +59,7 @@ public function testAddedFileCount() {
     // Test fails in 5 minutes if failed to receive watchEvent
     while (timeoutInSeconds > 0) {
         if (watchEventReceived) {
-            log:printInfo("Added file count: " + addedFileCount.toString());
+            log:print("Added file count: " + addedFileCount.toString());
             test:assertEquals(3, addedFileCount);
             break;
         } else {
