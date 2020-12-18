@@ -1,7 +1,6 @@
 ## Module Overview
 
-The `ballerina/ftp` module provides an FTP client and an FTP server listener implementation to facilitate an FTP
- connection to a remote location.
+This module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection to a remote location.
 
 ###FTP Client
 
