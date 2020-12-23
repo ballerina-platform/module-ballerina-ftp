@@ -174,7 +174,7 @@ public class FTPUtil {
     public static Type getFileInfoType() {
 
         BMap<BString, Object> fileInfoStruct = ValueCreator.createRecordValue(new Module(
-                FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
+                FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPUtil.getFtpPackage().getVersion()),
                 FTPConstants.FTP_FILE_INFO);
         return fileInfoStruct.getType();
     }
@@ -213,5 +213,14 @@ public class FTPUtil {
     public static String getCompressedFileName(String fileName) {
 
         return fileName.substring(0, fileName.lastIndexOf('.')).concat(".zip");
+    }
+
+    /**
+     * Gets ballerina ftp package.
+     *
+     * @return udp package.
+     */
+    public static Module getFtpPackage() {
+        return ModuleUtils.getModule();
     }
 }
