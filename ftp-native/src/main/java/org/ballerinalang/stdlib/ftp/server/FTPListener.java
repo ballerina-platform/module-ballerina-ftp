@@ -80,8 +80,8 @@ public class FTPListener implements RemoteFileSystemListener {
     private BMap<BString, Object> getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
 
         BMap<BString, Object> watchEventStruct = ValueCreator.createRecordValue(
-                new Module(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPConstants.FTP_MODULE_VERSION),
-                FTPConstants.FTP_SERVER_EVENT);
+                new Module(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
+                        FTPUtil.getFtpPackage().getVersion()), FTPConstants.FTP_SERVER_EVENT);
         List<FileInfo> addedFileList = fileSystemEvent.getAddedFiles();
         List<String> deletedFileList = fileSystemEvent.getDeletedFiles();
 
@@ -97,7 +97,7 @@ public class FTPListener implements RemoteFileSystemListener {
 
             final BMap<BString, Object> fileInfo = ValueCreator.createRecordValue(
                     new Module(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
-                            FTPConstants.FTP_MODULE_VERSION), FTPConstants.FTP_FILE_INFO, fileInfoParams);
+                            FTPUtil.getFtpPackage().getVersion()), FTPConstants.FTP_FILE_INFO, fileInfoParams);
             addedFiles.add(i, fileInfo);
         }
 
