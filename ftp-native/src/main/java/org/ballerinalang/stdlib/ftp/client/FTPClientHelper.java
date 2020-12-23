@@ -33,6 +33,7 @@ import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.stdlib.ftp.util.FTPUtil;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.ballerinalang.stdlib.io.utils.IOConstants;
+import org.ballerinalang.stdlib.io.utils.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.message.FileInfo;
@@ -49,6 +50,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
 import java.util.Map;
+
 
 /**
  * Contains helper methods to invoke FTP actions.
@@ -76,7 +78,8 @@ class FTPClientHelper {
             Channel channel = new FTPChannel(byteChannel);
 
             BObject channelStruct = ValueCreator.createObjectValue(
-                    new Module(FTPConstants.IO_ORG_NAME, FTPConstants.IO_MODULE_NAME, FTPConstants.IO_MODULE_VERSION),
+                    new Module(FTPConstants.IO_ORG_NAME,
+                            FTPConstants.IO_MODULE_NAME, IOUtils.getIOPackage().getVersion()),
                     READABLE_BYTE_CHANNEL);
             channelStruct.addNativeData(IOConstants.BYTE_CHANNEL_NAME, channel);
             balFuture.complete(channelStruct);
@@ -133,7 +136,7 @@ class FTPClientHelper {
 
                 final BMap<BString, Object> ballerinaFileInfo = ValueCreator.createRecordValue(
                         new Module(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
-                                FTPConstants.FTP_MODULE_VERSION), FTPConstants.FTP_FILE_INFO, fileInfoParams);
+                                FTPUtil.getFtpPackage().getVersion()), FTPConstants.FTP_FILE_INFO, fileInfoParams);
                 arrayValue.add(i++, ballerinaFileInfo);
             }
             balFuture.complete(arrayValue);
