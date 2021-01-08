@@ -63,7 +63,7 @@ public class FTPListener implements RemoteFileSystemListener {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             BMap<BString, Object> parameters = getSignatureParameters(event);
-            runtime.invokeMethodAsync(service, service.getType().getAttachedFunctions()[0].getName(), null,
+            runtime.invokeMethodAsync(service, service.getType().getMethods()[0].getName(), null,
                     null, new Callback() {
                 @Override
                 public void notifySuccess(Object o) {}
