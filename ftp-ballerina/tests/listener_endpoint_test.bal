@@ -14,8 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/lang.runtime as runtime;
 import ballerina/log;
-import ballerina/runtime;
 import ballerina/test;
 
 int addedFileCount = 0;
@@ -63,7 +63,7 @@ public function testAddedFileCount() {
             test:assertEquals(3, addedFileCount);
             break;
         } else {
-            runtime:sleep(1000);
+            runtime:sleep(1);
             timeoutInSeconds = timeoutInSeconds - 1;
         }
     }
