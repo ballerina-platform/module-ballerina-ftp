@@ -66,7 +66,7 @@ public function testReadContent() {
 }
 
 @test:Config{
-    dependsOn: ["testReadContent"]
+    dependsOn: [testReadContent]
 }
 public function testAppendContent() {
     io:ReadableByteChannel|error byteChannel = io:openReadableFile(appendFilePath);
@@ -83,7 +83,7 @@ public function testAppendContent() {
 }
 
 @test:Config{
-    dependsOn: ["testAppendContent"]
+    dependsOn: [testAppendContent]
 }
 public function testPutFileContent() {
     io:ReadableByteChannel|error byteChannelToPut = io:openReadableFile(putFilePath);
@@ -100,7 +100,7 @@ public function testPutFileContent() {
 }
 
 @test:Config{
-    dependsOn: ["testPutFileContent"]
+    dependsOn: [testPutFileContent]
 }
 public function testPutTextContent() {
     string textToPut = "Sample text content";
@@ -113,7 +113,7 @@ public function testPutTextContent() {
 }
 
 @test:Config{
-    dependsOn: ["testPutTextContent"]
+    dependsOn: [testPutTextContent]
 }
 public function testPutJsonContent() {
     json jsonToPut = { name: "Anne", age: 20 };
@@ -126,7 +126,7 @@ public function testPutJsonContent() {
 }
 
 @test:Config{
-    dependsOn: ["testPutJsonContent"]
+    dependsOn: [testPutJsonContent]
 }
 public function testPutXMLContent() {
     xml xmlToPut = xml `<note>
@@ -144,7 +144,7 @@ public function testPutXMLContent() {
 }
 
 @test:Config{
-    dependsOn: ["testPutXMLContent"]
+    dependsOn: [testPutXMLContent]
 }
 public function testIsDirectory() {
     boolean|error response = clientEP -> isDirectory("/home/in");
@@ -157,7 +157,7 @@ public function testIsDirectory() {
 }
 
 @test:Config{
-    dependsOn: ["testIsDirectory"]
+    dependsOn: [testIsDirectory]
 }
 public function testCreateDirectory() {
     error? response = clientEP -> mkdir("/home/in/out");
@@ -169,7 +169,7 @@ public function testCreateDirectory() {
 }
 
 @test:Config{
-    dependsOn: ["testCreateDirectory"]
+    dependsOn: [testCreateDirectory]
 }
 public function testRenameDirectory() {
     string existingName = "/home/in/out";
@@ -183,7 +183,7 @@ public function testRenameDirectory() {
 }
 
 @test:Config{
-    dependsOn: ["testRenameDirectory"]
+    dependsOn: [testRenameDirectory]
 }
 public function testGetFileSize() {
     int|error response = clientEP -> size(filePath);
@@ -196,7 +196,7 @@ public function testGetFileSize() {
 }
 
 @test:Config{
-    dependsOn: ["testGetFileSize"]
+    dependsOn: [testGetFileSize]
 }
 public function testListFiles() {
     FileInfo[]|error response = clientEP -> list("/home/in");
@@ -212,7 +212,7 @@ public function testListFiles() {
 }
 
 @test:Config{
-    dependsOn: ["testListFiles"]
+    dependsOn: [testListFiles]
 }
 public function testDeleteFile() {
     error? response = clientEP -> delete(filePath);
@@ -224,7 +224,7 @@ public function testDeleteFile() {
 }
 
 @test:Config{
-    dependsOn: ["testDeleteFile"]
+    dependsOn: [testDeleteFile]
 }
 public function testRemoveDirectory() {
     error? response = clientEP -> rmdir("/home/in/test");
