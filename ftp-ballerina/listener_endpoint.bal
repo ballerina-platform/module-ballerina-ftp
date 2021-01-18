@@ -39,7 +39,7 @@ public class Listener {
     # ```
     #
     # + return - () or else `error` upon failure to start the listener
-    public isolated function 'start() returns error? {
+    public isolated function 'start() returns @tainted error? {
         return self.internalStart();
     }
 
@@ -72,7 +72,7 @@ public class Listener {
     # error? response = listener->detach(service1);
     # ```
     #
-    # + s - Service to be detached from the listener
+    # + emailService - Service to be detached from the listener
     # + return - `()` or else a `error` upon failure to detach the service
     public isolated function detach(service object {} emailService) returns error? {
 
@@ -98,14 +98,14 @@ public class Listener {
         check self.stop();
     }
 
-    isolated function internalStart() returns error? {
+    isolated function internalStart() returns @tainted error? {
         var scheduler = self.config.cronExpression;
         if (scheduler is string) {
             task:AppointmentConfiguration config = { cronExpression: scheduler };
-            self.appointment = new(config);
+            self.appointment = check new(config);
         } else {
             task:TimerConfiguration config = { intervalInMillis: self.config.pollingInterval, initialDelayInMillis: 100};
-            self.appointment = new (config);
+            self.appointment = check new (config);
         }
         var appointment = self.appointment;
         if (appointment is task:Scheduler) {
