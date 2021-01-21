@@ -17,7 +17,7 @@
 import ballerina/io;
 import ballerina/test;
 import ballerina/log;
-import ballerina/java;
+import ballerina/jballerina.java;
 
 string filePath = "/home/in/test1.txt";
 string newFilePath = "/home/in/test2.txt";

@@ -16,7 +16,7 @@
 
 import ballerina/log;
 import ballerina/task;
-import ballerina/java;
+import ballerina/jballerina.java;
 
 # Represents a service listener that monitors the FTP location.
 public class Listener {
