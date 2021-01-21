@@ -15,7 +15,7 @@
 // under the License.
 
 import ballerina/io;
-import ballerina/java;
+import ballerina/jballerina.java;
 
 isolated function initEndpoint(Client clientEndpoint, map<anydata> config) returns error? = @java:Method {
     name: "initClientEndpoint",
