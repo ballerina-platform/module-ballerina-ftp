@@ -2,20 +2,6 @@
 org = "ballerina"
 name = "ftp"
 version = "@toml.version@"
-[[dependency]]
-org = "ballerina"
-name = "io"
-version = "@stdlib.io.version@"
-
-[[dependency]]
-org = "ballerina"
-name = "log"
-version = "@stdlib.log.version@"
-
-[[dependency]]
-org = "ballerina"
-name = "task"
-version = "@stdlib.task.version@"
 
 [[platform.java11.dependency]]
 path = "./lib/commons-vfs2-2.6.0.jar"
