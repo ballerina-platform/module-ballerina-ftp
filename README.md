@@ -10,7 +10,7 @@ The ftp library is one of the standard library modules of the<a target="_blank" 
 
 It provides implementation for file manipulation related operations over network using FTP protocol.
 
-For more information go to [The FTP Module](https://ballerina.io/swan-lake/learn/api-docs/ballerina/ftp/index.html).
+For more information go to [The FTP Module](https://ballerina.io/learn/api-docs/ballerina/ftp/index.html).
 
 ## Issues and Projects 
 
