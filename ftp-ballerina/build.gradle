@@ -19,6 +19,21 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 description = 'Ballerina - Ballerina FTP Library'
 
+def packageName = "ftp"
+def packageOrg = "ballerina"
+def tomlVersion = project.version.replace("-SNAPSHOT", "")
+def ballerinaConfigFile = new File("$project.projectDir/Ballerina.toml")
+def ballerinaDependencyFile = new File("$project.projectDir/Dependencies.toml")
+def artifactBallerinaDocs = file("$project.projectDir/build/docs_parent/")
+def artifactCacheParent = file("$project.projectDir/build/cache_parent/")
+def artifactLibParent = file("$project.projectDir/build/lib_parent/")
+def artifactCodeCoverageReport = file("$project.projectDir/target/cache/tests_cache/coverage/ballerina.exec")
+def ballerinaCentralAccessToken = System.getenv('BALLERINA_CENTRAL_ACCESS_TOKEN')
+def originalConfig = ballerinaConfigFile.text
+def originalDependencyConfig = ballerinaDependencyFile.text
+def distributionBinPath =  project.projectDir.absolutePath + "/build/target/extracted-distributions/" +
+        "jballerina-tools-zip/jballerina-tools-${ballerinaLangVersion}/bin"
+
 configurations {
     jbalTools
     packingJars
@@ -28,7 +43,7 @@ dependencies {
     jbalTools ("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
         transitive = false
     }
-    compile project(':ftp-native')
+    compile project(":${packageName}-native")
     packingJars (group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
         transitive = false
     }
@@ -99,25 +114,11 @@ task copyStdlibs(type: Copy) {
     }
 }
 
-def packageName = "ftp"
-def packageOrg = "ballerina"
-def ballerinaConfigFile = new File("$project.projectDir/Ballerina.toml")
-def ballerinaDependencyFile = new File("$project.projectDir/Dependencies.toml")
-def artifactBallerinaDocs = file("$project.projectDir/build/docs_parent/")
-def artifactCacheParent = file("$project.projectDir/build/cache_parent/")
-def artifactLibParent = file("$project.projectDir/build/lib_parent/")
-def artifactCodeCoverageReport = file("$project.projectDir/target/cache/tests_cache/coverage/ballerina.exec")
-def tomlVersion = project.version.split("-")[0]
-def ballerinaCentralAccessToken = System.getenv('BALLERINA_CENTRAL_ACCESS_TOKEN')
-def originalConfig = ballerinaConfigFile.text
-def originalDependencyConfig = ballerinaDependencyFile.text
-def distributionBinPath =  project.projectDir.absolutePath + "/build/target/extracted-distributions/jballerina-tools-zip/jballerina-tools-${ballerinaLangVersion}/bin"
-
 task updateTomlFile {
     doLast {
-        def stdlibDependentTaskVersion = project.stdlibTaskVersion.split("-")[0]
-        def stdlibDependentLogVersion = project.stdlibLogVersion.split("-")[0]
-        def stdlibDependentIoVersion = project.stdlibIoVersion.split("-")[0]
+        def stdlibDependentTaskVersion = project.stdlibTaskVersion.replace("-SNAPSHOT", "")
+        def stdlibDependentLogVersion = project.stdlibLogVersion.replace("-SNAPSHOT", "")
+        def stdlibDependentIoVersion = project.stdlibIoVersion.replace("-SNAPSHOT", "")
         def newConfig = ballerinaConfigFile.text.replace("@project.version@", project.version)
         newConfig = newConfig.replace("@toml.version@", tomlVersion)
         ballerinaConfigFile.text = newConfig
@@ -140,6 +141,7 @@ def groupParams = ""
 def disableGroups = ""
 def debugParams = ""
 def balJavaDebugParam = ""
+def testParams = ""
 
 task initializeVariables {
     if (project.hasProperty("groups")) {
@@ -153,6 +155,23 @@ task initializeVariables {
     }
     if (project.hasProperty("balJavaDebug")) {
         balJavaDebugParam = "BAL_JAVA_DEBUG=${project.findProperty("balJavaDebug")}"
+    }
+    gradle.taskGraph.whenReady { graph ->
+        if (graph.hasTask(":${packageName}-ballerina:build") || graph.hasTask(":${packageName}-ballerina:publish"))  {
+            ballerinaTest.enabled = false
+        }
+
+        if (graph.hasTask(":${packageName}-ballerina:test")) {
+            testParams = "--code-coverage --includes=*"
+        } else {
+            testParams = "--skip-tests"
+        }
+
+        if (graph.hasTask(":${packageName}-ballerina:publish")) {
+            ballerinaPublish.enabled = true
+        } else {
+            ballerinaPublish.enabled = false
+        }
     }
 }
 
@@ -195,25 +214,15 @@ task ballerinaBuild {
     dependsOn(initializeVariables)
     finalizedBy(revertTomlFile)
 
-    def testParams = "--skip-tests"
-    gradle.taskGraph.whenReady { graph ->
-        if (graph.hasTask(':ftp-ballerina:build') || graph.hasTask(':ftp-ballerina:publish')) {
-            ballerinaTest.enabled = false
-        }
-        if (graph.hasTask(':ftp-ballerina:test')) {
-            testParams = "--code-coverage --includes=*"
-        }
-    }
-
     doLast {
         // Build and populate caches
         exec {
             workingDir project.projectDir
             environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', "$balJavaDebugParam $distributionBinPath/bal.bat build $testParams ${debugParams} && exit %%ERRORLEVEL%%"
+                commandLine 'cmd', '/c', "$balJavaDebugParam $distributionBinPath/bal.bat build ${testParams} ${debugParams} && exit %%ERRORLEVEL%%"
             } else {
-                commandLine 'sh', '-c', "$balJavaDebugParam $distributionBinPath/bal build $testParams ${debugParams}"
+                commandLine 'sh', '-c', "$balJavaDebugParam $distributionBinPath/bal build ${testParams} ${debugParams}"
             }
         }
         copy {
@@ -258,19 +267,9 @@ build {
     dependsOn(ballerinaBuild)
 }
 
-task ballerinaPush {
-    dependsOn(build)
+task ballerinaPublish {
     doLast {
-        // Publish to central
-        if (!project.hasProperty("publishToCentral")) {
-            return
-        }
-        if (project.version.endsWith('-SNAPSHOT')) {
-            throw new GradleException("Stdlib not pushed to central for snapshot version '${project.version}'.")
-        } else {
-            if (ballerinaCentralAccessToken == null) {
-                throw new GradleException("Central push failed invalid access token.")
-            }
+        if (ballerinaCentralAccessToken != null) {
             println("Publishing to the ballerina central..")
             exec {
                 workingDir project.projectDir
@@ -281,12 +280,9 @@ task ballerinaPush {
                     commandLine 'sh', '-c', "$distributionBinPath/bal push"
                 }
             }
+
         }
     }
-}
-
-publish {
-    dependsOn(ballerinaPush)
 }
 
 task createArtifactZip(type: Zip) {
@@ -305,7 +301,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/ballerina-platform/module-ballerina-ftp")
+            url = uri("https://maven.pkg.github.com/ballerina-platform/module-${packageOrg}-${packageName}")
             credentials {
                 username = System.getenv("packageUser")
                 password = System.getenv("packagePAT")
@@ -314,11 +310,14 @@ publishing {
     }
 }
 
-ballerinaBuild.dependsOn ":ftp-native:build"
-ballerinaBuild.dependsOn ":ftp-test-utils:build"
+ballerinaBuild.dependsOn ":${packageName}-native:build"
+ballerinaBuild.dependsOn ":${packageName}-test-utils:build"
 unpackStdLibs.dependsOn unpackJballerinaTools
 copyStdlibs.dependsOn unpackStdLibs
 updateTomlFile.dependsOn copyStdlibs
 ballerinaBuild.dependsOn updateTomlFile
 unpackJballerinaTools.dependsOn copyPackingJarsToLib
 build.dependsOn ballerinaBuild
+
+ballerinaPublish.dependsOn ballerinaBuild
+publish.dependsOn ballerinaPublish
