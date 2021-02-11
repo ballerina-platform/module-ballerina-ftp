@@ -213,4 +213,4 @@ service ftpServerConnector on remoteServer {
 }
 ```
 
-For information on the operations, which you can perform with this module, see the below **Functions**. For examples on the usage of the operation, see the [Execute FTP Operations Example](https://ballerina.io/swan-lake/learn/by-example/execute-ftp-operations.html).
+For information on the operations, which you can perform with this module, see the **Functions** below. For examples of the usage of the operation, see the [Execute FTP Operations Example](https://ballerina.io/learn/by-example/execute-ftp-operations.html).
