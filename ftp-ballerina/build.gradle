@@ -28,6 +28,7 @@ def artifactBallerinaDocs = file("$project.projectDir/build/docs_parent/")
 def artifactCacheParent = file("$project.projectDir/build/cache_parent/")
 def artifactLibParent = file("$project.projectDir/build/lib_parent/")
 def artifactCodeCoverageReport = file("$project.projectDir/target/cache/tests_cache/coverage/ballerina.exec")
+def artifactTestableJar = file("$project.projectDir/target/cache/${packageOrg}/${packageName}/${tomlVersion}/java11/")
 def ballerinaCentralAccessToken = System.getenv('BALLERINA_CENTRAL_ACCESS_TOKEN')
 def originalConfig = ballerinaConfigFile.text
 def originalDependencyConfig = ballerinaDependencyFile.text
@@ -157,7 +158,9 @@ task initializeVariables {
         balJavaDebugParam = "BAL_JAVA_DEBUG=${project.findProperty("balJavaDebug")}"
     }
     gradle.taskGraph.whenReady { graph ->
-        if (graph.hasTask(":${packageName}-ballerina:build")) {
+        if (graph.hasTask(":${packageName}-ballerina:build") ||
+                graph.hasTask(":${packageName}-ballerina:publish") ||
+                graph.hasTask(":${packageName}-ballerina:publishToMavenLocal")) {
             ballerinaTest.enabled = false
         } else {
             ballerinaTest.enabled = true
@@ -169,9 +172,8 @@ task initializeVariables {
             testParams = "--skip-tests"
         }
 
-        if (graph.hasTask(":${packageName}-ballerina:publish") || graph.hasTask(":${packageName}-ballerina:publishToMavenLocal")) {
+        if (graph.hasTask(":${packageName}-ballerina:publish")) {
             ballerinaPublish.enabled = true
-            ballerinaTest.enabled = false
         } else {
             ballerinaPublish.enabled = false
         }
@@ -293,6 +295,14 @@ task createArtifactZip(type: Zip) {
     from ballerinaBuild
 }
 
+task createTestableJarZip(type: Zip) {
+    archiveName("${packageOrg}-${packageName}-${project.version}-testable-jars.zip")
+    destinationDir(file("${buildDir}/distributions"))
+    from("${artifactTestableJar}") {
+        include '**/*-testable.jar'
+    }
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
@@ -310,6 +320,20 @@ publishing {
                 password = System.getenv("packagePAT")
             }
         }
+    }
+}
+
+task extractBallerinaClassFiles(type: Copy) {
+    def jars = fileTree(artifactTestableJar).findAll {
+        it.name.endsWith("-testable.jar")
+    }
+
+    jars.forEach { file ->
+        from zipTree(file).matching {
+            exclude '**/tests/*'
+            include '**/*.class'
+        }
+        into "${project.rootDir.absolutePath}/build/classes"
     }
 }
 
