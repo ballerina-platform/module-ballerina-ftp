@@ -284,7 +284,8 @@ task ballerinaPublish {
                     commandLine 'sh', '-c', "$distributionBinPath/bal push"
                 }
             }
-
+        } else {
+            throw new InvalidUserDataException("Central Access Token is Not Present")
         }
     }
 }
