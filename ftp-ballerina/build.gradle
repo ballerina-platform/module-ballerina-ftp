@@ -294,13 +294,6 @@ task createArtifactZip(type: Zip) {
     from ballerinaBuild
 }
 
-task createTestableJarZip(type: Zip) {
-    archiveName("${packageOrg}-${packageName}-${project.version}-testable-jars.zip")
-    destinationDir(file("${buildDir}/distributions"))
-    from("${artifactTestableJar}") {
-        include '**/*-testable.jar'
-    }
-}
 
 publishing {
     publications {
