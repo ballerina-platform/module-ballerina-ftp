@@ -295,7 +295,6 @@ task createArtifactZip(type: Zip) {
     from ballerinaBuild
 }
 
-
 publishing {
     publications {
         maven(MavenPublication) {
@@ -315,7 +314,6 @@ publishing {
         }
     }
 }
-
 
 ballerinaBuild.dependsOn ":${packageName}-native:build"
 ballerinaBuild.dependsOn ":${packageName}-test-utils:build"
