@@ -273,6 +273,9 @@ build {
 
 task ballerinaPublish {
     doLast {
+        if (project.version.endsWith('-SNAPSHOT')) {
+            return
+        }
         if (ballerinaCentralAccessToken != null) {
             println("Publishing to the ballerina central..")
             exec {
