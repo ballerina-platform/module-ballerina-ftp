@@ -3,7 +3,7 @@ fixes:
 
 ignore:
   - "**/tests"
-  - "ftp-test-utils"
+  - "ftp-test-utils/"
 
 codecov:
   require_ci_to_pass: no
