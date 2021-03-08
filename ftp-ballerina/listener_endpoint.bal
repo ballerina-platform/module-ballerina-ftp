@@ -104,7 +104,8 @@ public class Listener {
             task:AppointmentConfiguration config = { cronExpression: scheduler };
             self.appointment = check new(config);
         } else {
-            task:TimerConfiguration config = { intervalInMillis: self.config.pollingInterval, initialDelayInMillis: 100};
+            task:TimerConfiguration config
+                = { intervalInMillis: <int>(self.config.pollingInterval * 1000), initialDelayInMillis: 100};
             self.appointment = check new (config);
         }
         var appointment = self.appointment;
@@ -187,7 +188,7 @@ public type ListenerConfig record {|
     SecureSocket? secureSocket = ();
     string path = "/home";
     string fileNamePattern = "(.*).txt";
-    int pollingInterval = 60000;
+    decimal pollingInterval = 60;
     string? cronExpression = ();
     handle? serverConnector = ();
 |};

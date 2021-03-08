@@ -33,7 +33,7 @@ listener Listener remoteServer = new({
     },
     port: 21212,
     path: "/home/in",
-    pollingInterval: 2000,
+    pollingInterval: 2,
     fileNamePattern: "(.*).txt"
 });
 
