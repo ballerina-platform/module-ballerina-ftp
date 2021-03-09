@@ -104,7 +104,8 @@ public class Listener {
             task:AppointmentConfiguration config = { cronExpression: scheduler };
             self.appointment = check new(config);
         } else {
-            task:TimerConfiguration config = { intervalInMillis: self.config.pollingInterval, initialDelayInMillis: 100};
+            task:TimerConfiguration config
+                = { intervalInMillis: <int>(self.config.pollingInterval * 1000), initialDelayInMillis: 100};
             self.appointment = check new (config);
         }
         var appointment = self.appointment;
@@ -112,7 +113,7 @@ public class Listener {
             check appointment.attach(appointmentService, self);
             check appointment.start();
         }
-        log:print("Listening to remote server at " + self.config.host + "...");
+        log:printInfo("Listening to remote server at " + self.config.host + "...");
     }
 
     isolated function stop() returns error? {
@@ -120,7 +121,7 @@ public class Listener {
         if (appointment is task:Scheduler) {
             check appointment.stop();
         }
-        log:print("Stopped listening to remote server at " + self.config.host);
+        log:printInfo("Stopped listening to remote server at " + self.config.host);
     }
 
     # Poll new files from a FTP server.
@@ -164,7 +165,7 @@ final service isolated object{} appointmentService = service object {
     remote isolated function onTrigger(Listener l) {
         var result = l.poll();
         if (result is error) {
-            log:printError("Error while executing poll function", err = result);
+            log:printError("Error while executing poll function", 'error = result);
         }
     }
 };
@@ -187,7 +188,7 @@ public type ListenerConfig record {|
     SecureSocket? secureSocket = ();
     string path = "/home";
     string fileNamePattern = "(.*).txt";
-    int pollingInterval = 60000;
+    decimal pollingInterval = 60;
     string? cronExpression = ();
     handle? serverConnector = ();
 |};

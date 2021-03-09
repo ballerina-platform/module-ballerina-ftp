@@ -50,18 +50,18 @@ public function testReadContent() {
         if (characters is io:ReadableCharacterChannel) {
             string|error content = characters.read(100);
             if(content is string){
-                log:print("Initial content in file: " + content);
-                log:print("Executed Get operation");
+                log:printInfo("Initial content in file: " + content);
+                log:printInfo("Executed Get operation");
             } else {
-                log:printError("Error in retrieving content", err = content);
+                log:printError("Error in retrieving content", 'error = content);
             }
             var closeResult = characters.close();
             if (closeResult is error) {
-                log:printError("Error occurred while closing the channel", err = closeResult);
+                log:printError("Error occurred while closing the channel", 'error = closeResult);
             }
         }
     } else {
-        log:printError("Error in retrieving content", err = response);
+        log:printError("Error in retrieving content", 'error = response);
     }
 }
 
@@ -73,12 +73,12 @@ public function testAppendContent() {
     if(byteChannel is io:ReadableByteChannel){
         error? response = clientEP -> append(filePath, byteChannel);
         if(response is error) {
-            log:printError("Error in editing file", err = response);
+            log:printError("Error in editing file", 'error = response);
         } else {
-            log:print("Executed Append operation");
+            log:printInfo("Executed Append operation");
         }
     } else {
-        log:printError("Error in reading input file", err = byteChannel);
+        log:printError("Error in reading input file", 'error = byteChannel);
     }
 }
 
@@ -91,11 +91,11 @@ public function testPutFileContent() {
     if(byteChannelToPut is io:ReadableByteChannel){
         error? response = clientEP -> put(newFilePath, byteChannelToPut);
         if(response is error) {
-            log:printError("Error in put operation", err = response);
+            log:printError("Error in put operation", 'error = response);
         }
-        log:print("Executed Put operation");
+        log:printInfo("Executed Put operation");
     } else {
-        log:print("Error in reading input file");
+        log:printInfo("Error in reading input file");
     }
 }
 
@@ -106,9 +106,9 @@ public function testPutTextContent() {
     string textToPut = "Sample text content";
     error? response = clientEP -> put(filePath, textToPut);
     if(response is error) {
-        log:printError("Error in put operation", err = response);
+        log:printError("Error in put operation", 'error = response);
     } else {
-        log:print("Executed Put operation");
+        log:printInfo("Executed Put operation");
     }
 }
 
@@ -119,9 +119,9 @@ public function testPutJsonContent() {
     json jsonToPut = { name: "Anne", age: 20 };
     error? response = clientEP -> put(filePath, jsonToPut);
     if(response is error) {
-        log:printError("Error in put operation", err = response);
+        log:printError("Error in put operation", 'error = response);
     } else {
-        log:print("Executed Put operation");
+        log:printInfo("Executed Put operation");
     }
 }
 
@@ -137,9 +137,9 @@ public function testPutXMLContent() {
                           </note>`;
     error? response = clientEP -> put(filePath, xmlToPut);
     if(response is error) {
-        log:printError("Error in put operation", err = response);
+        log:printError("Error in put operation", 'error = response);
     } else {
-        log:print("Executed Put operation");
+        log:printInfo("Executed Put operation");
     }
 }
 
@@ -149,10 +149,10 @@ public function testPutXMLContent() {
 public function testIsDirectory() {
     boolean|error response = clientEP -> isDirectory("/home/in");
     if(response is boolean) {
-        log:print("Is directory: " + response.toString());
-        log:print("Executed Is directory operation");
+        log:printInfo("Is directory: " + response.toString());
+        log:printInfo("Executed Is directory operation");
     } else {
-        log:printError("Error in reading isDirectory", err = response);
+        log:printError("Error in reading isDirectory", 'error = response);
     }
 }
 
@@ -162,9 +162,9 @@ public function testIsDirectory() {
 public function testCreateDirectory() {
     error? response = clientEP -> mkdir("/home/in/out");
     if(response is error) {
-        log:printError("Error in creating directory", err = response);
+        log:printError("Error in creating directory", 'error = response);
     } else {
-        log:print("Executed Mkdir operation");
+        log:printInfo("Executed Mkdir operation");
     }
 }
 
@@ -176,9 +176,9 @@ public function testRenameDirectory() {
     string newName = "/home/in/test";
     error? response = clientEP -> rename(existingName, newName);
     if(response is error) {
-        log:printError("Error in renaming directory", err = response);
+        log:printError("Error in renaming directory", 'error = response);
     } else {
-        log:print("Executed Rename operation");
+        log:printInfo("Executed Rename operation");
     }
 }
 
@@ -188,10 +188,10 @@ public function testRenameDirectory() {
 public function testGetFileSize() {
     int|error response = clientEP -> size(filePath);
     if(response is int){
-        log:print("Size: " + response.toString());
-        log:print("Executed size operation.");
+        log:printInfo("Size: " + response.toString());
+        log:printInfo("Executed size operation.");
     } else {
-        log:printError("Error in getting file size", err = response);
+        log:printError("Error in getting file size", 'error = response);
     }
 }
 
@@ -201,13 +201,13 @@ public function testGetFileSize() {
 public function testListFiles() {
     FileInfo[]|error response = clientEP -> list("/home/in");
     if (response is FileInfo[]) {
-        log:print("List of files/directories: ");
+        log:printInfo("List of files/directories: ");
         foreach var fileInfo in response {
-            log:print(fileInfo.toString());
+            log:printInfo(fileInfo.toString());
         }
-        log:print("Executed List operation");
+        log:printInfo("Executed List operation");
     } else {
-        log:printError("Error in getting file list", err = response);
+        log:printError("Error in getting file list", 'error = response);
     }
 }
 
@@ -217,9 +217,9 @@ public function testListFiles() {
 public function testDeleteFile() {
     error? response = clientEP -> delete(filePath);
     if(response is error) {
-        log:printError("Error in deleting file", err = response);
+        log:printError("Error in deleting file", 'error = response);
     } else {
-        log:print("Executed Delete operation");
+        log:printInfo("Executed Delete operation");
     }
 }
 
@@ -229,9 +229,9 @@ public function testDeleteFile() {
 public function testRemoveDirectory() {
     error? response = clientEP -> rmdir("/home/in/test");
     if(response is error) {
-        log:printError("Error in removing directory", err = response);
+        log:printError("Error in removing directory", 'error = response);
     } else {
-        log:print("Executed Rmdir operation");
+        log:printInfo("Executed Rmdir operation");
     }
 }
 
