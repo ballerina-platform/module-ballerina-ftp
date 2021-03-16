@@ -38,13 +38,13 @@ Client clientEP = new(config);
 boolean startedServer = initServer();
 
 function initServer() returns boolean {
-    error? response = initFtpServer(config);
-    return !(response is error);
+    Error? response = initFtpServer(config);
+    return !(response is Error);
 }
 
 @test:Config{}
 public function testReadContent() {
-    io:ReadableByteChannel|error response = clientEP -> get(filePath);
+    io:ReadableByteChannel|Error response = clientEP -> get(filePath);
     if(response is io:ReadableByteChannel){
         io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(response, "utf-8");
         if (characters is io:ReadableCharacterChannel) {
@@ -71,8 +71,8 @@ public function testReadContent() {
 public function testAppendContent() {
     io:ReadableByteChannel|error byteChannel = io:openReadableFile(appendFilePath);
     if(byteChannel is io:ReadableByteChannel){
-        error? response = clientEP -> append(filePath, byteChannel);
-        if(response is error) {
+        Error? response = clientEP -> append(filePath, byteChannel);
+        if(response is Error) {
             log:printError("Error in editing file", 'error = response);
         } else {
             log:printInfo("Executed Append operation");
@@ -89,8 +89,8 @@ public function testPutFileContent() {
     io:ReadableByteChannel|error byteChannelToPut = io:openReadableFile(putFilePath);
 
     if(byteChannelToPut is io:ReadableByteChannel){
-        error? response = clientEP -> put(newFilePath, byteChannelToPut);
-        if(response is error) {
+        Error? response = clientEP -> put(newFilePath, byteChannelToPut);
+        if(response is Error) {
             log:printError("Error in put operation", 'error = response);
         }
         log:printInfo("Executed Put operation");
@@ -104,8 +104,8 @@ public function testPutFileContent() {
 }
 public function testPutTextContent() {
     string textToPut = "Sample text content";
-    error? response = clientEP -> put(filePath, textToPut);
-    if(response is error) {
+    Error? response = clientEP -> put(filePath, textToPut);
+    if(response is Error) {
         log:printError("Error in put operation", 'error = response);
     } else {
         log:printInfo("Executed Put operation");
@@ -117,8 +117,8 @@ public function testPutTextContent() {
 }
 public function testPutJsonContent() {
     json jsonToPut = { name: "Anne", age: 20 };
-    error? response = clientEP -> put(filePath, jsonToPut);
-    if(response is error) {
+    Error? response = clientEP -> put(filePath, jsonToPut);
+    if(response is Error) {
         log:printError("Error in put operation", 'error = response);
     } else {
         log:printInfo("Executed Put operation");
@@ -135,8 +135,8 @@ public function testPutXMLContent() {
                               <heading>Memo</heading>
                               <body>Memo content</body>
                           </note>`;
-    error? response = clientEP -> put(filePath, xmlToPut);
-    if(response is error) {
+    Error? response = clientEP -> put(filePath, xmlToPut);
+    if(response is Error) {
         log:printError("Error in put operation", 'error = response);
     } else {
         log:printInfo("Executed Put operation");
@@ -147,7 +147,7 @@ public function testPutXMLContent() {
     dependsOn: [testPutXMLContent]
 }
 public function testIsDirectory() {
-    boolean|error response = clientEP -> isDirectory("/home/in");
+    boolean|Error response = clientEP -> isDirectory("/home/in");
     if(response is boolean) {
         log:printInfo("Is directory: " + response.toString());
         log:printInfo("Executed Is directory operation");
@@ -160,8 +160,8 @@ public function testIsDirectory() {
     dependsOn: [testIsDirectory]
 }
 public function testCreateDirectory() {
-    error? response = clientEP -> mkdir("/home/in/out");
-    if(response is error) {
+    Error? response = clientEP -> mkdir("/home/in/out");
+    if(response is Error) {
         log:printError("Error in creating directory", 'error = response);
     } else {
         log:printInfo("Executed Mkdir operation");
@@ -174,8 +174,8 @@ public function testCreateDirectory() {
 public function testRenameDirectory() {
     string existingName = "/home/in/out";
     string newName = "/home/in/test";
-    error? response = clientEP -> rename(existingName, newName);
-    if(response is error) {
+    Error? response = clientEP -> rename(existingName, newName);
+    if(response is Error) {
         log:printError("Error in renaming directory", 'error = response);
     } else {
         log:printInfo("Executed Rename operation");
@@ -186,7 +186,7 @@ public function testRenameDirectory() {
     dependsOn: [testRenameDirectory]
 }
 public function testGetFileSize() {
-    int|error response = clientEP -> size(filePath);
+    int|Error response = clientEP -> size(filePath);
     if(response is int){
         log:printInfo("Size: " + response.toString());
         log:printInfo("Executed size operation.");
@@ -199,7 +199,7 @@ public function testGetFileSize() {
     dependsOn: [testGetFileSize]
 }
 public function testListFiles() {
-    FileInfo[]|error response = clientEP -> list("/home/in");
+    FileInfo[]|Error response = clientEP -> list("/home/in");
     if (response is FileInfo[]) {
         log:printInfo("List of files/directories: ");
         foreach var fileInfo in response {
@@ -215,8 +215,8 @@ public function testListFiles() {
     dependsOn: [testListFiles]
 }
 public function testDeleteFile() {
-    error? response = clientEP -> delete(filePath);
-    if(response is error) {
+    Error? response = clientEP -> delete(filePath);
+    if(response is Error) {
         log:printError("Error in deleting file", 'error = response);
     } else {
         log:printInfo("Executed Delete operation");
@@ -227,8 +227,8 @@ public function testDeleteFile() {
     dependsOn: [testDeleteFile]
 }
 public function testRemoveDirectory() {
-    error? response = clientEP -> rmdir("/home/in/test");
-    if(response is error) {
+    Error? response = clientEP -> rmdir("/home/in/test");
+    if(response is Error) {
         log:printError("Error in removing directory", 'error = response);
     } else {
         log:printInfo("Executed Rmdir operation");
@@ -240,7 +240,7 @@ public function stopServer() returns error? {
     error? response = stopFtpServer();
 }
 
-function initFtpServer(map<anydata> config) returns error? = @java:Method{
+function initFtpServer(map<anydata> config) returns Error? = @java:Method{
     name: "initServer",
     'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFTPServer"
 } external;

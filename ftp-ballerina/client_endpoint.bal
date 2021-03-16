@@ -29,8 +29,8 @@ public client class Client {
     # + clientConfig - Configurations for FTP client endpoint
     public isolated function init(ClientEndpointConfig clientConfig) {
         self.config = clientConfig;
-        error? response = initEndpoint(self, self.config);
-        if (response is error) {
+        Error? response = initEndpoint(self, self.config);
+        if (response is Error) {
             log:printError("Invalid config provided");
             panic response;
         }
@@ -39,14 +39,14 @@ public client class Client {
     # The `get()` function can be used to retrieve file content from a remote
     # resource.
     # ```ballerina
-    # io:ReadableByteChannel|error channel = client->get(path);
+    # io:ReadableByteChannel|Error channel = client->get(path);
     # ```
     #
     # + path - The resource path
     # + return - A ReadableByteChannel that represents the data source to the
-    #            resource or an `error` if failed to establish communication
+    #            resource or an `Error` if failed to establish communication
     #            with the FTP server or read the resource
-    remote isolated function get(string path) returns io:ReadableByteChannel|error {
+    remote isolated function get(string path) returns io:ReadableByteChannel|Error {
         handle resourcePath = java:fromString(path);
         return get(self, resourcePath);
     }
@@ -54,42 +54,42 @@ public client class Client {
     # The `append()` function can be used to append content to an existing file
     # in an FTP server.
     # ```ballerina
-    # error? response = client->append(path, channel);
+    # Error? response = client->append(path, channel);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + return - An `error` if failed to establish communication with the FTP
+    # + return - An `Error` if failed to establish communication with the FTP
     #            server
-    remote isolated function append(string path, io:ReadableByteChannel|string|xml|json content) returns error? {
+    remote isolated function append(string path, io:ReadableByteChannel|string|xml|json content) returns Error? {
         return append(self, getInputContent(path, content));
     }
 
     # The `put()` function can be used to add a file to an FTP server.
     # ```ballerina
-    # error? response = client->put(path, channel);
+    # Error? response = client->put(path, channel);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
     # + compressInput - True if file should be compressed before uploading
-    # + return - An `error` if failed to establish communication with the FTP
+    # + return - An `Error` if failed to establish communication with the FTP
     #            server
     remote isolated function put(string path, io:ReadableByteChannel|string|xml|json content,
-                                                                boolean compressInput=false) returns error? {
+                                                                boolean compressInput=false) returns Error? {
         return put(self, getInputContent(path, content, compressInput));
     }
 
     # The `mkdir()` function can be used to create a new direcotry in an FTP
     # server.
     # ```ballerina
-    # error? response = client->mkdir(path);
+    # Error? response = client->mkdir(path);
     # ```
     #
     # + path - The directory path
-    # + return - An `error` if failed to establish communication with the FTP
+    # + return - An `Error` if failed to establish communication with the FTP
     #            server
-    remote isolated function mkdir(string path) returns error? {
+    remote isolated function mkdir(string path) returns Error? {
         handle resourcePath = java:fromString(path);
         return mkdir(self, resourcePath);
     }
@@ -97,13 +97,13 @@ public client class Client {
     # The `rmdir()` function can be used to delete an empty directory in an FTP
     # server.
     # ```ballerina
-    # error? response = client->rmdir(path);
+    # Error? response = client->rmdir(path);
     # ```
     #
     # + path - The directory path
-    # + return - An `error` if failed to establish communication with the FTP
+    # + return - An `Error` if failed to establish communication with the FTP
     #            server
-    remote isolated function rmdir(string path) returns error? {
+    remote isolated function rmdir(string path) returns Error? {
         handle resourcePath = java:fromString(path);
         return rmdir(self, resourcePath);
     }
@@ -111,14 +111,14 @@ public client class Client {
     # The `rename()` function can be used to rename a file or move to a new
     # location within the same FTP server.
     # ```ballerina
-    # error? response = client->rename(origin, destination);
+    # Error? response = client->rename(origin, destination);
     # ```
     #
     # + origin - The source file location
     # + destination - The destination file location
-    # + return - An `error` if failed to establish communication with the FTP
+    # + return - An `Error` if failed to establish communication with the FTP
     #            server
-    remote isolated function rename(string origin, string destination) returns error? {
+    remote isolated function rename(string origin, string destination) returns Error? {
         handle originPath = java:fromString(origin);
         handle destinationPath = java:fromString(destination);
         return rename(self, originPath, destinationPath);
@@ -126,13 +126,13 @@ public client class Client {
 
     # The `size()` function can be used to get the size of a file resource.
     # ```ballerina
-    # int|error response = client->size(path);
+    # int|Error response = client->size(path);
     # ```
     #
     # + path - The resource path
-    # + return - The file size in bytes or an `error` if failed to establish
+    # + return - The file size in bytes or an `Error` if failed to establish
     #            communication with the FTP server
-    remote isolated function size(string path) returns int|error {
+    remote isolated function size(string path) returns int|Error {
         handle resourcePath = java:fromString(path);
         return size(self, resourcePath);
     }
@@ -140,13 +140,13 @@ public client class Client {
     # The `list()` function can be used to get the file name list in a given
     # folder.
     # ```ballerina
-    # ftp:FileInfo[]|error response = client->list(path);
+    # ftp:FileInfo[]|Error response = client->list(path);
     # ```
     #
     # + path - The direcotry path
-    # + return - An array of file names or an `error` if failed to establish
+    # + return - An array of file names or an `Error` if failed to establish
     #            communication with the FTP server
-    remote isolated function list(string path) returns FileInfo[]|error {
+    remote isolated function list(string path) returns FileInfo[]|Error {
         handle resourcePath = java:fromString(path);
         return list(self, resourcePath);
     }
@@ -154,26 +154,26 @@ public client class Client {
     # The `isDirectory()` function can be used to check if a given resource is a
     # direcotry.
     # ```ballerina
-    # boolean|error response = client->isDirectory(path);
+    # boolean|Error response = client->isDirectory(path);
     # ```
     #
     # + path - The resource path
-    # + return - true if given resource is a direcotry or an `error` if failed
+    # + return - true if given resource is a direcotry or an `Error` if failed
     #            to establish communication with the FTP server
-    remote isolated function isDirectory(string path) returns boolean|error {
+    remote isolated function isDirectory(string path) returns boolean|Error {
         handle resourcePath = java:fromString(path);
         return isDirectory(self, resourcePath);
     }
 
     # The `delete()` function can be used to delete a file from an FTP server.
     # ```ballerina
-    # error? response = client->delete(path);
+    # Error? response = client->delete(path);
     # ```
     #
     # + path - The resource path
-    # + return -  An `error` if failed to establish communication with the FTP
+    # + return -  An `Error` if failed to establish communication with the FTP
     #             server
-    remote isolated function delete(string path) returns error? {
+    remote isolated function delete(string path) returns Error? {
         handle resourcePath = java:fromString(path);
         return delete(self, resourcePath);
     }
