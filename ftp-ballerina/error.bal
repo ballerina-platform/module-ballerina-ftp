@@ -14,6 +14,5 @@
 // specific language governing permissions and limitations
 // under the License.
 
-public type FTPError record {|
-    string message;
-|};
+# Defines the common error type for the module
+public type Error distinct error;
