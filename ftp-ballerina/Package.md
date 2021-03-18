@@ -40,8 +40,8 @@ ftp:Client ftpClient = new(ftpConfig);
 The following code creates a directory in the remote FTP server.
 
 ```ballerina
-error? mkdirResponse = ftpClient->mkdir("<The directory path>");
-if (mkdirResponse is error) {
+ftp:Error? mkdirResponse = ftpClient->mkdir("<The directory path>");
+if (mkdirResponse is ftp:Error) {
     log:printError("Error occured in creating directory", err = mkdirResponse);
     return;
 }
@@ -55,8 +55,8 @@ The following code uploads a file to a remote FTP server.
 io:ReadableByteChannel|error summaryChannel
     = io:openReadableFile("<The local data source path>");
 if(summaryChannel is io:ReadableByteChannel){
-    error? putResponse = ftpClient->put("<The resource path>", summaryChannel);   
-    if(putResponse is error) {
+    ftp:Error? putResponse = ftpClient->put("<The resource path>", summaryChannel);   
+    if(putResponse is ftp:Error) {
         log:printError("Error occured in uploading content", err = putResponse);
         return;
     }
@@ -72,9 +72,9 @@ io:ReadableByteChannel|error inputChannel
     = io:openReadableFile("<Local data source path>");
 if (inputChannel is io:ReadableByteChannel) {
     // Set the optional boolean flag as 'true' to compress before uploading
-    error? compressedPutResponse = ftpClient->put("<Resource path>",
+    ftp:Error? compressedPutResponse = ftpClient->put("<Resource path>",
         inputChannel, true);   
-    if (compressedPutResponse is error) {
+    if (compressedPutResponse is ftp:Error) {
         log:printError("Error occured in uploading content",
             err = compressedPutResponse);
         return;
@@ -131,9 +131,9 @@ if (getResponse is io:ReadableByteChannel) {
 The following rename or move remote a file to another location in the same remote FTP server.
 
 ```ballerina
-error? renameResponse = ftpClient->rename("<The source file path>",
+ftp:Error? renameResponse = ftpClient->rename("<The source file path>",
     "<The destination file path>");
-if (renameResponse is error) {
+if (renameResponse is ftp:Error) {
     log:printError("Error occurred while renaming the file", err = renameResponse);
     return;
 }
@@ -144,8 +144,8 @@ if (renameResponse is error) {
 The following delete a remote file in a remote FTP server.
 
 ```ballerina
-error? deleteResponse = ftpClient->delete("<The resource path>");
-if (deleteResponse is error) {
+ftp:Error? deleteResponse = ftpClient->delete("<The resource path>");
+if (deleteResponse is ftp:Error) {
     log:printError("Error occurred while deleting a file", err = deleteResponse);
     return;
 }
@@ -157,7 +157,7 @@ The following remove a directory in a remote FTP server.
 
 ```ballerina
 var rmdirResponse = ftpClient->rmdir("<The directory path>");
-if (rmdirResponse is error) {
+if (rmdirResponse is ftp:Error) {
     io:println("Error occured in removing directory.", rmdirResponse); 
     return;
 }
@@ -212,5 +212,3 @@ service ftpServerConnector on remoteServer {
     }
 }
 ```
-
-For information on the operations, which you can perform with this module, see the **Functions** below. For examples of the usage of the operation, see the [Execute FTP Operations Example](https://ballerina.io/learn/by-example/execute-ftp-operations.html).
