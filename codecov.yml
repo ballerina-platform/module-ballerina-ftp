@@ -1,9 +1,2 @@
-fixes:
-  - "ballerina/ftp/*/::ftp-ballerina/"
-
 ignore:
-  - "**/tests"
   - "ftp-test-utils/"
-
-codecov:
-  require_ci_to_pass: no
