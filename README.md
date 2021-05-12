@@ -11,7 +11,7 @@ The ftp package is one of the standard library packages of the<a target="_blank"
 
 It provides implementation for file manipulation related operations over network using FTP protocol.
 
-For more information go to [The FTP Package](https://ballerina.io/learn/api-docs/ballerina/ftp/index.html).
+For more information go to [The FTP Package](https://docs.central.ballerina.io/ballerina/ftp/latest).
 
 ## Issues and Projects 
 

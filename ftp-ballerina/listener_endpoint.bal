@@ -38,7 +38,7 @@ public class Listener {
     # error? response = listener->start();
     # ```
     #
-    # + return - () or else `error` upon failure to start the listener
+    # + return - `()` or else an `error` upon failure to start the listener
     public isolated function 'start() returns @tainted error? {
         return self.internalStart();
     }
@@ -48,7 +48,7 @@ public class Listener {
     # error? response = listener->__stop();
     # ```
     #
-    # + return - () or else `error` upon failure to stop the listener
+    # + return - `()` or else an `error` upon failure to stop the listener
     public isolated function __stop() returns error? {
         check self.stop();
     }
@@ -58,12 +58,13 @@ public class Listener {
     # error? response = listener->attach(service1);
     # ```
     #
-    # + s - Service to be detached from the listener
+    # + ftpService - Service to be detached from the listener
     # + name - Name of the service to be detached from the listener
-    # + return - `()` or else a `error` upon failure to register the listener
-    public isolated function attach(service object {} s, string[]|string? name = ()) returns error? {
+    # + return - `()` or else an `error` upon failure to register the listener
+    public isolated function attach(service object {} ftpService, string[]|string? name = ())
+            returns error? {
         if (name is string?) {
-            return self.register(s, name);
+            return self.register(ftpService, name);
         }
     }
 
@@ -73,7 +74,7 @@ public class Listener {
     # ```
     #
     # + emailService - Service to be detached from the listener
-    # + return - `()` or else a `error` upon failure to detach the service
+    # + return - `()` or else an `error` upon failure to detach the service
     public isolated function detach(service object {} emailService) returns error? {
 
     }
@@ -83,7 +84,7 @@ public class Listener {
     # error? response = listener->immediateStop();
     # ```
     #
-    # + return - `()` or else a `error` upon failure to stop the listener
+    # + return - `()` or else an `error` upon failure to stop the listener
     public isolated function immediateStop() returns error? {
         check self.stop();
     }
@@ -93,7 +94,7 @@ public class Listener {
     # error? response = listener->gracefulStop();
     # ```
     #
-    # + return - () or else `error` upon failure to stop the listener
+    # + return - `()` or else an `error` upon failure to stop the listener
     public isolated function gracefulStop() returns error? {
         check self.stop();
     }
