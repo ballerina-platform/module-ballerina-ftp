@@ -194,7 +194,7 @@ task initializeVariables {
         }
 
         if (graph.hasTask(":${packageName}-ballerina:test")) {
-            testParams = "--code-coverage --includes=*"
+            testParams = "--code-coverage --jacoco-xml --includes=org.ballerinalang.stdlib.ftp.*:ballerina.ftp.*"
         } else {
             testParams = "--skip-tests"
         }
