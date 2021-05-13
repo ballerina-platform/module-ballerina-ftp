@@ -4,8 +4,6 @@ The FTP library is one of the standard library packages of the<a target="_blank"
 
 It provides an implementation for performing CRUD operations on remote FTP servers with FTP protocol.
 
-For more information go to [The FTP Package](https://docs.central.ballerina.io/ballerina/ftp/latest).
-
 ## Report Issues
 
 To report bugs, request new features, start new discussions, view project boards, etc. please visit Ballerina Standard Library [parent repository](https://github.com/ballerina-platform/ballerina-standard-library).

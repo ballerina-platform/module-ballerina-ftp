@@ -16,8 +16,6 @@ private key, or TrustStore/Keystore.
 
 The following code creates an FTP client and perform I/O operations, which connects to the FTP server with Basic Auth.
 ```ballerina
-import ballerina/ftp;
-
 // Define FTP client configuration
 ftp:ClientEndpointConfig ftpConfig = {
     protocol: ftp:FTP,
@@ -41,10 +39,6 @@ The following code creates a directory in the remote FTP server.
 
 ```ballerina
 ftp:Error? mkdirResponse = ftpClient->mkdir("<The directory path>");
-if (mkdirResponse is ftp:Error) {
-    log:printError("Error occured in creating directory", err = mkdirResponse);
-    return;
-}
 ```
 
 ##### Uploading File to a Remote Server
@@ -52,15 +46,9 @@ if (mkdirResponse is ftp:Error) {
 The following code uploads a file to a remote FTP server.
 
 ```ballerina
-io:ReadableByteChannel|error summaryChannel
-    = io:openReadableFile("<The local data source path>");
-if(summaryChannel is io:ReadableByteChannel){
-    ftp:Error? putResponse = ftpClient->put("<The resource path>", summaryChannel);
-    if(putResponse is ftp:Error) {
-        log:printError("Error occured in uploading content", err = putResponse);
-        return;
-    }
-}
+io:ReadableByteChannel summaryChannel
+    = check io:openReadableFile("<The local data source path>");
+ftp:Error? putResponse = ftpClient->put("<The resource path>", summaryChannel);
 ```
 
 ##### Compressing and Uploading a File to a Remote Server
@@ -68,18 +56,11 @@ if(summaryChannel is io:ReadableByteChannel){
 The following code compresses and uploads a file to a remote FTP server.
 
 ```ballerina
-io:ReadableByteChannel|error inputChannel
-    = io:openReadableFile("<Local data source path>");
-if (inputChannel is io:ReadableByteChannel) {
-    // Set the optional boolean flag as 'true' to compress before uploading
-    ftp:Error? compressedPutResponse = ftpClient->put("<Resource path>",
-        inputChannel, true);
-    if (compressedPutResponse is ftp:Error) {
-        log:printError("Error occured in uploading content",
-            err = compressedPutResponse);
-        return;
-    }
-}
+io:ReadableByteChannel inputChannel
+    = check io:openReadableFile("<Local data source path>");
+// Set the optional boolean flag as 'true' to compress before uploading
+ftp:Error? compressedPutResponse = ftpClient->put("<Resource path>",
+    inputChannel, true);
 ```
 
 ##### Getting the Size of a Remote File
@@ -87,13 +68,7 @@ if (inputChannel is io:ReadableByteChannel) {
 The following code get and size of a file of a file in remote FTP server.
 
 ```ballerina
-var sizeResponse = ftpClient->size("<The resource path>");
-if (sizeResponse is int) {
-    log:print("File size: " + sizeResponse.toString());
-} else {
-    log:printError("Error occured in retrieving size", err = sizeResponse);
-    return;
-}
+int|ftp:Error sizeResponse = ftpClient->size("<The resource path>");
 ```
 
 ##### Reading the Content of a Remote File
@@ -101,28 +76,12 @@ if (sizeResponse is int) {
 The following code read the content of a file in remote FTP server.
 
 ```ballerina
-var getResponse = ftpClient->get("<The file path>");
-if (getResponse is io:ReadableByteChannel) {
-    io:ReadableCharacterChannel? characters
-        = new io:ReadableCharacterChannel(getResponse, "utf-8");
-    if (characters is io:ReadableCharacterChannel) {
-        var output = characters.read(<No of characters to read>);
-        if (output is string) {
-            log:print("File content: " + output);
-        } else {
-            log:printError("Error occured in retrieving content", err = output);
-            return;
-        }
-        var closeResult = characters.close();
-        if (closeResult is error) {
-            log:printError("Error occurred while closing the channel",
-                err = closeResult);
-            return;
-        }
-    }
-} else {
-    log:printError("Error occured in retrieving content", err = getResponse);
-    return;
+io:ReadableByteChannel getResponse = check ftpClient->get("<The file path>");
+io:ReadableCharacterChannel? characters
+    = new io:ReadableCharacterChannel(getResponse, "utf-8");
+if (characters is io:ReadableCharacterChannel) {
+    string output = check characters.read(<No of characters to read>);
+    var closeResult = characters.close();
 }
 ```
 
@@ -133,10 +92,6 @@ The following rename or move remote a file to another location in the same remot
 ```ballerina
 ftp:Error? renameResponse = ftpClient->rename("<The source file path>",
     "<The destination file path>");
-if (renameResponse is ftp:Error) {
-    log:printError("Error occurred while renaming the file", err = renameResponse);
-    return;
-}
 ```
 
 ##### Deleting a Remote File
@@ -145,10 +100,6 @@ The following delete a remote file in a remote FTP server.
 
 ```ballerina
 ftp:Error? deleteResponse = ftpClient->delete("<The resource path>");
-if (deleteResponse is ftp:Error) {
-    log:printError("Error occurred while deleting a file", err = deleteResponse);
-    return;
-}
 ```
 
 ##### Removing a Directory From a Remote Server
@@ -156,11 +107,7 @@ if (deleteResponse is ftp:Error) {
 The following remove a directory in a remote FTP server.
 
 ```ballerina
-var rmdirResponse = ftpClient->rmdir("<The directory path>");
-if (rmdirResponse is ftp:Error) {
-    io:println("Error occured in removing directory.", rmdirResponse);
-    return;
-}
+ftp:Error? rmdirResponse = ftpClient->rmdir("<The directory path>");
 ```
 
 ###FTP Listener
@@ -182,9 +129,6 @@ The FTP Listener can be used to listen to a remote directory. It will keep liste
 periodically notify on file addition and deletion.
 
 ```ballerina
-import ballerina/ftp;
-import ballerina/log;
-
 listener ftp:Listener remoteServer = new({
     protocol: ftp:FTP,
     host: "<The FTP host>",
