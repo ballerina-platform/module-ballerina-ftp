@@ -12,7 +12,7 @@ An FTP client endpoint is defined using the parameters `protocol` and `host`, an
 `secureSocket`. Authentication configuration can be configured using the `secureSocket` parameter for basicAuth,
 private key, or TrustStore/Keystore.
 
-##### Creating a client
+##### Creating a Client
 
 The following code creates an FTP client and perform I/O operations, which connects to the FTP server with Basic Auth.
 ```ballerina
@@ -35,7 +35,7 @@ ftp:ClientEndpointConfig ftpConfig = {
 ftp:Client ftpClient = new(ftpConfig);
 ```
 
-##### Creating a directory
+##### Creating a Directory
 
 The following code creates a directory in the remote FTP server.
 
@@ -47,7 +47,7 @@ if (mkdirResponse is ftp:Error) {
 }
 ```
 
-##### Uploading file to a remote server
+##### Uploading File to a Remote Server
 
 The following code uploads a file to a remote FTP server.
 
@@ -63,7 +63,7 @@ if(summaryChannel is io:ReadableByteChannel){
 }
 ```
 
-##### Compressing and uploading a file to a remote server
+##### Compressing and Uploading a File to a Remote Server
 
 The following code compresses and uploads a file to a remote FTP server.
 
@@ -82,7 +82,7 @@ if (inputChannel is io:ReadableByteChannel) {
 }
 ```
 
-##### Getting the size of a remote file
+##### Getting the Size of a Remote File
 
 The following code get and size of a file of a file in remote FTP server.
 
@@ -96,7 +96,7 @@ if (sizeResponse is int) {
 }
 ```
 
-##### Reading the content of a remote file
+##### Reading the Content of a Remote File
 
 The following code read the content of a file in remote FTP server.
 
@@ -126,7 +126,7 @@ if (getResponse is io:ReadableByteChannel) {
 }
 ```
 
-##### Renaming or moving a remote file to another remote location in a same FTP server
+##### Renaming or Moving a Remote file to Another Remote Location in the Same FTP Server
 
 The following rename or move remote a file to another location in the same remote FTP server.
 
@@ -139,7 +139,7 @@ if (renameResponse is ftp:Error) {
 }
 ```
 
-##### Deleting a remote file
+##### Deleting a Remote File
 
 The following delete a remote file in a remote FTP server.
 
@@ -151,7 +151,7 @@ if (deleteResponse is ftp:Error) {
 }
 ```
 
-##### Removing a directory from a remote server
+##### Removing a Directory From a Remote Server
 
 The following remove a directory in a remote FTP server.
 
@@ -176,7 +176,7 @@ Default polling interval is 60 seconds.
 The `fileNamePattern` parameter can be used to define the type of files the FTP listener endpoint will listen to.
 For instance, if the listener gets invoked for text files, the value `(.*).txt` can be given for the config.
 
-##### Creating a listener
+##### Creating a Listener
 
 The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and
 periodically notify on file addition and deletion.
