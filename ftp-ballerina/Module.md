@@ -116,9 +116,9 @@ The `ftp:Listener` is used to listen to a remote FTP location and trigger a `Wat
 files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added
 and/or deleted.
 
-An FTP listener endpoint is defined using the mandatory parameters `protocol`, `host` and  `path`. Authentication
+An FTP listener endpoint is defined using the mandatory parameters `protocol`, `host`, and  `path`. Authentication
 configuration can be done using `secureSocket` and polling interval can be configured using `pollingInterval`.
-Default polling interval is 60 seconds.
+The default polling interval is 60 seconds.
 
 The `fileNamePattern` parameter can be used to define the type of files the FTP listener endpoint will listen to.
 For instance, if the listener gets invoked for text files, the value `(.*).txt` can be given for the config.
