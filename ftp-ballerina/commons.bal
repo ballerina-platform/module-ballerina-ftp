@@ -23,7 +23,7 @@ public type Protocol "ftp"|"sftp"|"ftps";
 public const FTP = "ftp";
 # Underlying communication happens using SFTP
 public const SFTP = "sftp";
-# Underlying communication happens using FTPS
+# Underlying communication happens using FTPS.
 public const FTPS = "ftps";
 
 # Configuration to connect to a trust store.
@@ -44,7 +44,7 @@ public type KeyStore record {|
     string? password = ();
 |};
 
-# Configuration to read a privte key
+# Configuration to read a privte key.
 #
 # + path - Path to the private key file
 # + password - Private key password
@@ -53,7 +53,7 @@ public type PrivateKey record {|
     string? password = ();
 |};
 
-# Basic auth related configurations
+# Basic Auth related configurations.
 #
 # + username - Username of the user
 # + password - Password of the user

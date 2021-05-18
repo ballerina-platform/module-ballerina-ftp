@@ -1,6 +1,6 @@
 ## Overview
 
-This module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection to a remote location.
+This module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection connected to a remote location.
 
 ### FTP Client
 
@@ -8,15 +8,15 @@ The `ftp:Client` connects to an FTP server and performs various operations on th
 generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and
  `list`.
 
-An FTP client endpoint is defined using the parameters `protocol` and `host`, and optionally the `port` and
-`secureSocket`. Authentication configuration can be configured using the `secureSocket` parameter for basicAuth,
+An FTP client endpoint is defined using the `protocol` and `host` parameters and optionally the `port` and
+`secureSocket`. Authentication configuration can be configured using the `secureSocket` parameter for Basic Auth,
 private key, or TrustStore/Keystore.
 
 ##### Creating a Client
 
-The following code creates an FTP client and perform I/O operations, which connects to the FTP server with Basic Auth.
+The following code creates an FTP client and performs the I/O operations, which connect to the FTP server with Basic Auth.
 ```ballerina
-// Define FTP client configuration
+// Define the FTP client configuration.
 ftp:ClientEndpointConfig ftpConfig = {
     protocol: ftp:FTP,
     host: "<The FTP host>",
@@ -29,7 +29,7 @@ ftp:ClientEndpointConfig ftpConfig = {
     }
 };
 
-// Create FTP client
+// Create the FTP client.
 ftp:Client ftpClient = new(ftpConfig);
 ```
 
@@ -65,7 +65,7 @@ ftp:Error? compressedPutResponse = ftpClient->put("<Resource path>",
 
 ##### Getting the Size of a Remote File
 
-The following code get and size of a file of a file in remote FTP server.
+The following code gets the size of a file in a remote FTP server.
 
 ```ballerina
 int|ftp:Error sizeResponse = ftpClient->size("<The resource path>");
@@ -73,7 +73,7 @@ int|ftp:Error sizeResponse = ftpClient->size("<The resource path>");
 
 ##### Reading the Content of a Remote File
 
-The following code read the content of a file in remote FTP server.
+The following code reads the content of a file in a remote FTP server.
 
 ```ballerina
 io:ReadableByteChannel getResponse = check ftpClient->get("<The file path>");
@@ -87,7 +87,7 @@ if (characters is io:ReadableCharacterChannel) {
 
 ##### Renaming or Moving a Remote file to Another Remote Location in the Same FTP Server
 
-The following rename or move remote a file to another location in the same remote FTP server.
+The following code renames or moves a file to another location in the same remote FTP server.
 
 ```ballerina
 ftp:Error? renameResponse = ftpClient->rename("<The source file path>",
@@ -96,7 +96,7 @@ ftp:Error? renameResponse = ftpClient->rename("<The source file path>",
 
 ##### Deleting a Remote File
 
-The following delete a remote file in a remote FTP server.
+The following code deletes a remote file in a remote FTP server.
 
 ```ballerina
 ftp:Error? deleteResponse = ftpClient->delete("<The resource path>");
@@ -104,7 +104,7 @@ ftp:Error? deleteResponse = ftpClient->delete("<The resource path>");
 
 ##### Removing a Directory From a Remote Server
 
-The following remove a directory in a remote FTP server.
+The following code removes a directory in a remote FTP server.
 
 ```ballerina
 ftp:Error? rmdirResponse = ftpClient->rmdir("<The directory path>");
@@ -116,8 +116,8 @@ The `ftp:Listener` is used to listen to a remote FTP location and trigger a `Wat
 files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added
 and/or deleted.
 
-An FTP listener endpoint is defined using the mandatory parameters `protocol`, `host`, and  `path`. Authentication
-configuration can be done using `secureSocket` and polling interval can be configured using `pollingInterval`.
+An FTP listener endpoint is defined using the mandatory `protocol`, `host`, and  `path` parameters. The authentication
+configuration can be done using a `secureSocket` and the polling interval can be configured using the `pollingInterval` parameter.
 The default polling interval is 60 seconds.
 
 The `fileNamePattern` parameter can be used to define the type of files the FTP listener endpoint will listen to.
@@ -126,7 +126,7 @@ For instance, if the listener gets invoked for text files, the value `(.*).txt` 
 ##### Creating a Listener
 
 The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and
-periodically notify on file addition and deletion.
+notify on file addition and deletion periodically.
 
 ```ballerina
 listener ftp:Listener remoteServer = new({

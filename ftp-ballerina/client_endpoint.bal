@@ -36,21 +36,21 @@ public client class Client {
         }
     }
 
-    # Retrieves file content from a remote resource.
+    # Retrieves the file content from a remote resource.
     # ```ballerina
     # io:ReadableByteChannel|ftp:Error channel = client->get(path);
     # ```
     #
     # + path - The resource path
     # + return - An `io:ReadableByteChannel` that represents the data source
-    #            to the resource or an `ftp:Error` if failed to establish
-    #            communication with the FTP server or read the resource
+    #            in the resource or an `ftp:Error` if failed to establish
+    #            the communication with the FTP server or read the resource
     remote isolated function get(string path) returns io:ReadableByteChannel|Error {
         handle resourcePath = java:fromString(path);
         return get(self, resourcePath);
     }
 
-    # Appends content to an existing file in an FTP server.
+    # Appends the content to an existing file in an FTP server.
     # ```ballerina
     # ftp:Error? response = client->append(path, channel);
     # ```
@@ -58,7 +58,7 @@ public client class Client {
     # + path - The resource path
     # + content - Content to be written to the file in server
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #            communication with the FTP server
+    #            the communication with the FTP server
     remote isolated function append(string path, io:ReadableByteChannel|string|xml|json content) returns Error? {
         return append(self, getInputContent(path, content));
     }
@@ -72,7 +72,7 @@ public client class Client {
     # + content - Content to be written to the file in server
     # + compressInput - True if file should be compressed before uploading
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #            communication with the FTP server
+    #           the communication with the FTP server
     remote isolated function put(string path, io:ReadableByteChannel|string|xml|json content,
                                                                 boolean compressInput=false) returns Error? {
         return put(self, getInputContent(path, content, compressInput));
@@ -85,7 +85,7 @@ public client class Client {
     #
     # + path - The directory path
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #            communication with the FTP server
+    #            the communication with the FTP server
     remote isolated function mkdir(string path) returns Error? {
         handle resourcePath = java:fromString(path);
         return mkdir(self, resourcePath);
@@ -98,13 +98,13 @@ public client class Client {
     #
     # + path - The directory path
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #            communication with the FTP server
+    #            the communication with the FTP server
     remote isolated function rmdir(string path) returns Error? {
         handle resourcePath = java:fromString(path);
         return rmdir(self, resourcePath);
     }
 
-    # Renames a file or move to a new location within
+    # Renames a file or moves it to a new location within
     # the same FTP server.
     # ```ballerina
     # ftp:Error? response = client->rename(origin, destination);
@@ -113,7 +113,7 @@ public client class Client {
     # + origin - The source file location
     # + destination - The destination file location
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #            communication with the FTP server
+    #            the communication with the FTP server
     remote isolated function rename(string origin, string destination) returns Error? {
         handle originPath = java:fromString(origin);
         handle destinationPath = java:fromString(destination);
@@ -127,7 +127,7 @@ public client class Client {
     #
     # + path - The resource path
     # + return - The file size in bytes or an `ftp:Error` if
-    #            failed to establish communication with the FTP server
+    #            failed to establish the communication with the FTP server
     remote isolated function size(string path) returns int|Error {
         handle resourcePath = java:fromString(path);
         return size(self, resourcePath);
@@ -140,7 +140,7 @@ public client class Client {
     #
     # + path - The direcotry path
     # + return - An array of file names or an `ftp:Error` if failed to
-    #            establish communication with the FTP server
+    #            establish the communication with the FTP server
     remote isolated function list(string path) returns FileInfo[]|Error {
         handle resourcePath = java:fromString(path);
         return list(self, resourcePath);
@@ -152,21 +152,21 @@ public client class Client {
     # ```
     #
     # + path - The resource path
-    # + return - `true` if given resource is a direcotry or a `ftp:Error` if
-    #            failed to establish communication with the FTP server
+    # + return - `true` if given resource is a direcotry or an `ftp:Error` if
+    #            failed to establish the communication with the FTP server
     remote isolated function isDirectory(string path) returns boolean|Error {
         handle resourcePath = java:fromString(path);
         return isDirectory(self, resourcePath);
     }
 
-    # Deletes a file from a FTP server.
+    # Deletes a file from an FTP server.
     # ```ballerina
     # ftp:Error? response = client->delete(path);
     # ```
     #
     # + path - The resource path
     # + return -  `()` or else an `ftp:Error` if failed to establish
-    #             communication with the FTP server
+    #             the communication with the FTP server
     remote isolated function delete(string path) returns Error? {
         handle resourcePath = java:fromString(path);
         return delete(self, resourcePath);

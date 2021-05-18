@@ -14,31 +14,31 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Metadata for newly added files.
+# Metadata for newly-added files.
 #
-# + path - Relative file path for a newly added file
+# + path - Relative file path for a newly-added file
 # + size - Size of the file
-# + lastModifiedTimestamp - Last modified timestamp of the file in
+# + lastModifiedTimestamp - Last-modified timestamp of the file in
 #                           UNIX Epoch time
 # + name - File name
 # + isFolder - `true` if the file is a folder
 # + isFile - `true` if the file is a file
-# + pathDecoded - Normalized absolute path of this file,
+# + pathDecoded - Normalized absolute path of this file
 #                 within its file system
 # + extension - Extension of the file name
 # + publicURIString - Receiver as a URI String for public display
 # + fileType - Type of the file
-# + isAttached - `true` if the fileObject is attached
-# + isContentOpen - `true` if someone reads/writes to this file
+# + isAttached - `true` if the `fileObject` is attached
+# + isContentOpen - `true` if someone reads/writes from/to this file
 # + isExecutable - `true` if this file is executable
 # + isHidden - `true` if this file is hidden
 # + isReadable - `true` if this file can be read
 # + isWritable - `true` if this file can be written
-# + depth - Depth of the file name, within its file system
+# + depth - Depth of the file name within its file system
 # + scheme - URI scheme of the file
 # + uri - Absolute URI of the file
-# + rootURI - Root URI of the file system where the file exists
-# + friendlyURI - A "friendly path" is a path without a password
+# + rootURI - Root URI of the file system in which the file exists
+# + friendlyURI - A "friendly path" is a path, which can be accessed without a password
 public type FileInfo record {|
     string path;
     int size;
