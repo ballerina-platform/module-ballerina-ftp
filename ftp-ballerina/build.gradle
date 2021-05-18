@@ -53,31 +53,6 @@ def stripBallerinaExtensionVersion(String extVersion) {
     }
 }
 
-configurations {
-    packingJars
-}
-
-dependencies {
-    packingJars(group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
-        transitive = false
-    }
-    packingJars(group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}") {
-        transitive = false
-    }
-    packingJars(group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}") {
-        transitive = false
-    }
-    packingJars(group: 'org.testng', name: 'testng', version: "${testngVersion}") {
-        transitive = false
-    }
-    packingJars(group: 'org.slf4j', name: 'slf4j-api', version: "${slf4jVersion}") {
-        transitive = false
-    }
-    packingJars(group: 'org.wso2.transport.file', name: 'org.wso2.transport.remote-file-system', version: "${fileTransportVersion}") {
-        transitive = false
-    }
-}
-
 apply plugin: 'io.ballerina.plugin'
 
 ballerina {
@@ -85,9 +60,29 @@ ballerina {
     langVersion = ballerinaLangVersion
 }
 
-task copyPackingJarsToLib(type: Copy) {
-    into "$project.projectDir/lib"
-    from configurations.packingJars
+configurations {
+    externalJars
+}
+
+dependencies {
+    externalJars(group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.testng', name: 'testng', version: "${testngVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.slf4j', name: 'slf4j-api', version: "${slf4jVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.wso2.transport.file', name: 'org.wso2.transport.remote-file-system', version: "${fileTransportVersion}") {
+        transitive = false
+    }
 }
 
 task updateTomlVersions {
@@ -137,7 +132,6 @@ build.dependsOn ":${packageName}-test-utils:build"
 test.dependsOn ":${packageName}-native:build"
 test.dependsOn ":${packageName}-test-utils:build"
 updateTomlVersions.dependsOn copyStdlibs
-unpackJballerinaTools.dependsOn copyPackingJarsToLib
 
 publishToMavenLocal.dependsOn build
 publish.dependsOn build
