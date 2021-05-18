@@ -25,7 +25,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "io.ballerina:plugin-gradle:0.8.1-SNAPSHOT"
+        classpath "io.ballerina:plugin-gradle:0.8.1"
     }
 }
 
@@ -56,6 +56,7 @@ def stripBallerinaExtensionVersion(String extVersion) {
 apply plugin: 'io.ballerina.plugin'
 
 ballerina {
+    packageOrganization = packageOrg
     module = packageName
     langVersion = ballerinaLangVersion
 }
@@ -85,7 +86,7 @@ dependencies {
     }
 }
 
-task updateTomlVersions {
+task updateTomlFiles {
     doLast {
         def stdlibDependentTaskVersion = stripBallerinaExtensionVersion(project.stdlibTaskVersion)
         def stdlibDependentLogVersion = stripBallerinaExtensionVersion(project.stdlibLogVersion)
@@ -101,7 +102,7 @@ task updateTomlVersions {
     }
 }
 
-task revertTomlFile {
+task revertTomlFiles {
     doLast {
         ballerinaConfigFile.text = originalConfig
         ballerinaDependencyFile.text = originalDependencyConfig
@@ -127,11 +128,12 @@ publishing {
     }
 }
 
+updateTomlFiles.dependsOn copyStdlibs
+
 build.dependsOn ":${packageName}-native:build"
 build.dependsOn ":${packageName}-test-utils:build"
 test.dependsOn ":${packageName}-native:build"
 test.dependsOn ":${packageName}-test-utils:build"
-updateTomlVersions.dependsOn copyStdlibs
 
 publishToMavenLocal.dependsOn build
 publish.dependsOn build
