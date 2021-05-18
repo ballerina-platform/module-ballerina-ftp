@@ -25,7 +25,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "io.ballerina:plugin-gradle:0.8.1"
+        classpath "io.ballerina:plugin-gradle:${project.ballerinaGradlePluginVersion}"
     }
 }
 
