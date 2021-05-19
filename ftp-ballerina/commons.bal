@@ -23,28 +23,28 @@ public type Protocol "ftp"|"sftp"|"ftps";
 public const FTP = "ftp";
 # Underlying communication happens using SFTP
 public const SFTP = "sftp";
-# Underlying communication happens using FTPS
+# Underlying communication happens using FTPS.
 public const FTPS = "ftps";
 
-# A record for providing `Truststore` related configurations
+# Configuration to connect to a trust store.
 #
-# + path - Path to the truststore file
-# + password - Truststore password
+# + path - Path to a trust store file
+# + password - Trust store password
 public type TrustStore record {|
     string? path = ();
     string? password = ();
 |};
 
-# A record for providing `Keystore` related configurations
+# Configuration to connect to a key store.
 #
-# + path - Path to the keystore file
-# + password - Keystore password
+# + path - Path to the key store file
+# + password - Key store password
 public type KeyStore record {|
     string? path = ();
     string? password = ();
 |};
 
-# A record for providing `PrivateKey` related configurations
+# Configuration to read a privte key.
 #
 # + path - Path to the private key file
 # + password - Private key password
@@ -53,7 +53,7 @@ public type PrivateKey record {|
     string? password = ();
 |};
 
-# A record for providing `BasicAuth` related configurations
+# Basic Auth related configurations.
 #
 # + username - Username of the user
 # + password - Password of the user
@@ -62,12 +62,13 @@ public type BasicAuth record {|
     string password;
 |};
 
-# Provides configurations for facilitating secure communication with a remote FTP server
+# Configurations for facilitating secure communication with a remote
+# FTP server.
 #
-# + trustStore - Configures the truststore to be used
-# + keyStore - Configures the keystore to be used
-# + basicAuth - Configure username/password to be used
-# + privateKey - Configures the private key to be used
+# + trustStore - Trust store to be used
+# + keyStore - Key store to be used
+# + basicAuth - Username and password to be used
+# + privateKey - Private key to be used
 public type SecureSocket record {|
     TrustStore? trustStore = ();
     KeyStore? keyStore = ();
@@ -75,13 +76,14 @@ public type SecureSocket record {|
     PrivateKey? privateKey = ();
 |};
 
-# Provides configuration for the input given for FTP `put` and `append` operations
+# Configuration for the input given for `put` and `append` operations of
+# the FTP module.
 #
-# + filePath - Path of the file to create/append to
-# + isFile - True if input type is a file
+# + filePath - Path of the file to be created or appended
+# + isFile - `true` if the input type is a file
 # + fileContent - The content read from the input file, if the input is a file
 # + textContent - The input content, for other input types
-# + compressInput - If true, input will be compressed before upload
+# + compressInput - If true, input will be compressed before uploading
 public type InputContent record{|
     string filePath;
     boolean isFile = false;
