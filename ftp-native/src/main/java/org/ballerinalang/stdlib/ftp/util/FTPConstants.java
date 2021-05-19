@@ -18,6 +18,8 @@
 
 package org.ballerinalang.stdlib.ftp.util;
 
+import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BString;
 import org.wso2.transport.remotefilesystem.Constants;
 
 /**
@@ -39,7 +41,13 @@ public class FTPConstants {
     public static final String PROPERTY_MAP = "map";
     public static final String FTP_ORG_NAME = "ballerina";
     public static final String FTP_MODULE_NAME = "ftp";
-    
+    public static final String ENTITY_BYTE_STREAM = "entity_byte_stream";
+    public static final String READ_INPUT_STREAM = "readInputStream";
+    public static final String ARRAY_SIZE = "arraySize";
+    public static final String BYTE_STREAM_NEXT_FUNC = "next";
+    public static final String STREAM_ENTRY_RECORD = "StreamEntry";
+    public static final BString FIELD_VALUE = StringUtils.fromString("value");
+
     /**
      * ftp standard library version.
      * @deprecated Use FTPUtil.getFtpPackage().getVersion(),
@@ -68,8 +76,6 @@ public class FTPConstants {
     public static final String INPUT_CONTENT_FILE_CONTENT_KEY = "fileContent";
     public static final String INPUT_CONTENT_TEXT_CONTENT_KEY = "textContent";
     public static final String INPUT_CONTENT_COMPRESS_INPUT_KEY = "compressInput";
-    public static final String IO_ORG_NAME = "ballerina";
-    public static final String IO_MODULE_NAME = "io";
 
     /**
      * ftp standard library version.

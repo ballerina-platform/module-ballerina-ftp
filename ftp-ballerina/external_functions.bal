@@ -22,7 +22,8 @@ isolated function initEndpoint(Client clientEndpoint, map<anydata> config) retur
     'class: "org.ballerinalang.stdlib.ftp.client.FTPClient"
 } external;
 
-isolated function get(Client clientEndpoint, handle path) returns io:ReadableByteChannel|Error = @java:Method{
+isolated function get(Client clientEndpoint, handle path, int arraySize)
+        returns record {|byte[] value;|}|io:Error? = @java:Method{
     name: "get",
     'class: "org.ballerinalang.stdlib.ftp.client.FTPClient"
 } external;

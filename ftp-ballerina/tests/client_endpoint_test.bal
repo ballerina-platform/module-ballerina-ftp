@@ -16,6 +16,7 @@
 
 import ballerina/io;
 import ballerina/test;
+import ballerina/lang.'string as strings;
 import ballerina/log;
 import ballerina/jballerina.java;
 
@@ -43,42 +44,72 @@ function initServer() returns boolean {
 }
 
 @test:Config{}
-public function testReadContent() {
-    io:ReadableByteChannel|Error response = clientEP -> get(filePath);
-    if(response is io:ReadableByteChannel){
-        io:ReadableCharacterChannel? characters = new io:ReadableCharacterChannel(response, "utf-8");
-        if (characters is io:ReadableCharacterChannel) {
-            string|error content = characters.read(100);
-            if(content is string){
-                log:printInfo("Initial content in file: " + content);
-                log:printInfo("Executed Get operation");
+public function testReadBlockFittingContent() {
+    var str = clientEP -> get(filePath, 6);
+    if (str is stream<byte[], io:Error?>) {
+        record {|byte[] value;|}|io:Error? arr1 = str.next();
+        if (arr1 is record {|byte[] value;|}) {
+            string fileContent = checkpanic strings:fromBytes(arr1.value);
+            test:assertEquals(fileContent, "File c", msg = "Found unexpected content from `get` operation");
+            record {|byte[] value;|}|io:Error? arr2 = str.next();
+            if (arr2 is record {|byte[] value;|}) {
+                string fileContent2 = checkpanic strings:fromBytes(arr2.value);
+                test:assertEquals(fileContent2, "ontent",
+                    msg = "Found unexpected content from `next` method of `get` operation");
+                record {|byte[] value;|}|io:Error? arr3 = str.next();
+                test:assertTrue(arr3 is (), msg = "Found unexpected content from 2nd `next` method of `get` operation");
             } else {
-                log:printError("Error in retrieving content", 'error = content);
+                test:assertFail(msg = "Found unexpected arr2 output type");
             }
-            var closeResult = characters.close();
-            if (closeResult is error) {
-                log:printError("Error occurred while closing the channel", 'error = closeResult);
-            }
+        } else {
+            test:assertFail(msg = "Found unexpected arr1 output type");
         }
+        io:Error? closeResult = str.close();
     } else {
-        log:printError("Error in retrieving content", 'error = response);
+       test:assertFail(msg = "Found unexpected str output type" + str.message());
     }
 }
 
 @test:Config{
-    dependsOn: [testReadContent]
+    dependsOn: [testReadBlockFittingContent]
+}
+public function testReadBlockNonFittingContent() {
+    var str = clientEP -> get(filePath, 7);
+    if (str is stream<byte[], io:Error?>) {
+        record {|byte[] value;|}|io:Error? arr1 = str.next();
+        if (arr1 is record {|byte[] value;|}) {
+            string fileContent = checkpanic strings:fromBytes(arr1.value);
+            test:assertEquals(fileContent, "File co", msg = "Found unexpected content from `get` operation");
+            record {|byte[] value;|}|io:Error? arr2 = str.next();
+            if (arr2 is record {|byte[] value;|}) {
+                string fileContent2 = checkpanic strings:fromBytes(arr2.value);
+                test:assertEquals(fileContent2, "ntent",
+                    msg = "Found unexpected content from `next` method of `get` operation");
+                record {|byte[] value;|}|io:Error? arr3 = str.next();
+                test:assertTrue(arr3 is (), msg = "Found unexpected content from 2nd `next` method of `get` operation");
+            } else {
+                test:assertFail(msg = "Found unexpected arr2 output type");
+            }
+        } else {
+            test:assertFail(msg = "Found unexpected arr1 output type");
+        }
+        io:Error? closeResult = str.close();
+    } else {
+       test:assertFail(msg = "Found unexpected str output type" + str.message());
+    }
+}
+
+@test:Config{
+    dependsOn: [testReadBlockNonFittingContent]
 }
 public function testAppendContent() {
-    io:ReadableByteChannel|error byteChannel = io:openReadableFile(appendFilePath);
-    if(byteChannel is io:ReadableByteChannel){
-        Error? response = clientEP -> append(filePath, byteChannel);
-        if(response is Error) {
-            log:printError("Error in editing file", 'error = response);
-        } else {
-            log:printInfo("Executed Append operation");
-        }
+    (byte[])[] bList = ["Append ".toBytes(), "content".toBytes()];
+    stream<byte[], io:Error?> bStream = bList.toStream();
+    Error? response = clientEP -> append(filePath, bStream);
+    if(response is Error) {
+        log:printError("Error in editing file", 'error = response);
     } else {
-        log:printError("Error in reading input file", 'error = byteChannel);
+        log:printInfo("Executed Append operation");
     }
 }
 
@@ -86,17 +117,13 @@ public function testAppendContent() {
     dependsOn: [testAppendContent]
 }
 public function testPutFileContent() {
-    io:ReadableByteChannel|error byteChannelToPut = io:openReadableFile(putFilePath);
-
-    if(byteChannelToPut is io:ReadableByteChannel){
-        Error? response = clientEP -> put(newFilePath, byteChannelToPut);
-        if(response is Error) {
-            log:printError("Error in put operation", 'error = response);
-        }
-        log:printInfo("Executed Put operation");
-    } else {
-        log:printInfo("Error in reading input file");
+    (byte[])[] bList = ["Put c".toBytes(), "onten".toBytes(), "t".toBytes()];
+    stream<byte[], io:Error?> bStream = bList.toStream();
+    Error? response = clientEP -> put(newFilePath, bStream);
+    if(response is Error) {
+        log:printError("Error in put operation", 'error = response);
     }
+    log:printInfo("Executed Put operation");
 }
 
 @test:Config{

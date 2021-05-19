@@ -23,11 +23,11 @@ import io.ballerina.runtime.api.Future;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
+import io.ballerina.runtime.api.values.BString;
 import org.ballerinalang.stdlib.ftp.util.BallerinaFTPException;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.stdlib.ftp.util.FTPUtil;
-import org.ballerinalang.stdlib.io.channels.base.Channel;
-import org.ballerinalang.stdlib.io.utils.IOConstants;
+import org.ballerinalang.stdlib.io.utils.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.Constants;
@@ -43,6 +43,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.ballerinalang.stdlib.ftp.util.FTPConstants.ARRAY_SIZE;
+import static org.ballerinalang.stdlib.ftp.util.FTPConstants.ENTITY_BYTE_STREAM;
+import static org.ballerinalang.stdlib.ftp.util.FTPConstants.READ_INPUT_STREAM;
 
 /**
  * Contains functionality of FTP client.
@@ -99,15 +103,22 @@ public class FTPClient {
         return null;
     }
 
-    public static Object get(Environment env, BObject clientConnector, String filePath) throws BallerinaFTPException {
-        String url = FTPUtil.createUrl(clientConnector, filePath);
+    public static Object get(Environment env, BObject clientConnector, BString filePath, long arraySize)
+            throws BallerinaFTPException {
+        InputStream readInputStream = (InputStream) clientConnector.getNativeData(READ_INPUT_STREAM);
+        if (readInputStream != null) {
+            return FTPClientHelper.generateInputStreamEntry(readInputStream, arraySize);
+        }
+        clientConnector.addNativeData(ENTITY_BYTE_STREAM, null);
+        clientConnector.addNativeData(ARRAY_SIZE, arraySize);
+        String url = FTPUtil.createUrl(clientConnector, filePath.getValue());
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FTPConstants.PROPERTY_MAP));
         propertyMap.put(FTPConstants.PROPERTY_URI, url);
         Future balFuture = env.markAsync();
         FTPClientListener connectorListener = new FTPClientListener(balFuture,
                 remoteFileSystemBaseMessage -> FTPClientHelper.executeGetAction(remoteFileSystemBaseMessage,
-                        balFuture));
+                        balFuture, clientConnector));
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
@@ -117,6 +128,22 @@ public class FTPClient {
         }
         connector.send(null, FtpAction.GET);
         return null;
+    }
+
+    public static Object closeInputByteStream(BObject clientObject) {
+        InputStream readInputStream = (InputStream) clientObject.getNativeData(READ_INPUT_STREAM);
+        if (readInputStream != null) {
+            try {
+                readInputStream.close();
+                clientObject.addNativeData(READ_INPUT_STREAM, null);
+                clientObject.addNativeData(ENTITY_BYTE_STREAM, null);
+                return null;
+            } catch (IOException e) {
+                return IOUtils.createError(e);
+            }
+        } else {
+            return null;
+        }
     }
 
     public static Object append(Environment env, BObject clientConnector, BMap<Object, Object> inputContent)
@@ -132,10 +159,8 @@ public class FTPClient {
                     FTPConstants.INPUT_CONTENT_IS_FILE_KEY));
             RemoteFileSystemMessage message;
             if (isFile) {
-                BObject fileContent = inputContent.getObjectValue(StringUtils.fromString(
-                        FTPConstants.INPUT_CONTENT_FILE_CONTENT_KEY));
-                Channel byteChannel = (Channel) fileContent.getNativeData(IOConstants.BYTE_CHANNEL_NAME);
-                message = new RemoteFileSystemMessage(byteChannel.getInputStream());
+                InputStream stream = FTPClientHelper.getUploadStream(env, clientConnector, inputContent, true);
+                message = new RemoteFileSystemMessage(stream);
             } else {
                 String textContent = (inputContent.getStringValue(StringUtils.fromString(
                         FTPConstants.INPUT_CONTENT_TEXT_CONTENT_KEY))).getValue();
@@ -150,7 +175,7 @@ public class FTPClient {
                     connectorListener);
             connector.send(message, FtpAction.APPEND);
             balFuture.complete(null);
-        } catch (RemoteFileSystemConnectorException | IOException e) {
+        } catch (RemoteFileSystemConnectorException e) {
             throw new BallerinaFTPException(e.getMessage());
         }
         return null;
@@ -163,7 +188,7 @@ public class FTPClient {
         boolean isFile = inputContent.getBooleanValue(StringUtils.fromString(FTPConstants.INPUT_CONTENT_IS_FILE_KEY));
         boolean compressInput = inputContent.getBooleanValue(StringUtils.fromString(
                 FTPConstants.INPUT_CONTENT_COMPRESS_INPUT_KEY));
-        InputStream stream = FTPClientHelper.getUploadStream(inputContent, isFile);
+        InputStream stream = FTPClientHelper.getUploadStream(env, clientConnector, inputContent, isFile);
         RemoteFileSystemMessage message;
         ByteArrayInputStream compressedStream = null;
 

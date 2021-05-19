@@ -87,7 +87,7 @@ public type SecureSocket record {|
 public type InputContent record{|
     string filePath;
     boolean isFile = false;
-    io:ReadableByteChannel? fileContent = ();
+    stream<byte[], io:Error?>? fileContent = ();
     string? textContent = ();
     boolean compressInput = false;
 |};
