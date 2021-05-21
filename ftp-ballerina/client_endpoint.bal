@@ -21,14 +21,14 @@ import ballerina/log;
 import ballerina/jballerina.java;
 
 # Represents an FTP client that intracts with an FTP server
-public client class Client {
-    private ClientEndpointConfig config = {};
+public isolated client class Client {
+    private final readonly & ClientEndpointConfig config;
 
     # Gets invoked during object initialization.
     #
     # + clientConfig - Configurations for FTP client endpoint
     public isolated function init(ClientEndpointConfig clientConfig) {
-        self.config = clientConfig;
+        self.config = clientConfig.cloneReadOnly();
         Error? response = initEndpoint(self, self.config);
         if (response is Error) {
             log:printError("Invalid config provided");

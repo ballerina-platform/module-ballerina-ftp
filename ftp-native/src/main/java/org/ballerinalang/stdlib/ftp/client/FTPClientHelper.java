@@ -22,7 +22,6 @@ import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Future;
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.async.Callback;
-import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -58,9 +57,11 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.ballerinalang.stdlib.ftp.util.FTPConstants.ARRAY_SIZE;
 import static org.ballerinalang.stdlib.ftp.util.FTPConstants.BYTE_STREAM_NEXT_FUNC;
 import static org.ballerinalang.stdlib.ftp.util.FTPConstants.ENTITY_BYTE_STREAM;
 import static org.ballerinalang.stdlib.ftp.util.FTPConstants.FIELD_VALUE;
+import static org.ballerinalang.stdlib.ftp.util.FTPConstants.READ_INPUT_STREAM;
 import static org.ballerinalang.stdlib.ftp.util.FTPConstants.STREAM_ENTRY_RECORD;
 import static org.ballerinalang.stdlib.ftp.util.FTPUtil.getFtpPackage;
 
@@ -91,8 +92,8 @@ class FTPClientHelper {
                 ByteChannel byteChannel = new FTPByteChannel(in);
                 Channel channel = new FTPChannel(byteChannel);
                 InputStream inputStream = channel.getInputStream();
-                clientConnector.addNativeData("readInputStream", inputStream);
-                long arraySize = (long) clientConnector.getNativeData("arraySize");
+                clientConnector.addNativeData(READ_INPUT_STREAM, inputStream);
+                long arraySize = (long) clientConnector.getNativeData(ARRAY_SIZE);
                 BMap<BString, Object> streamEntry = generateInputStreamEntry(inputStream, arraySize);
                 clientConnector.addNativeData(ENTITY_BYTE_STREAM, streamEntry);
                 balFuture.complete(streamEntry);
@@ -111,7 +112,7 @@ class FTPClientHelper {
             int readNumber = inputStream.read(buffer);
             if (readNumber == -1) {
                 inputStream.close();
-                streamEntry.addNativeData("readInputStream", null);
+                streamEntry.addNativeData(READ_INPUT_STREAM, null);
                 return null;
             }
             byte[] returnArray;
@@ -280,8 +281,6 @@ class FTPClientHelper {
             @Override
             public void notifyFailure(BError bError) {
                 latch.countDown();
-                throw ErrorCreator.createError(StringUtils.fromString(
-                        "Error occurred while streaming content: " + bError.getMessage()));
             }
         });
     }
