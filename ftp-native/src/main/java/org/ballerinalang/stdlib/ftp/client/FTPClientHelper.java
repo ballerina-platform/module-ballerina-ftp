@@ -37,7 +37,6 @@ import org.ballerinalang.stdlib.ftp.util.BallerinaFTPException;
 import org.ballerinalang.stdlib.ftp.util.BufferHolder;
 import org.ballerinalang.stdlib.ftp.util.FTPConstants;
 import org.ballerinalang.stdlib.ftp.util.FTPUtil;
-import org.ballerinalang.stdlib.ftp.util.FileByteArrayInputStream;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +56,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.ballerinalang.stdlib.ftp.util.FTPConstants.BYTE_STREAM_NEXT_FUNC;
 import static org.ballerinalang.stdlib.ftp.util.FTPConstants.ENTITY_BYTE_STREAM;
@@ -68,7 +68,7 @@ import static org.ballerinalang.stdlib.ftp.util.FTPUtil.getFtpPackage;
 /**
  * Contains helper methods to invoke FTP actions.
  */
-public class FTPClientHelper {
+class FTPClientHelper {
 
     private static final String READABLE_BYTE_CHANNEL = "ReadableByteChannel";
     private static final Logger log = LoggerFactory.getLogger(FTPClientHelper.class);
@@ -196,14 +196,60 @@ public class FTPClientHelper {
 
     static InputStream getUploadStream(Environment env, BObject clientConnector, BMap<Object, Object> inputContent,
                                        boolean isFile) {
+        InputStream fileInputStream;
         if (isFile) {
             BStream fileByteStream = (BStream) inputContent.get(
                     StringUtils.fromString(FTPConstants.INPUT_CONTENT_FILE_CONTENT_KEY));
             if (fileByteStream != null) {
                 BObject iteratorObj = fileByteStream.getIteratorObj();
-                CountDownLatch latch = new CountDownLatch(1);
-                return new FileByteArrayInputStream(new byte[0], env, clientConnector, new BufferHolder(),
-                        iteratorObj, latch);
+                fileInputStream = new ByteArrayInputStream(new byte[0]) {
+                    private final BufferHolder bufferHolder = new BufferHolder();
+
+                    @Override
+                    public int read(byte[] b) {
+                        if (bufferHolder.getBuffer().length == 0) {
+                            CountDownLatch latch = new CountDownLatch(1);
+                            callStreamNext(env, clientConnector, bufferHolder, iteratorObj, latch);
+                            int timeout = 120;
+                            boolean countDownReached;
+                            try {
+                                countDownReached = latch.await(timeout, TimeUnit.SECONDS);
+                                if (!countDownReached) {
+                                    log.error("Could not complete byte stream serialization within " + timeout +
+                                            " seconds");
+                                    return -1;
+                                }
+                            } catch (InterruptedException e) {
+                                log.error("Interrupted before completing the 'next' method of the stream");
+                                return -1;
+                            }
+                        }
+                        int bLength = b.length;
+                        int buffLength = bufferHolder.getBuffer().length;
+                        if (bufferHolder.isTerminal()) {
+                            return -1;
+                        }
+                        if (bLength > buffLength) {
+                            for (int i = 0; i < buffLength; i++) {
+                                b[i] = bufferHolder.getBuffer()[i];
+                            }
+                            bufferHolder.setBuffer(new byte[0]);
+                            return buffLength;
+                        } else {
+                            for (int i = 0; i < bLength; i++) {
+                                b[i] = bufferHolder.getBuffer()[i];
+                            }
+                            int remainCount = buffLength % bLength;
+                            byte[] remainBytes = new byte[remainCount];
+                            for (int i = 0; i < remainCount; i++) {
+                                remainBytes[i] = bufferHolder.getBuffer()[buffLength - remainCount + i];
+                            }
+                            bufferHolder.setBuffer(remainBytes);
+                            return bLength;
+                        }
+                    }
+                };
+                return fileInputStream;
             }
             return null;
         } else {
@@ -213,19 +259,22 @@ public class FTPClientHelper {
         }
     }
 
-    public static void callStreamNext(Environment env, BObject entity, BufferHolder bufferHolder,
+    private static void callStreamNext(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj, CountDownLatch latch) {
         env.getRuntime().invokeMethodAsync(iteratorObj, BYTE_STREAM_NEXT_FUNC, null, null, new Callback() {
             @Override
             public void notifySuccess(Object result) {
-                if (result == null) {
+                if (result == bufferHolder.getTerminalType()) {
                     entity.addNativeData(ENTITY_BYTE_STREAM, null);
+                    bufferHolder.setTerminal(true);
                     latch.countDown();
                     return;
                 }
                 BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
                 byte[] bytes = arrayValue.getBytes();
                 bufferHolder.setBuffer(bytes);
+                bufferHolder.setTerminal(false);
+                latch.countDown();
             }
 
             @Override

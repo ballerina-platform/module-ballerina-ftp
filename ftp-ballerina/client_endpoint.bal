@@ -38,15 +38,15 @@ public client class Client {
 
     # Retrieves the file content from a remote resource.
     # ```ballerina
-    # stream<byte[], io:Error>|ftp:Error channel = client->get(path);
+    # stream<byte[], io:Error?>|ftp:Error channel = client->get(path);
     # ```
     #
     # + path - The resource path
     # + arraySize - A defaultable paramerter to state the size of the byte array. Default size is 8KB
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
-    remote isolated function get(string path, int arraySize = 8192) returns stream<byte[], io:Error>|Error {
+    remote isolated function get(string path, int arraySize = 8192) returns stream<byte[], io:Error?>|Error {
         ByteStream byteStream = new(self, path, arraySize);
-        return new stream<byte[], io:Error>(byteStream);
+        return new stream<byte[], io:Error?>(byteStream);
     }
 
     # Appends the content to an existing file in an FTP server.
@@ -192,7 +192,7 @@ isolated function getInputContent(string path, stream<byte[], io:Error?>|string|
         compressInput: compressInput
     };
 
-    if(content is stream<byte[], io:Error>){
+    if(content is stream<byte[], io:Error?>){
         inputContent.isFile = true;
         inputContent.fileContent = content;
     } else if(content is string){
