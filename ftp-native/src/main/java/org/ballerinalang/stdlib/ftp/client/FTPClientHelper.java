@@ -58,6 +58,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.ballerinalang.stdlib.ftp.util.FTPConstants.ARRAY_SIZE;
+import static org.ballerinalang.stdlib.ftp.util.FTPConstants.BYTE_STREAM_CLOSE_FUNC;
 import static org.ballerinalang.stdlib.ftp.util.FTPConstants.BYTE_STREAM_NEXT_FUNC;
 import static org.ballerinalang.stdlib.ftp.util.FTPConstants.ENTITY_BYTE_STREAM;
 import static org.ballerinalang.stdlib.ftp.util.FTPConstants.FIELD_VALUE;
@@ -217,11 +218,11 @@ class FTPClientHelper {
                                 countDownReached = latch.await(timeout, TimeUnit.SECONDS);
                                 if (!countDownReached) {
                                     log.error("Could not complete byte stream serialization within " + timeout +
-                                            " seconds");
+                                            " seconds.");
                                     return -1;
                                 }
                             } catch (InterruptedException e) {
-                                log.error("Interrupted before completing the 'next' method of the stream");
+                                log.error("Interrupted before completing the 'next' method of the stream.");
                                 return -1;
                             }
                         }
@@ -247,6 +248,18 @@ class FTPClientHelper {
                             }
                             bufferHolder.setBuffer(remainBytes);
                             return bLength;
+                        }
+                    }
+
+                    @Override
+                    public void close() {
+                        CountDownLatch latch = new CountDownLatch(1);
+                        callStreamClose(env, clientConnector, bufferHolder, iteratorObj, latch);
+                        int timeout = 120;
+                        try {
+                            latch.await(timeout, TimeUnit.SECONDS);
+                         } catch (InterruptedException e) {
+                            log.error("Interrupted before completing the 'close' method of the stream.");
                         }
                     }
                 };
@@ -280,6 +293,27 @@ class FTPClientHelper {
 
             @Override
             public void notifyFailure(BError bError) {
+                latch.countDown();
+            }
+        });
+    }
+
+    private static void callStreamClose(Environment env, BObject entity, BufferHolder bufferHolder,
+                                       BObject iteratorObj, CountDownLatch latch) {
+        env.getRuntime().invokeMethodAsync(iteratorObj, BYTE_STREAM_CLOSE_FUNC, null, null, new Callback() {
+            @Override
+            public void notifySuccess(Object result) {
+                this.terminateStream();
+            }
+
+            @Override
+            public void notifyFailure(BError bError) {
+                this.terminateStream();
+            }
+
+            private void terminateStream() {
+                entity.addNativeData(ENTITY_BYTE_STREAM, null);
+                bufferHolder.setTerminal(true);
                 latch.countDown();
             }
         });

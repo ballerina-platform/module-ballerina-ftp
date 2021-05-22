@@ -45,6 +45,7 @@ public class FTPConstants {
     public static final String READ_INPUT_STREAM = "readInputStream";
     public static final String ARRAY_SIZE = "arraySize";
     public static final String BYTE_STREAM_NEXT_FUNC = "next";
+    public static final String BYTE_STREAM_CLOSE_FUNC = "close";
     public static final String STREAM_ENTRY_RECORD = "StreamEntry";
     public static final BString FIELD_VALUE = StringUtils.fromString("value");
 
