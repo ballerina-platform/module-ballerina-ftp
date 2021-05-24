@@ -21,14 +21,14 @@ import ballerina/log;
 import ballerina/jballerina.java;
 
 # Represents an FTP client that intracts with an FTP server
-public client class Client {
-    private ClientEndpointConfig config = {};
+public isolated client class Client {
+    private final readonly & ClientEndpointConfig config;
 
     # Gets invoked during object initialization.
     #
     # + clientConfig - Configurations for FTP client endpoint
     public isolated function init(ClientEndpointConfig clientConfig) {
-        self.config = clientConfig;
+        self.config = clientConfig.cloneReadOnly();
         Error? response = initEndpoint(self, self.config);
         if (response is Error) {
             log:printError("Invalid config provided");
@@ -38,16 +38,16 @@ public client class Client {
 
     # Retrieves the file content from a remote resource.
     # ```ballerina
-    # io:ReadableByteChannel|ftp:Error channel = client->get(path);
+    # stream<byte[] & readonly, io:Error?>|ftp:Error channel
+    #   = client->get(path);
     # ```
     #
     # + path - The resource path
-    # + return - An `io:ReadableByteChannel` that represents the data source
-    #            in the resource or an `ftp:Error` if failed to establish
-    #            the communication with the FTP server or read the resource
-    remote isolated function get(string path) returns io:ReadableByteChannel|Error {
-        handle resourcePath = java:fromString(path);
-        return get(self, resourcePath);
+    # + arraySize - A defaultable paramerter to state the size of the byte array. Default size is 8KB
+    # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
+    remote isolated function get(string path, int arraySize = 8192) returns stream<byte[] & readonly, io:Error?>|Error {
+        ByteStream byteStream = new(self, path, arraySize);
+        return new stream<byte[] & readonly, io:Error?>(byteStream);
     }
 
     # Appends the content to an existing file in an FTP server.
@@ -59,7 +59,8 @@ public client class Client {
     # + content - Content to be written to the file in server
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
-    remote isolated function append(string path, io:ReadableByteChannel|string|xml|json content) returns Error? {
+    remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content)
+            returns Error? {
         return append(self, getInputContent(path, content));
     }
 
@@ -72,9 +73,9 @@ public client class Client {
     # + content - Content to be written to the file in server
     # + compressInput - True if file should be compressed before uploading
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #           the communication with the FTP server
-    remote isolated function put(string path, io:ReadableByteChannel|string|xml|json content,
-                                                                boolean compressInput=false) returns Error? {
+    #            the communication with the FTP server
+    remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
+            |string|xml|json content, boolean compressInput=false) returns Error? {
         return put(self, getInputContent(path, content, compressInput));
     }
 
@@ -186,13 +187,14 @@ public type ClientEndpointConfig record {|
     SecureSocket? secureSocket = ();
 |};
 
-isolated function getInputContent(string path, io:ReadableByteChannel|string|xml|json content, boolean compressInput=false) returns InputContent{
+isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,
+        boolean compressInput=false) returns InputContent{
     InputContent inputContent = {
         filePath: path,
         compressInput: compressInput
     };
 
-    if(content is io:ReadableByteChannel){
+    if(content is stream<byte[] & readonly, io:Error?>){
         inputContent.isFile = true;
         inputContent.fileContent = content;
     } else if(content is string){

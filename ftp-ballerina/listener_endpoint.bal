@@ -154,7 +154,7 @@ class Job {
     *task:Job;
     private Listener l;
 
-    public function execute() {
+    public isolated function execute() {
         var result = self.l.poll();
         if (result is error) {
             log:printError("Error while executing poll function", 'error = result);

@@ -46,9 +46,9 @@ ftp:Error? mkdirResponse = ftpClient->mkdir("<The directory path>");
 The following code uploads a file to a remote FTP server.
 
 ```ballerina
-io:ReadableByteChannel summaryChannel
-    = check io:openReadableFile("<The local data source path>");
-ftp:Error? putResponse = ftpClient->put("<The resource path>", summaryChannel);
+stream<io:Block, io:Error?> fileByteStream
+    = check io:fileReadBlocksAsStream(putFilePath, <Block size>);
+ftp:Error? putResponse = ftpClient->put("<The resource path>", fileByteStream);
 ```
 
 ##### Compressing and Uploading a File to a Remote Server
@@ -56,11 +56,11 @@ ftp:Error? putResponse = ftpClient->put("<The resource path>", summaryChannel);
 The following code compresses and uploads a file to a remote FTP server.
 
 ```ballerina
-io:ReadableByteChannel inputChannel
-    = check io:openReadableFile("<Local data source path>");
 // Set the optional boolean flag as 'true' to compress before uploading
+stream<io:Block, io:Error?> fileByteStream
+    = check io:fileReadBlocksAsStream(putFilePath, <Block size>);
 ftp:Error? compressedPutResponse = ftpClient->put("<Resource path>",
-    inputChannel, true);
+    fileByteStream, true);
 ```
 
 ##### Getting the Size of a Remote File
@@ -76,12 +76,17 @@ int|ftp:Error sizeResponse = ftpClient->size("<The resource path>");
 The following code reads the content of a file in a remote FTP server.
 
 ```ballerina
-io:ReadableByteChannel getResponse = check ftpClient->get("<The file path>");
-io:ReadableCharacterChannel? characters
-    = new io:ReadableCharacterChannel(getResponse, "utf-8");
-if (characters is io:ReadableCharacterChannel) {
-    string output = check characters.read(<No of characters to read>);
-    var closeResult = characters.close();
+stream<byte[], io:Error?>|Error str = clientEP -> get("<The file path>", <Block size>);
+if (str is stream<byte[], io:Error?>) {
+    record {|byte[] value;|}|io:Error? arr1 = str.next();
+    if (arr1 is record {|byte[] value;|}) {
+        string fileContent = check strings:fromBytes(arr1.value);
+        // `fileContent` is the `string` value of first byte array
+        record {|byte[] value;|}|io:Error? arr2 = str.next();
+        // Similarly following content chunks can be iteratively read with `next` method.
+        // Final chunk will contain the terminal value which is `()`.
+    }
+    io:Error? closeResult = str.close();
 }
 ```
 
