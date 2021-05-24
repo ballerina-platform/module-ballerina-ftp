@@ -46,6 +46,8 @@ ftp:Error? mkdirResponse = ftpClient->mkdir("<The directory path>");
 The following code uploads a file to a remote FTP server.
 
 ```ballerina
+stream<io:Block, io:Error?> fileByteStream
+    = check io:fileReadBlocksAsStream(putFilePath, <Block size>);
 ftp:Error? putResponse = ftpClient->put("<The resource path>", fileByteStream);
 ```
 
@@ -55,6 +57,8 @@ The following code compresses and uploads a file to a remote FTP server.
 
 ```ballerina
 // Set the optional boolean flag as 'true' to compress before uploading
+stream<io:Block, io:Error?> fileByteStream
+    = check io:fileReadBlocksAsStream(putFilePath, <Block size>);
 ftp:Error? compressedPutResponse = ftpClient->put("<Resource path>",
     fileByteStream, true);
 ```
@@ -72,8 +76,7 @@ int|ftp:Error sizeResponse = ftpClient->size("<The resource path>");
 The following code reads the content of a file in a remote FTP server.
 
 ```ballerina
-int blockSize = 1024;
-stream<byte[], io:Error?>|Error str = clientEP -> get("<The file path>", blockSize);
+stream<byte[], io:Error?>|Error str = clientEP -> get("<The file path>", <Block size>);
 if (str is stream<byte[], io:Error?>) {
     record {|byte[] value;|}|io:Error? arr1 = str.next();
     if (arr1 is record {|byte[] value;|}) {

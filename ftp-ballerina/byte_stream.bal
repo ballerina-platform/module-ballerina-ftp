@@ -21,7 +21,7 @@ import ballerina/jballerina.java;
 #
 # + value - The array of byte
 type StreamEntry record {|
-    byte[] value;
+    byte[] & readonly value;
 |};
 
 # `ByteStream` used to initialize a stream of type byte[]. This `ByteStream` refers to the stream that embedded to
@@ -48,7 +48,7 @@ class ByteStream {
     #
     # + return - A `record` of `byte[]`s when the stream is avaliable,
     #            `()` if the stream has reached the end or else an `io:Error`
-    public isolated function next() returns record {|byte[] value;|}|io:Error? {
+    public isolated function next() returns record {|byte[] & readonly value;|}|io:Error? {
         return externGetStreamEntryRecord(self.entity, self.resourcePath, self.arraySize);
     }
 
@@ -69,7 +69,7 @@ class ByteStream {
 }
 
 isolated function externGetStreamEntryRecord(Client entity, string path, int arraySize)
-        returns record {|byte[] value;|}|io:Error? = @java:Method {
+        returns record {|byte[] & readonly value;|}|io:Error? = @java:Method {
     'class: "org.ballerinalang.stdlib.ftp.client.FTPClient",
     name: "get"
 } external;
