@@ -16,6 +16,7 @@
 
 import ballerina/io;
 import ballerina/test;
+import ballerina/lang.runtime as runtime;
 import ballerina/lang.'string as strings;
 import ballerina/log;
 import ballerina/jballerina.java;
@@ -506,6 +507,13 @@ public function testRemoveDirectory() {
 
     boolean|Error response2 = clientEp -> isDirectory("/home/in/test");
     log:printInfo("Executed `isDirectory` operation after deleting a directory");
+    int i = 0;
+    while (response2 is boolean && response2 && i < 10) {
+         runtime:sleep(1);
+         response2 = clientEp -> isDirectory("/home/in/test");
+         log:printInfo("Executed `isDirectory` operation after deleting a directory");
+         i += 1;
+    }
     if(response2 is boolean) {
         log:printInfo("Existence of the directory: " + response2.toString());
         test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
