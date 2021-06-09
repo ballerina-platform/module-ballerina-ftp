@@ -31,10 +31,19 @@ ext.testngVersion = "6.14.3"
 ext.slf4jVersion = "1.7.30"
 ext.javaFtpVersion = "1.6.2"
 ext.fileTransportVersion = "6.0.57"
-ext.commonsVfsVersion="2.6.0"
+ext.commonsVfsVersion="2.2-wso2v1"
 ext.commonsNetVersion="3.6"
 ext.jschVersion= "0.1.54"
 ext.mockFtpServerVersion= "2.7.1"
+ext.sshdMinaVersion= "1.1.1"
+ext.ftpServerVersion = "1.1.1"
+ext.jcraftVersion = "0.1.54"
+ext.bouncycastleVersion = "1.58"
+ext.sshdCoreVersion = "1.7.0"
+ext.ftpletApiVersion = "1.1.1"
+ext.minaCoreVersion = "2.0.16"
+ext.aopallianceVersion = "1.0"
+ext.jclSlf4jVersion = "1.7.21"
 
 allprojects {
     group = 'org.ballerinalang'
@@ -122,11 +131,6 @@ subprojects {
         ballerinaStdLibs "org.ballerinalang:log-ballerina:${stdlibLogVersion}"
         ballerinaStdLibs "org.ballerinalang:io-ballerina:${stdlibIoVersion}"
         ballerinaStdLibs "org.ballerinalang:task-ballerina:${stdlibTaskVersion}"
-        ballerinaStdLibs "org.wso2.transport.file:org.wso2.transport.remote-file-system:${fileTransportVersion}"
-        ballerinaStdLibs "org.mockftpserver:MockFtpServer:${mockFtpServerVersion}"
-        ballerinaStdLibs "org.slf4j:slf4j-api:${slf4jVersion}"
-        ballerinaStdLibs "org.testng:testng:${testngVersion}"
-        ballerinaStdLibs "org.apache.commons:commons-vfs2:${commonsVfsVersion}"
         ballerinaStdLibs "org.ballerinalang:time-ballerina:${stdlibTimeVersion}"
     }
 }

@@ -4,10 +4,17 @@ name = "ftp"
 version = "@toml.version@"
 
 [[platform.java11.dependency]]
-path = "./lib/commons-vfs2-2.6.0.jar"
-groupId = "org.apache.commons"
+path = "./lib/commons-vfs2-2.2-wso2v1.jar"
+groupId = "org.wso2.org.apache.commons"
 artifactId = "commons-vfs2"
-version = "2.6.0"
+version = "2.2-wso2v1"
+
+
+[[platform.java11.dependency]]
+path = "./lib/jsch-0.1.54.jar"
+groupId = "com.jcraft"
+artifactId = "jsch"
+version = "0.1.54"
 
 
 [[platform.java11.dependency]]
@@ -29,6 +36,55 @@ path = "./lib/MockFtpServer-2.7.1.jar"
 groupId = "org.mockftpserver"
 artifactId = "MockFtpServer"
 version = "2.7.1"
+
+
+[[platform.java11.dependency]]
+path = "./lib/bcprov-jdk15on-1.58.jar"
+groupId = "org.bouncycastle"
+artifactId = "bcprov-jdk15on"
+version = "1.58"
+
+
+[[platform.java11.dependency]]
+path = "./lib/sshd-core-1.7.0.jar"
+groupId = "org.apache.sshd"
+artifactId = "sshd-core"
+version = "1.7.0"
+
+
+[[platform.java11.dependency]]
+path = "./lib/ftpserver-core-1.1.1.jar"
+groupId = "org.apache.ftpserver"
+artifactId = "ftpserver-core"
+version = "1.1.1"
+
+
+[[platform.java11.dependency]]
+path = "./lib/ftplet-api-1.1.1.jar"
+groupId = "org.apache.ftpserver"
+artifactId = "ftplet-api"
+version = "1.1.1"
+
+
+[[platform.java11.dependency]]
+path = "./lib/mina-core-2.0.16.jar"
+groupId = "org.apache.mina"
+artifactId = "mina-core"
+version = "2.0.16"
+
+
+[[platform.java11.dependency]]
+path = "./lib/aopalliance-1.0.jar"
+groupId = "aopalliance"
+artifactId = "aopalliance"
+version = "1.0"
+
+
+[[platform.java11.dependency]]
+path = "./lib/jcl-over-slf4j-1.7.21.jar"
+groupId = "org.slf4j"
+artifactId = "jcl-over-slf4j"
+version = "1.7.21"
 
 
 [[platform.java11.dependency]]

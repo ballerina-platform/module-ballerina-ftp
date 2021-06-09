@@ -66,13 +66,37 @@ configurations {
 }
 
 dependencies {
-    externalJars(group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
+    externalJars(group: 'org.wso2.org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'com.jcraft', name: 'jsch', version: "${jcraftVersion}") {
         transitive = false
     }
     externalJars(group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}") {
         transitive = false
     }
     externalJars(group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: "${bouncycastleVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.apache.sshd', name: 'sshd-core', version: "${sshdCoreVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.apache.ftpserver', name: 'ftpserver-core', version: "${ftpServerVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.apache.ftpserver', name: 'ftplet-api', version: "${ftpletApiVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.apache.mina', name: 'mina-core', version: "${minaCoreVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'aopalliance', name: 'aopalliance', version: "${aopallianceVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.slf4j', name: 'jcl-over-slf4j', version: "${jclSlf4jVersion}") {
         transitive = false
     }
     externalJars(group: 'org.testng', name: 'testng', version: "${testngVersion}") {

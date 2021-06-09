@@ -23,5 +23,9 @@ module io.ballerina.stdlib.ftp.testutils {
     requires org.slf4j;
     requires testng;
     requires MockFtpServer;
+    requires ftpserver.core;
+    requires ftplet.api;
+    requires sshd.core;
+    requires bcprov.jdk15on;
     exports org.ballerinalang.stdlib.ftp.testutils.mockServerUtils;
 }

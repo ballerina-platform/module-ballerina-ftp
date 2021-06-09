@@ -35,16 +35,36 @@ ClientEndpointConfig config = {
 
 Client clientEp = new(config);
 
-// Start mock FTP server
-boolean startedServer = initServer();
+// Create the config to access mock SFTP server
+ClientEndpointConfig sftpConfig = {
+    protocol: SFTP,
+    host: "127.0.0.1",
+    port: 21213,
+    secureSocket: {
+        basicAuth: {username: "wso2", password: "wso2123"},
+        privateKey: {
+            path: "tests/resources/sftp.private.key",
+            password: "changeit"
+        }
+    }
+};
 
-function initServer() returns boolean {
-    Error? response = initFtpServer(config);
-    return !(response is Error);
+Client sftpClientEp = new(sftpConfig);
+
+// Start mock FTP servers
+boolean startedServers = initServers();
+
+function initServers() returns boolean {
+    Error? response1 = initFtpServer(config);
+    Error? response2 = initSftpServer(sftpConfig);
+    return !(response1 is Error || response2 is Error);
 }
 
-@test:Config{}
+@test:Config{
+    dependsOn: [testAddedFileCount]
+}
 public function testReadBlockFittingContent() returns error? {
+    test:assertTrue(startedServers, msg = "Test servers are not properly started.");
     stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get(filePath, 6);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|io:Error? arr1 = str.next();
@@ -383,7 +403,7 @@ public function testRenameDirectory() {
         log:printInfo("Executed `rename` operation");
     }
 
-    boolean|Error response2 = clientEp -> isDirectory("/home/in/out");
+    boolean|Error response2 = clientEp -> isDirectory(existingName);
     log:printInfo("Executed `isDirectory` operation on original directory after renaming a directory");
     if(response2 is boolean) {
         log:printInfo("Existance of original directory: " + response2.toString());
@@ -392,7 +412,7 @@ public function testRenameDirectory() {
         log:printError("Error while invoking `isDirectory` operation", 'error = response2);
     }
 
-    boolean|Error response3 = clientEp -> isDirectory("/home/in/test");
+    boolean|Error response3 = clientEp -> isDirectory(newName);
     log:printInfo("Executed `isDirectory` operation on renamed directory after renaming a directory");
     if(response3 is boolean) {
         log:printInfo("Existance of renamed directory: " + response3.toString());
@@ -487,7 +507,7 @@ public function testRemoveDirectory() {
     boolean|Error response2 = clientEp -> isDirectory("/home/in/test");
     log:printInfo("Executed `isDirectory` operation after deleting a directory");
     if(response2 is boolean) {
-        log:printInfo("Existance of the directory: " + response2.toString());
+        log:printInfo("Existence of the directory: " + response2.toString());
         test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
     } else {
         log:printError("Error in reading `isDirectory`", 'error = response2);
@@ -496,15 +516,26 @@ public function testRemoveDirectory() {
 
 @test:AfterSuite{}
 public function stopServer() returns error? {
-    error? response = stopFtpServer();
+    error? response1 = stopFtpServer();
+    error? response2 = stopSftpServer();
 }
 
 function initFtpServer(map<anydata> config) returns Error? = @java:Method{
-    name: "initServer",
+    name: "initFtpServer",
+    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFTPServer"
+} external;
+
+function initSftpServer(map<anydata> config) returns Error? = @java:Method{
+    name: "initSftpServer",
     'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFTPServer"
 } external;
 
 function stopFtpServer() returns () = @java:Method{
-    name: "stopServer",
+    name: "stopFtpServer",
+    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFTPServer"
+} external;
+
+function stopSftpServer() returns error? = @java:Method{
+    name: "stopSftpServer",
     'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFTPServer"
 } external;
