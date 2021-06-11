@@ -183,8 +183,8 @@ public isolated client class Client {
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
-    int? port = 21;
-    AuthConfiguration? auth = ();
+    int port = 21;
+    AuthConfiguration auth?;
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,

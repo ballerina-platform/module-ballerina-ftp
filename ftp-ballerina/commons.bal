@@ -29,8 +29,8 @@ public const SFTP = "sftp";
 # + path - Path to a trust store file
 # + password - Trust store password
 public type TrustStore record {|
-    string? path = ();
-    string? password = ();
+    string path?;
+    string password?;
 |};
 
 # Configuration to connect to a key store.
@@ -38,8 +38,8 @@ public type TrustStore record {|
 # + path - Path to the key store file
 # + password - Key store password
 public type KeyStore record {|
-    string? path = ();
-    string? password = ();
+    string path?;
+    string password?;
 |};
 
 # Configuration to read a privte key.
@@ -47,8 +47,8 @@ public type KeyStore record {|
 # + path - Path to the private key file
 # + password - Private key password
 public type PrivateKey record {|
-    string? path = ();
-    string? password = ();
+    string path?;
+    string password?;
 |};
 
 # Basic Auth related configurations.
@@ -66,8 +66,8 @@ public type BasicAuth record {|
 # + basicAuth - Username and password to be used
 # + privateKey - Private key to be used
 public type AuthConfiguration record {|
-    BasicAuth? basicAuth = ();
-    PrivateKey? privateKey = ();
+    BasicAuth basicAuth?;
+    PrivateKey privateKey?;
 |};
 
 # Configuration for the input given for `put` and `append` operations of
@@ -81,7 +81,7 @@ public type AuthConfiguration record {|
 public type InputContent record{|
     string filePath;
     boolean isFile = false;
-    stream<byte[] & readonly, io:Error?>? fileContent = ();
-    string? textContent = ();
+    stream<byte[] & readonly, io:Error?> fileContent?;
+    string textContent?;
     boolean compressInput = false;
 |};

@@ -180,9 +180,9 @@ public type ListenerConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
     int port = 21;
-    AuthConfiguration? auth = ();
+    AuthConfiguration auth?;
     string path = "/home";
     string fileNamePattern = "(.*).txt";
     decimal pollingInterval = 60;
-    handle? serverConnector = ();
+    handle serverConnector?;
 |};
