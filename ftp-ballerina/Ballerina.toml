@@ -4,102 +4,96 @@ name = "ftp"
 version = "@toml.version@"
 
 [[platform.java11.dependency]]
-path = "./lib/commons-vfs2-2.2-wso2v1.jar"
+path = "./lib/commons-vfs2-@commons.vfs2.version@.jar"
 groupId = "org.wso2.org.apache.commons"
 artifactId = "commons-vfs2"
-version = "2.2-wso2v1"
-
+version = "@commons.vfs2.version@"
 
 [[platform.java11.dependency]]
-path = "./lib/jsch-0.1.54.jar"
+path = "./lib/jsch-@jsch.version@.jar"
 groupId = "com.jcraft"
 artifactId = "jsch"
-version = "0.1.54"
-
+version = "@jsch.version@"
 
 [[platform.java11.dependency]]
-path = "./lib/commons-net-3.6.jar"
+path = "./lib/commons-net-@commons.net.version@.jar"
 groupId = "commons-net"
 artifactId = "commons-net"
-version = "3.6"
-
+version = "@commons.net.version@"
 
 [[platform.java11.dependency]]
-path = "./lib/testng-6.14.3.jar"
+path = "./lib/testng-@testng.version@.jar"
 groupId = "org.testng"
 artifactId = "testng"
-version = "6.14.3"
-
+version = "@testng.version@"
 
 [[platform.java11.dependency]]
-path = "./lib/MockFtpServer-2.7.1.jar"
+path = "./lib/MockFtpServer-@mockftpserver.version@.jar"
 groupId = "org.mockftpserver"
 artifactId = "MockFtpServer"
-version = "2.7.1"
-
+version = "@mockftpserver.version@"
+scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "./lib/bcprov-jdk15on-1.58.jar"
+path = "./lib/bcprov-jdk15on-@bouncycastle.version@.jar"
 groupId = "org.bouncycastle"
 artifactId = "bcprov-jdk15on"
-version = "1.58"
-
+version = "@bouncycastle.version@"
+scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "./lib/sshd-core-1.7.0.jar"
+path = "./lib/sshd-core-@sshd.core.version@.jar"
 groupId = "org.apache.sshd"
 artifactId = "sshd-core"
-version = "1.7.0"
-
+version = "@sshd.core.version@"
+scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "./lib/ftpserver-core-1.1.1.jar"
+path = "./lib/ftpserver-core-@ftpserver.core.version@.jar"
 groupId = "org.apache.ftpserver"
 artifactId = "ftpserver-core"
-version = "1.1.1"
-
+version = "@ftpserver.core.version@"
+scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "./lib/ftplet-api-1.1.1.jar"
+path = "./lib/ftplet-api-@ftplet.api.version@.jar"
 groupId = "org.apache.ftpserver"
 artifactId = "ftplet-api"
-version = "1.1.1"
-
+version = "@ftplet.api.version@"
+scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "./lib/mina-core-2.0.16.jar"
+path = "./lib/mina-core-@mina.core.version@.jar"
 groupId = "org.apache.mina"
 artifactId = "mina-core"
-version = "2.0.16"
-
+version = "@mina.core.version@"
+scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "./lib/aopalliance-1.0.jar"
+path = "./lib/aopalliance-@aopalliance.version@.jar"
 groupId = "aopalliance"
 artifactId = "aopalliance"
-version = "1.0"
-
+version = "@aopalliance.version@"
+scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "./lib/jcl-over-slf4j-1.7.21.jar"
+path = "./lib/jcl-over-slf4j-@jcl.slf4j.version@.jar"
 groupId = "org.slf4j"
 artifactId = "jcl-over-slf4j"
-version = "1.7.21"
-
+version = "@jcl.slf4j.version@"
+scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "./lib/org.wso2.transport.remote-file-system-6.0.57.jar"
+path = "./lib/org.wso2.transport.remote-file-system-@wso2.remote.file.system.version@.jar"
 groupId = "org.wso2.transport.file"
 artifactId = "org.wso2.transport.remote-file-system"
-version = "6.0.57"
-
+version = "@wso2.remote.file.system.version@"
 
 [[platform.java11.dependency]]
 path = "../ftp-native/build/libs/ftp-native-@project.version@.jar"
 groupId = "ballerina"
 artifactId = "ftp"
 version = "@project.version@"
-
 
 [[platform.java11.dependency]]
 path = "../ftp-test-utils/build/libs/ftp-test-utils-@project.version@.jar"
