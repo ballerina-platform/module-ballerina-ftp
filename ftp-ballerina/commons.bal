@@ -16,38 +16,21 @@
 
 import ballerina/io;
 
-# Represents the set of protocols supported by the FTP listener and client
-public type Protocol "ftp"|"sftp";
-
-# Underlying communication happens using FTP
-public const FTP = "ftp";
-# Underlying communication happens using SFTP
-public const SFTP = "sftp";
-
-# Configuration to connect to a trust store.
+# Represents the set of protocols supported by the FTP listener and client.
 #
-# + path - Path to a trust store file
-# + password - Trust store password
-public type TrustStore record {|
-    string path?;
-    string password?;
-|};
-
-# Configuration to connect to a key store.
-#
-# + path - Path to the key store file
-# + password - Key store password
-public type KeyStore record {|
-    string path?;
-    string password?;
-|};
+# + FTP - Unsecure File Transfer Protocol
+# + SFTP - FTP over SSH
+public enum Protocol {
+    FTP = "ftp",
+    SFTP = "sftp"
+}
 
 # Configuration to read a privte key.
 #
 # + path - Path to the private key file
 # + password - Private key password
 public type PrivateKey record {|
-    string path?;
+    string path;
     string password?;
 |};
 

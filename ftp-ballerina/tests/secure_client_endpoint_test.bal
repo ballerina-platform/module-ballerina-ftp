@@ -112,7 +112,6 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
                 path: "tests/resources/sftp.wrong.private.key",
                 password: "changeit"
             }
-
         }
     };
 

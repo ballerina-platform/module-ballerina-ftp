@@ -63,10 +63,6 @@ public class FTPClient {
             throws BallerinaFTPException {
         String protocol = (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PROTOCOL)))
                 .getValue();
-        if (FTPUtil.notValidProtocol(protocol)) {
-            throw new BallerinaFTPException("Only FTP and SFTP protocols are supported by the FTP client.");
-        }
-
         Map<String, String> authMap = FTPUtil.getAuthMap(config);
         clientEndpoint.addNativeData(FTPConstants.ENDPOINT_CONFIG_USERNAME,
                 authMap.get(FTPConstants.ENDPOINT_CONFIG_USERNAME));
@@ -86,13 +82,11 @@ public class FTPClient {
             if (privateKey != null) {
                 final BString privateKeyPath = privateKey.getStringValue(StringUtils.fromString(
                         FTPConstants.ENDPOINT_CONFIG_PATH));
-                if (privateKeyPath != null && !privateKeyPath.getValue().isEmpty()) {
-                    ftpConfig.put(Constants.IDENTITY, privateKeyPath.getValue());
-                    final BString privateKeyPassword = privateKey.getStringValue(StringUtils.fromString(
-                            FTPConstants.ENDPOINT_CONFIG_PASS_KEY));
-                    if (privateKeyPassword != null && !privateKeyPassword.getValue().isEmpty()) {
-                        ftpConfig.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
-                    }
+                ftpConfig.put(Constants.IDENTITY, privateKeyPath.getValue());
+                final BString privateKeyPassword = privateKey.getStringValue(StringUtils.fromString(
+                        FTPConstants.ENDPOINT_CONFIG_PASS_KEY));
+                if (privateKeyPassword != null && !privateKeyPassword.getValue().isEmpty()) {
+                    ftpConfig.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
                 }
             }
         }

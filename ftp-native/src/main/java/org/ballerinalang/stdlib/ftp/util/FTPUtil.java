@@ -55,10 +55,6 @@ public class FTPUtil {
         // private constructor
     }
 
-    public static boolean notValidProtocol(String url) {
-        return !url.startsWith("ftp") && !url.startsWith("sftp");
-    }
-
     public static String createUrl(BObject clientConnector, String filePath) throws BallerinaFTPException {
 
         String username = (String) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_USERNAME);

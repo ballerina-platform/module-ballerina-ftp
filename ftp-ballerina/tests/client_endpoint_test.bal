@@ -62,7 +62,7 @@ function initServers() returns boolean {
 }
 
 @test:Config{
-    dependsOn: [testAddedFileCount]
+    dependsOn: [testAddedFileCount, testSecureAddedFileCount]
 }
 public function testReadBlockFittingContent() returns error? {
     test:assertTrue(startedServers, msg = "Test servers are not properly started.");

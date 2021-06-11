@@ -82,13 +82,11 @@ public class FTPListenerHelper {
             if (privateKey != null) {
                 final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
                         FTPConstants.ENDPOINT_CONFIG_PATH))).getValue();
-                if (privateKeyPath != null && !privateKeyPath.isEmpty()) {
-                    params.put(Constants.IDENTITY, privateKeyPath);
-                    final String privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
-                            FTPConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
-                    if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
-                        params.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword);
-                    }
+                params.put(Constants.IDENTITY, privateKeyPath);
+                final String privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
+                        FTPConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
+                if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
+                    params.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword);
                 }
             }
         }
