@@ -8,20 +8,20 @@ The `ftp:Client` connects to an FTP server and performs various operations on th
 generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and
  `list`.
 
-An FTP client endpoint is defined using the `protocol` and `host` parameters and optionally the `port` and
-`secureSocket`. Authentication configuration can be configured using the `secureSocket` parameter for Basic Auth,
-private key, or TrustStore/Keystore.
+An FTP client is defined using the `protocol` and `host` parameters and optionally the `port` and
+`auth`. Authentication configuration can be configured using the `auth` parameter for Basic Auth and
+private key.
 
 ##### Creating a Client
 
 The following code creates an FTP client and performs the I/O operations, which connect to the FTP server with Basic Auth.
 ```ballerina
 // Define the FTP client configuration.
-ftp:ClientEndpointConfig ftpConfig = {
+ftp:ClientConfiguration ftpConfig = {
     protocol: ftp:FTP,
     host: "<The FTP host>",
     port: <The FTP port>,
-    secureSocket: {
+    auth: {
         basicAuth: {
             username: "<The FTP username>",
             password: "<The FTP passowrd>"
@@ -121,11 +121,11 @@ The `ftp:Listener` is used to listen to a remote FTP location and trigger a `Wat
 files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added
 and/or deleted.
 
-An FTP listener endpoint is defined using the mandatory `protocol`, `host`, and  `path` parameters. The authentication
-configuration can be done using a `secureSocket` and the polling interval can be configured using the `pollingInterval` parameter.
+An FTP listener is defined using the mandatory `protocol`, `host`, and  `path` parameters. The authentication
+configuration can be done using a `auth` and the polling interval can be configured using the `pollingInterval` parameter.
 The default polling interval is 60 seconds.
 
-The `fileNamePattern` parameter can be used to define the type of files the FTP listener endpoint will listen to.
+The `fileNamePattern` parameter can be used to define the type of files the FTP listener will listen to.
 For instance, if the listener gets invoked for text files, the value `(.*).txt` can be given for the config.
 
 ##### Creating a Listener
@@ -137,7 +137,7 @@ notify on file addition and deletion periodically.
 listener ftp:Listener remoteServer = new({
     protocol: ftp:FTP,
     host: "<The FTP host>",
-    secureSocket: {
+    auth: {
         basicAuth: {
             username: "<The FTP username>",
             password: "<The FTP passowrd>"

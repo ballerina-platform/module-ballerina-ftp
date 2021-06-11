@@ -68,7 +68,7 @@ public class FTPConstants {
     public static final String ENDPOINT_CONFIG_PASS_KEY = "password";
     public static final String ENDPOINT_CONFIG_PATH = "path";
     public static final String ENDPOINT_CONFIG_FILE_PATTERN = "fileNamePattern";
-    public static final String ENDPOINT_CONFIG_SECURE_SOCKET = "secureSocket";
+    public static final String ENDPOINT_CONFIG_AUTH = "auth";
     public static final String ENDPOINT_CONFIG_BASIC_AUTH = "basicAuth";
     public static final String ENDPOINT_CONFIG_PRIVATE_KEY = "privateKey";
 

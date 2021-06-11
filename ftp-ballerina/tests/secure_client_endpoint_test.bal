@@ -54,11 +54,11 @@ public function testSecureGetFileContent() returns error? {
 }
 public function testSecureGetFileContentWithWrongPassword() returns error? {
 
-    ClientEndpointConfig incorrectSftpConfig = {
+    ClientConfiguration incorrectSftpConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
-        secureSocket: {
+        auth: {
             basicAuth: {username: "wso2", password: "wrongPassword"},
             privateKey: {
                 path: "tests/resources/sftp.private.key",
@@ -102,16 +102,17 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
 }
 public function testSecureGetFileContentWithWrongKey() returns error? {
 
-    ClientEndpointConfig incorrectSftpConfig = {
+    ClientConfiguration incorrectSftpConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
-        secureSocket: {
+        auth: {
             basicAuth: {username: "wso2", password: "wso2123"},
             privateKey: {
                 path: "tests/resources/sftp.wrong.private.key",
                 password: "changeit"
             }
+
         }
     };
 

@@ -17,14 +17,12 @@
 import ballerina/io;
 
 # Represents the set of protocols supported by the FTP listener and client
-public type Protocol "ftp"|"sftp"|"ftps";
+public type Protocol "ftp"|"sftp";
 
 # Underlying communication happens using FTP
 public const FTP = "ftp";
 # Underlying communication happens using SFTP
 public const SFTP = "sftp";
-# Underlying communication happens using FTPS.
-public const FTPS = "ftps";
 
 # Configuration to connect to a trust store.
 #
@@ -65,13 +63,9 @@ public type BasicAuth record {|
 # Configurations for facilitating secure communication with a remote
 # FTP server.
 #
-# + trustStore - Trust store to be used
-# + keyStore - Key store to be used
 # + basicAuth - Username and password to be used
 # + privateKey - Private key to be used
-public type SecureSocket record {|
-    TrustStore? trustStore = ();
-    KeyStore? keyStore = ();
+public type AuthConfiguration record {|
     BasicAuth? basicAuth = ();
     PrivateKey? privateKey = ();
 |};

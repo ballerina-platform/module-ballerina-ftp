@@ -71,13 +71,13 @@ public class FTPListenerHelper {
 
         Map<String, String> params = new HashMap<>(12);
 
-        BMap secureSocket = serviceEndpointConfig.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
+                FTPConstants.ENDPOINT_CONFIG_AUTH));
         String url = FTPUtil.createUrl(serviceEndpointConfig);
         params.put(Constants.URI, url);
         addStringProperty(serviceEndpointConfig, params);
-        if (secureSocket != null) {
-            final BMap privateKey = secureSocket.getMapValue(StringUtils.fromString(
+        if (auth != null) {
+            final BMap privateKey = auth.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
             if (privateKey != null) {
                 final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(

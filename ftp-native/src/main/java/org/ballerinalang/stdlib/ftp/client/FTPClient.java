@@ -64,7 +64,7 @@ public class FTPClient {
         String protocol = (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PROTOCOL)))
                 .getValue();
         if (FTPUtil.notValidProtocol(protocol)) {
-            throw new BallerinaFTPException("Only FTP, SFTP and FTPS protocols are supported by FTP client.");
+            throw new BallerinaFTPException("Only FTP and SFTP protocols are supported by the FTP client.");
         }
 
         Map<String, String> authMap = FTPUtil.getAuthMap(config);
@@ -79,9 +79,9 @@ public class FTPClient {
                         FTPConstants.ENDPOINT_CONFIG_PORT))));
         clientEndpoint.addNativeData(FTPConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
         Map<String, String> ftpConfig = new HashMap<>(5);
-        BMap secureSocket = config.getMapValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
-        if (secureSocket != null) {
-            final BMap privateKey = secureSocket.getMapValue(StringUtils.fromString(
+        BMap auth = config.getMapValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_AUTH));
+        if (auth != null) {
+            final BMap privateKey = auth.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
             if (privateKey != null) {
                 final BString privateKeyPath = privateKey.getStringValue(StringUtils.fromString(

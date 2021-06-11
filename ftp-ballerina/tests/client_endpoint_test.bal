@@ -27,21 +27,21 @@ string appendFilePath = "tests/resources/datafiles/file1.txt";
 string putFilePath = "tests/resources/datafiles/file2.txt";
 
 // Create the config to access mock FTP server
-ClientEndpointConfig config = {
+ClientConfiguration config = {
         protocol: FTP,
         host: "127.0.0.1",
         port: 21212,
-        secureSocket: {basicAuth: {username: "wso2", password: "wso2123"}}
+        auth: {basicAuth: {username: "wso2", password: "wso2123"}}
 };
 
 Client clientEp = new(config);
 
 // Create the config to access mock SFTP server
-ClientEndpointConfig sftpConfig = {
+ClientConfiguration sftpConfig = {
     protocol: SFTP,
     host: "127.0.0.1",
     port: 21213,
-    secureSocket: {
+    auth: {
         basicAuth: {username: "wso2", password: "wso2123"},
         privateKey: {
             path: "tests/resources/sftp.private.key",

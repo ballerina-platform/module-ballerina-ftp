@@ -25,7 +25,7 @@ boolean watchEventReceived = false;
 listener Listener remoteServer = new({
     protocol: FTP,
     host: "127.0.0.1",
-    secureSocket: {
+    auth: {
         basicAuth: {
             username: "wso2",
             password: "wso2123"
@@ -38,7 +38,7 @@ listener Listener remoteServer = new({
 });
 
 service "ftpServerConnector" on remoteServer {
-    remote function onFileChange(WatchEvent event) {
+    function onFileChange(WatchEvent event) {
         addedFileCount = event.addedFiles.length();
         deletedFileCount = event.deletedFiles.length();
         watchEventReceived = true;

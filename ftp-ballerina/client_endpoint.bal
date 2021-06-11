@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// FTP Client Endpoint
+// FTP Client
 
 import ballerina/io;
 import ballerina/log;
@@ -22,12 +22,12 @@ import ballerina/jballerina.java;
 
 # Represents an FTP client that intracts with an FTP server
 public isolated client class Client {
-    private final readonly & ClientEndpointConfig config;
+    private final readonly & ClientConfiguration config;
 
     # Gets invoked during object initialization.
     #
-    # + clientConfig - Configurations for FTP client endpoint
-    public isolated function init(ClientEndpointConfig clientConfig) {
+    # + clientConfig - Configurations for FTP client
+    public isolated function init(ClientConfiguration clientConfig) {
         self.config = clientConfig.cloneReadOnly();
         Error? response = initEndpoint(self, self.config);
         if (response is Error) {
@@ -174,17 +174,17 @@ public isolated client class Client {
     }
 }
 
-# Configuration for FTP client endpoint.
+# Configuration for FTP client.
 #
 # + protocol - Supported FTP protocols
 # + host - Target service URL
 # + port - Port number of the remote service
-# + secureSocket - Authenthication options
-public type ClientEndpointConfig record {|
+# + auth - Authenthication options
+public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
     int? port = 21;
-    SecureSocket? secureSocket = ();
+    AuthConfiguration? auth = ();
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,

@@ -22,14 +22,14 @@ import ballerina/jballerina.java;
 public class Listener {
 
     private handle EMPTY_JAVA_STRING = java:fromString("");
-    private ListenerConfig config = {};
+    private ListenerConfiguration config = {};
     private task:JobId? jobId = ();
     private handle? serverConnector = ();
 
     # Gets invoked during object initialization.
     #
     # + listenerConfig - Configurations for FTP listener
-    public isolated function init(ListenerConfig listenerConfig) {
+    public isolated function init(ListenerConfiguration listenerConfig) {
         self.config = listenerConfig;
     }
 
@@ -166,21 +166,21 @@ class Job {
     }
 }
 
-# Configuration for FTP listener endpoint.
+# Configuration for FTP listener.
 #
 # + protocol - Supported FTP protocols
 # + host - Target service url
 # + port - Port number of the remote service
-# + secureSocket - Authentication options
+# + auth - Authentication options
 # + path - Remote FTP directory location
 # + fileNamePattern - File name pattern that event need to trigger
 # + pollingInterval - Periodic time interval to check new update
 # + serverConnector - Server connector for service
-public type ListenerConfig record {|
+public type ListenerConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
     int port = 21;
-    SecureSocket? secureSocket = ();
+    AuthConfiguration? auth = ();
     string path = "/home";
     string fileNamePattern = "(.*).txt";
     decimal pollingInterval = 60;

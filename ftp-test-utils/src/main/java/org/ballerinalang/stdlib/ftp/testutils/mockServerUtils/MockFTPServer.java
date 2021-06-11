@@ -86,12 +86,12 @@ public class MockFTPServer {
     public static void initFtpServer(BMap<Object, Object> config) throws BallerinaFTPException, InterruptedException {
         int port = FTPUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                 FTPConstants.ENDPOINT_CONFIG_PORT)));
-        final BMap secureSocket = config.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        final BMap auth = config.getMapValue(StringUtils.fromString(
+                FTPConstants.ENDPOINT_CONFIG_AUTH));
         String username = null;
         String password = null;
-        if (secureSocket != null) {
-            final BMap basicAuth = secureSocket.getMapValue(StringUtils.fromString(
+        if (auth != null) {
+            final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
                 username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))
@@ -142,12 +142,12 @@ public class MockFTPServer {
                 final FtpServerFactory serverFactory = new FtpServerFactory();
         int port = FTPUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                 FTPConstants.ENDPOINT_CONFIG_PORT)));
-        final BMap secureSocket = config.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        final BMap auth = config.getMapValue(StringUtils.fromString(
+                FTPConstants.ENDPOINT_CONFIG_AUTH));
         String username = null;
         String password = null;
-        if (secureSocket != null) {
-            final BMap basicAuth = secureSocket.getMapValue(StringUtils.fromString(
+        if (auth != null) {
+            final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
                 username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))
@@ -207,12 +207,12 @@ public class MockFTPServer {
             UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException {
         int port = FTPUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                 FTPConstants.ENDPOINT_CONFIG_PORT)));
-        final BMap secureSocket = config.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        final BMap auth = config.getMapValue(StringUtils.fromString(
+                FTPConstants.ENDPOINT_CONFIG_AUTH));
         final String username;
         final String password;
-        if (secureSocket != null) {
-            final BMap basicAuth = secureSocket.getMapValue(StringUtils.fromString(
+        if (auth != null) {
+            final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
                 username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))

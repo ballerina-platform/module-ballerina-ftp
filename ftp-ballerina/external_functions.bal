@@ -73,12 +73,12 @@ isolated function isDirectory(Client clientEndpoint, handle path) returns boolea
     'class: "org.ballerinalang.stdlib.ftp.client.FTPClient"
 } external;
 
-isolated function poll(ListenerConfig config) returns Error? = @java:Method{
+isolated function poll(ListenerConfiguration config) returns Error? = @java:Method{
     name: "poll",
     'class: "org.ballerinalang.stdlib.ftp.server.FTPListenerHelper"
 } external;
 
-isolated function register(Listener listenerEndpoint, ListenerConfig config, service object {} ftpService, handle name)
+isolated function register(Listener listenerEndpoint, ListenerConfiguration config, service object {} ftpService, handle name)
     returns handle|Error = @java:Method{
     name: "register",
     'class: "org.ballerinalang.stdlib.ftp.server.FTPListenerHelper"
