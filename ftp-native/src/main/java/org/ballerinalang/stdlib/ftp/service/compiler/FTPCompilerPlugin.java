@@ -77,7 +77,7 @@ public class FTPCompilerPlugin extends AbstractCompilerPlugin {
                         "Invalid resource signature. A single " + FTPConstants.FTP_SERVER_EVENT
                                 + " parameter is required for the resource signature.");
             }
-            final BType type = parameters.get(0).getTypeNode().type;
+            final BType type = parameters.get(0).getTypeNode().getBType();
             if (type.getKind().equals(TypeKind.OBJECT) && type instanceof BObjectType) {
                 BObjectType event = (BObjectType) type;
                 if (!"ftp".equals(event.tsymbol.pkgID.name.value) || !FTPConstants.FTP_SERVER_EVENT
