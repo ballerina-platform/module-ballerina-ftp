@@ -16,41 +16,22 @@
 
 import ballerina/io;
 
-# Represents the set of protocols supported by the FTP listener and client
-public type Protocol "ftp"|"sftp"|"ftps";
-
-# Underlying communication happens using FTP
-public const FTP = "ftp";
-# Underlying communication happens using SFTP
-public const SFTP = "sftp";
-# Underlying communication happens using FTPS.
-public const FTPS = "ftps";
-
-# Configuration to connect to a trust store.
+# Represents the set of protocols supported by the FTP listener and client.
 #
-# + path - Path to a trust store file
-# + password - Trust store password
-public type TrustStore record {|
-    string? path = ();
-    string? password = ();
-|};
-
-# Configuration to connect to a key store.
-#
-# + path - Path to the key store file
-# + password - Key store password
-public type KeyStore record {|
-    string? path = ();
-    string? password = ();
-|};
+# + FTP - Unsecure File Transfer Protocol
+# + SFTP - FTP over SSH
+public enum Protocol {
+    FTP = "ftp",
+    SFTP = "sftp"
+}
 
 # Configuration to read a privte key.
 #
 # + path - Path to the private key file
 # + password - Private key password
 public type PrivateKey record {|
-    string? path = ();
-    string? password = ();
+    string path;
+    string password?;
 |};
 
 # Basic Auth related configurations.
@@ -65,15 +46,11 @@ public type BasicAuth record {|
 # Configurations for facilitating secure communication with a remote
 # FTP server.
 #
-# + trustStore - Trust store to be used
-# + keyStore - Key store to be used
 # + basicAuth - Username and password to be used
 # + privateKey - Private key to be used
-public type SecureSocket record {|
-    TrustStore? trustStore = ();
-    KeyStore? keyStore = ();
-    BasicAuth? basicAuth = ();
-    PrivateKey? privateKey = ();
+public type AuthConfiguration record {|
+    BasicAuth basicAuth?;
+    PrivateKey privateKey?;
 |};
 
 # Configuration for the input given for `put` and `append` operations of
@@ -87,7 +64,7 @@ public type SecureSocket record {|
 public type InputContent record{|
     string filePath;
     boolean isFile = false;
-    stream<byte[] & readonly, io:Error?>? fileContent = ();
-    string? textContent = ();
+    stream<byte[] & readonly, io:Error?> fileContent?;
+    string textContent?;
     boolean compressInput = false;
 |};

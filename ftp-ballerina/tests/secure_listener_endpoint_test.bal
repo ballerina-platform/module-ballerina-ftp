@@ -1,4 +1,4 @@
-// Copyright (c) 2019 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+// Copyright (c) 2021 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
 //
 // WSO2 Inc. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -18,30 +18,34 @@ import ballerina/lang.runtime as runtime;
 import ballerina/log;
 import ballerina/test;
 
-int addedFileCount = 0;
-int deletedFileCount = 0;
-boolean watchEventReceived = false;
+int secureAddedFileCount = 0;
+int secureDeletedFileCount = 0;
+boolean secureWatchEventReceived = false;
 
-listener Listener remoteServer = new({
-    protocol: FTP,
+listener Listener secureRemoteServer = new({
+    protocol: SFTP,
     host: "127.0.0.1",
     auth: {
         basicAuth: {
             username: "wso2",
             password: "wso2123"
+        },
+        privateKey: {
+            path: "tests/resources/sftp.private.key",
+            password: "changeit"
         }
     },
-    port: 21212,
-    path: "/home/in",
+    port: 21213,
+    path: "",
     pollingInterval: 2,
     fileNamePattern: "(.*).txt"
 });
 
-service "ftpServerConnector" on remoteServer {
+service "ftpServerConnector" on secureRemoteServer {
     function onFileChange(WatchEvent event) {
-        addedFileCount = event.addedFiles.length();
-        deletedFileCount = event.deletedFiles.length();
-        watchEventReceived = true;
+        secureAddedFileCount = event.addedFiles.length();
+        secureDeletedFileCount = event.deletedFiles.length();
+        secureWatchEventReceived = true;
 
         foreach FileInfo addedFile in event.addedFiles {
             log:printInfo("Added file path: " + addedFile.path);
@@ -54,13 +58,13 @@ service "ftpServerConnector" on remoteServer {
 
 @test:Config{
 }
-public function testAddedFileCount() {
+public function testSecureAddedFileCount() {
     int timeoutInSeconds = 300;
     // Test fails in 5 minutes if failed to receive watchEvent
     while (timeoutInSeconds > 0) {
-        if (watchEventReceived) {
-            log:printInfo("Added file count: " + addedFileCount.toString());
-            test:assertEquals(3, addedFileCount);
+        if (secureWatchEventReceived) {
+            log:printInfo("Added file count: " + secureAddedFileCount.toString());
+            test:assertEquals(2, secureAddedFileCount);
             break;
         } else {
             runtime:sleep(1);

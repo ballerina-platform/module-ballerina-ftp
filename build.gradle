@@ -26,15 +26,25 @@ ext.ballerinaLangVersion = project.ballerinaLangVersion
 ext.stdlibTaskVersion = project.stdlibTaskVersion
 ext.stdlibLogVersion = project.stdlibLogVersion
 ext.stdlibIoVersion = project.stdlibIoVersion
-ext.puppycrawlCheckstyleVersion = "8.18"
-ext.testngVersion = "6.14.3"
-ext.slf4jVersion = "1.7.30"
-ext.javaFtpVersion = "1.6.2"
-ext.fileTransportVersion = "6.0.57"
-ext.commonsVfsVersion="2.6.0"
-ext.commonsNetVersion="3.6"
-ext.jschVersion= "0.1.54"
-ext.mockFtpServerVersion= "2.7.1"
+ext.puppycrawlCheckstyleVersion = project.puppycrawlCheckstyleVersion
+ext.testngVersion = project.testngVersion
+ext.slf4jVersion = project.slf4jVersion
+ext.javaFtpVersion = project.javaFtpVersion
+ext.fileTransportVersion = project.fileTransportVersion
+ext.commonsVfsVersion = project.commonsVfsVersion
+ext.commonsNetVersion = project.commonsNetVersion
+ext.jschVersion = project.jschVersion
+ext.mockFtpServerVersion = project.mockFtpServerVersion
+ext.sshdMinaVersion = project.sshdMinaVersion
+ext.ftpServerVersion = project.ftpServerVersion
+ext.jcraftVersion = project.jcraftVersion
+ext.bouncycastleVersion = project.bouncycastleVersion
+ext.sshdCoreVersion = project.sshdCoreVersion
+ext.ftpletApiVersion = project.ftpletApiVersion
+ext.minaCoreVersion = project.minaCoreVersion
+ext.aopallianceVersion = project.aopallianceVersion
+ext.jclSlf4jVersion = project.jclSlf4jVersion
+ext.fileTransportVersion = project.fileTransportVersion
 
 allprojects {
     group = 'org.ballerinalang'
@@ -122,11 +132,6 @@ subprojects {
         ballerinaStdLibs "org.ballerinalang:log-ballerina:${stdlibLogVersion}"
         ballerinaStdLibs "org.ballerinalang:io-ballerina:${stdlibIoVersion}"
         ballerinaStdLibs "org.ballerinalang:task-ballerina:${stdlibTaskVersion}"
-        ballerinaStdLibs "org.wso2.transport.file:org.wso2.transport.remote-file-system:${fileTransportVersion}"
-        ballerinaStdLibs "org.mockftpserver:MockFtpServer:${mockFtpServerVersion}"
-        ballerinaStdLibs "org.slf4j:slf4j-api:${slf4jVersion}"
-        ballerinaStdLibs "org.testng:testng:${testngVersion}"
-        ballerinaStdLibs "org.apache.commons:commons-vfs2:${commonsVfsVersion}"
         ballerinaStdLibs "org.ballerinalang:time-ballerina:${stdlibTimeVersion}"
     }
 }

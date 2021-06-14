@@ -55,10 +55,6 @@ public class FTPUtil {
         // private constructor
     }
 
-    public static boolean notValidProtocol(String url) {
-        return !url.startsWith("ftp") && !url.startsWith("sftp") && !url.startsWith("ftps");
-    }
-
     public static String createUrl(BObject clientConnector, String filePath) throws BallerinaFTPException {
 
         String username = (String) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_USERNAME);
@@ -80,12 +76,12 @@ public class FTPUtil {
                 .getValue();
         int port = extractPortValue(config.getIntValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PORT)));
 
-        final BMap secureSocket = config.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        final BMap auth = config.getMapValue(StringUtils.fromString(
+                FTPConstants.ENDPOINT_CONFIG_AUTH));
         String username = null;
         String password = null;
-        if (secureSocket != null) {
-            final BMap basicAuth = secureSocket.getMapValue(StringUtils.fromString(
+        if (auth != null) {
+            final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
                 username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))
@@ -113,12 +109,12 @@ public class FTPUtil {
 
     public static Map<String, String> getAuthMap(BMap config) {
 
-        final BMap secureSocket = config.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        final BMap auth = config.getMapValue(StringUtils.fromString(
+                FTPConstants.ENDPOINT_CONFIG_AUTH));
         String username = null;
         String password = null;
-        if (secureSocket != null) {
-            final BMap basicAuth = secureSocket.getMapValue(StringUtils.fromString(
+        if (auth != null) {
+            final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
                 username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))

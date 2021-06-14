@@ -63,10 +63,6 @@ public class FTPClient {
             throws BallerinaFTPException {
         String protocol = (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PROTOCOL)))
                 .getValue();
-        if (FTPUtil.notValidProtocol(protocol)) {
-            throw new BallerinaFTPException("Only FTP, SFTP and FTPS protocols are supported by FTP client.");
-        }
-
         Map<String, String> authMap = FTPUtil.getAuthMap(config);
         clientEndpoint.addNativeData(FTPConstants.ENDPOINT_CONFIG_USERNAME,
                 authMap.get(FTPConstants.ENDPOINT_CONFIG_USERNAME));
@@ -79,20 +75,18 @@ public class FTPClient {
                         FTPConstants.ENDPOINT_CONFIG_PORT))));
         clientEndpoint.addNativeData(FTPConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
         Map<String, String> ftpConfig = new HashMap<>(5);
-        BMap secureSocket = config.getMapValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
-        if (secureSocket != null) {
-            final BMap privateKey = secureSocket.getMapValue(StringUtils.fromString(
+        BMap auth = config.getMapValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_AUTH));
+        if (auth != null) {
+            final BMap privateKey = auth.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
             if (privateKey != null) {
-                final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
-                        FTPConstants.ENDPOINT_CONFIG_PATH))).getValue();
-                if (privateKeyPath != null && !privateKeyPath.isEmpty()) {
-                    ftpConfig.put(Constants.IDENTITY, privateKeyPath);
-                    final String privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
-                            FTPConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
-                    if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
-                        ftpConfig.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword);
-                    }
+                final BString privateKeyPath = privateKey.getStringValue(StringUtils.fromString(
+                        FTPConstants.ENDPOINT_CONFIG_PATH));
+                ftpConfig.put(Constants.IDENTITY, privateKeyPath.getValue());
+                final BString privateKeyPassword = privateKey.getStringValue(StringUtils.fromString(
+                        FTPConstants.ENDPOINT_CONFIG_PASS_KEY));
+                if (privateKeyPassword != null && !privateKeyPassword.getValue().isEmpty()) {
+                    ftpConfig.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
                 }
             }
         }
@@ -103,15 +97,19 @@ public class FTPClient {
         return null;
     }
 
-    public static Object get(Environment env, BObject clientConnector, BString filePath, long arraySize)
-            throws BallerinaFTPException {
+    public static Object get(Environment env, BObject clientConnector, BString filePath, long arraySize) {
         InputStream readInputStream = (InputStream) clientConnector.getNativeData(READ_INPUT_STREAM);
         if (readInputStream != null) {
             return FTPClientHelper.generateInputStreamEntry(readInputStream, arraySize);
         }
         clientConnector.addNativeData(ENTITY_BYTE_STREAM, null);
         clientConnector.addNativeData(ARRAY_SIZE, arraySize);
-        String url = FTPUtil.createUrl(clientConnector, filePath.getValue());
+        String url;
+        try {
+            url = FTPUtil.createUrl(clientConnector, filePath.getValue());
+        } catch (BallerinaFTPException e) {
+            return FTPUtil.createError(e.getMessage(), e.getCause().getMessage());
+        }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FTPConstants.PROPERTY_MAP));
         propertyMap.put(FTPConstants.PROPERTY_URI, url);
@@ -124,7 +122,7 @@ public class FTPClient {
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            throw new BallerinaFTPException(e.getMessage());
+            return FTPUtil.createError(e.getMessage(), e.getCause().getMessage());
         }
         connector.send(null, FtpAction.GET);
         return null;
