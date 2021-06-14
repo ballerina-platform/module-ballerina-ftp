@@ -27,6 +27,5 @@ module io.ballerina.stdlib.ftp {
     requires org.wso2.transport.remote.file.system;
     exports org.ballerinalang.stdlib.ftp.client;
     exports org.ballerinalang.stdlib.ftp.server;
-    exports org.ballerinalang.stdlib.ftp.service.compiler;
     exports org.ballerinalang.stdlib.ftp.util;
 }
