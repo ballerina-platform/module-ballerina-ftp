@@ -71,9 +71,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Creates a Mock FTP Servers
  */
-public class MockFTPServer {
+public class MockFtpServer {
 
-    MockFTPServer() {
+    MockFtpServer() {
         // empty constructor
     }
 
@@ -209,8 +209,8 @@ public class MockFTPServer {
                 FTPConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FTPConstants.ENDPOINT_CONFIG_AUTH));
-        final String username;
-        final String password;
+        String username = null;
+        String password = null;
         if (auth != null) {
             final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
                     FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
@@ -219,13 +219,7 @@ public class MockFTPServer {
                         .getValue();
                 password = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
-            } else {
-                username = null;
-                password = null;
             }
-        } else {
-            username = null;
-            password = null;
         }
 
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
@@ -245,9 +239,11 @@ public class MockFTPServer {
         sftpServer.setKeyPairProvider(getKeyPairProvider());
         sftpServer.setPublickeyAuthenticator(new TwoFactorAuthorizedKeysAuthenticator(
                 new File("tests/resources/authorized_keys"), sftpAuthStatusHolder));
+        String finalUsername = username;
+        String finalPassword = password;
         sftpServer.setPasswordAuthenticator(
                 (authUsername, authPassword, session) -> sftpAuthStatusHolder.isPublicKeyAuthenticated()
-                        && username.equals(authUsername) && password.equals(authPassword));
+                        && finalUsername.equals(authUsername) && finalPassword.equals(authPassword));
         sftpServer.setShellFactory(new ProcessShellFactory("/bin/sh", "-i", "-l"));
         sftpServer.start();
 

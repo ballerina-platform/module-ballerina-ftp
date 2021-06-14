@@ -530,20 +530,20 @@ public function stopServer() returns error? {
 
 function initFtpServer(map<anydata> config) returns Error? = @java:Method{
     name: "initFtpServer",
-    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFTPServer"
+    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;
 
 function initSftpServer(map<anydata> config) returns Error? = @java:Method{
     name: "initSftpServer",
-    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFTPServer"
+    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;
 
 function stopFtpServer() returns () = @java:Method{
     name: "stopFtpServer",
-    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFTPServer"
+    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;
 
 function stopSftpServer() returns error? = @java:Method{
     name: "stopSftpServer",
-    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFTPServer"
+    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;
