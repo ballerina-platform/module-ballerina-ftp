@@ -262,7 +262,6 @@ public class MockFTPServer {
             }
         }
         logger.info("Started Mock SFTP server");
-
     }
 
     private static KeyPairProvider getKeyPairProvider() throws IOException, CertificateException, NoSuchAlgorithmException,
