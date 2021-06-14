@@ -35,8 +35,7 @@ public class TwoFactorAuthorizedKeysAuthenticator extends AuthorizedKeysAuthenti
 
     @Override
     public boolean authenticate(String username, PublicKey key, ServerSession session) {
-        boolean authSuccess;
-        authSuccess = super.authenticate(username, key, session);
+        boolean authSuccess = super.authenticate(username, key, session);
         sftpAuthStatusHolder.setPublicKeyAuthenticated(authSuccess);
         return false;
     }
