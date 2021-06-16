@@ -37,9 +37,9 @@ import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.scp.ScpCommandFactory;
 import org.apache.sshd.server.shell.ProcessShellFactory;
 import org.apache.sshd.server.subsystem.sftp.SftpSubsystemFactory;
-import org.ballerinalang.stdlib.ftp.util.BallerinaFTPException;
-import org.ballerinalang.stdlib.ftp.util.FTPConstants;
-import org.ballerinalang.stdlib.ftp.util.FTPUtil;
+import org.ballerinalang.stdlib.ftp.util.BallerinaFtpException;
+import org.ballerinalang.stdlib.ftp.util.FtpConstants;
+import org.ballerinalang.stdlib.ftp.util.FtpUtil;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
@@ -83,26 +83,26 @@ public class MockFtpServer {
     private static FtpServer ftpsServer;
     private static SftpAuthStatusHolder sftpAuthStatusHolder = new SftpAuthStatusHolder();
 
-    public static void initFtpServer(BMap<Object, Object> config) throws BallerinaFTPException, InterruptedException {
-        int port = FTPUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_PORT)));
+    public static void initFtpServer(BMap<Object, Object> config) throws BallerinaFtpException, InterruptedException {
+        int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_AUTH));
+                FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = null;
         String password = null;
         if (auth != null) {
             final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
-                    FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
+                    FtpConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
-                username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))
+                username = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
                         .getValue();
-                password = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PASS_KEY)))
+                password = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
         }
 
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-            throw new BallerinaFTPException("Username and password cannot be empty");
+            throw new BallerinaFtpException("Username and password cannot be empty");
         }
 
         ftpServer = new FakeFtpServer();
@@ -132,33 +132,33 @@ public class MockFtpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new BallerinaFTPException("Error in starting mock FTP server");
+                throw new BallerinaFtpException("Error in starting mock FTP server");
             }
         }
         logger.info("Started Mock FTP server");
     }
 
-    public static void startFtpsServer(BMap<Object, Object> config) throws FtpException, BallerinaFTPException {
+    public static void startFtpsServer(BMap<Object, Object> config) throws FtpException, BallerinaFtpException {
                 final FtpServerFactory serverFactory = new FtpServerFactory();
-        int port = FTPUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_PORT)));
+        int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_AUTH));
+                FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = null;
         String password = null;
         if (auth != null) {
             final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
-                    FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
+                    FtpConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
-                username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))
+                username = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
                         .getValue();
-                password = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PASS_KEY)))
+                password = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
         }
 
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-            throw new BallerinaFTPException("Username and password cannot be empty");
+            throw new BallerinaFtpException("Username and password cannot be empty");
         }
 
         final ListenerFactory factory = new ListenerFactory();
@@ -193,7 +193,7 @@ public class MockFtpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new BallerinaFTPException("Error in starting Apache FTPS server");
+                throw new BallerinaFtpException("Error in starting Apache FTPS server");
             }
         }
         if (i < 10) {
@@ -203,27 +203,27 @@ public class MockFtpServer {
         }
     }
 
-    public static void initSftpServer(BMap<Object, Object> config) throws IOException, BallerinaFTPException,
+    public static void initSftpServer(BMap<Object, Object> config) throws IOException, BallerinaFtpException,
             UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException {
-        int port = FTPUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_PORT)));
+        int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_AUTH));
+                FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = null;
         String password = null;
         if (auth != null) {
             final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
-                    FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
+                    FtpConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
-                username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))
+                username = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
                         .getValue();
-                password = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PASS_KEY)))
+                password = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
         }
 
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-            throw new BallerinaFTPException("Username and password cannot be empty");
+            throw new BallerinaFtpException("Username and password cannot be empty");
         }
 
         File homeFolder = new File("tests/resources/datafiles/");
@@ -254,7 +254,7 @@ public class MockFtpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new BallerinaFTPException("Error in starting mock FTP server");
+                throw new BallerinaFtpException("Error in starting mock FTP server");
             }
         }
         logger.info("Started Mock SFTP server");

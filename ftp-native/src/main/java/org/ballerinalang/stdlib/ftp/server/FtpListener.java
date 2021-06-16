@@ -29,8 +29,8 @@ import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
-import org.ballerinalang.stdlib.ftp.util.FTPConstants;
-import org.ballerinalang.stdlib.ftp.util.FTPUtil;
+import org.ballerinalang.stdlib.ftp.util.FtpConstants;
+import org.ballerinalang.stdlib.ftp.util.FtpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
@@ -45,13 +45,13 @@ import java.util.Map;
 /**
  * FTP File System connector listener for Ballerina.
  */
-public class FTPListener implements RemoteFileSystemListener {
+public class FtpListener implements RemoteFileSystemListener {
 
-    private static final Logger log = LoggerFactory.getLogger(FTPListener.class);
+    private static final Logger log = LoggerFactory.getLogger(FtpListener.class);
     private final Runtime runtime;
     private final BObject service;
 
-    FTPListener(Runtime runtime, BObject service) {
+    FtpListener(Runtime runtime, BObject service) {
 
         this.runtime = runtime;
         this.service = service;
@@ -80,13 +80,13 @@ public class FTPListener implements RemoteFileSystemListener {
     private BMap<BString, Object> getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
 
         BMap<BString, Object> watchEventStruct = ValueCreator.createRecordValue(
-                new Module(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
-                        FTPUtil.getFtpPackage().getVersion()), FTPConstants.FTP_SERVER_EVENT);
+                new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
+                        FtpUtil.getFtpPackage().getVersion()), FtpConstants.FTP_SERVER_EVENT);
         List<FileInfo> addedFileList = fileSystemEvent.getAddedFiles();
         List<String> deletedFileList = fileSystemEvent.getDeletedFiles();
 
         // For newly added files
-        BArray addedFiles = ValueCreator.createArrayValue(TypeCreator.createArrayType(FTPUtil.getFileInfoType()));
+        BArray addedFiles = ValueCreator.createArrayValue(TypeCreator.createArrayType(FtpUtil.getFileInfoType()));
 
         for (int i = 0; i < addedFileList.size(); i++) {
             FileInfo info = addedFileList.get(i);
@@ -96,8 +96,8 @@ public class FTPListener implements RemoteFileSystemListener {
             fileInfoParams.put("lastModifiedTimestamp", info.getLastModifiedTime());
 
             final BMap<BString, Object> fileInfo = ValueCreator.createRecordValue(
-                    new Module(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
-                            FTPUtil.getFtpPackage().getVersion()), FTPConstants.FTP_FILE_INFO, fileInfoParams);
+                    new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
+                            FtpUtil.getFtpPackage().getVersion()), FtpConstants.FTP_FILE_INFO, fileInfoParams);
             addedFiles.add(i, fileInfo);
         }
 
@@ -117,6 +117,6 @@ public class FTPListener implements RemoteFileSystemListener {
 
     @Override
     public void done() {
-        log.debug(FTPConstants.SUCCESSFULLY_FINISHED_THE_ACTION);
+        log.debug(FtpConstants.SUCCESSFULLY_FINISHED_THE_ACTION);
     }
 }

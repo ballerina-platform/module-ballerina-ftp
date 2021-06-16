@@ -32,10 +32,10 @@ import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BStream;
 import io.ballerina.runtime.api.values.BString;
 import org.apache.commons.vfs2.FileSystemException;
-import org.ballerinalang.stdlib.ftp.util.BallerinaFTPException;
+import org.ballerinalang.stdlib.ftp.util.BallerinaFtpException;
 import org.ballerinalang.stdlib.ftp.util.BufferHolder;
-import org.ballerinalang.stdlib.ftp.util.FTPConstants;
-import org.ballerinalang.stdlib.ftp.util.FTPUtil;
+import org.ballerinalang.stdlib.ftp.util.FtpConstants;
+import org.ballerinalang.stdlib.ftp.util.FtpUtil;
 import org.ballerinalang.stdlib.io.channels.base.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,25 +57,25 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.ballerinalang.stdlib.ftp.util.FTPConstants.ARRAY_SIZE;
-import static org.ballerinalang.stdlib.ftp.util.FTPConstants.BYTE_STREAM_CLOSE_FUNC;
-import static org.ballerinalang.stdlib.ftp.util.FTPConstants.BYTE_STREAM_NEXT_FUNC;
-import static org.ballerinalang.stdlib.ftp.util.FTPConstants.ENTITY_BYTE_STREAM;
-import static org.ballerinalang.stdlib.ftp.util.FTPConstants.FIELD_VALUE;
-import static org.ballerinalang.stdlib.ftp.util.FTPConstants.READ_INPUT_STREAM;
-import static org.ballerinalang.stdlib.ftp.util.FTPConstants.STREAM_ENTRY_RECORD;
-import static org.ballerinalang.stdlib.ftp.util.FTPUtil.getFtpPackage;
+import static org.ballerinalang.stdlib.ftp.util.FtpConstants.ARRAY_SIZE;
+import static org.ballerinalang.stdlib.ftp.util.FtpConstants.BYTE_STREAM_CLOSE_FUNC;
+import static org.ballerinalang.stdlib.ftp.util.FtpConstants.BYTE_STREAM_NEXT_FUNC;
+import static org.ballerinalang.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
+import static org.ballerinalang.stdlib.ftp.util.FtpConstants.FIELD_VALUE;
+import static org.ballerinalang.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
+import static org.ballerinalang.stdlib.ftp.util.FtpConstants.STREAM_ENTRY_RECORD;
+import static org.ballerinalang.stdlib.ftp.util.FtpUtil.getFtpPackage;
 
 
 /**
  * Contains helper methods to invoke FTP actions.
  */
-class FTPClientHelper {
+class FtpClientHelper {
 
     private static final String READABLE_BYTE_CHANNEL = "ReadableByteChannel";
-    private static final Logger log = LoggerFactory.getLogger(FTPClientHelper.class);
+    private static final Logger log = LoggerFactory.getLogger(FtpClientHelper.class);
 
-    private FTPClientHelper() {
+    private FtpClientHelper() {
         // private constructor
     }
 
@@ -144,7 +144,7 @@ class FTPClientHelper {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
             Map<String, FileInfo> childrenInfo = message.getChildrenInfo();
-            BArray arrayValue = ValueCreator.createArrayValue(TypeCreator.createArrayType(FTPUtil.getFileInfoType()));
+            BArray arrayValue = ValueCreator.createArrayValue(TypeCreator.createArrayType(FtpUtil.getFileInfoType()));
 
             int i = 0;
             for (Map.Entry<String, FileInfo> entry : childrenInfo.entrySet()) {
@@ -177,8 +177,8 @@ class FTPClientHelper {
                 }
 
                 final BMap<BString, Object> ballerinaFileInfo = ValueCreator.createRecordValue(
-                        new Module(FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME,
-                                FTPUtil.getFtpPackage().getVersion()), FTPConstants.FTP_FILE_INFO, fileInfoParams);
+                        new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
+                                FtpUtil.getFtpPackage().getVersion()), FtpConstants.FTP_FILE_INFO, fileInfoParams);
                 arrayValue.add(i++, ballerinaFileInfo);
             }
             balFuture.complete(arrayValue);
@@ -201,7 +201,7 @@ class FTPClientHelper {
         InputStream fileInputStream;
         if (isFile) {
             BStream fileByteStream = (BStream) inputContent.get(
-                    StringUtils.fromString(FTPConstants.INPUT_CONTENT_FILE_CONTENT_KEY));
+                    StringUtils.fromString(FtpConstants.INPUT_CONTENT_FILE_CONTENT_KEY));
             if (fileByteStream != null) {
                 BObject iteratorObj = fileByteStream.getIteratorObj();
                 fileInputStream = new ByteArrayInputStream(new byte[0]) {
@@ -268,7 +268,7 @@ class FTPClientHelper {
             return null;
         } else {
             String textContent = (inputContent.getStringValue(StringUtils.fromString(
-                    FTPConstants.INPUT_CONTENT_TEXT_CONTENT_KEY))).getValue();
+                    FtpConstants.INPUT_CONTENT_TEXT_CONTENT_KEY))).getValue();
             return new ByteArrayInputStream(textContent.getBytes());
         }
     }
@@ -323,10 +323,10 @@ class FTPClientHelper {
                                                           Map<String, String> propertyMap, InputStream stream) {
 
         try {
-            String url = FTPUtil.createUrl(clientConnector, filePath);
-            propertyMap.put(FTPConstants.PROPERTY_URI, url);
+            String url = FtpUtil.createUrl(clientConnector, filePath);
+            propertyMap.put(FtpConstants.PROPERTY_URI, url);
             return new RemoteFileSystemMessage(stream);
-        } catch (BallerinaFTPException e) {
+        } catch (BallerinaFtpException e) {
             log.error(e.getMessage());
             return null;
         }
@@ -337,11 +337,11 @@ class FTPClientHelper {
                                                         ByteArrayInputStream compressedStream) {
 
         try {
-            String compressedFilePath = FTPUtil.getCompressedFileName(filePath);
-            String url = FTPUtil.createUrl(clientConnector, compressedFilePath);
-            propertyMap.put(FTPConstants.PROPERTY_URI, url);
+            String compressedFilePath = FtpUtil.getCompressedFileName(filePath);
+            String url = FtpUtil.createUrl(clientConnector, compressedFilePath);
+            propertyMap.put(FtpConstants.PROPERTY_URI, url);
             return new RemoteFileSystemMessage(compressedStream);
-        } catch (BallerinaFTPException e) {
+        } catch (BallerinaFtpException e) {
             log.error(e.getMessage());
             return null;
         }

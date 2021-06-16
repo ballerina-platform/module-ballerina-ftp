@@ -19,8 +19,8 @@
 package org.ballerinalang.stdlib.ftp.client;
 
 import io.ballerina.runtime.api.Future;
-import org.ballerinalang.stdlib.ftp.util.FTPConstants;
-import org.ballerinalang.stdlib.ftp.util.FTPUtil;
+import org.ballerinalang.stdlib.ftp.util.FtpConstants;
+import org.ballerinalang.stdlib.ftp.util.FtpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
@@ -32,15 +32,15 @@ import java.util.function.Function;
 /**
  * Contains implementation of RemoteFileSystemListener.
  */
-public class FTPClientListener implements RemoteFileSystemListener {
+public class FtpClientListener implements RemoteFileSystemListener {
 
-    private static final Logger log = LoggerFactory.getLogger(FTPClientListener.class);
+    private static final Logger log = LoggerFactory.getLogger(FtpClientListener.class);
     private CompletableFuture<Object> future;
     private Function<RemoteFileSystemBaseMessage, Boolean> function;
 
     private Future balFuture;
 
-    FTPClientListener(Future listenerFuture,
+    FtpClientListener(Future listenerFuture,
                       Function<RemoteFileSystemBaseMessage, Boolean> function) {
 
         this.balFuture = listenerFuture;
@@ -61,11 +61,11 @@ public class FTPClientListener implements RemoteFileSystemListener {
         if (throwable.getCause() != null) {
             detail = throwable.getCause().getMessage();
         }
-        balFuture.complete(FTPUtil.createError(throwable.getMessage(), detail));
+        balFuture.complete(FtpUtil.createError(throwable.getMessage(), detail));
     }
 
     @Override
     public void done() {
-        log.debug(FTPConstants.SUCCESSFULLY_FINISHED_THE_ACTION);
+        log.debug(FtpConstants.SUCCESSFULLY_FINISHED_THE_ACTION);
     }
 }

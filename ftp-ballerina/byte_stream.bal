@@ -70,11 +70,11 @@ class ByteStream {
 
 isolated function externGetStreamEntryRecord(Client entity, string path, int arraySize)
         returns record {|byte[] & readonly value;|}|io:Error? = @java:Method {
-    'class: "org.ballerinalang.stdlib.ftp.client.FTPClient",
+    'class: "org.ballerinalang.stdlib.ftp.client.FtpClient",
     name: "get"
 } external;
 
 isolated function externCloseInputStream(Client entity) returns io:Error? = @java:Method {
-    'class: "org.ballerinalang.stdlib.ftp.client.FTPClient",
+    'class: "org.ballerinalang.stdlib.ftp.client.FtpClient",
     name: "closeInputByteStream"
 } external;
