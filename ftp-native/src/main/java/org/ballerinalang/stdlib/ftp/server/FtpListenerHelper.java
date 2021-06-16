@@ -22,9 +22,9 @@ import io.ballerina.runtime.api.Runtime;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
-import org.ballerinalang.stdlib.ftp.util.BallerinaFTPException;
-import org.ballerinalang.stdlib.ftp.util.FTPConstants;
-import org.ballerinalang.stdlib.ftp.util.FTPUtil;
+import org.ballerinalang.stdlib.ftp.util.BallerinaFtpException;
+import org.ballerinalang.stdlib.ftp.util.FtpConstants;
+import org.ballerinalang.stdlib.ftp.util.FtpUtil;
 import org.wso2.transport.remotefilesystem.Constants;
 import org.wso2.transport.remotefilesystem.RemoteFileSystemConnectorFactory;
 import org.wso2.transport.remotefilesystem.exception.RemoteFileSystemConnectorException;
@@ -37,54 +37,54 @@ import java.util.Map;
 /**
  * Helper class for listener functions.
  */
-public class FTPListenerHelper {
+public class FtpListenerHelper {
 
-    private FTPListenerHelper() {
+    private FtpListenerHelper() {
         // private constructor
     }
 
     public static RemoteFileSystemServerConnector register(BObject ftpListener,
                                                            BMap<Object, Object> serviceEndpointConfig, BObject service,
                                                            String name)
-            throws BallerinaFTPException {
+            throws BallerinaFtpException {
 
         try {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-            final FTPListener listener = new FTPListener(Runtime.getCurrentRuntime(), service);
+            final FtpListener listener = new FtpListener(Runtime.getCurrentRuntime(), service);
             if (name == null || name.isEmpty()) {
                 name = service.getType().getName();
             }
             RemoteFileSystemServerConnector serverConnector = fileSystemConnectorFactory
                     .createServerConnector(name, paramMap, listener);
-            ftpListener.addNativeData(FTPConstants.FTP_SERVER_CONNECTOR, serverConnector);
+            ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             // This is a temporary solution
-            serviceEndpointConfig.addNativeData(FTPConstants.FTP_SERVER_CONNECTOR, serverConnector);
+            serviceEndpointConfig.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             return serverConnector;
         } catch (RemoteFileSystemConnectorException e) {
-            throw new BallerinaFTPException("Unable to initialize the FTP listener: " + e.getMessage(), e);
+            throw new BallerinaFtpException("Unable to initialize the FTP listener: " + e.getMessage(), e);
         }
     }
 
     private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
-            throws BallerinaFTPException {
+            throws BallerinaFtpException {
 
         Map<String, String> params = new HashMap<>(12);
 
         BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_AUTH));
-        String url = FTPUtil.createUrl(serviceEndpointConfig);
+                FtpConstants.ENDPOINT_CONFIG_AUTH));
+        String url = FtpUtil.createUrl(serviceEndpointConfig);
         params.put(Constants.URI, url);
         addStringProperty(serviceEndpointConfig, params);
         if (auth != null) {
             final BMap privateKey = auth.getMapValue(StringUtils.fromString(
-                    FTPConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+                    FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
             if (privateKey != null) {
                 final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
-                        FTPConstants.ENDPOINT_CONFIG_PATH))).getValue();
+                        FtpConstants.ENDPOINT_CONFIG_PATH))).getValue();
                 params.put(Constants.IDENTITY, privateKeyPath);
                 final String privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
-                        FTPConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
+                        FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
                 if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
                     params.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword);
                 }
@@ -98,21 +98,21 @@ public class FTPListenerHelper {
 
     private static void addStringProperty(BMap config, Map<String, String> params) {
 
-        final String value = (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_FILE_PATTERN)))
+        final String value = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN)))
                 .getValue();
         if (value != null && !value.isEmpty()) {
             params.put(Constants.FILE_NAME_PATTERN, value);
         }
     }
 
-    public static void poll(BMap<Object, Object> config) throws BallerinaFTPException {
+    public static void poll(BMap<Object, Object> config) throws BallerinaFtpException {
 
         RemoteFileSystemServerConnector connector = (RemoteFileSystemServerConnector) config.
-                getNativeData(FTPConstants.FTP_SERVER_CONNECTOR);
+                getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         try {
             connector.poll();
         } catch (RemoteFileSystemConnectorException e) {
-            throw new BallerinaFTPException(e.getMessage());
+            throw new BallerinaFtpException(e.getMessage());
 
         }
     }

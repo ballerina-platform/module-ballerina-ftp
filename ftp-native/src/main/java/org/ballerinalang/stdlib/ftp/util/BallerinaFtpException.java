@@ -21,13 +21,13 @@ package org.ballerinalang.stdlib.ftp.util;
 /**
  * Exception class for FTP.
  */
-public class BallerinaFTPException extends Exception {
+public class BallerinaFtpException extends Exception {
 
-    public BallerinaFTPException(String message) {
+    public BallerinaFtpException(String message) {
         super(message);
     }
 
-    public BallerinaFTPException(String message, Throwable cause) {
+    public BallerinaFtpException(String message, Throwable cause) {
         super(message, cause);
     }
 }

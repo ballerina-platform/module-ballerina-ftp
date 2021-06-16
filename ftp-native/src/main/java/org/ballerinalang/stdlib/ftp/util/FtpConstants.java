@@ -25,9 +25,9 @@ import org.wso2.transport.remotefilesystem.Constants;
 /**
  * Constants for FTP operations.
  */
-public class FTPConstants {
+public class FtpConstants {
 
-    private FTPConstants() {
+    private FtpConstants() {
         // private constructor
     }
 

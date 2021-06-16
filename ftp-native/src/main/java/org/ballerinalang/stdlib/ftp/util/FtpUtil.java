@@ -46,47 +46,47 @@ import java.util.zip.ZipOutputStream;
 /**
  * Utils class for FTP client operations.
  */
-public class FTPUtil {
+public class FtpUtil {
 
-    private static final Logger log = LoggerFactory.getLogger(FTPUtil.class);
+    private static final Logger log = LoggerFactory.getLogger(FtpUtil.class);
     private static final int MAX_PORT = 65535;
 
-    private FTPUtil() {
+    private FtpUtil() {
         // private constructor
     }
 
-    public static String createUrl(BObject clientConnector, String filePath) throws BallerinaFTPException {
+    public static String createUrl(BObject clientConnector, String filePath) throws BallerinaFtpException {
 
-        String username = (String) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_USERNAME);
-        String password = (String) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_PASS_KEY);
-        String host = (String) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_HOST);
-        int port = (Integer) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_PORT);
-        String protocol = (String) clientConnector.getNativeData(FTPConstants.ENDPOINT_CONFIG_PROTOCOL);
+        String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
+        String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASS_KEY);
+        String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
+        int port = (Integer) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
+        String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
 
         return createUrl(protocol, host, port, username, password, filePath);
     }
 
-    public static String createUrl(BMap config) throws BallerinaFTPException {
+    public static String createUrl(BMap config) throws BallerinaFtpException {
 
-        final String filePath = (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PATH)))
+        final String filePath = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PATH)))
                 .getValue();
-        String protocol = (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PROTOCOL)))
+        String protocol = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL)))
                 .getValue();
-        final String host = (config.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_HOST)))
+        final String host = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_HOST)))
                 .getValue();
-        int port = extractPortValue(config.getIntValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PORT)));
+        int port = extractPortValue(config.getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
 
         final BMap auth = config.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_AUTH));
+                FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = null;
         String password = null;
         if (auth != null) {
             final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
-                    FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
+                    FtpConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
-                username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))
+                username = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
                         .getValue();
-                password = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PASS_KEY)))
+                password = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
         }
@@ -94,14 +94,14 @@ public class FTPUtil {
     }
 
     private static String createUrl(String protocol, String host, int port, String username, String password,
-                                    String filePath) throws BallerinaFTPException {
+                                    String filePath) throws BallerinaFtpException {
 
         String userInfo = username + ":" + password;
         URI uri = null;
         try {
             uri = new URI(protocol, userInfo, host, port, filePath, null, null);
         } catch (URISyntaxException e) {
-            throw new BallerinaFTPException("Error occurred while constructing a URI from host: " + host +
+            throw new BallerinaFtpException("Error occurred while constructing a URI from host: " + host +
                     ", port: " + port + ", username: " + username + " and basePath: " + filePath + e.getMessage(), e);
         }
         return uri.toString();
@@ -110,22 +110,22 @@ public class FTPUtil {
     public static Map<String, String> getAuthMap(BMap config) {
 
         final BMap auth = config.getMapValue(StringUtils.fromString(
-                FTPConstants.ENDPOINT_CONFIG_AUTH));
+                FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = null;
         String password = null;
         if (auth != null) {
             final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
-                    FTPConstants.ENDPOINT_CONFIG_BASIC_AUTH));
+                    FtpConstants.ENDPOINT_CONFIG_BASIC_AUTH));
             if (basicAuth != null) {
-                username = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_USERNAME)))
+                username = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
                         .getValue();
-                password = (basicAuth.getStringValue(StringUtils.fromString(FTPConstants.ENDPOINT_CONFIG_PASS_KEY)))
+                password = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
         }
         Map<String, String> authMap = new HashMap<>();
-        authMap.put(FTPConstants.ENDPOINT_CONFIG_USERNAME, username);
-        authMap.put(FTPConstants.ENDPOINT_CONFIG_PASS_KEY, password);
+        authMap.put(FtpConstants.ENDPOINT_CONFIG_USERNAME, username);
+        authMap.put(FtpConstants.ENDPOINT_CONFIG_PASS_KEY, password);
 
         return authMap;
     }
@@ -170,8 +170,8 @@ public class FTPUtil {
     public static Type getFileInfoType() {
 
         BMap<BString, Object> fileInfoStruct = ValueCreator.createRecordValue(new Module(
-                FTPConstants.FTP_ORG_NAME, FTPConstants.FTP_MODULE_NAME, FTPUtil.getFtpPackage().getVersion()),
-                FTPConstants.FTP_FILE_INFO);
+                FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME, FtpUtil.getFtpPackage().getVersion()),
+                FtpConstants.FTP_FILE_INFO);
         return fileInfoStruct.getType();
     }
 
