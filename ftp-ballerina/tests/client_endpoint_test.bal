@@ -202,6 +202,24 @@ public function testPutFileContent() returns error? {
 @test:Config{
     dependsOn: [testPutFileContent]
 }
+public function testPutCompressedFileContent() returns error? {
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+
+    Error? response = clientEp -> put("/home/in/test3.txt", bStream, compressInput=true);
+    if(response is Error) {
+        log:printError("Error in put operation", 'error = response);
+    }
+    log:printInfo("Executed `put` operation");
+
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get("/home/in/test3.zip", 11);
+    if (str is error) {
+        test:assertFail(msg = "Error during compressed `put` operation");
+    }
+}
+
+@test:Config{
+    dependsOn: [testPutCompressedFileContent]
+}
 public function testPutLargeFileContent() returns error? {
 
     byte[] firstByteArray = [];
@@ -443,7 +461,7 @@ public function testGetFileSize() {
 }
 public function testListFiles() {
     string[] resourceNames
-        = ["child_directory", "test1.txt", "test", "folder1", "childDirectory", "test2.txt", "test3.txt"];
+        = ["child_directory", "test1.txt", "test", "folder1", "test3.zip", "childDirectory", "test2.txt", "test3.txt"];
     FileInfo[]|Error response = clientEp -> list("/home/in");
     if (response is FileInfo[]) {
         log:printInfo("List of files/directories: ");
