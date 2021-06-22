@@ -1,6 +1,6 @@
 ## Package Overview
 
-The `ftp` library is one of the standard library packages of the [Ballerina](https://ballerina.io/) language.
+The `ftp` library is one of the standard library packages of the <a target="_blank" href="https://ballerina.io/">Ballerina</a> language.
 
 It provides an implementation for performing CRUD operations on remote FTP servers via the FTP protocol.
 
