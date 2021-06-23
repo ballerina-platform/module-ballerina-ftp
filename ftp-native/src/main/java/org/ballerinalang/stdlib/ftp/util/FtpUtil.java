@@ -214,7 +214,7 @@ public class FtpUtil {
     }
 
     /**
-     * Specifies the error type for tcp module.
+     * Specifies the error type for ftp package.
      */
     public enum ErrorType {
 
