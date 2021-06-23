@@ -22,13 +22,13 @@ isolated function initEndpoint(Client clientEndpoint, map<anydata> config) retur
     'class: "org.ballerinalang.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function get(Client clientEndpoint, handle path, int arraySize)
+isolated function get(Client clientEndpoint, string path, int arraySize)
         returns record {|byte[] value;|}|io:Error? = @java:Method{
     name: "get",
     'class: "org.ballerinalang.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function delete(Client clientEndpoint, handle path) returns Error? = @java:Method{
+isolated function delete(Client clientEndpoint, string path) returns Error? = @java:Method{
     name: "delete",
     'class: "org.ballerinalang.stdlib.ftp.client.FtpClient"
 } external;
@@ -43,32 +43,32 @@ isolated function put(Client clientEndpoint, InputContent inputContent) returns 
     'class: "org.ballerinalang.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function mkdir(Client clientEndpoint, handle path) returns Error? = @java:Method{
+isolated function mkdir(Client clientEndpoint, string path) returns Error? = @java:Method{
     name: "mkdir",
     'class: "org.ballerinalang.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function rmdir(Client clientEndpoint, handle path) returns Error? = @java:Method{
+isolated function rmdir(Client clientEndpoint, string path) returns Error? = @java:Method{
     name: "rmdir",
     'class: "org.ballerinalang.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function rename(Client clientEndpoint, handle origin, handle destination) returns Error? = @java:Method{
+isolated function rename(Client clientEndpoint, string origin, string destination) returns Error? = @java:Method{
     name: "rename",
     'class: "org.ballerinalang.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function size(Client clientEndpoint, handle path) returns int|Error = @java:Method{
+isolated function size(Client clientEndpoint, string path) returns int|Error = @java:Method{
     name: "size",
     'class: "org.ballerinalang.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function list(Client clientEndpoint, handle path) returns FileInfo[]|Error = @java:Method{
+isolated function list(Client clientEndpoint, string path) returns FileInfo[]|Error = @java:Method{
     name: "list",
     'class: "org.ballerinalang.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function isDirectory(Client clientEndpoint, handle path) returns boolean|Error = @java:Method{
+isolated function isDirectory(Client clientEndpoint, string path) returns boolean|Error = @java:Method{
     name: "isDirectory",
     'class: "org.ballerinalang.stdlib.ftp.client.FtpClient"
 } external;
@@ -78,8 +78,8 @@ isolated function poll(ListenerConfiguration config) returns Error? = @java:Meth
     'class: "org.ballerinalang.stdlib.ftp.server.FtpListenerHelper"
 } external;
 
-isolated function register(Listener listenerEndpoint, ListenerConfiguration config, service object {} ftpService, handle name)
-    returns handle|Error = @java:Method{
+isolated function register(Listener listenerEndpoint, ListenerConfiguration config, service object {} ftpService,
+        handle name) returns handle|Error = @java:Method{
     name: "register",
     'class: "org.ballerinalang.stdlib.ftp.server.FtpListenerHelper"
 } external;

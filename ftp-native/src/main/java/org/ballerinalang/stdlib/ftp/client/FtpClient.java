@@ -243,10 +243,10 @@ public class FtpClient {
         return null;
     }
 
-    public static Object delete(Environment env, BObject clientConnector, String filePath) {
+    public static Object delete(Environment env, BObject clientConnector, BString filePath) {
         String url;
         try {
-            url = FtpUtil.createUrl(clientConnector, filePath);
+            url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), FTP_ERROR);
         }
@@ -268,10 +268,10 @@ public class FtpClient {
         return null;
     }
 
-    public static Object isDirectory(Environment env, BObject clientConnector, String filePath) {
+    public static Object isDirectory(Environment env, BObject clientConnector, BString filePath) {
         String url;
         try {
-            url = FtpUtil.createUrl(clientConnector, filePath);
+            url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), FTP_ERROR);
         }
@@ -292,10 +292,10 @@ public class FtpClient {
         return false;
     }
 
-    public static Object list(Environment env, BObject clientConnector, String filePath) {
+    public static Object list(Environment env, BObject clientConnector, BString filePath) {
         String url;
         try {
-            url = FtpUtil.createUrl(clientConnector, filePath);
+            url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), FTP_ERROR);
         }
@@ -316,10 +316,10 @@ public class FtpClient {
         return null;
     }
 
-    public static Object mkdir(Environment env, BObject clientConnector, String path) {
+    public static Object mkdir(Environment env, BObject clientConnector, BString path) {
         String url;
         try {
-            url = FtpUtil.createUrl(clientConnector, path);
+            url = FtpUtil.createUrl(clientConnector, path.getValue());
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), FTP_ERROR);
         }
@@ -341,12 +341,13 @@ public class FtpClient {
         return null;
     }
 
-    public static Object rename(Environment env, BObject clientConnector, String origin, String destination) {
+    public static Object rename(Environment env, BObject clientConnector, BString origin, BString destination) {
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         try {
-            propertyMap.put(FtpConstants.PROPERTY_URI, FtpUtil.createUrl(clientConnector, origin));
-            propertyMap.put(FtpConstants.PROPERTY_DESTINATION, FtpUtil.createUrl(clientConnector, destination));
+            propertyMap.put(FtpConstants.PROPERTY_URI, FtpUtil.createUrl(clientConnector, origin.getValue()));
+            propertyMap.put(FtpConstants.PROPERTY_DESTINATION, FtpUtil.createUrl(clientConnector,
+                    destination.getValue()));
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), FTP_ERROR);
         }
@@ -365,10 +366,10 @@ public class FtpClient {
         return null;
     }
 
-    public static Object rmdir(Environment env, BObject clientConnector, String filePath) {
+    public static Object rmdir(Environment env, BObject clientConnector, BString filePath) {
         String url;
         try {
-            url = FtpUtil.createUrl(clientConnector, filePath);
+            url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), FTP_ERROR);
         }
@@ -390,10 +391,10 @@ public class FtpClient {
         return null;
     }
 
-    public static Object size(Environment env, BObject clientConnector, String filePath) {
+    public static Object size(Environment env, BObject clientConnector, BString filePath) {
         String url;
         try {
-            url = FtpUtil.createUrl(clientConnector, filePath);
+            url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), FTP_ERROR);
         }
@@ -414,5 +415,4 @@ public class FtpClient {
         connector.send(null, FtpAction.SIZE);
         return 0;
     }
-
 }

@@ -18,7 +18,6 @@
 
 import ballerina/io;
 import ballerina/log;
-import ballerina/jballerina.java;
 
 # Represents an FTP client that intracts with an FTP server
 public isolated client class Client {
@@ -88,8 +87,7 @@ public isolated client class Client {
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
     remote isolated function mkdir(string path) returns Error? {
-        handle resourcePath = java:fromString(path);
-        return mkdir(self, resourcePath);
+        return mkdir(self, path);
     }
 
     # Deletes an empty directory in an FTP server.
@@ -101,8 +99,7 @@ public isolated client class Client {
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
     remote isolated function rmdir(string path) returns Error? {
-        handle resourcePath = java:fromString(path);
-        return rmdir(self, resourcePath);
+        return rmdir(self, path);
     }
 
     # Renames a file or moves it to a new location within
@@ -116,9 +113,7 @@ public isolated client class Client {
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
     remote isolated function rename(string origin, string destination) returns Error? {
-        handle originPath = java:fromString(origin);
-        handle destinationPath = java:fromString(destination);
-        return rename(self, originPath, destinationPath);
+        return rename(self, origin, destination);
     }
 
     # Gets the size of a file resource.
@@ -130,8 +125,7 @@ public isolated client class Client {
     # + return - The file size in bytes or an `ftp:Error` if
     #            failed to establish the communication with the FTP server
     remote isolated function size(string path) returns int|Error {
-        handle resourcePath = java:fromString(path);
-        return size(self, resourcePath);
+        return size(self, path);
     }
 
     # Gets the file name list in a given folder.
@@ -143,8 +137,7 @@ public isolated client class Client {
     # + return - An array of file names or an `ftp:Error` if failed to
     #            establish the communication with the FTP server
     remote isolated function list(string path) returns FileInfo[]|Error {
-        handle resourcePath = java:fromString(path);
-        return list(self, resourcePath);
+        return list(self, path);
     }
 
     # Checks if a given resource is a direcotry.
@@ -156,8 +149,7 @@ public isolated client class Client {
     # + return - `true` if given resource is a direcotry or an `ftp:Error` if
     #            failed to establish the communication with the FTP server
     remote isolated function isDirectory(string path) returns boolean|Error {
-        handle resourcePath = java:fromString(path);
-        return isDirectory(self, resourcePath);
+        return isDirectory(self, path);
     }
 
     # Deletes a file from an FTP server.
@@ -169,8 +161,7 @@ public isolated client class Client {
     # + return -  `()` or else an `ftp:Error` if failed to establish
     #             the communication with the FTP server
     remote isolated function delete(string path) returns Error? {
-        handle resourcePath = java:fromString(path);
-        return delete(self, resourcePath);
+        return delete(self, path);
     }
 }
 
@@ -179,7 +170,7 @@ public isolated client class Client {
 # + protocol - Supported FTP protocols
 # + host - Target service URL
 # + port - Port number of the remote service
-# + auth - Authenthication options
+# + auth - Authentication options
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -188,18 +179,18 @@ public type ClientConfiguration record {|
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,
-        boolean compressInput=false) returns InputContent{
+        boolean compressInput=false) returns InputContent {
     InputContent inputContent = {
         filePath: path,
         compressInput: compressInput
     };
 
-    if(content is stream<byte[] & readonly, io:Error?>){
+    if (content is stream<byte[] & readonly, io:Error?>) {
         inputContent.isFile = true;
         inputContent.fileContent = content;
-    } else if(content is string){
+    } else if (content is string) {
         inputContent.textContent = content;
-    } else if(content is json){
+    } else if (content is json) {
         inputContent.textContent = content.toJsonString();
     } else {
         inputContent.textContent = content.toString();
