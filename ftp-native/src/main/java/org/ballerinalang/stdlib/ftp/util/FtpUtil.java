@@ -138,7 +138,8 @@ public class FtpUtil {
      * @return an error which will be propagated to ballerina user.
      */
     public static BError createError(String error, String details) {
-        return ErrorCreator.createError(StringUtils.fromString(error), StringUtils.fromString(details));
+        return ErrorCreator.createError(ModuleUtils.getModule(), "Error", StringUtils.fromString(error), null,
+                StringUtils.fromString(details));
     }
 
     /**

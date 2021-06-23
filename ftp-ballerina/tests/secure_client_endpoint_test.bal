@@ -24,7 +24,7 @@ import ballerina/log;
 }
 public function testSecureGetFileContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    stream<byte[] & readonly, io:Error?>|Error str = sftpClientEp -> get("/file2.txt", 11);
+    stream<byte[] & readonly, io:Error?>|Error str = sftpClientEp->get("/file2.txt", 11);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|error? arr1 = trap str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -71,7 +71,7 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
 
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
-    stream<byte[] & readonly, io:Error?>|Error str = incorrectSftpClientEp -> get("/file2.txt", 11);
+    stream<byte[] & readonly, io:Error?>|Error str = incorrectSftpClientEp->get("/file2.txt", 11);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|error? arr1 = trap str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -119,7 +119,7 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
 
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
-    stream<byte[] & readonly, io:Error?>|Error str = incorrectSftpClientEp -> get("/file2.txt", 11);
+    stream<byte[] & readonly, io:Error?>|Error str = incorrectSftpClientEp->get("/file2.txt", 11);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|error? arr1 = trap str.next();
         if (arr1 is record {|byte[] value;|}) {
