@@ -135,10 +135,11 @@ public class FtpUtil {
      *
      * @param error   the cause for the error.
      * @param details the detailed message of the error.
+     * @param errorType the error type.
      * @return an error which will be propagated to ballerina user.
      */
-    public static BError createError(String error, String details) {
-        return ErrorCreator.createError(ModuleUtils.getModule(), "Error", StringUtils.fromString(error), null,
+    public static BError createError(String error, String details, String errorType) {
+        return ErrorCreator.createError(ModuleUtils.getModule(), errorType, StringUtils.fromString(error), null,
                 StringUtils.fromString(details));
     }
 
@@ -210,6 +211,24 @@ public class FtpUtil {
     public static String getCompressedFileName(String fileName) {
 
         return fileName.substring(0, fileName.lastIndexOf('.')).concat(".zip");
+    }
+
+    /**
+     * Specifies the error type for tcp module.
+     */
+    public enum ErrorType {
+
+        Error("Error");
+
+        private String errorType;
+
+        ErrorType(String errorType) {
+            this.errorType = errorType;
+        }
+
+        public String errorType() {
+            return errorType;
+        }
     }
 
     /**

@@ -47,6 +47,7 @@ import java.util.Map;
 import static org.ballerinalang.stdlib.ftp.util.FtpConstants.ARRAY_SIZE;
 import static org.ballerinalang.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
 import static org.ballerinalang.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
+import static org.ballerinalang.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
 /**
  * Contains functionality of FTP client.
@@ -108,7 +109,7 @@ public class FtpClient {
         try {
             url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), e.getCause().getMessage());
+            return FtpUtil.createError(e.getMessage(), e.getCause().getMessage(), Error.errorType());
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
@@ -122,7 +123,7 @@ public class FtpClient {
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), e.getCause().getMessage());
+            return FtpUtil.createError(e.getMessage(), e.getCause().getMessage(), Error.errorType());
         }
         connector.send(null, FtpAction.GET);
         return null;

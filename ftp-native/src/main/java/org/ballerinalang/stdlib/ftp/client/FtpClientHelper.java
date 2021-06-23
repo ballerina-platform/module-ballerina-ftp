@@ -72,7 +72,6 @@ import static org.ballerinalang.stdlib.ftp.util.FtpUtil.getFtpPackage;
  */
 class FtpClientHelper {
 
-    private static final String READABLE_BYTE_CHANNEL = "ReadableByteChannel";
     private static final Logger log = LoggerFactory.getLogger(FtpClientHelper.class);
 
     private FtpClientHelper() {
@@ -80,7 +79,6 @@ class FtpClientHelper {
     }
 
     static boolean executeGenericAction(Future balFuture) {
-
         balFuture.complete(null);
         return true;
     }
