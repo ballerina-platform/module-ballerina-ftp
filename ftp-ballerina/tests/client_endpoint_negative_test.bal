@@ -28,7 +28,7 @@ ClientConfiguration wrongConfig = {
 
 Client wrongClientEp = new(wrongConfig);
 
-// Create the incorrect config with for non-existing server
+// Create the incorrect config for non-existing server
 ClientConfiguration nonExistingServerConfig = {
         protocol: FTP,
         host: "127.0.0.1",
