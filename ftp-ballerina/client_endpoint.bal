@@ -179,16 +179,16 @@ public type ClientConfiguration record {|
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,
-        boolean compressInput=false) returns InputContent{
+        boolean compressInput=false) returns InputContent {
     InputContent inputContent = {
         filePath: path,
         compressInput: compressInput
     };
 
-    if (content is stream<byte[] & readonly, io:Error?>){
+    if (content is stream<byte[] & readonly, io:Error?>) {
         inputContent.isFile = true;
         inputContent.fileContent = content;
-    } else if (content is string){
+    } else if (content is string) {
         inputContent.textContent = content;
     } else if (content is json) {
         inputContent.textContent = content.toJsonString();

@@ -318,7 +318,8 @@ class FtpClientHelper {
     }
 
     static RemoteFileSystemMessage getUncompressedMessage(BObject clientConnector, String filePath,
-                                                          Map<String, String> propertyMap, InputStream stream) {
+                                                          Map<String, String> propertyMap, InputStream stream)
+            throws BallerinaFtpException {
 
         try {
             String url = FtpUtil.createUrl(clientConnector, filePath);
@@ -326,7 +327,7 @@ class FtpClientHelper {
             return new RemoteFileSystemMessage(stream);
         } catch (BallerinaFtpException e) {
             log.error(e.getMessage());
-            return null;
+            throw e;
         }
     }
 
