@@ -136,11 +136,11 @@ public class Listener {
     public isolated function register(service object {} ftpService, string? name) returns error? {
         error? response = ();
         handle serviceName = self.EMPTY_JAVA_STRING;
-        if(name is string){
+        if (name is string) {
             serviceName = java:fromString(name);
         }
         handle|error result = register(self, self.config,  ftpService, serviceName);
-        if(result is handle){
+        if (result is handle) {
             self.config.serverConnector = result;
         } else {
             response = result;

@@ -66,7 +66,7 @@ function initServers() returns boolean {
 }
 public function testReadBlockFittingContent() returns error? {
     test:assertTrue(startedServers, msg = "Test servers are not properly started.");
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get(filePath, 6);
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath, 6);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|io:Error? arr1 = str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -100,7 +100,7 @@ public function testReadBlockFittingContent() returns error? {
     dependsOn: [testReadBlockFittingContent]
 }
 public function testReadBlockNonFittingContent() returns error? {
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get(filePath, 7);
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath, 7);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|io:Error? arr1 = str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -136,14 +136,14 @@ public function testReadBlockNonFittingContent() returns error? {
 public function testAppendContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(appendFilePath, 7);
 
-    Error? response = clientEp -> append(filePath, bStream);
-    if(response is Error) {
+    Error? response = clientEp->append(filePath, bStream);
+    if (response is Error) {
         log:printError("Error while appending a file", 'error = response);
     } else {
         log:printInfo("Executed `append` operation");
     }
 
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get(filePath, 26);
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath, 26);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|io:Error? arr1 = str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -171,13 +171,13 @@ public function testAppendContent() returns error? {
 public function testPutFileContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
-    Error? response = clientEp -> put(newFilePath, bStream);
-    if(response is Error) {
+    Error? response = clientEp->put(newFilePath, bStream);
+    if (response is Error) {
         log:printError("Error in put operation", 'error = response);
     }
     log:printInfo("Executed `put` operation");
 
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get(newFilePath, 11);
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(newFilePath, 11);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|io:Error? arr1 = str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -205,13 +205,13 @@ public function testPutFileContent() returns error? {
 public function testPutCompressedFileContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
-    Error? response = clientEp -> put("/home/in/test3.txt", bStream, compressInput=true);
-    if(response is Error) {
+    Error? response = clientEp->put("/home/in/test3.txt", bStream, compressInput=true);
+    if (response is Error) {
         log:printError("Error in put operation", 'error = response);
     }
     log:printInfo("Executed `put` operation");
 
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get("/home/in/test3.zip", 11);
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get("/home/in/test3.zip", 11);
     if (str is error) {
         test:assertFail(msg = "Error during compressed `put` operation");
     }
@@ -233,13 +233,13 @@ public function testPutLargeFileContent() returns error? {
     (byte[])[] & readonly bList = [firstByteArray.cloneReadOnly(), "123456".toBytes().cloneReadOnly(),
         "end.".toBytes().cloneReadOnly()];
     stream<byte[] & readonly, io:Error?> bStream = bList.toStream();
-    Error? response = clientEp -> put(newFilePath, bStream);
-    if(response is Error) {
+    Error? response = clientEp->put(newFilePath, bStream);
+    if (response is Error) {
         log:printError("Error in put operation", 'error = response);
     }
     log:printInfo("Executed `put` operation");
 
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get(newFilePath, 16400);
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(newFilePath, 16400);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|io:Error? arr1 = str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -266,14 +266,14 @@ public function testPutLargeFileContent() returns error? {
 }
 public function testPutTextContent() returns error? {
     string textToPut = "Sample text content";
-    Error? response = clientEp -> put(filePath, textToPut);
-    if(response is Error) {
+    Error? response = clientEp->put(filePath, textToPut);
+    if (response is Error) {
         log:printError("Error while invoking `put` operation", 'error = response);
     } else {
         log:printInfo("Executed `put` operation on text");
     }
 
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get(filePath, 19);
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath, 19);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|io:Error? arr1 = str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -300,14 +300,14 @@ public function testPutTextContent() returns error? {
 }
 public function testPutJsonContent() returns error? {
     json jsonToPut = { name: "Anne", age: 20 };
-    Error? response = clientEp -> put(filePath, jsonToPut);
-    if(response is Error) {
+    Error? response = clientEp->put(filePath, jsonToPut);
+    if (response is Error) {
         log:printError("Error while invoking `put` operation", 'error = response);
     } else {
         log:printInfo("Executed `put` operation on JSON");
     }
 
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get(filePath, 25);
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath, 25);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|io:Error? arr1 = str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -334,14 +334,14 @@ public function testPutJsonContent() returns error? {
 }
 public function testPutXMLContent() returns error? {
     xml xmlToPut = xml `<note><heading>Memo</heading><body>Memo content</body></note>`;
-    Error? response = clientEp -> put(filePath, xmlToPut);
-    if(response is Error) {
+    Error? response = clientEp->put(filePath, xmlToPut);
+    if (response is Error) {
         log:printError("Error while invoking `put` operation", 'error = response);
     } else {
         log:printInfo("Executed `put` operation on XML");
     }
 
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get(filePath, 85);
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath, 85);
     if (str is stream<byte[] & readonly, io:Error?>) {
         record {|byte[] value;|}|io:Error? arr1 = str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -367,9 +367,9 @@ public function testPutXMLContent() returns error? {
     dependsOn: [testPutXMLContent]
 }
 public function testIsDirectory() {
-    boolean|Error response1 = clientEp -> isDirectory("/home/in");
+    boolean|Error response1 = clientEp->isDirectory("/home/in");
     log:printInfo("Executed `isDirectory` operation on a directory");
-    if(response1 is boolean) {
+    if (response1 is boolean) {
         log:printInfo("Is directory: " + response1.toString());
         test:assertEquals(response1, true,
             msg = "A directory is not correctly recognized with `isDirectory` operation");
@@ -377,9 +377,9 @@ public function testIsDirectory() {
         log:printError("Error while invoking `isDirectory` operation", 'error = response1);
     }
 
-    boolean|Error response2 = clientEp -> isDirectory(filePath);
+    boolean|Error response2 = clientEp->isDirectory(filePath);
     log:printInfo("Executed `isDirectory` operation on a file");
-    if(response2 is boolean) {
+    if (response2 is boolean) {
         log:printInfo("Is directory: " + response2.toString());
         test:assertEquals(response2, false,
             msg = "A file is not correctly recognized with `isDirectory` operation");
@@ -392,16 +392,16 @@ public function testIsDirectory() {
     dependsOn: [testIsDirectory]
 }
 public function testCreateDirectory() {
-    Error? response1 = clientEp -> mkdir("/home/in/out");
-    if(response1 is Error) {
+    Error? response1 = clientEp->mkdir("/home/in/out");
+    if (response1 is Error) {
         log:printError("Error while creating directory", 'error = response1);
     } else {
         log:printInfo("Executed `mkdir` operation");
     }
 
-    boolean|Error response2 = clientEp -> isDirectory("/home/in/out");
+    boolean|Error response2 = clientEp->isDirectory("/home/in/out");
     log:printInfo("Executed `isDirectory` operation after creating a directory");
-    if(response2 is boolean) {
+    if (response2 is boolean) {
         log:printInfo("Is directory: " + response2.toString());
         test:assertEquals(response2, true, msg = "Directory was not created");
     } else {
@@ -415,25 +415,25 @@ public function testCreateDirectory() {
 public function testRenameDirectory() {
     string existingName = "/home/in/out";
     string newName = "/home/in/test";
-    Error? response1 = clientEp -> rename(existingName, newName);
-    if(response1 is Error) {
+    Error? response1 = clientEp->rename(existingName, newName);
+    if (response1 is Error) {
         log:printError("Error in renaming directory", 'error = response1);
     } else {
         log:printInfo("Executed `rename` operation");
     }
 
-    boolean|Error response2 = clientEp -> isDirectory(existingName);
+    boolean|Error response2 = clientEp->isDirectory(existingName);
     log:printInfo("Executed `isDirectory` operation on original directory after renaming a directory");
-    if(response2 is boolean) {
+    if (response2 is boolean) {
         log:printInfo("Existance of original directory: " + response2.toString());
         test:assertEquals(response2, false, msg = "Directory was not removed during `rename` operation");
     } else {
         log:printError("Error while invoking `isDirectory` operation", 'error = response2);
     }
 
-    boolean|Error response3 = clientEp -> isDirectory(newName);
+    boolean|Error response3 = clientEp->isDirectory(newName);
     log:printInfo("Executed `isDirectory` operation on renamed directory after renaming a directory");
-    if(response3 is boolean) {
+    if (response3 is boolean) {
         log:printInfo("Existance of renamed directory: " + response3.toString());
         test:assertEquals(response3, true, msg = "New directory name was not created during `rename` operation");
     } else {
@@ -446,9 +446,9 @@ public function testRenameDirectory() {
     dependsOn: [testRenameDirectory]
 }
 public function testGetFileSize() {
-    int|Error response = clientEp -> size(filePath);
+    int|Error response = clientEp->size(filePath);
     log:printInfo("Executed `size` operation.");
-    if(response is int){
+    if (response is int){
         log:printInfo("Size: " + response.toString());
         test:assertEquals(response, 61, msg = "File size is not given with `size` operation");
     } else {
@@ -462,7 +462,7 @@ public function testGetFileSize() {
 public function testListFiles() {
     string[] resourceNames
         = ["child_directory", "test1.txt", "test", "folder1", "test3.zip", "childDirectory", "test2.txt", "test3.txt"];
-    FileInfo[]|Error response = clientEp -> list("/home/in");
+    FileInfo[]|Error response = clientEp->list("/home/in");
     if (response is FileInfo[]) {
         log:printInfo("List of files/directories: ");
         int i = 0;
@@ -482,14 +482,14 @@ public function testListFiles() {
     dependsOn: [testListFiles]
 }
 public function testDeleteFile() returns error? {
-    Error? response = clientEp -> delete(filePath);
-    if(response is Error) {
+    Error? response = clientEp->delete(filePath);
+    if (response is Error) {
         log:printError("Error in deleting file", 'error = response);
     } else {
         log:printInfo("Executed `delete` operation");
     }
 
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp -> get(filePath, 61);
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath, 61);
     if (str is stream<byte[] & readonly, io:Error?>) {
         (record {|byte[] value;|}|io:Error)|error? arr1 = trap str.next();
         if (arr1 is record {|byte[] value;|}) {
@@ -516,23 +516,23 @@ public function testDeleteFile() returns error? {
     dependsOn: [testDeleteFile]
 }
 public function testRemoveDirectory() {
-    Error? response1 = clientEp -> rmdir("/home/in/test");
-    if(response1 is Error) {
+    Error? response1 = clientEp->rmdir("/home/in/test");
+    if (response1 is Error) {
         log:printError("Error in removing directory", 'error = response1);
     } else {
         log:printInfo("Executed `rmdir` operation");
     }
 
-    boolean|Error response2 = clientEp -> isDirectory("/home/in/test");
+    boolean|Error response2 = clientEp->isDirectory("/home/in/test");
     log:printInfo("Executed `isDirectory` operation after deleting a directory");
     int i = 0;
     while (response2 is boolean && response2 && i < 10) {
          runtime:sleep(1);
-         response2 = clientEp -> isDirectory("/home/in/test");
+         response2 = clientEp->isDirectory("/home/in/test");
          log:printInfo("Executed `isDirectory` operation after deleting a directory");
          i += 1;
     }
-    if(response2 is boolean) {
+    if (response2 is boolean) {
         log:printInfo("Existence of the directory: " + response2.toString());
         // test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
     } else {

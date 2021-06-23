@@ -236,9 +236,9 @@ public class FtpClient {
         return null;
     }
 
-    public static Object delete(Environment env, BObject clientConnector, String filePath)
+    public static Object delete(Environment env, BObject clientConnector, BString filePath)
             throws BallerinaFtpException {
-        String url = FtpUtil.createUrl(clientConnector, filePath);
+        String url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
@@ -257,9 +257,9 @@ public class FtpClient {
         return null;
     }
 
-    public static Object isDirectory(Environment env, BObject clientConnector, String filePath)
+    public static Object isDirectory(Environment env, BObject clientConnector, BString filePath)
             throws BallerinaFtpException {
-        String url = FtpUtil.createUrl(clientConnector, filePath);
+        String url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
@@ -277,8 +277,8 @@ public class FtpClient {
         return false;
     }
 
-    public static Object list(Environment env, BObject clientConnector, String filePath) throws BallerinaFtpException {
-        String url = FtpUtil.createUrl(clientConnector, filePath);
+    public static Object list(Environment env, BObject clientConnector, BString filePath) throws BallerinaFtpException {
+        String url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
@@ -296,8 +296,8 @@ public class FtpClient {
         return null;
     }
 
-    public static Object mkdir(Environment env, BObject clientConnector, String path) throws BallerinaFtpException {
-        String url = FtpUtil.createUrl(clientConnector, path);
+    public static Object mkdir(Environment env, BObject clientConnector, BString path) throws BallerinaFtpException {
+        String url = FtpUtil.createUrl(clientConnector, path.getValue());
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
@@ -316,12 +316,12 @@ public class FtpClient {
         return null;
     }
 
-    public static Object rename(Environment env, BObject clientConnector, String origin, String destination)
+    public static Object rename(Environment env, BObject clientConnector, BString origin, BString destination)
             throws BallerinaFtpException {
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-        propertyMap.put(FtpConstants.PROPERTY_URI, FtpUtil.createUrl(clientConnector, origin));
-        propertyMap.put(FtpConstants.PROPERTY_DESTINATION, FtpUtil.createUrl(clientConnector, destination));
+        propertyMap.put(FtpConstants.PROPERTY_URI, FtpUtil.createUrl(clientConnector, origin.getValue()));
+        propertyMap.put(FtpConstants.PROPERTY_DESTINATION, FtpUtil.createUrl(clientConnector, destination.getValue()));
         Future balFuture = env.markAsync();
         FtpClientListener connectorListener = new FtpClientListener(balFuture,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction(balFuture));
@@ -337,8 +337,9 @@ public class FtpClient {
         return null;
     }
 
-    public static Object rmdir(Environment env, BObject clientConnector, String filePath) throws BallerinaFtpException {
-        String url = FtpUtil.createUrl(clientConnector, filePath);
+    public static Object rmdir(Environment env, BObject clientConnector, BString filePath)
+            throws BallerinaFtpException {
+        String url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
@@ -357,8 +358,8 @@ public class FtpClient {
         return null;
     }
 
-    public static Object size(Environment env, BObject clientConnector, String filePath) throws BallerinaFtpException {
-        String url = FtpUtil.createUrl(clientConnector, filePath);
+    public static Object size(Environment env, BObject clientConnector, BString filePath) throws BallerinaFtpException {
+        String url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
@@ -376,5 +377,4 @@ public class FtpClient {
         connector.send(null, FtpAction.SIZE);
         return 0;
     }
-
 }
