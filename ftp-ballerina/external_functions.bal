@@ -78,8 +78,8 @@ isolated function poll(ListenerConfiguration config) returns Error? = @java:Meth
     'class: "org.ballerinalang.stdlib.ftp.server.FtpListenerHelper"
 } external;
 
-isolated function register(Listener listenerEndpoint, ListenerConfiguration config, service object {} ftpService, handle name)
-    returns handle|Error = @java:Method{
+isolated function register(Listener listenerEndpoint, ListenerConfiguration config, service object {} ftpService,
+        handle name) returns handle|Error = @java:Method{
     name: "register",
     'class: "org.ballerinalang.stdlib.ftp.server.FtpListenerHelper"
 } external;
