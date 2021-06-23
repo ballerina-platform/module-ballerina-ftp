@@ -43,6 +43,8 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static org.ballerinalang.stdlib.ftp.util.ModuleUtils.getModule;
+
 /**
  * Utils class for FTP client operations.
  */
@@ -133,12 +135,12 @@ public class FtpUtil {
     /**
      * Creates an error message.
      *
-     * @param error   the cause for the error.
-     * @param details the detailed message of the error.
+     * @param message the detailed message of the error.
+     * @param errorTypeName error type.
      * @return an error which will be propagated to ballerina user.
      */
-    public static BError createError(String error, String details) {
-        return ErrorCreator.createError(StringUtils.fromString(error), StringUtils.fromString(details));
+    public static BError createError(String message, String errorTypeName) {
+        return ErrorCreator.createError(getModule(), errorTypeName, StringUtils.fromString(message), null, null);
     }
 
     /**
@@ -217,6 +219,6 @@ public class FtpUtil {
      * @return udp package.
      */
     public static Module getFtpPackage() {
-        return ModuleUtils.getModule();
+        return getModule();
     }
 }

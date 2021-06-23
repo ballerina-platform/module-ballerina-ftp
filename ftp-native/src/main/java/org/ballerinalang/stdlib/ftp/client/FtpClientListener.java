@@ -29,6 +29,8 @@ import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import static org.ballerinalang.stdlib.ftp.util.FtpConstants.FTP_ERROR;
+
 /**
  * Contains implementation of RemoteFileSystemListener.
  */
@@ -57,11 +59,7 @@ public class FtpClientListener implements RemoteFileSystemListener {
     public void onError(Throwable throwable) {
 
         log.error(throwable.getMessage(), throwable);
-        String detail = null;
-        if (throwable.getCause() != null) {
-            detail = throwable.getCause().getMessage();
-        }
-        balFuture.complete(FtpUtil.createError(throwable.getMessage(), detail));
+        balFuture.complete(FtpUtil.createError(throwable.getMessage(), FTP_ERROR));
     }
 
     @Override
