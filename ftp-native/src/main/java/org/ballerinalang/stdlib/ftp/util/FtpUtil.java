@@ -144,6 +144,11 @@ public class FtpUtil {
                 null, null);
     }
 
+    public static BError createError(String message, String details, String errorTypeName) {
+        return ErrorCreator.createError(ModuleUtils.getModule(), errorTypeName, StringUtils.fromString(message), null,
+                StringUtils.fromString(details));
+    }
+
     /**
      * Gives the port value from a given config input.
      *
@@ -212,6 +217,24 @@ public class FtpUtil {
     public static String getCompressedFileName(String fileName) {
 
         return fileName.substring(0, fileName.lastIndexOf('.')).concat(".zip");
+    }
+
+    /**
+     * Specifies the error type for ftp package.
+     */
+    public enum ErrorType {
+
+        Error("Error");
+
+        private String errorType;
+
+        ErrorType(String errorType) {
+            this.errorType = errorType;
+        }
+
+        public String errorType() {
+            return errorType;
+        }
     }
 
     /**

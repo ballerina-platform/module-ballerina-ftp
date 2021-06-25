@@ -113,7 +113,7 @@ public function testIsDirectoryWithNonExistingServer() {
 }
 public function testCreateDirectoryWithWrongUrl() {
     var response1 = wrongClientEp->mkdir("/home/in/out");
-    if(response1 is Error) {
+    if (response1 is Error) {
         log:printInfo("Received error: " + response1.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
