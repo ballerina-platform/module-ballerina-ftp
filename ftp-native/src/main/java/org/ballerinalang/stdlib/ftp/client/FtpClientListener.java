@@ -39,19 +39,19 @@ public class FtpClientListener implements RemoteFileSystemListener {
     private static final Logger log = LoggerFactory.getLogger(FtpClientListener.class);
     private CompletableFuture<Object> future;
     private Function<RemoteFileSystemBaseMessage, Boolean> function;
+    private boolean isGenericAction;
 
     private Future balFuture;
 
-    FtpClientListener(Future listenerFuture,
-                      Function<RemoteFileSystemBaseMessage, Boolean> function) {
-
+    FtpClientListener(Future listenerFuture, boolean isGenericAction,
+            Function<RemoteFileSystemBaseMessage, Boolean> function) {
         this.balFuture = listenerFuture;
         this.function = function;
+        this.isGenericAction = isGenericAction;
     }
 
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
-
         return function.apply(remoteFileSystemBaseMessage);
     }
 
@@ -64,6 +64,9 @@ public class FtpClientListener implements RemoteFileSystemListener {
 
     @Override
     public void done() {
+        if (isGenericAction) {
+            balFuture.complete(null);
+        }
         log.debug(FtpConstants.SUCCESSFULLY_FINISHED_THE_ACTION);
     }
 }
