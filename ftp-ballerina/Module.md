@@ -115,7 +115,7 @@ The following code removes a directory in a remote FTP server.
 ftp:Error? rmdirResponse = ftpClient->rmdir("<The directory path>");
 ```
 
-###FTP Listener
+### FTP Listener
 
 The `ftp:Listener` is used to listen to a remote FTP location and trigger a `WatchEvent` type of event when new
 files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added

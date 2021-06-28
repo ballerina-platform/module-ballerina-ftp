@@ -31,12 +31,12 @@ public function testSecureGetFileContent() returns error? {
             string fileContent = check strings:fromBytes(arr1.value);
             test:assertEquals(fileContent, "Put content",
                 msg = "Found unexpected content from secure `get` operation");
-            record {|byte[] value;|}|io:Error? arr2 = str.next();
+            record {|byte[] value;|}|error? arr2 = trap str.next();
             test:assertTrue(arr2 is (),
                 msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
         } else {
             if (arr1 is error) {
-                log:printError("Error while `next` operation " + arr1.message());
+                test:assertFail(msg = "Error while `next` operation " + arr1.message());
             }
             test:assertFail(msg = "Found unexpected arr1 output type");
         }
