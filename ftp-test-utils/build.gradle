@@ -29,6 +29,7 @@ dependencies {
     compile group: 'org.testng', name: 'testng', version: "${testngVersion}"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "${slf4jVersion}"
     compile group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}"
+//    compile group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}"
     compile group: 'org.wso2.org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}"
     compile group: 'com.jcraft', name: 'jsch', version: "${jcraftVersion}"
     compile project(":ftp-native")

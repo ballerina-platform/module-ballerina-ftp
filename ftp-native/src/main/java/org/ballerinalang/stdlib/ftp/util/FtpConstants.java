@@ -20,7 +20,7 @@ package org.ballerinalang.stdlib.ftp.util;
 
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BString;
-import org.wso2.transport.remotefilesystem.Constants;
+import org.ballerinalang.stdlib.ftp.transport.Constants;
 
 /**
  * Constants for FTP operations.

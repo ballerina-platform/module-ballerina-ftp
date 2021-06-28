@@ -29,14 +29,14 @@ import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import org.ballerinalang.stdlib.ftp.transport.listener.RemoteFileSystemListener;
+import org.ballerinalang.stdlib.ftp.transport.message.FileInfo;
+import org.ballerinalang.stdlib.ftp.transport.message.RemoteFileSystemBaseMessage;
+import org.ballerinalang.stdlib.ftp.transport.message.RemoteFileSystemEvent;
 import org.ballerinalang.stdlib.ftp.util.FtpConstants;
 import org.ballerinalang.stdlib.ftp.util.FtpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
-import org.wso2.transport.remotefilesystem.message.FileInfo;
-import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
-import org.wso2.transport.remotefilesystem.message.RemoteFileSystemEvent;
 
 import java.util.HashMap;
 import java.util.List;

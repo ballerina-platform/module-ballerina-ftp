@@ -3,6 +3,18 @@ org = "ballerina"
 name = "ftp"
 version = "@toml.version@"
 
+#[[platform.java11.dependency]]
+#path = "./lib/commons-vfs2-@commons.vfs2.version@.jar"
+#groupId = "org.apache.commons"
+#artifactId = "commons-vfs2"
+#version = "@commons.vfs2.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/commons-lang3-@commons.lang3.version@.jar"
+groupId = "org.apache.commons"
+artifactId = "commons-lang3"
+version = "@commons.lang3.version@"
+
 [[platform.java11.dependency]]
 path = "./lib/commons-vfs2-@commons.vfs2.version@.jar"
 groupId = "org.wso2.org.apache.commons"
@@ -83,11 +95,11 @@ artifactId = "jcl-over-slf4j"
 version = "@jcl.slf4j.version@"
 scope = "testOnly"
 
-[[platform.java11.dependency]]
-path = "./lib/org.wso2.transport.remote-file-system-@wso2.remote.file.system.version@.jar"
-groupId = "org.wso2.transport.file"
-artifactId = "org.wso2.transport.remote-file-system"
-version = "@wso2.remote.file.system.version@"
+#[[platform.java11.dependency]]
+#path = "./lib/org.wso2.transport.remote-file-system-6.0.57.jar"
+#groupId = "org.wso2.transport.file"
+#artifactId = "org.wso2.transport.remote-file-system"
+#version = "6.0.57"
 
 [[platform.java11.dependency]]
 path = "../ftp-native/build/libs/ftp-native-@project.version@.jar"

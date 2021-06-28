@@ -245,6 +245,7 @@ public class MockFtpServer {
                 (authUsername, authPassword, session) -> sftpAuthStatusHolder.isPublicKeyAuthenticated()
                         && finalUsername.equals(authUsername) && finalPassword.equals(authPassword));
         sftpServer.setShellFactory(new ProcessShellFactory("/bin/sh", "-i", "-l"));
+        // sftpServer.setShellFactory(new InteractiveProcessShellFactory());
         sftpServer.start();
 
         int i = 0;

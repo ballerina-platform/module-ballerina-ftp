@@ -66,6 +66,12 @@ configurations {
 }
 
 dependencies {
+//    externalJars(group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
+//        transitive = false
+//    }
+    externalJars(group: 'org.apache.commons', name: 'commons-lang3', version: "${commonsLang3Version}") {
+        transitive = false
+    }
     externalJars(group: 'org.wso2.org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
         transitive = false
     }
@@ -105,9 +111,9 @@ dependencies {
     externalJars(group: 'org.slf4j', name: 'slf4j-api', version: "${slf4jVersion}") {
         transitive = false
     }
-    externalJars(group: 'org.wso2.transport.file', name: 'org.wso2.transport.remote-file-system', version: "${fileTransportVersion}") {
-        transitive = false
-    }
+//    externalJars(group: 'org.wso2.transport.file', name: 'org.wso2.transport.remote-file-system', version: "${fileTransportVersion}") {
+//        transitive = false
+//    }
 }
 
 task updateTomlFiles {
@@ -117,6 +123,7 @@ task updateTomlFiles {
         def stdlibDependentIoVersion = stripBallerinaExtensionVersion(project.stdlibIoVersion)
 
         def stdlibDependentCommonsVfsVersion = project.commonsVfsVersion
+        def stdlibDependentCommonsLang3Version = project.commonsLang3Version
         def stdlibDependentJschVersion = project.jschVersion
         def stdlibDependentCommonsNetVersion = project.commonsNetVersion
         def stdlibDependentTestngVersion = project.testngVersion
@@ -128,11 +135,12 @@ task updateTomlFiles {
         def stdlibDependentMinaCoreVersion = project.minaCoreVersion
         def stdlibDependentAopallianceVersion = project.aopallianceVersion
         def stdlibDependentJclSlf4jVersion = project.jclSlf4jVersion
-        def stdlibDependentFileTransportVersion = project.fileTransportVersion
+//        def stdlibDependentFileTransportVersion = project.fileTransportVersion
 
         def newConfig = ballerinaConfigFile.text.replace("@project.version@", project.version)
         newConfig = newConfig.replace("@toml.version@", tomlVersion)
         newConfig = newConfig.replace("@commons.vfs2.version@", stdlibDependentCommonsVfsVersion)
+        newConfig = newConfig.replace("@commons.lang3.version@", stdlibDependentCommonsLang3Version)
         newConfig = newConfig.replace("@jsch.version@", stdlibDependentJschVersion)
         newConfig = newConfig.replace("@commons.net.version@", stdlibDependentCommonsNetVersion)
         newConfig = newConfig.replace("@testng.version@", stdlibDependentTestngVersion)
@@ -144,7 +152,7 @@ task updateTomlFiles {
         newConfig = newConfig.replace("@mina.core.version@", stdlibDependentMinaCoreVersion)
         newConfig = newConfig.replace("@aopalliance.version@", stdlibDependentAopallianceVersion)
         newConfig = newConfig.replace("@jcl.slf4j.version@", stdlibDependentJclSlf4jVersion)
-        newConfig = newConfig.replace("@wso2.remote.file.system.version@", stdlibDependentFileTransportVersion)
+//        newConfig = newConfig.replace("@wso2.remote.file.system.version@", stdlibDependentFileTransportVersion)
 
         ballerinaConfigFile.text = newConfig
 
