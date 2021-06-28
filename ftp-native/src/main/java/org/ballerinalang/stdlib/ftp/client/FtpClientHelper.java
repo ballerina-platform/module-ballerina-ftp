@@ -78,8 +78,7 @@ class FtpClientHelper {
         // private constructor
     }
 
-    static boolean executeGenericAction(Future balFuture) {
-        balFuture.complete(null);
+    static boolean executeGenericAction() {
         return true;
     }
 
