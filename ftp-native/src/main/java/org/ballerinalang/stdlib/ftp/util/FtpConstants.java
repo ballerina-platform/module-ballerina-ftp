@@ -60,7 +60,6 @@ public class FtpConstants {
     public static final String FTP_SERVER_EVENT = "WatchEvent";
     public static final String FTP_FILE_INFO = "FileInfo";
     public static final String FTP_SERVER_CONNECTOR = "serverConnector";
-    public static final String FTP_ERROR = "Error";
 
     public static final String ENDPOINT_CONFIG_PROTOCOL = "protocol";
     public static final String ENDPOINT_CONFIG_HOST = "host";

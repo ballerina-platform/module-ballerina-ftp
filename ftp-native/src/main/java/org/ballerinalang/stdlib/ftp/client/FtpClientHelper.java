@@ -72,16 +72,13 @@ import static org.ballerinalang.stdlib.ftp.util.FtpUtil.getFtpPackage;
  */
 class FtpClientHelper {
 
-    private static final String READABLE_BYTE_CHANNEL = "ReadableByteChannel";
     private static final Logger log = LoggerFactory.getLogger(FtpClientHelper.class);
 
     private FtpClientHelper() {
         // private constructor
     }
 
-    static boolean executeGenericAction(Future balFuture) {
-
-        balFuture.complete(null);
+    static boolean executeGenericAction() {
         return true;
     }
 
@@ -320,17 +317,10 @@ class FtpClientHelper {
     }
 
     static RemoteFileSystemMessage getUncompressedMessage(BObject clientConnector, String filePath,
-                                                          Map<String, String> propertyMap, InputStream stream)
-            throws BallerinaFtpException {
-
-        try {
-            String url = FtpUtil.createUrl(clientConnector, filePath);
-            propertyMap.put(FtpConstants.PROPERTY_URI, url);
-            return new RemoteFileSystemMessage(stream);
-        } catch (BallerinaFtpException e) {
-            log.error(e.getMessage());
-            throw e;
-        }
+            Map<String, String> propertyMap, InputStream stream) throws BallerinaFtpException {
+        String url = FtpUtil.createUrl(clientConnector, filePath);
+        propertyMap.put(FtpConstants.PROPERTY_URI, url);
+        return new RemoteFileSystemMessage(stream);
     }
 
     static RemoteFileSystemMessage getCompressedMessage(BObject clientConnector, String filePath,

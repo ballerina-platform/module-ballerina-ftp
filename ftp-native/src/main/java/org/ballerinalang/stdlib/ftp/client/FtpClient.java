@@ -46,8 +46,8 @@ import java.util.Map;
 
 import static org.ballerinalang.stdlib.ftp.util.FtpConstants.ARRAY_SIZE;
 import static org.ballerinalang.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
-import static org.ballerinalang.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static org.ballerinalang.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
+import static org.ballerinalang.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
 /**
  * Contains functionality of FTP client.
@@ -108,13 +108,13 @@ public class FtpClient {
         try {
             url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
         Future balFuture = env.markAsync();
-        FtpClientListener connectorListener = new FtpClientListener(balFuture,
+        FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGetAction(remoteFileSystemBaseMessage,
                         balFuture, clientConnector));
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
@@ -122,7 +122,7 @@ public class FtpClient {
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         connector.send(null, FtpAction.GET);
         return null;
@@ -151,7 +151,7 @@ public class FtpClient {
                 url = FtpUtil.createUrl(clientConnector, (inputContent.getStringValue(StringUtils.fromString(
                         FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue());
             } catch (BallerinaFtpException e) {
-                return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+                return FtpUtil.createError(e.getMessage(), Error.errorType());
             }
             Map<String, String> propertyMap = new HashMap<>(
                     (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
@@ -170,15 +170,14 @@ public class FtpClient {
                 message = new RemoteFileSystemMessage(stream);
             }
             Future balFuture = env.markAsync();
-            FtpClientListener connectorListener = new FtpClientListener(balFuture,
-                    remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction(balFuture));
+            FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
+                    remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
             VFSClientConnector connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap,
                     connectorListener);
             connector.send(message, FtpAction.APPEND);
-            balFuture.complete(null);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         return null;
     }
@@ -203,7 +202,7 @@ public class FtpClient {
                                 StringUtils.fromString(FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(),
                                 propertyMap, compressedStream);
                     } else {
-                        return FtpUtil.createError("Error while compressing a file", FTP_ERROR);
+                        return FtpUtil.createError("Error while compressing a file", Error.errorType());
                     }
                 } else {
                     try {
@@ -211,23 +210,22 @@ public class FtpClient {
                                 StringUtils.fromString(FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(),
                                 propertyMap, stream);
                     } catch (BallerinaFtpException e) {
-                        return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+                        return FtpUtil.createError(e.getMessage(), Error.errorType());
                     }
                 }
             } else {
-                return FtpUtil.createError("Error while reading a file", FTP_ERROR);
+                return FtpUtil.createError("Error while reading a file", Error.errorType());
             }
             Future balFuture = env.markAsync();
-            FtpClientListener connectorListener = new FtpClientListener(balFuture, remoteFileSystemBaseMessage ->
-                    FtpClientHelper.executeGenericAction(balFuture));
+            FtpClientListener connectorListener = new FtpClientListener(balFuture, true, remoteFileSystemBaseMessage ->
+                    FtpClientHelper.executeGenericAction());
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
 
             VFSClientConnector connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap,
                     connectorListener);
             connector.send(message, FtpAction.PUT);
-            balFuture.complete(null);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         } finally {
             try {
                 if (stream != null) {
@@ -248,23 +246,22 @@ public class FtpClient {
         try {
             url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
         Future balFuture = env.markAsync();
-        FtpClientListener connectorListener = new FtpClientListener(balFuture,
-                remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction(balFuture));
+        FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
+                remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         connector.send(null, FtpAction.DELETE);
-        balFuture.complete(null);
         return null;
     }
 
@@ -273,20 +270,20 @@ public class FtpClient {
         try {
             url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
         Future balFuture = env.markAsync();
-        FtpClientListener connectorListener = new FtpClientListener(balFuture, remoteFileSystemBaseMessage ->
+        FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeIsDirectoryAction(remoteFileSystemBaseMessage, balFuture));
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         connector.send(null, FtpAction.ISDIR);
         return false;
@@ -297,20 +294,20 @@ public class FtpClient {
         try {
             url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
         Future balFuture = env.markAsync();
-        FtpClientListener connectorListener = new FtpClientListener(balFuture, remoteFileSystemBaseMessage ->
+        FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeListAction(remoteFileSystemBaseMessage, balFuture));
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         connector.send(null, FtpAction.LIST);
         return null;
@@ -321,23 +318,22 @@ public class FtpClient {
         try {
             url = FtpUtil.createUrl(clientConnector, path.getValue());
         } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
         Future balFuture = env.markAsync();
-        FtpClientListener connectorListener = new FtpClientListener(balFuture,
-                remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction(balFuture));
+        FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
+                remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         connector.send(null, FtpAction.MKDIR);
-        balFuture.complete(null);
         return null;
     }
 
@@ -349,20 +345,19 @@ public class FtpClient {
             propertyMap.put(FtpConstants.PROPERTY_DESTINATION, FtpUtil.createUrl(clientConnector,
                     destination.getValue()));
         } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         Future balFuture = env.markAsync();
-        FtpClientListener connectorListener = new FtpClientListener(balFuture,
-                remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction(balFuture));
+        FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
+                remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         connector.send(null, FtpAction.RENAME);
-        balFuture.complete(null);
         return null;
     }
 
@@ -371,23 +366,22 @@ public class FtpClient {
         try {
             url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
         Future balFuture = env.markAsync();
-        FtpClientListener connectorListener = new FtpClientListener(balFuture,
-                remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction(balFuture));
+        FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
+                remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         connector.send(null, FtpAction.RMDIR);
-        balFuture.complete(null);
         return null;
     }
 
@@ -396,21 +390,21 @@ public class FtpClient {
         try {
             url = FtpUtil.createUrl(clientConnector, filePath.getValue());
         } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PROPERTY_URI, url);
         propertyMap.put(FtpConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
         Future balFuture = env.markAsync();
-        FtpClientListener connectorListener = new FtpClientListener(balFuture, remoteFileSystemBaseMessage ->
+        FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeSizeAction(remoteFileSystemBaseMessage, balFuture));
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         VFSClientConnector connector;
         try {
             connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         connector.send(null, FtpAction.SIZE);
         return 0;

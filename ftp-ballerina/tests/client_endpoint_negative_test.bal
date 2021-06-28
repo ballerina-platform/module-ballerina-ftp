@@ -61,7 +61,7 @@ public function testReadWithWrongUrl() returns error? {
 public function testAppendContentWithWrongUrl() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(appendFilePath, 7);
 
-    var receivedError =  wrongClientEp -> append(filePath, bStream);
+    Error? receivedError =  wrongClientEp->append(filePath, bStream);
     if (receivedError is Error) {
         log:printInfo("Received error: " + receivedError.message());
     } else {
@@ -75,7 +75,7 @@ public function testAppendContentWithWrongUrl() returns error? {
 public function testPutFileContentWithWrongUrl() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
-    var receivedError = wrongClientEp->put(newFilePath, bStream);
+    Error? receivedError = wrongClientEp->put(newFilePath, bStream);
 
     if (receivedError is Error) {
         log:printInfo("Received error: " + receivedError.message());
@@ -88,7 +88,7 @@ public function testPutFileContentWithWrongUrl() returns error? {
     dependsOn: [testIsDirectory]
 }
 public function testIsDirectoryWithWrongUrl() {
-    var receivedError = wrongClientEp->isDirectory("/home/in");
+    boolean|Error receivedError = wrongClientEp->isDirectory("/home/in");
     if (receivedError is Error) {
         log:printInfo("Received error: " + receivedError.message());
     } else {
@@ -100,7 +100,7 @@ public function testIsDirectoryWithWrongUrl() {
     dependsOn: [testIsDirectory]
 }
 public function testIsDirectoryWithNonExistingServer() {
-    var receivedError = nonExistingServerClientEp->isDirectory("/home/in");
+    boolean|Error receivedError = nonExistingServerClientEp->isDirectory("/home/in");
     if (receivedError is Error) {
         log:printInfo("Received error for non-existing server: " + receivedError.message());
     } else {
@@ -112,9 +112,21 @@ public function testIsDirectoryWithNonExistingServer() {
     dependsOn: [testCreateDirectory]
 }
 public function testCreateDirectoryWithWrongUrl() {
-    var response1 = wrongClientEp->mkdir("/home/in/out");
-    if(response1 is Error) {
-        log:printInfo("Received error: " + response1.message());
+    Error? response = wrongClientEp->mkdir("/home/in/out");
+    if (response is Error) {
+        log:printInfo("Received error: " + response.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response with a wrong URL");
+    }
+}
+
+@test:Config{
+    dependsOn: [testCreateDirectoryWithWrongUrl]
+}
+public function testCreateDirectoryWithNonExistingServer() {
+    Error? receivedError = nonExistingServerClientEp->mkdir("/home/in/out");
+    if (receivedError is Error) {
+        log:printInfo("Received error for non-existing server: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
     }
@@ -126,7 +138,7 @@ public function testCreateDirectoryWithWrongUrl() {
 public function testRenameDirectoryWithWrongUrl() {
     string existingName = "/home/in/out";
     string newName = "/home/in/test";
-    var receivedError = wrongClientEp->rename(existingName, newName);
+    Error? receivedError = wrongClientEp->rename(existingName, newName);
     if (receivedError is Error) {
         log:printInfo("Received error: " + receivedError.message());
     } else {
@@ -138,7 +150,7 @@ public function testRenameDirectoryWithWrongUrl() {
     dependsOn: [testGetFileSize]
 }
 public function testGetFileSizeWithWrongUrl() {
-    var receivedError = wrongClientEp->size(filePath);
+    int|Error receivedError = wrongClientEp->size(filePath);
     if (receivedError is Error) {
         log:printInfo("Received error: " + receivedError.message());
     } else {
@@ -150,7 +162,7 @@ public function testGetFileSizeWithWrongUrl() {
     dependsOn: [testGetFileSize]
 }
 public function testGetFileSizeWithNonExistingServer() {
-    var receivedError = nonExistingServerClientEp->size(filePath);
+    int|Error receivedError = nonExistingServerClientEp->size(filePath);
     if (receivedError is Error) {
         log:printInfo("Received error for non-existing server: " + receivedError.message());
     } else {
@@ -162,7 +174,7 @@ public function testGetFileSizeWithNonExistingServer() {
     dependsOn: [testListFiles]
 }
 public function testListFilesWithWrongUrl() {
-    var receivedError = wrongClientEp->list("/home/in");
+    FileInfo[]|Error receivedError = wrongClientEp->list("/home/in");
     if (receivedError is Error) {
         log:printInfo("Received error: " + receivedError.message());
     } else {
@@ -174,7 +186,7 @@ public function testListFilesWithWrongUrl() {
     dependsOn: [testListFiles]
 }
 public function testListFilesWithNonExistingServer() {
-    var receivedError = nonExistingServerClientEp->list("/home/in");
+    FileInfo[]|Error receivedError = nonExistingServerClientEp->list("/home/in");
     if (receivedError is Error) {
         log:printInfo("Received error for non-existing server: " + receivedError.message());
     } else {
@@ -186,7 +198,7 @@ public function testListFilesWithNonExistingServer() {
     dependsOn: [testDeleteFile]
 }
 public function testDeleteFileWithWrongUrl() returns error? {
-    var receivedError = wrongClientEp->delete(filePath);
+    Error? receivedError = wrongClientEp->delete(filePath);
     if (receivedError is Error) {
         log:printInfo("Received error: " + receivedError.message());
     } else {
@@ -198,7 +210,7 @@ public function testDeleteFileWithWrongUrl() returns error? {
     dependsOn: [testRemoveDirectory]
 }
 public function testRemoveDirectoryWithWrongUrl() {
-    var receivedError = wrongClientEp->rmdir("/home/in/test");
+    Error? receivedError = wrongClientEp->rmdir("/home/in/test");
     if (receivedError is Error) {
         log:printInfo("Received error: " + receivedError.message());
     } else {
