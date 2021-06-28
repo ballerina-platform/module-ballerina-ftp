@@ -95,12 +95,6 @@ artifactId = "jcl-over-slf4j"
 version = "@jcl.slf4j.version@"
 scope = "testOnly"
 
-#[[platform.java11.dependency]]
-#path = "./lib/org.wso2.transport.remote-file-system-6.0.57.jar"
-#groupId = "org.wso2.transport.file"
-#artifactId = "org.wso2.transport.remote-file-system"
-#version = "6.0.57"
-
 [[platform.java11.dependency]]
 path = "../ftp-native/build/libs/ftp-native-@project.version@.jar"
 groupId = "ballerina"
