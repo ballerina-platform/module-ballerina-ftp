@@ -26,7 +26,7 @@ public isolated client class Client {
     # Gets invoked during object initialization.
     #
     # + clientConfig - Configurations for FTP client
-    public isolated function init(ClientConfiguration clientConfig) {
+    public isolated function init(*ClientConfiguration clientConfig) {
         self.config = clientConfig.cloneReadOnly();
         Error? response = initEndpoint(self, self.config);
         if (response is Error) {

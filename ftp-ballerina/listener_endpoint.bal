@@ -29,7 +29,7 @@ public class Listener {
     # Gets invoked during object initialization.
     #
     # + listenerConfig - Configurations for FTP listener
-    public isolated function init(ListenerConfiguration listenerConfig) {
+    public isolated function init(*ListenerConfiguration listenerConfig) {
         self.config = listenerConfig;
     }
 
@@ -101,7 +101,7 @@ public class Listener {
 
     isolated function internalStart() returns error? {
         self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), self.config.pollingInterval);
-        log:printInfo("Listening to remote server at " + self.config.host + "...");
+        log:printInfo("Listening to remote server at " + self.config.host);
     }
 
     isolated function stop() returns error? {
@@ -181,8 +181,8 @@ public type ListenerConfiguration record {|
     string host = "127.0.0.1";
     int port = 21;
     AuthConfiguration auth?;
-    string path = "/home";
-    string fileNamePattern = "(.*).txt";
+    string path?;
+    string fileNamePattern?;
     decimal pollingInterval = 60;
     handle serverConnector?;
 |};
