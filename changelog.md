@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
  - [[#1345] Introduce byte stream related functionality to FTP module](https://github.com/ballerina-platform/ballerina-standard-library/issues/1345)
  - [[#1388] Add verification for tests](https://github.com/ballerina-platform/ballerina-standard-library/issues/1388)
-- [[#1586] Support include record parameters](https://github.com/ballerina-platform/ballerina-standard-library/issues/1586)
+ - [[#1586] Support include record parameters](https://github.com/ballerina-platform/ballerina-standard-library/issues/1586)
 
 ### Fixed
  - [[#1518] Remove thrown exceptions and make then return](https://github.com/ballerina-platform/ballerina-standard-library/issues/1518)
