@@ -88,6 +88,9 @@ public class FtpUtil {
             if (basicAuth != null) {
                 username = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
                         .getValue();
+                if (username.isBlank()) {
+                    throw new BallerinaFtpException("Username cannot be empty");
+                }
                 password = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
