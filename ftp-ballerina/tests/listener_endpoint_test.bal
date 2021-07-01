@@ -71,3 +71,57 @@ public function testAddedFileCount() {
         test:assertFail("Failed to receive WatchEvent for 5 minuetes.");
     }
 }
+
+listener Listener emptyPasswordServer = new({
+    protocol: FTP,
+    host: "127.0.0.1",
+    auth: {
+        basicAuth: {
+            username: "wso2",
+            password: ""
+        }
+    },
+    port: 21212,
+    path: "/home/in",
+    pollingInterval: 2,
+    fileNamePattern: "(.*).txt"
+});
+
+@test:Config {}
+public function testServerRegisterFailureEmptyPassword() {
+    error? result = emptyPasswordServer.attach(service object {
+          function onFileChange(WatchEvent event) {}
+    }, "remote-server");
+    if (result is error) {
+        test:assertEquals(result.message(), "Failed to initialize File server connector for Service: remote-server");
+    } else {
+        test:assertFail("Empty password set to basic auth. Test should fail");
+    }
+}
+
+listener Listener emptyUsernameServer = new({
+    protocol: FTP,
+    host: "127.0.0.1",
+    auth: {
+        basicAuth: {
+            username: "",
+            password: "wso2"
+        }
+    },
+    port: 21212,
+    path: "/home/in",
+    pollingInterval: 2,
+    fileNamePattern: "(.*).txt"
+});
+
+@test:Config {}
+public function testServerRegisterFailureEmptyUsername() {
+    error? result = emptyUsernameServer.attach(service object {
+          function onFileChange(WatchEvent event) {}
+    }, "remote-server");
+    if (result is error) {
+        test:assertEquals(result.message(), "Username cannot be empty");
+    } else {
+        test:assertFail("Empty username set to basic auth. Test should fail");
+    }
+}

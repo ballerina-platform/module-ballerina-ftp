@@ -47,7 +47,7 @@ public class FtpListenerHelper {
     }
 
     public static Object register(BObject ftpListener, BMap<Object, Object> serviceEndpointConfig, BObject service,
-            String name) throws BallerinaFtpException {
+            String name) {
         try {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
@@ -61,7 +61,7 @@ public class FtpListenerHelper {
             // This is a temporary solution
             serviceEndpointConfig.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             return serverConnector;
-        } catch (RemoteFileSystemConnectorException e) {
+        } catch (RemoteFileSystemConnectorException | BallerinaFtpException e) {
             Throwable rootCause = findRootCause(e);
             String detail = (rootCause != null) ? rootCause.getMessage() : null;
             return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
