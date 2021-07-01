@@ -33,6 +33,9 @@ import org.wso2.transport.remotefilesystem.server.connector.contract.RemoteFileS
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+
+import static org.ballerinalang.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
 /**
  * Helper class for listener functions.
@@ -43,11 +46,8 @@ public class FtpListenerHelper {
         // private constructor
     }
 
-    public static RemoteFileSystemServerConnector register(BObject ftpListener,
-                                                           BMap<Object, Object> serviceEndpointConfig, BObject service,
-                                                           String name)
-            throws BallerinaFtpException {
-
+    public static Object register(BObject ftpListener, BMap<Object, Object> serviceEndpointConfig, BObject service,
+            String name) {
         try {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
@@ -61,9 +61,20 @@ public class FtpListenerHelper {
             // This is a temporary solution
             serviceEndpointConfig.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             return serverConnector;
-        } catch (RemoteFileSystemConnectorException e) {
-            throw new BallerinaFtpException("Unable to initialize the FTP listener: " + e.getMessage(), e);
+        } catch (RemoteFileSystemConnectorException | BallerinaFtpException e) {
+            Throwable rootCause = findRootCause(e);
+            String detail = (rootCause != null) ? rootCause.getMessage() : null;
+            return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
         }
+    }
+
+    private static Throwable findRootCause(Throwable throwable) {
+        Objects.requireNonNull(throwable);
+        Throwable rootCause = throwable;
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+            rootCause = rootCause.getCause();
+        }
+        return rootCause;
     }
 
     private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
