@@ -197,6 +197,10 @@ ftp:ClientConfiguration sftpConfig = {
 listener ftp:Listener remoteServer = new({
     protocol: ftp:SFTP,
     host: "<The SFTP host>",
+    port: <The SFTP port>,
+    path: "<The remote SFTP direcotry location>",
+    pollingInterval: <Polling interval>,
+    fileNamePattern: "<File name pattern>",
     auth: {
         basicAuth: {username: "<The SFTP username>", password: "<The SFTP password>"},
         privateKey: {
@@ -204,9 +208,5 @@ listener ftp:Listener remoteServer = new({
             password: "<The private key file password>"
         }
     }
-    port: <The SFTP port>,
-    path: "<The remote SFTP direcotry location>",
-    pollingInterval: <Polling interval>,
-    fileNamePattern: "<File name pattern>"
 });
 ```
