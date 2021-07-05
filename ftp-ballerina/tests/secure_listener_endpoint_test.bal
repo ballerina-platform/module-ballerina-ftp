@@ -63,7 +63,7 @@ public function testSecureAddedFileCount() {
     // Test fails in 5 minutes if failed to receive watchEvent
     while (timeoutInSeconds > 0) {
         if (secureWatchEventReceived) {
-            log:printInfo("Secure added file count: " + secureAddedFileCount.toString());
+            log:printInfo("Securely added file count: " + secureAddedFileCount.toString());
             test:assertEquals(secureAddedFileCount, 2);
             break;
         } else {

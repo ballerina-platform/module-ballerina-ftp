@@ -12,7 +12,7 @@ An FTP client is defined using the `protocol` and `host` parameters and optional
 `auth`. Authentication configuration can be configured using the `auth` parameter for Basic Auth and
 private key.
 
-Authentication related configuration can be given to the FTP client with `auth` configuration.
+An authentication-related configuration can be given to the FTP client with the `auth` configuration.
 
 ##### Creating a Client
 
@@ -130,7 +130,7 @@ The default polling interval is 60 seconds.
 The `fileNamePattern` parameter can be used to define the type of files the FTP listener will listen to.
 For instance, if the listener gets invoked for text files, the value `(.*).txt` can be given for the config.
 
-Authentication related configuration can be given to the FTP listener with `auth` configuration.
+An authentication-related configuration can be given to the FTP listener with the `auth` configuration.
 
 ##### Creating a Listener
 
@@ -168,11 +168,11 @@ service ftpServerConnector on remoteServer {
 
 ### Secure access with SFTP
 
-SFTP is a secure protocol alternative to the FTP which runs on top of SSH protocol.
+SFTP is a secure protocol alternative to the FTP, which runs on top of the SSH protocol.
 There are several ways to authenticate an SFTP server. One is using the username and the password.
-Another way is using the client's private key. Ballerina SFTP client and the listener supports only those authentication standards.
-Authentication related configuration can be given to the SFTP client/listener with `auth` configuration.
-Password based authentication is defined with `credentials` configuration while the private key based authentication is defined with `privateKey` configuration.
+Another way is using the client's private key. The Ballerina SFTP client and the listener support only those authentication standards.
+An authentication-related configuration can be given to the SFTP client/listener with the `auth` configuration.
+Password-based authentication is defined with the `credentials` configuration while the private key based authentication is defined with the `privateKey` configuration.
 
 #### SFTP Client Configuration
 
