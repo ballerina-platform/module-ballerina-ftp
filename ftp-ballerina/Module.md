@@ -24,7 +24,7 @@ ftp:ClientConfiguration ftpConfig = {
     host: "<The FTP host>",
     port: <The FTP port>,
     auth: {
-        basicAuth: {
+        credentials: {
             username: "<The FTP username>",
             password: "<The FTP passowrd>"
         }
@@ -142,7 +142,7 @@ listener ftp:Listener remoteServer = new({
     protocol: ftp:FTP,
     host: "<The FTP host>",
     auth: {
-        basicAuth: {
+        credentials: {
             username: "<The FTP username>",
             password: "<The FTP passowrd>"
         }
@@ -172,7 +172,7 @@ SFTP is a secure protocol alternative to the FTP, which runs on top of the SSH p
 There are several ways to authenticate an SFTP server. One is using the username and the password.
 Another way is using the client's private key. The Ballerina SFTP client and the listener support only those authentication standards.
 An authentication-related configuration can be given to the SFTP client/listener with the `auth` configuration.
-Password-based authentication is defined with the `basicAuth` configuration while the private key based authentication is defined with the `privateKey` configuration.
+Password-based authentication is defined with the `credentials` configuration while the private key based authentication is defined with the `privateKey` configuration.
 
 #### SFTP Client Configuration
 
@@ -182,7 +182,7 @@ ftp:ClientConfiguration sftpConfig = {
     host: "<The SFTP host>",
     port: <The SFTP port>,
     auth: {
-        basicAuth: {username: "<The SFTP username>", password: "<The SFTP password>"},
+        credentials: {username: "<The SFTP username>", password: "<The SFTP password>"},
         privateKey: {
             path: "<The private key file path>",
             password: "<The private key file password>"
@@ -202,7 +202,7 @@ listener ftp:Listener remoteServer = new({
     pollingInterval: <Polling interval>,
     fileNamePattern: "<File name pattern>",
     auth: {
-        basicAuth: {username: "<The SFTP username>", password: "<The SFTP password>"},
+        credentials: {username: "<The SFTP username>", password: "<The SFTP password>"},
         privateKey: {
             path: "<The private key file path>",
             password: "<The private key file password>"

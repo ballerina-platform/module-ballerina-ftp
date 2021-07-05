@@ -83,15 +83,15 @@ public class FtpUtil {
         String username = null;
         String password = null;
         if (auth != null) {
-            final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_BASIC_AUTH));
-            if (basicAuth != null) {
-                username = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
+            final BMap credentials = auth.getMapValue(StringUtils.fromString(
+                    FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
+            if (credentials != null) {
+                username = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
                         .getValue();
                 if (username.isBlank()) {
                     throw new BallerinaFtpException("Username cannot be empty");
                 }
-                password = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
+                password = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
         }
@@ -119,12 +119,12 @@ public class FtpUtil {
         String username = null;
         String password = null;
         if (auth != null) {
-            final BMap basicAuth = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_BASIC_AUTH));
-            if (basicAuth != null) {
-                username = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
+            final BMap credentials = auth.getMapValue(StringUtils.fromString(
+                    FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
+            if (credentials != null) {
+                username = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
                         .getValue();
-                password = (basicAuth.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
+                password = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
         }

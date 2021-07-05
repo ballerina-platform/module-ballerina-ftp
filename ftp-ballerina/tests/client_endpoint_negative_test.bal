@@ -23,7 +23,7 @@ ClientConfiguration wrongConfig = {
         protocol: FTP,
         host: "#!@$%^&*(_+",
         port: 21212,
-        auth: {basicAuth: {username: "wso2", password: "wso2123"}}
+        auth: {credentials: {username: "wso2", password: "wso2123"}}
 };
 
 Client wrongClientEp = new(wrongConfig);
@@ -33,7 +33,7 @@ ClientConfiguration nonExistingServerConfig = {
         protocol: FTP,
         host: "127.0.0.1",
         port: 21218,
-        auth: {basicAuth: {username: "wso2", password: "wso2123"}}
+        auth: {credentials: {username: "wso2", password: "wso2123"}}
 };
 
 Client nonExistingServerClientEp = new(nonExistingServerConfig);
