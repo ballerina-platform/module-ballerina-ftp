@@ -1,6 +1,6 @@
 ## Overview
 
-This module provides an FTP client and an FTP server listener implementation to facilitate an FTP connection connected to a remote location.
+This module provides an FTP/SFTP client and an FTP/SFTP server listener implementation to facilitate an FTP/SFTP connection connected to a remote location.
 
 ### FTP Client
 
@@ -11,6 +11,8 @@ generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isD
 An FTP client is defined using the `protocol` and `host` parameters and optionally, the `port` and
 `auth`. Authentication configuration can be configured using the `auth` parameter for Basic Auth and
 private key.
+
+An authentication-related configuration can be given to the FTP client with the `auth` configuration.
 
 ##### Creating a Client
 
@@ -128,6 +130,8 @@ The default polling interval is 60 seconds.
 The `fileNamePattern` parameter can be used to define the type of files the FTP listener will listen to.
 For instance, if the listener gets invoked for text files, the value `(.*).txt` can be given for the config.
 
+An authentication-related configuration can be given to the FTP listener with the `auth` configuration.
+
 ##### Creating a Listener
 
 The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and
@@ -146,7 +150,7 @@ listener ftp:Listener remoteServer = new({
     port: <The FTP port>,
     path: "<The remote FTP direcotry location>",
     pollingInterval: <Polling interval>,
-    fileNamePattern: "<File type>"
+    fileNamePattern: "<File name pattern>"
 });
 
 service ftpServerConnector on remoteServer {
@@ -160,4 +164,49 @@ service ftpServerConnector on remoteServer {
         }
     }
 }
+```
+
+### Secure access with SFTP
+
+SFTP is a secure protocol alternative to the FTP, which runs on top of the SSH protocol.
+There are several ways to authenticate an SFTP server. One is using the username and the password.
+Another way is using the client's private key. The Ballerina SFTP client and the listener support only those authentication standards.
+An authentication-related configuration can be given to the SFTP client/listener with the `auth` configuration.
+Password-based authentication is defined with the `basicAuth` configuration while the private key based authentication is defined with the `privateKey` configuration.
+
+#### SFTP Client Configuration
+
+```ballerina
+ftp:ClientConfiguration sftpConfig = {
+    protocol: ftp:SFTP,
+    host: "<The SFTP host>",
+    port: <The SFTP port>,
+    auth: {
+        basicAuth: {username: "<The SFTP username>", password: "<The SFTP password>"},
+        privateKey: {
+            path: "<The private key file path>",
+            password: "<The private key file password>"
+        }
+    }
+};
+```
+
+#### SFTP Listener Configuration
+
+```ballerina
+listener ftp:Listener remoteServer = new({
+    protocol: ftp:SFTP,
+    host: "<The SFTP host>",
+    port: <The SFTP port>,
+    path: "<The remote SFTP direcotry location>",
+    pollingInterval: <Polling interval>,
+    fileNamePattern: "<File name pattern>",
+    auth: {
+        basicAuth: {username: "<The SFTP username>", password: "<The SFTP password>"},
+        privateKey: {
+            path: "<The private key file path>",
+            password: "<The private key file password>"
+        }
+    }
+});
 ```
