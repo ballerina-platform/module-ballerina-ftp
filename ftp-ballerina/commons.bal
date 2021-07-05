@@ -38,7 +38,7 @@ public type PrivateKey record {|
 #
 # + username - Username of the user
 # + password - Password of the user
-public type BasicAuth record {|
+public type Credentials record {|
     string username;
     string password;
 |};
@@ -46,10 +46,10 @@ public type BasicAuth record {|
 # Configurations for facilitating secure communication with a remote
 # FTP server.
 #
-# + basicAuth - Username and password to be used
+# + credentials - Username and password to be used
 # + privateKey - Private key to be used
 public type AuthConfiguration record {|
-    BasicAuth basicAuth?;
+    Credentials credentials?;
     PrivateKey privateKey?;
 |};
 

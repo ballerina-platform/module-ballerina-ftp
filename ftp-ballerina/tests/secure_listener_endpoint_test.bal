@@ -26,7 +26,7 @@ listener Listener secureRemoteServer = new({
     protocol: SFTP,
     host: "127.0.0.1",
     auth: {
-        basicAuth: {
+        credentials: {
             username: "wso2",
             password: "wso2123"
         },

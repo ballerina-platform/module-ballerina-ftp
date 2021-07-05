@@ -58,7 +58,7 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
         host: "127.0.0.1",
         port: 21213,
         auth: {
-            basicAuth: {username: "wso2", password: "wrongPassword"},
+            credentials: {username: "wso2", password: "wrongPassword"},
             privateKey: {
                 path: "tests/resources/sftp.private.key",
                 password: "changeit"
@@ -104,7 +104,7 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
         host: "127.0.0.1",
         port: 21213,
         auth: {
-            basicAuth: {username: "wso2", password: "wso2123"},
+            credentials: {username: "wso2", password: "wso2123"},
             privateKey: {
                 path: "tests/resources/sftp.wrong.private.key",
                 password: "changeit"

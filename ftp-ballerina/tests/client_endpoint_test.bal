@@ -31,7 +31,7 @@ ClientConfiguration config = {
         protocol: FTP,
         host: "127.0.0.1",
         port: 21212,
-        auth: {basicAuth: {username: "wso2", password: "wso2123"}}
+        auth: {credentials: {username: "wso2", password: "wso2123"}}
 };
 
 Client clientEp = new(config);
@@ -42,7 +42,7 @@ ClientConfiguration sftpConfig = {
     host: "127.0.0.1",
     port: 21213,
     auth: {
-        basicAuth: {username: "wso2", password: "wso2123"},
+        credentials: {username: "wso2", password: "wso2123"},
         privateKey: {
             path: "tests/resources/sftp.private.key",
             password: "changeit"

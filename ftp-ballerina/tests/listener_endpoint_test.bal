@@ -26,7 +26,7 @@ listener Listener remoteServer = new({
     protocol: FTP,
     host: "127.0.0.1",
     auth: {
-        basicAuth: {
+        credentials: {
             username: "wso2",
             password: "wso2123"
         }
@@ -76,7 +76,7 @@ listener Listener emptyPasswordServer = new({
     protocol: FTP,
     host: "127.0.0.1",
     auth: {
-        basicAuth: {
+        credentials: {
             username: "wso2",
             password: ""
         }
@@ -103,7 +103,7 @@ listener Listener emptyUsernameServer = new({
     protocol: FTP,
     host: "127.0.0.1",
     auth: {
-        basicAuth: {
+        credentials: {
             username: "",
             password: "wso2"
         }
