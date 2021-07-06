@@ -112,7 +112,7 @@ public class MockFtpServer {
                 throw new BallerinaFtpException("Error in starting anonymous mock FTP server");
             }
         }
-        logger.info("Started AnonymousMock FTP server");
+        logger.info("Started Anonymous Mock FTP server");
     }
 
     public static void initFtpServer(BMap<Object, Object> config) throws BallerinaFtpException {

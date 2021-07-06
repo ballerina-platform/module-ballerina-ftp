@@ -28,9 +28,9 @@ string putFilePath = "tests/resources/datafiles/file2.txt";
 
 // Create the config to access anonymous mock FTP server
 ClientConfiguration anonConfig = {
-        protocol: FTP,
-        host: "127.0.0.1",
-        port: 21210
+    protocol: FTP,
+    host: "127.0.0.1",
+    port: 21210
 };
 
 Client anonClientEp = new(anonConfig);
