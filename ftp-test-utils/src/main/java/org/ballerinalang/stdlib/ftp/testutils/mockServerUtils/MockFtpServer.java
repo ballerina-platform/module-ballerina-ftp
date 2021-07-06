@@ -78,12 +78,44 @@ public class MockFtpServer {
     }
 
     private static final Logger logger = LoggerFactory.getLogger("ballerina");
+    private static FakeFtpServer anonFtpServer;
     private static FakeFtpServer ftpServer;
     private static SshServer sftpServer;
     private static FtpServer ftpsServer;
     private static SftpAuthStatusHolder sftpAuthStatusHolder = new SftpAuthStatusHolder();
 
-    public static void initFtpServer(BMap<Object, Object> config) throws BallerinaFtpException, InterruptedException {
+    public static void initAnonymousFtpServer(BMap<Object, Object> config) throws BallerinaFtpException {
+        int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PORT)));
+        anonFtpServer = new FakeFtpServer();
+        anonFtpServer.setServerControlPort(port);
+        String rootFolder = "/home/in";
+        String content = "File content";
+
+        UserAccount anonymousUserAccount = new UserAccount("anonymous", "abc", rootFolder);
+        anonymousUserAccount.setPasswordCheckedDuringValidation(false);
+        anonFtpServer.addUserAccount(anonymousUserAccount);
+        FileSystem fileSystem = new UnixFakeFileSystem();
+        fileSystem.add(new DirectoryEntry(rootFolder));
+        fileSystem.add(new FileEntry("/home/in/test1.txt", content));
+        anonFtpServer.setFileSystem(fileSystem);
+        anonFtpServer.start();
+        logger.info("Starting Anonymous FTP server...");
+
+        int i = 0;
+        while (!anonFtpServer.isStarted() && i < 10) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(500);
+                i++;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new BallerinaFtpException("Error in starting anonymous mock FTP server");
+            }
+        }
+        logger.info("Started Anonymous Mock FTP server");
+    }
+
+    public static void initFtpServer(BMap<Object, Object> config) throws BallerinaFtpException {
         int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
@@ -286,6 +318,13 @@ public class MockFtpServer {
             }
         };
 
+    }
+
+    public static void stopAnonymousFtpServer() {
+        if (anonFtpServer.isStarted()) {
+            anonFtpServer.stop();
+        }
+        logger.info("Stopped Anonymous Mock FTP server");
     }
 
     public static void stopFtpServer() {
