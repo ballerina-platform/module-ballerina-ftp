@@ -127,6 +127,9 @@ public class FtpUtil {
                 password = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
+        } else {
+            username = "anonymous";
+            password = "";
         }
         Map<String, String> authMap = new HashMap<>();
         authMap.put(FtpConstants.ENDPOINT_CONFIG_USERNAME, username);

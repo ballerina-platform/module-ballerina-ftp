@@ -26,6 +26,15 @@ string newFilePath = "/home/in/test2.txt";
 string appendFilePath = "tests/resources/datafiles/file1.txt";
 string putFilePath = "tests/resources/datafiles/file2.txt";
 
+// Create the config to access anonymous mock FTP server
+ClientConfiguration anonConfig = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21210
+};
+
+Client anonClientEp = new(anonConfig);
+
 // Create the config to access mock FTP server
 ClientConfiguration config = {
         protocol: FTP,
@@ -56,13 +65,47 @@ Client sftpClientEp = new(sftpConfig);
 boolean startedServers = initServers();
 
 function initServers() returns boolean {
+    Error? response0 = initAnonymousFtpServer(anonConfig);
     Error? response1 = initFtpServer(config);
     Error? response2 = initSftpServer(sftpConfig);
-    return !(response1 is Error || response2 is Error);
+    return !(response0 is Error || response1 is Error || response2 is Error);
+}
+
+@test:Config{}
+public function testReadFromAnonServer() returns error? {
+    test:assertTrue(startedServers, msg = "Test servers are not properly started.");
+    stream<byte[] & readonly, io:Error?>|Error str = anonClientEp->get(filePath, 6);
+    if (str is stream<byte[] & readonly, io:Error?>) {
+        record {|byte[] value;|}|io:Error? arr1 = str.next();
+        if (arr1 is record {|byte[] value;|}) {
+            string fileContent = check strings:fromBytes(arr1.value);
+            test:assertEquals(fileContent, "File c", msg = "Found unexpected content from `get` operation");
+            record {|byte[] value;|}|io:Error? arr2 = str.next();
+            if (arr2 is record {|byte[] value;|}) {
+                string fileContent2 = check strings:fromBytes(arr2.value);
+                test:assertEquals(fileContent2, "ontent",
+                    msg = "Found unexpected content from `next` method of `get` operation");
+                record {|byte[] value;|}|io:Error? arr3 = str.next();
+                log:printInfo("Executed first `get` operation");
+                log:printInfo("Later content in file: " + fileContent + fileContent2);
+                test:assertTrue(arr3 is (), msg = "Found unexpected content from 2nd `next` method of `get` operation");
+            } else {
+                test:assertFail(msg = "Found unexpected arr2 output type");
+            }
+        } else {
+            test:assertFail(msg = "Found unexpected arr1 output type");
+        }
+        io:Error? closeResult = str.close();
+        if (closeResult is io:Error) {
+            test:assertFail(msg = "Error while closing stream in `get` operation.");
+        }
+    } else {
+       test:assertFail(msg = "Found unexpected response type" + str.message());
+    }
 }
 
 @test:Config{
-    dependsOn: [testAddedFileCount, testSecureAddedFileCount]
+    dependsOn: [testReadFromAnonServer, testAddedFileCount, testSecureAddedFileCount]
 }
 public function testReadBlockFittingContent() returns error? {
     test:assertTrue(startedServers, msg = "Test servers are not properly started.");
@@ -542,9 +585,15 @@ public function testRemoveDirectory() {
 
 @test:AfterSuite{}
 public function stopServer() returns error? {
+    error? response0 = stopAnonymousFtpServer();
     error? response1 = stopFtpServer();
     error? response2 = stopSftpServer();
 }
+
+function initAnonymousFtpServer(map<anydata> config) returns Error? = @java:Method{
+    name: "initAnonymousFtpServer",
+    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
+} external;
 
 function initFtpServer(map<anydata> config) returns Error? = @java:Method{
     name: "initFtpServer",
@@ -558,6 +607,11 @@ function initSftpServer(map<anydata> config) returns Error? = @java:Method{
 
 function stopFtpServer() returns () = @java:Method{
     name: "stopFtpServer",
+    'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
+} external;
+
+function stopAnonymousFtpServer() returns () = @java:Method{
+    name: "stopAnonymousFtpServer",
     'class: "org.ballerinalang.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;
 
