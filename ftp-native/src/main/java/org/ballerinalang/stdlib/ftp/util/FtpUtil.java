@@ -116,8 +116,8 @@ public class FtpUtil {
 
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
-        String username = null;
-        String password = null;
+        String username = "anonymous";
+        String password = "";
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
@@ -127,9 +127,6 @@ public class FtpUtil {
                 password = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
                         .getValue();
             }
-        } else {
-            username = "anonymous";
-            password = "";
         }
         Map<String, String> authMap = new HashMap<>();
         authMap.put(FtpConstants.ENDPOINT_CONFIG_USERNAME, username);
