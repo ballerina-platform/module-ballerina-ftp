@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
  - [[#1438] Add SFTP and related security](https://github.com/ballerina-platform/ballerina-standard-library/issues/1438)
+ - [[#1607] Add the support for anonymous user](https://github.com/ballerina-platform/ballerina-standard-library/issues/1607)
 
 ### Changed
  - [[#1345] Introduce byte stream related functionality to FTP module](https://github.com/ballerina-platform/ballerina-standard-library/issues/1345)
