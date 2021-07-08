@@ -26,14 +26,14 @@ dependencies {
     checkstyle project(':build-config:checkstyle')
     checkstyle "com.puppycrawl.tools:checkstyle:${puppycrawlCheckstyleVersion}"
 
-    compile group: 'org.ballerinalang', name: 'ballerina-lang', version: "${ballerinaLangVersion}"
-    compile group: 'org.ballerinalang', name: 'ballerina-runtime', version: "${ballerinaLangVersion}"
-    compile group: 'org.ballerinalang', name: 'ballerina-tools-api', version: "${ballerinaLangVersion}"
-    compile group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}"
-    compile group: 'org.ballerinalang', name: 'ballerina-core', version: "${ballerinaLangVersion}"
-    compile group: 'org.ballerinalang', name: 'io-native', version: "${stdlibIoVersion}"
-    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "${slf4jVersion}"
-    compile group: 'org.wso2.transport.file', name: 'org.wso2.transport.remote-file-system', version: "${fileTransportVersion}"
+    implementation group: 'org.ballerinalang', name: 'ballerina-lang', version: "${ballerinaLangVersion}"
+    implementation group: 'org.ballerinalang', name: 'ballerina-runtime', version: "${ballerinaLangVersion}"
+    implementation group: 'org.ballerinalang', name: 'ballerina-tools-api', version: "${ballerinaLangVersion}"
+    implementation group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}"
+    implementation group: 'org.ballerinalang', name: 'ballerina-core', version: "${ballerinaLangVersion}"
+    implementation group: 'org.ballerinalang', name: 'io-native', version: "${stdlibIoVersion}"
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "${slf4jVersion}"
+    implementation group: 'org.wso2.transport.file', name: 'org.wso2.transport.remote-file-system', version: "${fileTransportVersion}"
 }
 
 checkstyle {

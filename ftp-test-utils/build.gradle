@@ -22,16 +22,18 @@ plugins {
 description = 'Ballerina - FTP Java Test Utils'
 
 dependencies {
-    compile group: 'org.ballerinalang', name: 'ballerina-runtime', version: "${ballerinaLangVersion}"
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: "${bouncycastleVersion}"
-    compile group: 'org.apache.sshd', name: 'sshd-core', version: "${sshdCoreVersion}"
-    compile group: 'org.apache.ftpserver', name: 'ftpserver-core', version: "${sshdMinaVersion}"
-    compile group: 'org.testng', name: 'testng', version: "${testngVersion}"
-    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "${slf4jVersion}"
-    compile group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}"
-    compile group: 'org.wso2.org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}"
-    compile group: 'com.jcraft', name: 'jsch', version: "${jcraftVersion}"
-    compile project(":ftp-native")
+    implementation group: 'org.ballerinalang', name: 'ballerina-runtime', version: "${ballerinaLangVersion}"
+    implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: "${bouncycastleVersion}"
+    implementation group: 'org.apache.sshd', name: 'sshd-core', version: "${sshdCoreVersion}"
+    implementation group: 'org.apache.ftpserver', name: 'ftpserver-core', version: "${sshdMinaVersion}"
+    implementation group: 'org.testng', name: 'testng', version: "${testngVersion}"
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "${slf4jVersion}"
+    implementation group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}"
+    implementation group: 'org.wso2.org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}"
+    implementation group: 'com.jcraft', name: 'jsch', version: "${jcraftVersion}"
+    implementation group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}"
+    implementation group: 'org.wso2.transport.file', name: 'org.wso2.transport.remote-file-system', version: "${fileTransportVersion}"
+    implementation project(":ftp-native")
 }
 
 compileJava {
