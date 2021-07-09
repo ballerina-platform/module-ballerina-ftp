@@ -3,4 +3,4 @@ coverage:
   round: down
   range: "60...80"
 ignore:
-  - "ftp-test-utils/"
+  - "test-utils/"

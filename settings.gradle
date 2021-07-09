@@ -12,8 +12,16 @@ plugins {
 }
 
 rootProject.name = 'ftp'
-include(':build-config:checkstyle')
-include ':ftp-native', ':ftp-test-utils', ':ftp-ballerina'
+
+include ':checkstyle'
+include ':ftp-native'
+include ':ftp-test-utils'
+include ':ftp-ballerina'
+
+project(':checkstyle').projectDir = file("build-config${File.separator}checkstyle")
+project(':ftp-native').projectDir = file('native')
+project(':ftp-test-utils').projectDir = file('test-utils')
+project(':ftp-ballerina').projectDir = file('ballerina')
 
 gradleEnterprise {
     buildScan {

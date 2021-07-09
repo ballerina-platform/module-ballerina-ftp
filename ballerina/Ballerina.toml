@@ -1,0 +1,58 @@
+[package]
+org = "ballerina"
+name = "ftp"
+version = "@toml.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/commons-vfs2-@commons.vfs2.version@.jar"
+
+[[platform.java11.dependency]]
+path = "./lib/jsch-@jsch.version@.jar"
+
+[[platform.java11.dependency]]
+path = "./lib/commons-net-@commons.net.version@.jar"
+
+[[platform.java11.dependency]]
+path = "./lib/testng-@testng.version@.jar"
+
+[[platform.java11.dependency]]
+path = "./lib/MockFtpServer-@mockftpserver.version@.jar"
+scope = "testOnly"
+
+[[platform.java11.dependency]]
+path = "./lib/bcprov-jdk15on-@bouncycastle.version@.jar"
+scope = "testOnly"
+
+[[platform.java11.dependency]]
+path = "./lib/sshd-core-@sshd.core.version@.jar"
+scope = "testOnly"
+
+[[platform.java11.dependency]]
+path = "./lib/ftpserver-core-@ftpserver.core.version@.jar"
+scope = "testOnly"
+
+[[platform.java11.dependency]]
+path = "./lib/ftplet-api-@ftplet.api.version@.jar"
+scope = "testOnly"
+
+[[platform.java11.dependency]]
+path = "./lib/mina-core-@mina.core.version@.jar"
+scope = "testOnly"
+
+[[platform.java11.dependency]]
+path = "./lib/aopalliance-@aopalliance.version@.jar"
+scope = "testOnly"
+
+[[platform.java11.dependency]]
+path = "./lib/jcl-over-slf4j-@jcl.slf4j.version@.jar"
+scope = "testOnly"
+
+[[platform.java11.dependency]]
+path = "./lib/org.wso2.transport.remote-file-system-@wso2.remote.file.system.version@.jar"
+
+[[platform.java11.dependency]]
+path = "../native/build/libs/ftp-native-@project.version@.jar"
+
+[[platform.java11.dependency]]
+path = "../test-utils/build/libs/ftp-test-utils-@project.version@.jar"
+scope = "testOnly"
