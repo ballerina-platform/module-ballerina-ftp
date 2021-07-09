@@ -47,7 +47,7 @@ tasks.withType(Checkstyle) {
     exclude excludePattern
 }
 
-checkstyleMain.dependsOn(":checkstyle:downloadMultipleFiles")
+checkstyleMain.dependsOn(":checkstyle:downloadCheckstyleRuleFiles")
 
 compileJava {
     doFirst {
