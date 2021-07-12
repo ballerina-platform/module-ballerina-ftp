@@ -18,7 +18,6 @@
 
 package io.ballerina.stdlib.ftp.transport;
 
-//import io.ballerina.stdlib.ftp.transport.client.connector.contract.VFSClientConnector;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VFSClientConnector;
 import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
