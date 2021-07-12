@@ -47,7 +47,7 @@ ext.jclSlf4jVersion = project.jclSlf4jVersion
 ext.fileTransportVersion = project.fileTransportVersion
 
 allprojects {
-    group = 'org.ballerinalang'
+    group = project.group
     version = project.version
 
     apply plugin: 'jacoco'
