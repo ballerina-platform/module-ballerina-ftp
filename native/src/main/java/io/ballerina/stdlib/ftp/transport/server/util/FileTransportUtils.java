@@ -79,51 +79,6 @@ public class FileTransportUtils {
         }
     }
 
-//    private static void setSftpOptions(Map<String, String> options, FileSystemOptions opts)
-//            throws RemoteFileSystemConnectorException {
-//        final SftpFileSystemConfigBuilder configBuilder = SftpFileSystemConfigBuilder.getInstance();
-//        if (options.get(Constants.USER_DIR_IS_ROOT) != null) {
-//            configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(Constants.USER_DIR_IS_ROOT));
-//        }
-//        if (options.get(Constants.IDENTITY) != null) {
-////            IdentityInfo identityInfo;
-////            if (options.get(Constants.IDENTITY_PASS_PHRASE) != null) {
-////                identityInfo = new IdentityInfo(new File(options.get(Constants.IDENTITY),
-////                        options.get(Constants.IDENTITY_PASS_PHRASE)));
-////            } else {
-////                identityInfo = new IdentityInfo(new File(options.get(Constants.IDENTITY)));
-////            }
-//
-//
-//            try {
-//                // configBuilder.setIdentityInfo(opts, identityInfo);
-//                IdentityInfo identityInfo = new IdentityInfo(new File(options.get(Constants.IDENTITY)),
-//                        options.get(Constants.IDENTITY_PASS_PHRASE).getBytes());
-//                configBuilder.setIdentityInfo(opts, identityInfo);
-//            } catch (FileSystemException e) {
-//                throw new RemoteFileSystemConnectorException(e.getMessage(), e);
-//            }
-//        }
-//
-////        if (options.get(Constants.IDENTITY) != null) {
-////            try {
-////                configBuilder.setIdentityInfo(opts, new IdentityInfo(new File(options.get(Constants.IDENTITY))));
-////            } catch (FileSystemException e) {
-////                throw new RemoteFileSystemConnectorException(e.getMessage(), e);
-////            }
-////        }
-////        if (options.get(Constants.IDENTITY_PASS_PHRASE) != null) {
-////            try {
-////                configBuilder.setIdentityPassPhrase(opts, options.get(Constants.IDENTITY_PASS_PHRASE));
-////            } catch (FileSystemException e) {
-////                throw new RemoteFileSystemConnectorException(e.getMessage(), e);
-////            }
-////        }
-////        if (options.get(Constants.AVOID_PERMISSION_CHECK) != null) {
-////            configBuilder.setAvoidPermissionCheck(opts, options.get(Constants.AVOID_PERMISSION_CHECK));
-////        }
-//    }
-
     private static void setSftpOptions(Map<String, String> options, FileSystemOptions opts)
             throws RemoteFileSystemConnectorException {
         final SftpFileSystemConfigBuilder configBuilder = SftpFileSystemConfigBuilder.getInstance();
