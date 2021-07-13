@@ -30,7 +30,7 @@ ext.puppycrawlCheckstyleVersion = project.puppycrawlCheckstyleVersion
 ext.testngVersion = project.testngVersion
 ext.slf4jVersion = project.slf4jVersion
 ext.javaFtpVersion = project.javaFtpVersion
-ext.fileTransportVersion = project.fileTransportVersion
+ext.commonsLang3Version = project.commonsLang3Version
 ext.commonsVfsVersion = project.commonsVfsVersion
 ext.commonsNetVersion = project.commonsNetVersion
 ext.jschVersion = project.jschVersion
@@ -44,7 +44,6 @@ ext.ftpletApiVersion = project.ftpletApiVersion
 ext.minaCoreVersion = project.minaCoreVersion
 ext.aopallianceVersion = project.aopallianceVersion
 ext.jclSlf4jVersion = project.jclSlf4jVersion
-ext.fileTransportVersion = project.fileTransportVersion
 
 allprojects {
     group = project.group

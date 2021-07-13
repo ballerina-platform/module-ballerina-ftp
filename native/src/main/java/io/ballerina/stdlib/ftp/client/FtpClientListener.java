@@ -19,12 +19,12 @@
 package io.ballerina.stdlib.ftp.client;
 
 import io.ballerina.runtime.api.Future;
+import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
+import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemBaseMessage;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.transport.remotefilesystem.listener.RemoteFileSystemListener;
-import org.wso2.transport.remotefilesystem.message.RemoteFileSystemBaseMessage;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;

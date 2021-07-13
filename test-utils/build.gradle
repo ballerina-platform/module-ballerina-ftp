@@ -32,7 +32,6 @@ dependencies {
     implementation group: 'org.wso2.org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}"
     implementation group: 'com.jcraft', name: 'jsch', version: "${jcraftVersion}"
     implementation group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}"
-    implementation group: 'org.wso2.transport.file', name: 'org.wso2.transport.remote-file-system', version: "${fileTransportVersion}"
     implementation project(":ftp-native")
 }
 
