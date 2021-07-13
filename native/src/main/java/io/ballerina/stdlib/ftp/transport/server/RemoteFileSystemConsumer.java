@@ -24,6 +24,7 @@ import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
 import io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils;
+import io.ballerina.stdlib.ftp.util.ExcludeCoverageFromGeneratedReport;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
@@ -114,11 +115,7 @@ public class RemoteFileSystemConsumer {
      * @throws RemoteFileSystemConnectorException for all the error situation.
      */
     public void consume() throws RemoteFileSystemConnectorException {
-        if (log.isDebugEnabled()) {
-            log.debug("Thread name: " + Thread.currentThread().getName());
-            log.debug("File System Consumer hashcode: " + this.hashCode());
-            log.debug("Polling for directory or file: " + FileTransportUtils.maskURLPassword(listeningDirURI));
-        }
+        logDebugConsumeStarted();
         try {
             boolean isFileExists; // Initially assume that the file doesn't exist
             boolean isFileReadable; // Initially assume that the file is not readable
@@ -132,18 +129,10 @@ public class RemoteFileSystemConsumer {
                 try {
                     children = listeningDir.getChildren();
                 } catch (FileSystemException ignored) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("[" + serviceName + "] The file does not exist, or is not a folder, or an error "
-                                + "has occurred when trying to list the children. File URI : " + FileTransportUtils
-                                .maskURLPassword(listeningDirURI), ignored);
-                    }
+                    logDebugErrorWhileGetChildrenFromDirListener(ignored);
                 }
                 if (children == null || children.length == 0) {
-                    if (log.isDebugEnabled()) {
-                        log.debug(
-                                "[" + serviceName + "] Folder at " + FileTransportUtils.maskURLPassword(listeningDirURI)
-                                        + " is empty.");
-                    }
+                    logDebugNoChildrenFromDirWhileConsuming();
                 } else {
                     directoryHandler(children);
                     List<String> deleted = new ArrayList<>();
@@ -172,7 +161,7 @@ public class RemoteFileSystemConsumer {
             } else {
                 remoteFileSystemListener.onError(new RemoteFileSystemConnectorException(
                         "[" + serviceName + "] Unable to access or read file or directory : " + FileTransportUtils
-                                .maskURLPassword(listeningDirURI) + ". Reason: " + (isFileExists ?
+                                .maskUrlPassword(listeningDirURI) + ". Reason: " + (isFileExists ?
                                 "The file can not be read!" :
                                 "The file does not exist!")));
             }
@@ -187,13 +176,10 @@ public class RemoteFileSystemConsumer {
                 }
             } catch (FileSystemException e) {
                 log.warn("[" + serviceName + "] Could not close file at URI: " + FileTransportUtils
-                        .maskURLPassword(listeningDirURI), e);
+                        .maskUrlPassword(listeningDirURI), e);
             }
         }
-        if (log.isDebugEnabled()) {
-            log.debug("[" + serviceName + "] End : Scanning directory or file : " + FileTransportUtils
-                    .maskURLPassword(listeningDirURI));
-        }
+        logDebugConsumeStopped();
     }
 
     /**
@@ -201,14 +187,10 @@ public class RemoteFileSystemConsumer {
      *
      * @param children The array containing child elements of a folder
      */
-    private void directoryHandler(FileObject[] children)
-            throws FileSystemException {
+    private void directoryHandler(FileObject[] children) throws FileSystemException {
         for (FileObject child : children) {
             if (!(fileNamePattern == null || child.getName().getBaseName().matches(fileNamePattern))) {
-                if (log.isDebugEnabled()) {
-                    log.debug("File " + listeningDir.getName().getFriendlyURI()
-                            + " is not processed because it did not match the specified pattern.");
-                }
+                logDebugDirFileNamePatternNotMatchedInDirHandler();
             } else {
                 FileType childType = child.getType();
                 if (childType == FileType.FOLDER) {
@@ -216,16 +198,10 @@ public class RemoteFileSystemConsumer {
                     try {
                         c = child.getChildren();
                     } catch (FileSystemException ignored) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("The file does not exist, or is not a folder, or an error "
-                                    + "has occurred when trying to list the children. File URI : " + FileTransportUtils
-                                    .maskURLPassword(listeningDirURI), ignored);
-                        }
+                        logDebugErrorWhileGetChildrenInDirHandler(ignored);
                     }
                     if (c == null || c.length == 0) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Folder at " + child.getName().getFriendlyURI() + " is empty.");
-                        }
+                        logDebugNoChildrenFromDirInDirHandler(child);
                     } else {
                         directoryHandler(c);
                     }
@@ -252,5 +228,64 @@ public class RemoteFileSystemConsumer {
         info.setLastModifiedTime(file.getContent().getLastModifiedTime());
         addedFileInfo.add(info);
         processed.add(path);
+    }
+
+    @ExcludeCoverageFromGeneratedReport
+    private void logDebugErrorWhileGetChildrenFromDirListener(FileSystemException ignored) {
+        if (log.isDebugEnabled()) {
+            log.debug("[" + serviceName + "] The file does not exist, or is not a folder, or an error "
+                    + "has occurred when trying to list the children. File URI : " + FileTransportUtils
+                    .maskUrlPassword(listeningDirURI), ignored);
+        }
+    }
+
+    @ExcludeCoverageFromGeneratedReport
+    private void logDebugNoChildrenFromDirWhileConsuming() {
+        if (log.isDebugEnabled()) {
+            log.debug(
+                    "[" + serviceName + "] Folder at " + FileTransportUtils.maskUrlPassword(listeningDirURI)
+                            + " is empty.");
+        }
+    }
+
+    @ExcludeCoverageFromGeneratedReport
+    private void logDebugDirFileNamePatternNotMatchedInDirHandler() {
+        if (log.isDebugEnabled()) {
+            log.debug("File " + listeningDir.getName().getFriendlyURI()
+                    + " is not processed because it did not match the specified pattern.");
+        }
+    }
+
+    @ExcludeCoverageFromGeneratedReport
+    private void logDebugNoChildrenFromDirInDirHandler(FileObject child) {
+        if (log.isDebugEnabled()) {
+            log.debug("Folder at " + child.getName().getFriendlyURI() + " is empty.");
+        }
+    }
+
+    @ExcludeCoverageFromGeneratedReport
+    private void logDebugErrorWhileGetChildrenInDirHandler(FileSystemException ignored) {
+        if (log.isDebugEnabled()) {
+            log.debug("The file does not exist, or is not a folder, or an error "
+                    + "has occurred when trying to list the children. File URI : " + FileTransportUtils
+                    .maskUrlPassword(listeningDirURI), ignored);
+        }
+    }
+
+    @ExcludeCoverageFromGeneratedReport
+    private void logDebugConsumeStarted() {
+        if (log.isDebugEnabled()) {
+            log.debug("Thread name: " + Thread.currentThread().getName());
+            log.debug("File System Consumer hashcode: " + this.hashCode());
+            log.debug("Polling for directory or file: " + FileTransportUtils.maskUrlPassword(listeningDirURI));
+        }
+    }
+
+    @ExcludeCoverageFromGeneratedReport
+    private void logDebugConsumeStopped() {
+        if (log.isDebugEnabled()) {
+            log.debug("[" + serviceName + "] End : Scanning directory or file : " + FileTransportUtils
+                    .maskUrlPassword(listeningDirURI));
+        }
     }
 }

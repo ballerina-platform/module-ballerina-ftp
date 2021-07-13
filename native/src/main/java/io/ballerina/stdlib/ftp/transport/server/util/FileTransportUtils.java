@@ -20,6 +20,7 @@ package io.ballerina.stdlib.ftp.transport.server.util;
 
 import io.ballerina.stdlib.ftp.transport.Constants;
 import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.util.ExcludeCoverageFromGeneratedReport;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
@@ -110,7 +111,8 @@ public class FileTransportUtils {
      * @param url URL to be masked
      * @return The masked URL
      */
-    public static String maskURLPassword(String url) {
+    @ExcludeCoverageFromGeneratedReport
+    public static String maskUrlPassword(String url) {
         Matcher urlMatcher = URL_PATTERN.matcher(url);
         if (urlMatcher.find()) {
             Matcher pwdMatcher = PASSWORD_PATTERN.matcher(url);
