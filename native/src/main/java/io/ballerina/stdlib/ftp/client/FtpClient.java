@@ -27,7 +27,7 @@ import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.transport.Constants;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.FtpAction;
-import io.ballerina.stdlib.ftp.transport.client.connector.contract.VFSClientConnector;
+import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
 import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
@@ -118,9 +118,9 @@ public class FtpClient {
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGetAction(remoteFileSystemBaseMessage,
                         balFuture, clientConnector));
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-        VFSClientConnector connector;
+        VfsClientConnector connector;
         try {
-            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
+            connector = fileSystemConnectorFactory.createVfsClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
@@ -173,7 +173,7 @@ public class FtpClient {
             FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                     remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-            VFSClientConnector connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap,
+            VfsClientConnector connector = fileSystemConnectorFactory.createVfsClientConnector(propertyMap,
                     connectorListener);
             connector.send(message, FtpAction.APPEND);
         } catch (RemoteFileSystemConnectorException e) {
@@ -221,7 +221,7 @@ public class FtpClient {
                     FtpClientHelper.executeGenericAction());
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
 
-            VFSClientConnector connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap,
+            VfsClientConnector connector = fileSystemConnectorFactory.createVfsClientConnector(propertyMap,
                     connectorListener);
             connector.send(message, FtpAction.PUT);
         } catch (RemoteFileSystemConnectorException e) {
@@ -255,9 +255,9 @@ public class FtpClient {
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-        VFSClientConnector connector;
+        VfsClientConnector connector;
         try {
-            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
+            connector = fileSystemConnectorFactory.createVfsClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
@@ -279,9 +279,9 @@ public class FtpClient {
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeIsDirectoryAction(remoteFileSystemBaseMessage, balFuture));
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-        VFSClientConnector connector;
+        VfsClientConnector connector;
         try {
-            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
+            connector = fileSystemConnectorFactory.createVfsClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
@@ -303,9 +303,9 @@ public class FtpClient {
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeListAction(remoteFileSystemBaseMessage, balFuture));
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-        VFSClientConnector connector;
+        VfsClientConnector connector;
         try {
-            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
+            connector = fileSystemConnectorFactory.createVfsClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
@@ -327,9 +327,9 @@ public class FtpClient {
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-        VFSClientConnector connector;
+        VfsClientConnector connector;
         try {
-            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
+            connector = fileSystemConnectorFactory.createVfsClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
@@ -351,9 +351,9 @@ public class FtpClient {
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-        VFSClientConnector connector;
+        VfsClientConnector connector;
         try {
-            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
+            connector = fileSystemConnectorFactory.createVfsClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
@@ -375,9 +375,9 @@ public class FtpClient {
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-        VFSClientConnector connector;
+        VfsClientConnector connector;
         try {
-            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
+            connector = fileSystemConnectorFactory.createVfsClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
@@ -400,9 +400,9 @@ public class FtpClient {
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeSizeAction(remoteFileSystemBaseMessage, balFuture));
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-        VFSClientConnector connector;
+        VfsClientConnector connector;
         try {
-            connector = fileSystemConnectorFactory.createVFSClientConnector(propertyMap, connectorListener);
+            connector = fileSystemConnectorFactory.createVfsClientConnector(propertyMap, connectorListener);
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }

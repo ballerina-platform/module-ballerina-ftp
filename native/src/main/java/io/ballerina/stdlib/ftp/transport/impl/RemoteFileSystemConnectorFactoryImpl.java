@@ -19,8 +19,8 @@
 package io.ballerina.stdlib.ftp.transport.impl;
 
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
-import io.ballerina.stdlib.ftp.transport.client.connector.contract.VFSClientConnector;
-import io.ballerina.stdlib.ftp.transport.client.connector.contractimpl.VFSClientConnectorImpl;
+import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
+import io.ballerina.stdlib.ftp.transport.client.connector.contractimpl.VfsClientConnectorImpl;
 import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
@@ -41,9 +41,9 @@ public class RemoteFileSystemConnectorFactoryImpl implements RemoteFileSystemCon
     }
 
     @Override
-    public VFSClientConnector createVFSClientConnector(Map<String, String> connectorConfig,
+    public VfsClientConnector createVfsClientConnector(Map<String, String> connectorConfig,
                                                        RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException {
-        return new VFSClientConnectorImpl(connectorConfig, remoteFileSystemListener);
+        return new VfsClientConnectorImpl(connectorConfig, remoteFileSystemListener);
     }
 }

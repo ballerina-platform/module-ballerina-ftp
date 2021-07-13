@@ -23,7 +23,7 @@ import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
 /**
  * A Client Connector for remote file systems using the Apache VFS library.
  */
-public interface VFSClientConnector {
+public interface VfsClientConnector {
 
     /**
      * Send {@link RemoteFileSystemMessage} to target file system using VFS.

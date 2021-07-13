@@ -20,7 +20,7 @@ package io.ballerina.stdlib.ftp.transport.client.connector.contractimpl;
 
 import io.ballerina.stdlib.ftp.transport.Constants;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.FtpAction;
-import io.ballerina.stdlib.ftp.transport.client.connector.contract.VFSClientConnector;
+import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
 import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
@@ -44,18 +44,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Implementation for {@link VFSClientConnector} interface.
+ * Implementation for {@link VfsClientConnector} interface.
  */
-public class VFSClientConnectorImpl implements VFSClientConnector {
+public class VfsClientConnectorImpl implements VfsClientConnector {
 
     private static final Logger logger = LoggerFactory.getLogger(
-            io.ballerina.stdlib.ftp.transport.client.connector.contractimpl.VFSClientConnectorImpl.class);
+            VfsClientConnectorImpl.class);
 
     private Map<String, String> connectorConfig;
     private RemoteFileSystemListener remoteFileSystemListener;
     private FileSystemOptions opts;
 
-    public VFSClientConnectorImpl(Map<String, String> config, RemoteFileSystemListener listener)
+    public VfsClientConnectorImpl(Map<String, String> config, RemoteFileSystemListener listener)
             throws RemoteFileSystemConnectorException {
         this.connectorConfig = config;
         this.remoteFileSystemListener = listener;
