@@ -69,7 +69,7 @@ dependencies {
     externalJars(group: 'org.apache.commons', name: 'commons-lang3', version: "${commonsLang3Version}") {
         transitive = false
     }
-    externalJars(group: 'org.wso2.org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
+    externalJars(group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
         transitive = false
     }
     externalJars(group: 'com.jcraft', name: 'jsch', version: "${jcraftVersion}") {

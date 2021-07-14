@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -83,26 +84,28 @@ public class FileTransportUtils {
     private static void setSftpOptions(Map<String, String> options, FileSystemOptions opts)
             throws RemoteFileSystemConnectorException {
         final SftpFileSystemConfigBuilder configBuilder = SftpFileSystemConfigBuilder.getInstance();
+        configBuilder.setPreferredAuthentications(opts,
+                "gssapi-with-mic,publickey,keyboard-interactive,password");
         if (options.get(Constants.USER_DIR_IS_ROOT) != null) {
-            configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(Constants.USER_DIR_IS_ROOT));
+            configBuilder.setUserDirIsRoot(opts, false);
         }
         if (options.get(Constants.IDENTITY) != null) {
             try {
-                configBuilder.setIdentityInfo(opts, new IdentityInfo(new File(options.get(Constants.IDENTITY))));
-            } catch (FileSystemException e) {
-                throw new RemoteFileSystemConnectorException(e.getMessage(), e);
-            }
-        }
-        if (options.get(Constants.IDENTITY_PASS_PHRASE) != null) {
-            try {
-                configBuilder.setIdentityPassPhrase(opts, options.get(Constants.IDENTITY_PASS_PHRASE));
+                IdentityInfo identityInfo = new IdentityInfo(new File(options.get(Constants.IDENTITY)),
+                        options.get(Constants.IDENTITY_PASS_PHRASE).getBytes());
+                configBuilder.setIdentityInfo(opts, identityInfo);
             } catch (FileSystemException e) {
                 throw new RemoteFileSystemConnectorException(e.getMessage(), e);
             }
         }
         if (options.get(Constants.AVOID_PERMISSION_CHECK) != null) {
-            configBuilder.setAvoidPermissionCheck(opts, options.get(Constants.AVOID_PERMISSION_CHECK));
+            try {
+                configBuilder.setStrictHostKeyChecking(opts, "no");
+            } catch (FileSystemException e) {
+                throw new RemoteFileSystemConnectorException(e.getMessage(), e);
+            }
         }
+        configBuilder.setConnectTimeout(opts, Duration.ofSeconds(10));
     }
 
     /**
