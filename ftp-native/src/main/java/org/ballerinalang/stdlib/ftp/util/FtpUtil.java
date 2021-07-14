@@ -204,6 +204,7 @@ public class FtpUtil {
             log.error("The file does not exist");
         } finally {
             try {
+                inputStream.close();
                 zipOutputStream.closeEntry();
                 zipOutputStream.close();
             } catch (IOException e) {
