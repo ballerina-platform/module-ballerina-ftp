@@ -195,8 +195,8 @@ public class FtpUtil {
             zipOutputStream.putNextEntry(new ZipEntry(fileName));
             byte[] buffer = new byte[1000];
             int len;
-            // this should ideally be wrapped from a BufferedInputStream. but currently
-            // not working due to missing method implementations in the custom input stream.
+            // This should ideally be wrapped from a BufferedInputStream. but currently
+            // not working due to missing method implementations in the implemented custom ByteArrayInputStream.
             while ((len = inputStream.read(buffer)) > 0) {
                 zipOutputStream.write(buffer, 0, len);
             }
