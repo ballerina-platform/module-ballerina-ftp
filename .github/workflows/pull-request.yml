@@ -1,12 +1,6 @@
 name: PR build
 
-on:
-  pull_request:
-  push:
-    branches-ignore:
-      - master
-      - "automated/dependency_version_update"
-      - "automated/dependency_version_update_tmp"
+on: pull_request
 
 jobs:
   ubuntu-build:
@@ -26,13 +20,6 @@ jobs:
           packageUser: ${{ github.actor }}
           packagePAT: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew build --scan
-      - name: Archive Error Log
-        uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: Ballerina Internal Log
-          path: ftp-ballerina/ballerina-internal.log
-          if-no-files-found: ignore
       - name: Archive Code Coverage JSON
         uses: actions/upload-artifact@v2
         with:

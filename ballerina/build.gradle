@@ -1,0 +1,192 @@
+/*
+ * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+buildscript {
+    repositories {
+        maven {
+            url = 'https://maven.pkg.github.com/ballerina-platform/plugin-gradle'
+            credentials {
+                username System.getenv("packageUser")
+                password System.getenv("packagePAT")
+            }
+        }
+    }
+    dependencies {
+        classpath "io.ballerina:plugin-gradle:${project.ballerinaGradlePluginVersion}"
+    }
+}
+
+description = 'Ballerina - Ballerina FTP Library'
+
+def packageName = "ftp"
+def packageOrg = "ballerina"
+def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
+def ballerinaConfigFile = new File("$project.projectDir/Ballerina.toml")
+def ballerinaDependencyFile = new File("$project.projectDir/Dependencies.toml")
+def originalConfig = ballerinaConfigFile.text
+def originalDependencyConfig = ballerinaDependencyFile.text
+
+def stripBallerinaExtensionVersion(String extVersion) {
+    if (extVersion.matches(project.ext.timestampedVersionRegex)) {
+        def splitVersion = extVersion.split('-')
+        if (splitVersion.length > 3) {
+            def strippedValues = splitVersion[0..-4]
+            return strippedValues.join('-')
+        } else {
+            return extVersion
+        }
+    } else {
+        return extVersion.replace("${project.ext.snapshotVersion}", "")
+    }
+}
+
+apply plugin: 'io.ballerina.plugin'
+
+ballerina {
+    packageOrganization = packageOrg
+    module = packageName
+    langVersion = ballerinaLangVersion
+}
+
+configurations {
+    externalJars
+}
+
+dependencies {
+    externalJars(group: 'org.apache.commons', name: 'commons-lang3', version: "${commonsLang3Version}") {
+        transitive = false
+    }
+    externalJars(group: 'org.wso2.org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'com.jcraft', name: 'jsch', version: "${jcraftVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: "${bouncycastleVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.apache.sshd', name: 'sshd-core', version: "${sshdCoreVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.apache.ftpserver', name: 'ftpserver-core', version: "${ftpServerVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.apache.ftpserver', name: 'ftplet-api', version: "${ftpletApiVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.apache.mina', name: 'mina-core', version: "${minaCoreVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'aopalliance', name: 'aopalliance', version: "${aopallianceVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.slf4j', name: 'jcl-over-slf4j', version: "${jclSlf4jVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.testng', name: 'testng', version: "${testngVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'org.slf4j', name: 'slf4j-api', version: "${slf4jVersion}") {
+        transitive = false
+    }
+}
+
+task updateTomlFiles {
+    doLast {
+        def stdlibDependentTaskVersion = stripBallerinaExtensionVersion(project.stdlibTaskVersion)
+        def stdlibDependentLogVersion = stripBallerinaExtensionVersion(project.stdlibLogVersion)
+        def stdlibDependentIoVersion = stripBallerinaExtensionVersion(project.stdlibIoVersion)
+
+        def stdlibDependentCommonsVfsVersion = project.commonsVfsVersion
+        def stdlibDependentCommonsLang3Version = project.commonsLang3Version
+        def stdlibDependentJschVersion = project.jschVersion
+        def stdlibDependentCommonsNetVersion = project.commonsNetVersion
+        def stdlibDependentTestngVersion = project.testngVersion
+        def stdlibDependentMockFtpServerVersion = project.mockFtpServerVersion
+        def stdlibDependentBouncycastleVersion = project.bouncycastleVersion
+        def stdlibDependentSshdCoreVersion = project.sshdCoreVersion
+        def stdlibDependentFtpServerVersion = project.ftpServerVersion
+        def stdlibDependentFtpletApiVersion = project.ftpletApiVersion
+        def stdlibDependentMinaCoreVersion = project.minaCoreVersion
+        def stdlibDependentAopallianceVersion = project.aopallianceVersion
+        def stdlibDependentJclSlf4jVersion = project.jclSlf4jVersion
+
+        def newConfig = ballerinaConfigFile.text.replace("@project.version@", project.version)
+        newConfig = newConfig.replace("@toml.version@", tomlVersion)
+        newConfig = newConfig.replace("@commons.vfs2.version@", stdlibDependentCommonsVfsVersion)
+        newConfig = newConfig.replace("@commons.lang3.version@", stdlibDependentCommonsLang3Version)
+        newConfig = newConfig.replace("@jsch.version@", stdlibDependentJschVersion)
+        newConfig = newConfig.replace("@commons.net.version@", stdlibDependentCommonsNetVersion)
+        newConfig = newConfig.replace("@testng.version@", stdlibDependentTestngVersion)
+        newConfig = newConfig.replace("@mockftpserver.version@", stdlibDependentMockFtpServerVersion)
+        newConfig = newConfig.replace("@bouncycastle.version@", stdlibDependentBouncycastleVersion)
+        newConfig = newConfig.replace("@sshd.core.version@", stdlibDependentSshdCoreVersion)
+        newConfig = newConfig.replace("@ftpserver.core.version@", stdlibDependentFtpServerVersion)
+        newConfig = newConfig.replace("@ftplet.api.version@", stdlibDependentFtpletApiVersion)
+        newConfig = newConfig.replace("@mina.core.version@", stdlibDependentMinaCoreVersion)
+        newConfig = newConfig.replace("@aopalliance.version@", stdlibDependentAopallianceVersion)
+        newConfig = newConfig.replace("@jcl.slf4j.version@", stdlibDependentJclSlf4jVersion)
+
+        ballerinaConfigFile.text = newConfig
+
+        def newDependencyConfig = ballerinaDependencyFile.text.replace("@stdlib.io.version@", stdlibDependentIoVersion)
+        newDependencyConfig = newDependencyConfig.replace("@stdlib.log.version@", stdlibDependentLogVersion)
+        newDependencyConfig = newDependencyConfig.replace("@stdlib.task.version@", stdlibDependentTaskVersion)
+        ballerinaDependencyFile.text = newDependencyConfig
+    }
+}
+
+task revertTomlFiles {
+    doLast {
+        ballerinaConfigFile.text = originalConfig
+        ballerinaDependencyFile.text = originalDependencyConfig
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifact source: createArtifactZip, extension: 'zip'
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ballerina-platform/module-${packageOrg}-${packageName}")
+            credentials {
+                username = System.getenv("publishUser")
+                password = System.getenv("publishPAT")
+            }
+        }
+    }
+}
+
+updateTomlFiles.dependsOn copyStdlibs
+
+build.dependsOn ":${packageName}-native:build"
+build.dependsOn ":${packageName}-test-utils:build"
+test.dependsOn ":${packageName}-native:build"
+test.dependsOn ":${packageName}-test-utils:build"
+
+publishToMavenLocal.dependsOn build
+publish.dependsOn build

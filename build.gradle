@@ -30,7 +30,7 @@ ext.puppycrawlCheckstyleVersion = project.puppycrawlCheckstyleVersion
 ext.testngVersion = project.testngVersion
 ext.slf4jVersion = project.slf4jVersion
 ext.javaFtpVersion = project.javaFtpVersion
-ext.fileTransportVersion = project.fileTransportVersion
+ext.commonsLang3Version = project.commonsLang3Version
 ext.commonsVfsVersion = project.commonsVfsVersion
 ext.commonsNetVersion = project.commonsNetVersion
 ext.jschVersion = project.jschVersion
@@ -44,10 +44,9 @@ ext.ftpletApiVersion = project.ftpletApiVersion
 ext.minaCoreVersion = project.minaCoreVersion
 ext.aopallianceVersion = project.aopallianceVersion
 ext.jclSlf4jVersion = project.jclSlf4jVersion
-ext.fileTransportVersion = project.fileTransportVersion
 
 allprojects {
-    group = 'org.ballerinalang'
+    group = project.group
     version = project.version
 
     apply plugin: 'jacoco'
@@ -89,10 +88,10 @@ subprojects {
     }
     dependencies {
         /* Standard libraries */
-        ballerinaStdLibs "org.ballerinalang:log-ballerina:${stdlibLogVersion}"
-        ballerinaStdLibs "org.ballerinalang:io-ballerina:${stdlibIoVersion}"
-        ballerinaStdLibs "org.ballerinalang:task-ballerina:${stdlibTaskVersion}"
-        ballerinaStdLibs "org.ballerinalang:time-ballerina:${stdlibTimeVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:log-ballerina:${stdlibLogVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:io-ballerina:${stdlibIoVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:task-ballerina:${stdlibTaskVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:time-ballerina:${stdlibTimeVersion}"
     }
 }
 
