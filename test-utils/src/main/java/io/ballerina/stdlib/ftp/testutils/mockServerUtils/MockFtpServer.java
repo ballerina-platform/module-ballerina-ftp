@@ -151,6 +151,12 @@ public class MockFtpServer {
         fileSystem.add(new DirectoryEntry("/home/in/folder1"));
         fileSystem.add(new DirectoryEntry("/home/in/folder1/subfolder1"));
         fileSystem.add(new DirectoryEntry("/home/in/childDirectory"));
+        fileSystem.add(new DirectoryEntry("/home/in/complexDirectory/subfolder1/subSubFolder1"));
+        fileSystem.add(new DirectoryEntry("/home/in/complexDirectory/subfolder1/subSubFolder2"));
+        fileSystem.add(new DirectoryEntry("/home/in/complexDirectory/subfolder2"));
+        fileSystem.add(new FileEntry("/home/in/complexDirectory/subfolder1/subSubFolder1/content1.txt"));
+        fileSystem.add(new FileEntry("/home/in/complexDirectory/subfolder1/subSubFolder3/content1.txt"));
+        fileSystem.add(new FileEntry("/home/in/complexDirectory/subfolder1/subSubFolder3/content2.txt"));
         fileSystem.add(new FileEntry("/home/in/child_directory/content1.txt"));
         fileSystem.add(new FileEntry("/home/in/child_directory/content2.txt"));
         ftpServer.setFileSystem(fileSystem);
