@@ -30,7 +30,6 @@ import io.ballerina.runtime.api.values.BString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -189,32 +188,30 @@ public class FtpUtil {
     public static ByteArrayInputStream compress(InputStream inputStream, String targetFilePath) {
 
         String fileName = new File(targetFilePath).getName();
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
 
         try {
-
             zipOutputStream.putNextEntry(new ZipEntry(fileName));
             byte[] buffer = new byte[1000];
             int len;
-            while ((len = bufferedInputStream.read(buffer)) > 0) {
+            // This should ideally be wrapped from a BufferedInputStream. but currently
+            // not working due to missing method implementations in the implemented custom ByteArrayInputStream.
+            while ((len = inputStream.read(buffer)) > 0) {
                 zipOutputStream.write(buffer, 0, len);
             }
-            return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-
         } catch (IOException ex) {
             log.error("The file does not exist");
         } finally {
             try {
-                bufferedInputStream.close();
+                inputStream.close();
                 zipOutputStream.closeEntry();
                 zipOutputStream.close();
             } catch (IOException e) {
                 log.error("Error in closing stream");
             }
         }
-        return null;
+        return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     }
 
     public static String getCompressedFileName(String fileName) {

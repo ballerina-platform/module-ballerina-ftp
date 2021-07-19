@@ -4,6 +4,7 @@ This file contains all the notable changes done to the Ballerina Email package t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- [[#1523] Fix the issue of created zip file being corrupted](https://github.com/ballerina-platform/ballerina-standard-library/issues/1523)
 
 ### Added
  - [[#1438] Add SFTP and related security](https://github.com/ballerina-platform/ballerina-standard-library/issues/1438)
