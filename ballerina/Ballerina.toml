@@ -7,6 +7,9 @@ version = "@toml.version@"
 path = "./lib/commons-vfs2-@commons.vfs2.version@.jar"
 
 [[platform.java11.dependency]]
+path = "./lib/commons-lang3-@commons.lang3.version@.jar"
+
+[[platform.java11.dependency]]
 path = "./lib/jsch-@jsch.version@.jar"
 
 [[platform.java11.dependency]]
