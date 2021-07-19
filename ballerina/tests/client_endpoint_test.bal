@@ -583,6 +583,62 @@ public function testRemoveDirectory() {
     }
 }
 
+@test:Config{
+    dependsOn: [testRemoveDirectory]
+}
+public function testRemoveDirectoryWithSubdirectory() {
+    Error? response1 = clientEp->rmdir("/home/in/folder1");
+    if (response1 is Error) {
+        log:printError("Error in removing directory", 'error = response1);
+    } else {
+        log:printInfo("Executed `rmdir` operation");
+    }
+
+    boolean|Error response2 = clientEp->isDirectory("/home/in/folder1");
+    log:printInfo("Executed `isDirectory` operation after deleting a directory");
+    int i = 0;
+    while (response2 is boolean && response2 && i < 10) {
+         runtime:sleep(1);
+         response2 = clientEp->isDirectory("/home/in/folder1");
+         log:printInfo("Executed `isDirectory` operation after deleting a directory");
+         i += 1;
+    }
+    if (response2 is boolean) {
+        log:printInfo("Existence of the directory: " + response2.toString());
+        test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
+    } else {
+        log:printError("Error in reading `isDirectory`", 'error = response2);
+    }
+}
+
+@test:Config{
+    dependsOn: [testRemoveDirectoryWithSubdirectory]
+}
+public function testRemoveDirectoryWithFiles() {
+    Error? response1 = clientEp->rmdir("/home/in/child_directory");
+    if (response1 is Error) {
+        log:printError("Error in removing directory", 'error = response1);
+    } else {
+        log:printInfo("Executed `rmdir` operation");
+    }
+
+    boolean|Error response2 = clientEp->isDirectory("/home/in/child_directory");
+    log:printInfo("Executed `isDirectory` operation after deleting a directory");
+    int i = 0;
+    while (response2 is boolean && response2 && i < 10) {
+         runtime:sleep(1);
+         response2 = clientEp->isDirectory("/home/in/child_directory");
+         log:printInfo("Executed `isDirectory` operation after deleting a directory");
+         i += 1;
+    }
+    if (response2 is boolean) {
+        log:printInfo("Existence of the directory: " + response2.toString());
+        test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
+    } else {
+        log:printError("Error in reading `isDirectory`", 'error = response2);
+    }
+}
+
 @test:AfterSuite{}
 public function stopServer() returns error? {
     error? response0 = stopAnonymousFtpServer();
