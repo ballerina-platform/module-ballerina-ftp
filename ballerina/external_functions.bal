@@ -14,17 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 import ballerina/jballerina.java;
 
 isolated function initEndpoint(Client clientEndpoint, map<anydata> config) returns Error? = @java:Method {
     name: "initClientEndpoint",
-    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
-} external;
-
-isolated function get(Client clientEndpoint, string path, int arraySize)
-        returns record {|byte[] value;|}|io:Error? = @java:Method{
-    name: "get",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 

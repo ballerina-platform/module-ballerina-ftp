@@ -59,7 +59,7 @@ class ByteStream {
     #            `()` if the stream has reached the end or else an `io:Error`
     public isolated function next() returns record {|byte[] & readonly value;|}|io:Error? {
         if (self.initialStreamEntryConsumed) {
-            return externGetStreamEntryRecord(self.entity, self.resourcePath, self.arraySize);
+            return externGetStreamEntryRecord(self.entity, self.arraySize);
         } else {
             self.initialStreamEntryConsumed = true;
             return self.initialStreamEntry;
@@ -82,7 +82,7 @@ class ByteStream {
     }
 }
 
-isolated function externGetStreamEntryRecord(Client entity, string path, int arraySize)
+isolated function externGetStreamEntryRecord(Client entity, int arraySize)
         returns record {|byte[] & readonly value;|}|io:Error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.client.FtpClient",
     name: "get"
