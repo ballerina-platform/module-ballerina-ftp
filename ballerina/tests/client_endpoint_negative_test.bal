@@ -46,12 +46,12 @@ public function testReadWithWrongUrl() returns error? {
     if (str is stream<byte[] & readonly, io:Error?>) {
         var receivedError = trap str.next();
         if (receivedError is error) {
-            log:printInfo("Received error: " + receivedError.message());
+            test:assertFail(msg = "Found unexpected response type" + receivedError.message());
         } else {
             test:assertFail(msg = "Found a non-error response with a wrong URL");
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+       log:printInfo("Received error: " + str.message());
     }
 }
 

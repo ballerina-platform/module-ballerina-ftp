@@ -543,7 +543,7 @@ public function testDeleteFile() returns error? {
         } else if (arr1 is io:Error) {
             test:assertFail(msg = "I/O Error during `get` operation after `delete` operation");
         } else if (arr1 is error) {
-            test:assertTrue(true);
+            test:assertFail(msg = "Found unexpected output type ");
         } else {
             test:assertFail(msg = "Nil type during `get` operation after `delete` operation");
         }
@@ -552,7 +552,7 @@ public function testDeleteFile() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation.");
         }
     } else {
-       test:assertFail(msg = "Found unexpected output type ");
+       test:assertTrue(true);
     }
 }
 
