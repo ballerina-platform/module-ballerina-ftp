@@ -552,7 +552,9 @@ public function testDeleteFile() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation.");
         }
     } else {
-       test:assertTrue(true);
+        test:assertEquals(str.message(),
+            "Failed to read file: ftp://wso2:wso2123@127.0.0.1:21212/home/in/test1.txt not found",
+            msg = "Correct error is not given when the file is deleted.");
     }
 }
 

@@ -90,7 +90,9 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation.");
         }
     } else {
-       test:assertTrue(true);
+        test:assertEquals(str.message(),
+            "Could not connect to SFTP server at \"sftp://wso2:***@127.0.0.1:21213/\".",
+            msg = "Correct error is not given when the incorrect password is used to connect.");
     }
 }
 
