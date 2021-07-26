@@ -97,11 +97,7 @@ public class FtpClient {
         return null;
     }
 
-    public static Object get(Environment env, BObject clientConnector, BString filePath, long arraySize) {
-        InputStream readInputStream = (InputStream) clientConnector.getNativeData(READ_INPUT_STREAM);
-        if (readInputStream != null) {
-            return FtpClientHelper.generateInputStreamEntry(readInputStream, arraySize);
-        }
+    public static Object getFirst(Environment env, BObject clientConnector, BString filePath, long arraySize) {
         clientConnector.addNativeData(ENTITY_BYTE_STREAM, null);
         clientConnector.addNativeData(ARRAY_SIZE, arraySize);
         String url;
@@ -126,6 +122,11 @@ public class FtpClient {
         }
         connector.send(null, FtpAction.GET);
         return null;
+    }
+
+    public static Object get(BObject clientConnector, long arraySize) {
+        return FtpClientHelper.generateInputStreamEntry((InputStream) clientConnector.getNativeData(READ_INPUT_STREAM),
+                arraySize);
     }
 
     public static Object closeInputByteStream(BObject clientObject) {

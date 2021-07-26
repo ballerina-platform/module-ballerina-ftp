@@ -32,16 +32,25 @@ class ByteStream {
     private int arraySize;
     private boolean isClosed = false;
     private string resourcePath;
+    private boolean initialStreamEntryConsumed = false;
+    private StreamEntry? initialStreamEntry;
 
     # Initialize a `ByteStream` using a `ftp:Client`.
     #
     # + entity - The `ftp:Client` which contains the byte stream
     # + resourcePath - The local path of the file/directory
     # + arraySize - The size of a byte array as an integer
-    public isolated function init(Client entity, string resourcePath, int arraySize) {
+    public isolated function init(Client entity, string resourcePath, int arraySize) returns Error? {
         self.entity = entity;
         self.arraySize = arraySize;
         self.resourcePath = resourcePath;
+        record {|byte[] & readonly value;|}|Error? tempInitialStreamEntity
+            = externInitialGetStreamEntryRecord(self.entity, self.resourcePath, self.arraySize);
+        if (tempInitialStreamEntity is Error) {
+            return tempInitialStreamEntity;
+        } else {
+            self.initialStreamEntry = tempInitialStreamEntity;
+        }
     }
 
     # The next function reads and return the next `byte[]` of the related stream.
@@ -49,7 +58,12 @@ class ByteStream {
     # + return - A `record` of `byte[]`s when the stream is avaliable,
     #            `()` if the stream has reached the end or else an `io:Error`
     public isolated function next() returns record {|byte[] & readonly value;|}|io:Error? {
-        return externGetStreamEntryRecord(self.entity, self.resourcePath, self.arraySize);
+        if (self.initialStreamEntryConsumed) {
+            return externGetStreamEntryRecord(self.entity, self.arraySize);
+        } else {
+            self.initialStreamEntryConsumed = true;
+            return self.initialStreamEntry;
+        }
     }
 
     # Close the stream. The primary usage of this function is to close the stream without reaching the end.
@@ -68,10 +82,16 @@ class ByteStream {
     }
 }
 
-isolated function externGetStreamEntryRecord(Client entity, string path, int arraySize)
+isolated function externGetStreamEntryRecord(Client entity, int arraySize)
         returns record {|byte[] & readonly value;|}|io:Error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.client.FtpClient",
     name: "get"
+} external;
+
+isolated function externInitialGetStreamEntryRecord(Client entity, string path, int arraySize)
+        returns record {|byte[] & readonly value;|}|Error? = @java:Method {
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient",
+    name: "getFirst"
 } external;
 
 isolated function externCloseInputStream(Client entity) returns io:Error? = @java:Method {

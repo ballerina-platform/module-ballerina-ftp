@@ -34,7 +34,7 @@ public type PrivateKey record {|
     string password?;
 |};
 
-# Basic Auth related configurations.
+# Username/password authentication related configurations.
 #
 # + username - Username of the user
 # + password - Password of the user

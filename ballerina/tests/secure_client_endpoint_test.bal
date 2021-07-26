@@ -82,7 +82,7 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
             if (arr1 is error) {
                 log:printError("Error while `next` operation " + arr1.message());
             } else {
-                test:assertTrue(true);
+                test:assertFail(msg = "Found unexpected response type");
             }
         }
         io:Error? closeResult = str.close();
@@ -90,7 +90,9 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation.");
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertEquals(str.message(),
+            "Could not connect to SFTP server at \"sftp://wso2:***@127.0.0.1:21213/\".",
+            msg = "Correct error is not given when the incorrect password is used to connect.");
     }
 }
 
@@ -128,7 +130,7 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
             if (arr1 is error) {
                 log:printError("Error while `next` operation " + arr1.message());
             } else {
-                test:assertTrue(true);
+                test:assertFail(msg = "Found unexpected response type");
             }
         }
         io:Error? closeResult = str.close();
@@ -136,7 +138,7 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation.");
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertTrue(true);
     }
 }
 
@@ -195,7 +197,7 @@ public function testSecureDeleteFileContent() returns error? {
         } else if (arr1 is io:Error) {
             test:assertFail(msg = "I/O Error during secure `get` operation after secure `delete` operation");
         } else if (arr1 is error) {
-            test:assertTrue(true);
+            test:assertFail(msg = "Found unexpected output type ");
         } else {
             test:assertFail(msg = "Nil type during secure `get` operation after secure `delete` operation");
         }
@@ -204,6 +206,6 @@ public function testSecureDeleteFileContent() returns error? {
             test:assertFail(msg = "Error while closing stream in secure `get` operation.");
         }
     } else {
-       test:assertFail(msg = "Found unexpected output type ");
+        test:assertTrue(true);
     }
 }

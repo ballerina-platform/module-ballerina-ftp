@@ -45,8 +45,13 @@ public isolated client class Client {
     # + arraySize - A defaultable paramerter to state the size of the byte array. Default size is 8KB
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
     remote isolated function get(string path, int arraySize = 8192) returns stream<byte[] & readonly, io:Error?>|Error {
-        ByteStream byteStream = new(self, path, arraySize);
-        return new stream<byte[] & readonly, io:Error?>(byteStream);
+        ByteStream|Error byteStream = new(self, path, arraySize);
+        if (byteStream is ByteStream) {
+            return new stream<byte[] & readonly, io:Error?>(byteStream);
+        } else {
+            return byteStream;
+        }
+
     }
 
     # Appends the content to an existing file in an FTP server.

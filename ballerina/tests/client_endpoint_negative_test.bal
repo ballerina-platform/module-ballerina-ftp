@@ -46,12 +46,29 @@ public function testReadWithWrongUrl() returns error? {
     if (str is stream<byte[] & readonly, io:Error?>) {
         var receivedError = trap str.next();
         if (receivedError is error) {
-            log:printInfo("Received error: " + receivedError.message());
+            test:assertFail(msg = "Found unexpected response type" + receivedError.message());
         } else {
             test:assertFail(msg = "Found a non-error response with a wrong URL");
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+       log:printInfo("Received error: " + str.message());
+    }
+}
+
+@test:Config{
+    dependsOn: [testReadBlockNonFittingContent]
+}
+public function testReadNonExistingFile() returns error? {
+    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get("/home/in/nonexisting.txt", 6);
+    if (str is stream<byte[] & readonly, io:Error?>) {
+        var receivedError = trap str.next();
+        if (receivedError is error) {
+            test:assertFail(msg = "Found unexpected response type" + receivedError.message());
+        } else {
+            test:assertFail(msg = "Found a non-error response from a non-existing file path");
+        }
+    } else {
+       log:printInfo("Received error: " + str.message());
     }
 }
 

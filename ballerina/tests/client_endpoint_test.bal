@@ -504,7 +504,8 @@ public function testGetFileSize() {
 }
 public function testListFiles() {
     string[] resourceNames
-        = ["child_directory", "test1.txt", "test", "folder1", "test3.zip", "childDirectory", "test2.txt", "test3.txt"];
+        = ["child_directory", "test1.txt", "complexDirectory", "test", "folder1", "test3.zip", "childDirectory",
+            "test2.txt", "test3.txt"];
     FileInfo[]|Error response = clientEp->list("/home/in");
     if (response is FileInfo[]) {
         log:printInfo("List of files/directories: ");
@@ -542,7 +543,7 @@ public function testDeleteFile() returns error? {
         } else if (arr1 is io:Error) {
             test:assertFail(msg = "I/O Error during `get` operation after `delete` operation");
         } else if (arr1 is error) {
-            test:assertTrue(true);
+            test:assertFail(msg = "Found unexpected output type ");
         } else {
             test:assertFail(msg = "Nil type during `get` operation after `delete` operation");
         }
@@ -551,7 +552,9 @@ public function testDeleteFile() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation.");
         }
     } else {
-       test:assertFail(msg = "Found unexpected output type ");
+        test:assertEquals(str.message(),
+            "Failed to read file: ftp://wso2:wso2123@127.0.0.1:21212/home/in/test1.txt not found",
+            msg = "Correct error is not given when the file is deleted.");
     }
 }
 
@@ -572,6 +575,90 @@ public function testRemoveDirectory() {
     while (response2 is boolean && response2 && i < 10) {
          runtime:sleep(1);
          response2 = clientEp->isDirectory("/home/in/test");
+         log:printInfo("Executed `isDirectory` operation after deleting a directory");
+         i += 1;
+    }
+    if (response2 is boolean) {
+        log:printInfo("Existence of the directory: " + response2.toString());
+        test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
+    } else {
+        log:printError("Error in reading `isDirectory`", 'error = response2);
+    }
+}
+
+@test:Config{
+    dependsOn: [testRemoveDirectory]
+}
+public function testRemoveDirectoryWithSubdirectory() {
+    Error? response1 = clientEp->rmdir("/home/in/folder1");
+    if (response1 is Error) {
+        log:printError("Error in removing directory", 'error = response1);
+    } else {
+        log:printInfo("Executed `rmdir` operation");
+    }
+
+    boolean|Error response2 = clientEp->isDirectory("/home/in/folder1");
+    log:printInfo("Executed `isDirectory` operation after deleting a directory");
+    int i = 0;
+    while (response2 is boolean && response2 && i < 10) {
+         runtime:sleep(1);
+         response2 = clientEp->isDirectory("/home/in/folder1");
+         log:printInfo("Executed `isDirectory` operation after deleting a directory");
+         i += 1;
+    }
+    if (response2 is boolean) {
+        log:printInfo("Existence of the directory: " + response2.toString());
+        test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
+    } else {
+        log:printError("Error in reading `isDirectory`", 'error = response2);
+    }
+}
+
+@test:Config{
+    dependsOn: [testRemoveDirectoryWithSubdirectory]
+}
+public function testRemoveDirectoryWithFiles() {
+    Error? response1 = clientEp->rmdir("/home/in/child_directory");
+    if (response1 is Error) {
+        log:printError("Error in removing directory", 'error = response1);
+    } else {
+        log:printInfo("Executed `rmdir` operation");
+    }
+
+    boolean|Error response2 = clientEp->isDirectory("/home/in/child_directory");
+    log:printInfo("Executed `isDirectory` operation after deleting a directory");
+    int i = 0;
+    while (response2 is boolean && response2 && i < 10) {
+         runtime:sleep(1);
+         response2 = clientEp->isDirectory("/home/in/child_directory");
+         log:printInfo("Executed `isDirectory` operation after deleting a directory");
+         i += 1;
+    }
+    if (response2 is boolean) {
+        log:printInfo("Existence of the directory: " + response2.toString());
+        test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
+    } else {
+        log:printError("Error in reading `isDirectory`", 'error = response2);
+    }
+}
+
+@test:Config{
+    dependsOn: [testRemoveDirectoryWithFiles]
+}
+public function testRemoveComplexDirectory() {
+    Error? response1 = clientEp->rmdir("/home/in/complexDirectory");
+    if (response1 is Error) {
+        log:printError("Error in removing directory", 'error = response1);
+    } else {
+        log:printInfo("Executed `rmdir` operation");
+    }
+
+    boolean|Error response2 = clientEp->isDirectory("/home/in/complexDirectory");
+    log:printInfo("Executed `isDirectory` operation after deleting a directory");
+    int i = 0;
+    while (response2 is boolean && response2 && i < 10) {
+         runtime:sleep(1);
+         response2 = clientEp->isDirectory("/home/in/complexDirectory");
          log:printInfo("Executed `isDirectory` operation after deleting a directory");
          i += 1;
     }
