@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.stdlib.ftp.util;
+package io.ballerina.stdlib.ftp.exception;
 
 /**
  * Exception class for FTP.

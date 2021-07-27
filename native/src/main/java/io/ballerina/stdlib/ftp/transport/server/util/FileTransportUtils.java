@@ -18,9 +18,9 @@
 
 package io.ballerina.stdlib.ftp.transport.server.util;
 
-import io.ballerina.stdlib.ftp.transport.Constants;
-import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.util.ExcludeCoverageFromGeneratedReport;
+import io.ballerina.stdlib.ftp.util.FtpConstants;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
@@ -36,8 +36,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static io.ballerina.stdlib.ftp.transport.Constants.SCHEME_FTP;
-import static io.ballerina.stdlib.ftp.transport.Constants.SCHEME_SFTP;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_FTP;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_SFTP;
 
 /**
  * Utility class for File Transport.
@@ -62,7 +62,7 @@ public class FileTransportUtils {
             return null;
         }
         FileSystemOptions opts = new FileSystemOptions();
-        String listeningDirURI = options.get(Constants.URI);
+        String listeningDirURI = options.get(FtpConstants.URI);
         if (listeningDirURI.toLowerCase(Locale.getDefault()).startsWith(SCHEME_FTP)) {
             setFtpOptions(options, opts);
         } else if (listeningDirURI.toLowerCase(Locale.getDefault()).startsWith(SCHEME_SFTP)) {
@@ -73,11 +73,11 @@ public class FileTransportUtils {
 
     private static void setFtpOptions(Map<String, String> options, FileSystemOptions opts) {
         final FtpFileSystemConfigBuilder configBuilder = FtpFileSystemConfigBuilder.getInstance();
-        if (options.get(Constants.PASSIVE_MODE) != null) {
-            configBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(Constants.PASSIVE_MODE)));
+        if (options.get(FtpConstants.PASSIVE_MODE) != null) {
+            configBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(FtpConstants.PASSIVE_MODE)));
         }
-        if (options.get(Constants.USER_DIR_IS_ROOT) != null) {
-            configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(Constants.USER_DIR_IS_ROOT));
+        if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
+            configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(FtpConstants.USER_DIR_IS_ROOT));
         }
     }
 
@@ -86,19 +86,19 @@ public class FileTransportUtils {
         final SftpFileSystemConfigBuilder configBuilder = SftpFileSystemConfigBuilder.getInstance();
         configBuilder.setPreferredAuthentications(opts,
                 "gssapi-with-mic,publickey,keyboard-interactive,password");
-        if (options.get(Constants.USER_DIR_IS_ROOT) != null) {
+        if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
             configBuilder.setUserDirIsRoot(opts, false);
         }
-        if (options.get(Constants.IDENTITY) != null) {
+        if (options.get(FtpConstants.IDENTITY) != null) {
             try {
-                IdentityInfo identityInfo = new IdentityInfo(new File(options.get(Constants.IDENTITY)),
-                        options.get(Constants.IDENTITY_PASS_PHRASE).getBytes());
+                IdentityInfo identityInfo = new IdentityInfo(new File(options.get(FtpConstants.IDENTITY)),
+                        options.get(FtpConstants.IDENTITY_PASS_PHRASE).getBytes());
                 configBuilder.setIdentityInfo(opts, identityInfo);
             } catch (FileSystemException e) {
                 throw new RemoteFileSystemConnectorException(e.getMessage(), e);
             }
         }
-        if (options.get(Constants.AVOID_PERMISSION_CHECK) != null) {
+        if (options.get(FtpConstants.AVOID_PERMISSION_CHECK) != null) {
             try {
                 configBuilder.setStrictHostKeyChecking(opts, "no");
             } catch (FileSystemException e) {

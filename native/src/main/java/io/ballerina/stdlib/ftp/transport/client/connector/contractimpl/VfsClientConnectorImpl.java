@@ -18,14 +18,14 @@
 
 package io.ballerina.stdlib.ftp.transport.client.connector.contractimpl;
 
-import io.ballerina.stdlib.ftp.transport.Constants;
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.FtpAction;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
-import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
 import io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils;
+import io.ballerina.stdlib.ftp.util.FtpConstants;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
@@ -64,7 +64,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
 
     @Override
     public void send(RemoteFileSystemMessage message, FtpAction action) {
-        String fileURI = connectorConfig.get(Constants.URI);
+        String fileURI = connectorConfig.get(FtpConstants.URI);
         InputStream inputStream;
         OutputStream outputStream = null;
         ByteBuffer byteBuffer;
@@ -128,7 +128,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                     break;
                 case RENAME:
                     if (path.exists()) {
-                        String destination = connectorConfig.get(Constants.DESTINATION);
+                        String destination = connectorConfig.get(FtpConstants.DESTINATION);
                         try (FileObject newPath = fsManager.resolveFile(destination, opts);
                                 FileObject parent = newPath.getParent()) {
                             if (parent != null) {

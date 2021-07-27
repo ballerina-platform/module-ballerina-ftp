@@ -27,4 +27,5 @@ module io.ballerina.stdlib.ftp {
     exports io.ballerina.stdlib.ftp.client;
     exports io.ballerina.stdlib.ftp.server;
     exports io.ballerina.stdlib.ftp.util;
+    exports io.ballerina.stdlib.ftp.exception;
 }

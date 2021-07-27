@@ -24,14 +24,13 @@ import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
-import io.ballerina.stdlib.ftp.transport.Constants;
+import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.FtpAction;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
-import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
-import io.ballerina.stdlib.ftp.util.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.io.utils.IOUtils;
@@ -82,15 +81,15 @@ public class FtpClient {
             if (privateKey != null) {
                 final BString privateKeyPath = privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PATH));
-                ftpConfig.put(Constants.IDENTITY, privateKeyPath.getValue());
+                ftpConfig.put(FtpConstants.IDENTITY, privateKeyPath.getValue());
                 final BString privateKeyPassword = privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PASS_KEY));
                 if (privateKeyPassword != null && !privateKeyPassword.getValue().isEmpty()) {
-                    ftpConfig.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
+                    ftpConfig.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
                 }
             }
         }
-        ftpConfig.put(FtpConstants.FTP_PASSIVE_MODE, String.valueOf(true));
+        ftpConfig.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
         ftpConfig.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(false));
         ftpConfig.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
         clientEndpoint.addNativeData(FtpConstants.PROPERTY_MAP, ftpConfig);
@@ -108,7 +107,7 @@ public class FtpClient {
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-        propertyMap.put(FtpConstants.PROPERTY_URI, url);
+        propertyMap.put(FtpConstants.URI, url);
         Future balFuture = env.markAsync();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGetAction(remoteFileSystemBaseMessage,
@@ -156,7 +155,7 @@ public class FtpClient {
             }
             Map<String, String> propertyMap = new HashMap<>(
                     (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-            propertyMap.put(FtpConstants.PROPERTY_URI, url);
+            propertyMap.put(FtpConstants.URI, url);
 
             boolean isFile = inputContent.getBooleanValue(StringUtils.fromString(
                     FtpConstants.INPUT_CONTENT_IS_FILE_KEY));
@@ -251,7 +250,7 @@ public class FtpClient {
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-        propertyMap.put(FtpConstants.PROPERTY_URI, url);
+        propertyMap.put(FtpConstants.URI, url);
         Future balFuture = env.markAsync();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
@@ -275,7 +274,7 @@ public class FtpClient {
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-        propertyMap.put(FtpConstants.PROPERTY_URI, url);
+        propertyMap.put(FtpConstants.URI, url);
         Future balFuture = env.markAsync();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeIsDirectoryAction(remoteFileSystemBaseMessage, balFuture));
@@ -299,7 +298,7 @@ public class FtpClient {
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-        propertyMap.put(FtpConstants.PROPERTY_URI, url);
+        propertyMap.put(FtpConstants.URI, url);
         Future balFuture = env.markAsync();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeListAction(remoteFileSystemBaseMessage, balFuture));
@@ -323,7 +322,7 @@ public class FtpClient {
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-        propertyMap.put(FtpConstants.PROPERTY_URI, url);
+        propertyMap.put(FtpConstants.URI, url);
         Future balFuture = env.markAsync();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
@@ -342,8 +341,8 @@ public class FtpClient {
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         try {
-            propertyMap.put(FtpConstants.PROPERTY_URI, FtpUtil.createUrl(clientConnector, origin.getValue()));
-            propertyMap.put(FtpConstants.PROPERTY_DESTINATION, FtpUtil.createUrl(clientConnector,
+            propertyMap.put(FtpConstants.URI, FtpUtil.createUrl(clientConnector, origin.getValue()));
+            propertyMap.put(FtpConstants.DESTINATION, FtpUtil.createUrl(clientConnector,
                     destination.getValue()));
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
@@ -371,7 +370,7 @@ public class FtpClient {
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-        propertyMap.put(FtpConstants.PROPERTY_URI, url);
+        propertyMap.put(FtpConstants.URI, url);
         Future balFuture = env.markAsync();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
@@ -395,8 +394,8 @@ public class FtpClient {
         }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-        propertyMap.put(FtpConstants.PROPERTY_URI, url);
-        propertyMap.put(FtpConstants.FTP_PASSIVE_MODE, Boolean.TRUE.toString());
+        propertyMap.put(FtpConstants.URI, url);
+        propertyMap.put(FtpConstants.PASSIVE_MODE, Boolean.TRUE.toString());
         Future balFuture = env.markAsync();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeSizeAction(remoteFileSystemBaseMessage, balFuture));

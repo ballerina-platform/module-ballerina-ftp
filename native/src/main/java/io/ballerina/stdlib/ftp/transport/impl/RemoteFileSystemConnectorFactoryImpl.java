@@ -18,10 +18,10 @@
 
 package io.ballerina.stdlib.ftp.transport.impl;
 
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
 import io.ballerina.stdlib.ftp.transport.client.connector.contractimpl.VfsClientConnectorImpl;
-import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
 import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.RemoteFileSystemServerConnectorImpl;

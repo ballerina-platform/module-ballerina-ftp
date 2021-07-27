@@ -18,7 +18,7 @@
 
 package io.ballerina.stdlib.ftp.transport.server.connector.contract;
 
-import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 
 /**
  * RemoteFileSystemServer Connector interface to poll information from given the directory location.

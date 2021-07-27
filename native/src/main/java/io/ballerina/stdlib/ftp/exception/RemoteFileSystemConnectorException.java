@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.stdlib.ftp.transport.exception;
+package io.ballerina.stdlib.ftp.exception;
 
 /**
  * Generic {@link Exception} for File Server connector.

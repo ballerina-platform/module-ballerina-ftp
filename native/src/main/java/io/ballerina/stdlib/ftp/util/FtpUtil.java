@@ -27,6 +27,7 @@ import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -18,13 +18,13 @@
 
 package io.ballerina.stdlib.ftp.transport.server;
 
-import io.ballerina.stdlib.ftp.transport.Constants;
-import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
 import io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils;
 import io.ballerina.stdlib.ftp.util.ExcludeCoverageFromGeneratedReport;
+import io.ballerina.stdlib.ftp.util.FtpConstants;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
@@ -70,7 +70,7 @@ public class RemoteFileSystemConsumer {
         this.serviceName = id;
         this.remoteFileSystemListener = listener;
         validateParam(fileProperties);
-        listeningDirURI = fileProperties.get(Constants.URI);
+        listeningDirURI = fileProperties.get(FtpConstants.URI);
         try {
             FileSystemManager fsManager = VFS.getManager();
             FileSystemOptions fso = FileTransportUtils.attachFileSystemOptions(fileProperties);
@@ -88,20 +88,20 @@ public class RemoteFileSystemConsumer {
             throw new RemoteFileSystemConnectorException(
                     "[" + serviceName + "] Unable to initialize " + "the connection with server.", e);
         }
-        if (fileProperties.get(Constants.FILE_NAME_PATTERN) != null) {
-            fileNamePattern = fileProperties.get(Constants.FILE_NAME_PATTERN);
+        if (fileProperties.get(FtpConstants.FILE_NAME_PATTERN) != null) {
+            fileNamePattern = fileProperties.get(FtpConstants.FILE_NAME_PATTERN);
         }
     }
 
     private void validateParam(Map<String, String> fileProperties) throws RemoteFileSystemConnectorException {
-        if (fileProperties.get(Constants.URI) == null) {
+        if (fileProperties.get(FtpConstants.URI) == null) {
             final RemoteFileSystemConnectorException e = new RemoteFileSystemConnectorException(
-                    Constants.URI + " is a mandatory parameter for FTP transport.");
+                    FtpConstants.URI + " is a mandatory parameter for FTP transport.");
             remoteFileSystemListener.onError(e);
             throw e;
-        } else if (fileProperties.get(Constants.URI).trim().isEmpty()) {
+        } else if (fileProperties.get(FtpConstants.URI).trim().isEmpty()) {
             final RemoteFileSystemConnectorException e = new RemoteFileSystemConnectorException(
-                    "[" + serviceName + "] " + Constants.URI
+                    "[" + serviceName + "] " + FtpConstants.URI
                             + " parameter cannot be empty for FTP transport.");
             remoteFileSystemListener.onError(e);
             throw e;

@@ -37,7 +37,7 @@ import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.scp.ScpCommandFactory;
 import org.apache.sshd.server.shell.ProcessShellFactory;
 import org.apache.sshd.server.subsystem.sftp.SftpSubsystemFactory;
-import io.ballerina.stdlib.ftp.util.BallerinaFtpException;
+import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import org.mockftpserver.fake.FakeFtpServer;

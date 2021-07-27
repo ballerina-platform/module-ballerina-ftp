@@ -80,7 +80,7 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
                 msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
         } else {
             if (arr1 is error) {
-                log:printError("Error while `next` operation " + arr1.message());
+                test:assertFail(msg = "Error while `next` operation " + arr1.message());
             } else {
                 test:assertFail(msg = "Found unexpected response type");
             }
@@ -128,7 +128,7 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
                 msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
         } else {
             if (arr1 is error) {
-                log:printError("Error while `next` operation " + arr1.message());
+                test:assertFail(msg = "Error while `next` operation " + arr1.message());
             } else {
                 test:assertFail(msg = "Found unexpected response type");
             }
@@ -138,7 +138,9 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation.");
         }
     } else {
-        test:assertTrue(true);
+        test:assertEquals(str.message(),
+            "Could not connect to SFTP server at \"sftp://wso2:***@127.0.0.1:21213/\".",
+            msg = "Correct error is not given when the wrong key is used to connect.");
     }
 }
 
@@ -150,7 +152,7 @@ public function testSecurePutFileContent() returns error? {
 
     Error? response = sftpClientEp->put("/tempFile1.txt", bStream);
     if (response is Error) {
-        log:printError("Error in secure put operation", 'error = response);
+        test:assertFail(msg = "Error in secure `put` operation");
     }
     log:printInfo("Executed secure `put` operation");
 
@@ -183,7 +185,7 @@ public function testSecureDeleteFileContent() returns error? {
 
     Error? response = sftpClientEp->delete("/tempFile1.txt");
     if (response is Error) {
-        log:printError("Error in secure `delete` operation", 'error = response);
+        test:assertFail(msg = "Error in secure `delete` operation");
     }
     log:printInfo("Executed secure `delete` operation");
 
@@ -203,9 +205,11 @@ public function testSecureDeleteFileContent() returns error? {
         }
         io:Error? closeResult = str.close();
         if (closeResult is io:Error) {
-            test:assertFail(msg = "Error while closing stream in secure `get` operation.");
+            test:assertFail(msg = "Error while closing the stream in secure `get` operation.");
         }
     } else {
-        test:assertTrue(true);
+        test:assertEquals(str.message(),
+            "Failed to read file: sftp://wso2:wso2123@127.0.0.1:21213/tempFile1.txt not found",
+            msg = "Correct error is not given when trying to get a non-existing file.");
     }
 }

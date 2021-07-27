@@ -216,7 +216,7 @@ public function testPutFileContent() returns error? {
 
     Error? response = clientEp->put(newFilePath, bStream);
     if (response is Error) {
-        log:printError("Error in put operation", 'error = response);
+        test:assertFail(msg = "Found unexpected response type from `put` operation");
     }
     log:printInfo("Executed `put` operation");
 
@@ -250,13 +250,13 @@ public function testPutCompressedFileContent() returns error? {
 
     Error? response = clientEp->put("/home/in/test3.txt", bStream, compressInput=true);
     if (response is Error) {
-        log:printError("Error in put operation", 'error = response);
+        test:assertFail(msg = "Found unexpected response type from compressed `put` operation");
     }
-    log:printInfo("Executed `put` operation");
+    log:printInfo("Executed compressed `put` operation");
 
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get("/home/in/test3.zip", 11);
-    if (str is error) {
-        test:assertFail(msg = "Error during compressed `put` operation");
+    if (str is Error) {
+        test:assertFail(msg = "Error occurred during compressed `put` operation");
     }
 }
 
@@ -278,9 +278,9 @@ public function testPutLargeFileContent() returns error? {
     stream<byte[] & readonly, io:Error?> bStream = bList.toStream();
     Error? response = clientEp->put(newFilePath, bStream);
     if (response is Error) {
-        log:printError("Error in put operation", 'error = response);
+        test:assertFail(msg = "Found unexpected response type from `put` operation");
     }
-    log:printInfo("Executed `put` operation");
+    log:printInfo("Executed `put` operation for large files");
 
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(newFilePath, 16400);
     if (str is stream<byte[] & readonly, io:Error?>) {
@@ -311,7 +311,7 @@ public function testPutTextContent() returns error? {
     string textToPut = "Sample text content";
     Error? response = clientEp->put(filePath, textToPut);
     if (response is Error) {
-        log:printError("Error while invoking `put` operation", 'error = response);
+        test:assertFail(msg = "Found unexpected response type from `put` operation on text content");
     } else {
         log:printInfo("Executed `put` operation on text");
     }
@@ -345,7 +345,7 @@ public function testPutJsonContent() returns error? {
     json jsonToPut = { name: "Anne", age: 20 };
     Error? response = clientEp->put(filePath, jsonToPut);
     if (response is Error) {
-        log:printError("Error while invoking `put` operation", 'error = response);
+        test:assertFail(msg = "Found unexpected response type from `put` operation on JSON content");
     } else {
         log:printInfo("Executed `put` operation on JSON");
     }
@@ -379,7 +379,7 @@ public function testPutXMLContent() returns error? {
     xml xmlToPut = xml `<note><heading>Memo</heading><body>Memo content</body></note>`;
     Error? response = clientEp->put(filePath, xmlToPut);
     if (response is Error) {
-        log:printError("Error while invoking `put` operation", 'error = response);
+        test:assertFail(msg = "Found unexpected response type from `put` operation on XML content");
     } else {
         log:printInfo("Executed `put` operation on XML");
     }
@@ -417,7 +417,7 @@ public function testIsDirectory() {
         test:assertEquals(response1, true,
             msg = "A directory is not correctly recognized with `isDirectory` operation");
     } else {
-        log:printError("Error while invoking `isDirectory` operation", 'error = response1);
+        test:assertFail(msg = "Error while invoking `isDirectory` operation");
     }
 
     boolean|Error response2 = clientEp->isDirectory(filePath);
@@ -427,7 +427,7 @@ public function testIsDirectory() {
         test:assertEquals(response2, false,
             msg = "A file is not correctly recognized with `isDirectory` operation");
     } else {
-        log:printError("Error while invoking `isDirectory` operation", 'error = response2);
+        test:assertFail(msg = "Error while invoking `isDirectory` operation");
     }
 }
 
@@ -437,7 +437,7 @@ public function testIsDirectory() {
 public function testCreateDirectory() {
     Error? response1 = clientEp->mkdir("/home/in/out");
     if (response1 is Error) {
-        log:printError("Error while creating directory", 'error = response1);
+        test:assertFail(msg = "Error while creating a directory");
     } else {
         log:printInfo("Executed `mkdir` operation");
     }
@@ -448,7 +448,7 @@ public function testCreateDirectory() {
         log:printInfo("Is directory: " + response2.toString());
         test:assertEquals(response2, true, msg = "Directory was not created");
     } else {
-        log:printError("Error while invoking `isDirectory` operation", 'error = response2);
+        test:assertFail(msg = "Error while invoking `isDirectory` operation");
     }
 }
 
@@ -460,7 +460,7 @@ public function testRenameDirectory() {
     string newName = "/home/in/test";
     Error? response1 = clientEp->rename(existingName, newName);
     if (response1 is Error) {
-        log:printError("Error in renaming directory", 'error = response1);
+        test:assertFail(msg = "Error while invoking `rename` operation");
     } else {
         log:printInfo("Executed `rename` operation");
     }
@@ -471,7 +471,7 @@ public function testRenameDirectory() {
         log:printInfo("Existance of original directory: " + response2.toString());
         test:assertEquals(response2, false, msg = "Directory was not removed during `rename` operation");
     } else {
-        log:printError("Error while invoking `isDirectory` operation", 'error = response2);
+        test:assertFail(msg = "Error while invoking `isDirectory` operation after `rename` operation");
     }
 
     boolean|Error response3 = clientEp->isDirectory(newName);
@@ -480,7 +480,7 @@ public function testRenameDirectory() {
         log:printInfo("Existance of renamed directory: " + response3.toString());
         test:assertEquals(response3, true, msg = "New directory name was not created during `rename` operation");
     } else {
-        log:printError("Error while invoking `isDirectory` operation", 'error = response3);
+        test:assertFail(msg = "Error while invoking `isDirectory` operation after `rename` operation");
     }
 
 }
@@ -495,7 +495,7 @@ public function testGetFileSize() {
         log:printInfo("Size: " + response.toString());
         test:assertEquals(response, 61, msg = "File size is not given with `size` operation");
     } else {
-        log:printError("Error in getting file size", 'error = response);
+        test:assertFail(msg = "Error while invoking the `size` operation");
     }
 }
 
@@ -518,7 +518,7 @@ public function testListFiles() {
         }
         log:printInfo("Executed `list` operation");
     } else {
-        log:printError("Error in getting file list", 'error = response);
+        test:assertFail(msg = "Error while invoking the `list` operation");
     }
 }
 
@@ -528,7 +528,7 @@ public function testListFiles() {
 public function testDeleteFile() returns error? {
     Error? response = clientEp->delete(filePath);
     if (response is Error) {
-        log:printError("Error in deleting file", 'error = response);
+        test:assertFail(msg = "Error while invoking the `delete` operation");
     } else {
         log:printInfo("Executed `delete` operation");
     }
@@ -543,7 +543,7 @@ public function testDeleteFile() returns error? {
         } else if (arr1 is io:Error) {
             test:assertFail(msg = "I/O Error during `get` operation after `delete` operation");
         } else if (arr1 is error) {
-            test:assertFail(msg = "Found unexpected output type ");
+            test:assertFail(msg = "Found an unexpected output type");
         } else {
             test:assertFail(msg = "Nil type during `get` operation after `delete` operation");
         }
@@ -564,7 +564,7 @@ public function testDeleteFile() returns error? {
 public function testRemoveDirectory() {
     Error? response1 = clientEp->rmdir("/home/in/test");
     if (response1 is Error) {
-        log:printError("Error in removing directory", 'error = response1);
+        test:assertFail(msg = "Error while invoking the `rmdir` operation");
     } else {
         log:printInfo("Executed `rmdir` operation");
     }
@@ -582,7 +582,7 @@ public function testRemoveDirectory() {
         log:printInfo("Existence of the directory: " + response2.toString());
         test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
     } else {
-        log:printError("Error in reading `isDirectory`", 'error = response2);
+        test:assertFail(msg = "Error while invoking the `isDirectory` operation after the `rmdir` operation");
     }
 }
 
@@ -592,7 +592,7 @@ public function testRemoveDirectory() {
 public function testRemoveDirectoryWithSubdirectory() {
     Error? response1 = clientEp->rmdir("/home/in/folder1");
     if (response1 is Error) {
-        log:printError("Error in removing directory", 'error = response1);
+        test:assertFail(msg = "Error while invoking the `rmdir` operation");
     } else {
         log:printInfo("Executed `rmdir` operation");
     }
@@ -610,7 +610,7 @@ public function testRemoveDirectoryWithSubdirectory() {
         log:printInfo("Existence of the directory: " + response2.toString());
         test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
     } else {
-        log:printError("Error in reading `isDirectory`", 'error = response2);
+        test:assertFail(msg = "Error while invoking the `isDirectory` operation after the `rmdir` operation");
     }
 }
 
@@ -620,7 +620,7 @@ public function testRemoveDirectoryWithSubdirectory() {
 public function testRemoveDirectoryWithFiles() {
     Error? response1 = clientEp->rmdir("/home/in/child_directory");
     if (response1 is Error) {
-        log:printError("Error in removing directory", 'error = response1);
+        test:assertFail(msg = "Error while invoking the `rmdir` operation");
     } else {
         log:printInfo("Executed `rmdir` operation");
     }
@@ -638,17 +638,17 @@ public function testRemoveDirectoryWithFiles() {
         log:printInfo("Existence of the directory: " + response2.toString());
         test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
     } else {
-        log:printError("Error in reading `isDirectory`", 'error = response2);
+        test:assertFail(msg = "Error while invoking the `isDirectory` operation after the `rmdir` operation");
     }
 }
 
 @test:Config{
-    dependsOn: [testRemoveDirectoryWithFiles]
+    dependsOn: [testRemoveDirectoryWithFiles], enable: false
 }
 public function testRemoveComplexDirectory() {
     Error? response1 = clientEp->rmdir("/home/in/complexDirectory");
     if (response1 is Error) {
-        log:printError("Error in removing directory", 'error = response1);
+        test:assertFail(msg = "Error while invoking the `rmdir` operation");
     } else {
         log:printInfo("Executed `rmdir` operation");
     }
@@ -666,7 +666,7 @@ public function testRemoveComplexDirectory() {
         log:printInfo("Existence of the directory: " + response2.toString());
         test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
     } else {
-        log:printError("Error in reading `isDirectory`", 'error = response2);
+        test:assertFail(msg = "Error while invoking the `isDirectory` operation after the `rmdir` operation");
     }
 }
 
