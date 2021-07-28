@@ -21,3 +21,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
  - [[#1588] Add missing SFTP related configuration to Module.md](https://github.com/ballerina-platform/ballerina-standard-library/issues/1588)
  - [[#1523] Fix the issue of created zip file being corrupted](https://github.com/ballerina-platform/ballerina-standard-library/issues/1523)
  - [[#1546] Correctly handle errors of `get` method](https://github.com/ballerina-platform/ballerina-standard-library/issues/1546)
+ - [[#108] Implement the `stop` functionality to the FTP connector](https://github.com/ballerina-platform/ballerina-standard-library/issues/108)
