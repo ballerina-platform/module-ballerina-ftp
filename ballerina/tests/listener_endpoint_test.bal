@@ -72,6 +72,35 @@ public function testAddedFileCount() {
     }
 }
 
+listener Listener detachFtpServer = new({
+    protocol: FTP,
+    host: "127.0.0.1",
+    auth: {
+        credentials: {
+            username: "wso2",
+            password: "wso2123"
+        }
+    },
+    port: 21212,
+    path: "/home/in",
+    pollingInterval: 2,
+    fileNamePattern: "(.*).txt"
+});
+
+@test:Config {}
+public function testFtpServerDeregistration() {
+    service object {} detachService = service object { function onFileChange(WatchEvent event) {} };
+    error? result1 = detachFtpServer.attach(detachService, "remote-server");
+    if (result1 is error) {
+        test:assertFail("Failed to attach to the FTP server: " + result1.message());
+    } else {
+        error? result2 = detachFtpServer.detach(detachService);
+        if (result2 is error) {
+            test:assertFail("Failed to detach from the FTP server: " + result2.message());
+        }
+    }
+}
+
 listener Listener emptyPasswordServer = new({
     protocol: FTP,
     host: "127.0.0.1",

@@ -73,10 +73,11 @@ public class Listener {
     # error? response = listener->detach(service1);
     # ```
     #
-    # + emailService - Service to be detached from the listener
+    # + ftpService - Service to be detached from the listener
     # + return - `()` or else an `error` upon failure to detach the service
-    public isolated function detach(service object {} emailService) returns error? {
-
+    public isolated function detach(service object {} ftpService) returns error? {
+        check self.stop();
+        return deregister(self, ftpService);
     }
 
     # Stops the `ftp:Listener` forcefully.
@@ -139,7 +140,7 @@ public class Listener {
         if(name is string){
             serviceName = java:fromString(name);
         }
-        handle|error result = register(self, self.config,  ftpService, serviceName);
+        handle|error result = register(self, self.config, ftpService, serviceName);
         if(result is handle){
             self.config.serverConnector = result;
         } else {

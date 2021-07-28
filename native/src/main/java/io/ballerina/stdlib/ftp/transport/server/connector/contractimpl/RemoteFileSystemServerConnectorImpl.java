@@ -59,4 +59,8 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
             log.error("Error executing the polling cycle of RemoteFileSystemServer for service: " + id, e);
         }
     }
+
+    public void stop() throws RemoteFileSystemConnectorException {
+        consumer.close();
+    }
 }

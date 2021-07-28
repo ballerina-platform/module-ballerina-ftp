@@ -170,16 +170,30 @@ public class RemoteFileSystemConsumer {
             throw new RemoteFileSystemConnectorException(
                     "[" + serviceName + "] Unable to get details from remote server.", e);
         } finally {
-            try {
-                if (listeningDir != null) {
-                    listeningDir.close();
-                }
-            } catch (FileSystemException e) {
-                log.warn("[" + serviceName + "] Could not close file at URI: " + FileTransportUtils
-                        .maskUrlPassword(listeningDirURI), e);
-            }
+            closeDirectories();
         }
         logDebugConsumeStopped();
+    }
+
+    /**
+     * Closes the connections and stops the listener.
+     *
+     * @throws RemoteFileSystemConnectorException for all the error situation.
+     */
+    public void close() throws RemoteFileSystemConnectorException {
+        closeDirectories();
+        remoteFileSystemListener.done();
+    }
+
+    private void closeDirectories() {
+        try {
+            if (listeningDir != null) {
+                listeningDir.close();
+            }
+        } catch (FileSystemException e) {
+            log.warn("[" + serviceName + "] Could not close file at URI: " + FileTransportUtils
+                    .maskUrlPassword(listeningDirURI), e);
+        }
     }
 
     /**

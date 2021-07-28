@@ -123,7 +123,25 @@ public class FtpListenerHelper {
             connector.poll();
         } catch (RemoteFileSystemConnectorException e) {
             throw new BallerinaFtpException(e.getMessage());
-
         }
     }
+
+    public static Object deregister(BObject ftpListener, BObject service) {
+        try {
+            Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+            if (serverConnectorObject instanceof RemoteFileSystemServerConnector) {
+                RemoteFileSystemServerConnector serverConnector
+                        = (RemoteFileSystemServerConnector) serverConnectorObject;
+                serverConnector.stop();
+            }
+        } catch (RemoteFileSystemConnectorException e) {
+            Throwable rootCause = findRootCause(e);
+            String detail = (rootCause != null) ? rootCause.getMessage() : null;
+            return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
+        } finally {
+            ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
+        }
+        return null;
+    }
+
 }

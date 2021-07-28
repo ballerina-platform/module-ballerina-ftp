@@ -33,4 +33,11 @@ public interface RemoteFileSystemServerConnector {
      * @throws RemoteFileSystemConnectorException if execution failed.
      */
     void poll() throws RemoteFileSystemConnectorException;
+
+    /**
+     * This method will stops the listeners to the given directory location.
+     *
+     * @throws RemoteFileSystemConnectorException if execution failed.
+     */
+    void stop() throws RemoteFileSystemConnectorException;
 }
