@@ -61,7 +61,7 @@ service "ftpServerConnector" on secureRemoteServer {
 public function testSecureAddedFileCount() {
     int timeoutInSeconds = 300;
     // Test fails in 5 minutes if failed to receive watchEvent
-    while (timeoutInSeconds > 0) {
+    while timeoutInSeconds > 0 {
         if (secureWatchEventReceived) {
             log:printInfo("Securely added file count: " + secureAddedFileCount.toString());
             test:assertEquals(secureAddedFileCount, 2);
@@ -71,7 +71,7 @@ public function testSecureAddedFileCount() {
             timeoutInSeconds = timeoutInSeconds - 1;
         }
     }
-    if (timeoutInSeconds == 0) {
+    if timeoutInSeconds == 0 {
         test:assertFail("Failed to receive WatchEvent for 5 minuetes.");
     }
 }

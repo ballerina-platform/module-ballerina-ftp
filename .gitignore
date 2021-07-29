@@ -33,3 +33,18 @@ target
 # Ballerina
 velocity.log*
 *Ballerina.lock
+
+# VSCode
+.project
+.settings/
+ballerina/.project
+ballerina/.settings/
+build-config/checkstyle/.classpath
+build-config/checkstyle/.project
+build-config/checkstyle/.settings/
+native/.classpath
+native/.project
+native/.settings/
+test-utils/.classpath
+test-utils/.project
+test-utils/.settings/

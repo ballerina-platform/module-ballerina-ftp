@@ -45,7 +45,7 @@ public function testReadWithWrongUrl() returns error? {
     stream<byte[] & readonly, io:Error?>|Error str = wrongClientEp->get(filePath, 6);
     if (str is stream<byte[] & readonly, io:Error?>) {
         var receivedError = trap str.next();
-        if (receivedError is error) {
+        if receivedError is error {
             test:assertFail(msg = "Found unexpected response type" + receivedError.message());
         } else {
             test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -62,7 +62,7 @@ public function testReadNonExistingFile() returns error? {
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get("/home/in/nonexisting.txt", 6);
     if (str is stream<byte[] & readonly, io:Error?>) {
         var receivedError = trap str.next();
-        if (receivedError is error) {
+        if receivedError is error {
             test:assertFail(msg = "Found unexpected response type" + receivedError.message());
         } else {
             test:assertFail(msg = "Found a non-error response from a non-existing file path");
@@ -79,7 +79,7 @@ public function testAppendContentWithWrongUrl() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(appendFilePath, 7);
 
     Error? receivedError =  wrongClientEp->append(filePath, bStream);
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -94,7 +94,7 @@ public function testPutFileContentWithWrongUrl() returns error? {
 
     Error? receivedError = wrongClientEp->put(newFilePath, bStream);
 
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -106,7 +106,7 @@ public function testPutFileContentWithWrongUrl() returns error? {
 }
 public function testIsDirectoryWithWrongUrl() {
     boolean|Error receivedError = wrongClientEp->isDirectory("/home/in");
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -118,7 +118,7 @@ public function testIsDirectoryWithWrongUrl() {
 }
 public function testIsDirectoryWithNonExistingServer() {
     boolean|Error receivedError = nonExistingServerClientEp->isDirectory("/home/in");
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error for non-existing server: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -130,7 +130,7 @@ public function testIsDirectoryWithNonExistingServer() {
 }
 public function testCreateDirectoryWithWrongUrl() {
     Error? response = wrongClientEp->mkdir("/home/in/out");
-    if (response is Error) {
+    if response is Error {
         log:printInfo("Received error: " + response.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -142,7 +142,7 @@ public function testCreateDirectoryWithWrongUrl() {
 }
 public function testCreateDirectoryWithNonExistingServer() {
     Error? receivedError = nonExistingServerClientEp->mkdir("/home/in/out");
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error for non-existing server: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -156,7 +156,7 @@ public function testRenameDirectoryWithWrongUrl() {
     string existingName = "/home/in/out";
     string newName = "/home/in/test";
     Error? receivedError = wrongClientEp->rename(existingName, newName);
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -168,7 +168,7 @@ public function testRenameDirectoryWithWrongUrl() {
 }
 public function testGetFileSizeWithWrongUrl() {
     int|Error receivedError = wrongClientEp->size(filePath);
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -180,7 +180,7 @@ public function testGetFileSizeWithWrongUrl() {
 }
 public function testGetFileSizeWithNonExistingServer() {
     int|Error receivedError = nonExistingServerClientEp->size(filePath);
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error for non-existing server: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -192,7 +192,7 @@ public function testGetFileSizeWithNonExistingServer() {
 }
 public function testListFilesWithWrongUrl() {
     FileInfo[]|Error receivedError = wrongClientEp->list("/home/in");
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -204,7 +204,7 @@ public function testListFilesWithWrongUrl() {
 }
 public function testListFilesWithNonExistingServer() {
     FileInfo[]|Error receivedError = nonExistingServerClientEp->list("/home/in");
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error for non-existing server: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -216,7 +216,7 @@ public function testListFilesWithNonExistingServer() {
 }
 public function testDeleteFileWithWrongUrl() returns error? {
     Error? receivedError = wrongClientEp->delete(filePath);
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");
@@ -228,7 +228,7 @@ public function testDeleteFileWithWrongUrl() returns error? {
 }
 public function testRemoveDirectoryWithWrongUrl() {
     Error? receivedError = wrongClientEp->rmdir("/home/in/test");
-    if (receivedError is Error) {
+    if receivedError is Error {
         log:printInfo("Received error: " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response with a wrong URL");

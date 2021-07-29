@@ -34,13 +34,13 @@ public function testSecureGetFileContent() returns error? {
             test:assertTrue(arr2 is (),
                 msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
         } else {
-            if (arr1 is error) {
+            if arr1 is error {
                 test:assertFail(msg = "Error while `next` operation " + arr1.message());
             }
             test:assertFail(msg = "Found unexpected arr1 output type");
         }
         io:Error? closeResult = str.close();
-        if (closeResult is io:Error) {
+        if closeResult is io:Error {
             test:assertFail(msg = "Error while closing stream in `get` operation.");
         }
     } else {
@@ -79,14 +79,14 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
             test:assertTrue(arr2 is (),
                 msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
         } else {
-            if (arr1 is error) {
+            if arr1 is error {
                 test:assertFail(msg = "Error while `next` operation " + arr1.message());
             } else {
                 test:assertFail(msg = "Found unexpected response type");
             }
         }
         io:Error? closeResult = str.close();
-        if (closeResult is io:Error) {
+        if closeResult is io:Error {
             test:assertFail(msg = "Error while closing stream in `get` operation.");
         }
     } else {
@@ -127,14 +127,14 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
             test:assertTrue(arr2 is (),
                 msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
         } else {
-            if (arr1 is error) {
+            if arr1 is error {
                 test:assertFail(msg = "Error while `next` operation " + arr1.message());
             } else {
                 test:assertFail(msg = "Found unexpected response type");
             }
         }
         io:Error? closeResult = str.close();
-        if (closeResult is io:Error) {
+        if closeResult is io:Error {
             test:assertFail(msg = "Error while closing stream in `get` operation.");
         }
     } else {
@@ -151,7 +151,7 @@ public function testSecurePutFileContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
     Error? response = sftpClientEp->put("/tempFile1.txt", bStream);
-    if (response is Error) {
+    if response is Error {
         test:assertFail(msg = "Error in secure `put` operation");
     }
     log:printInfo("Executed secure `put` operation");
@@ -170,7 +170,7 @@ public function testSecurePutFileContent() returns error? {
             test:assertFail(msg = "Found unexpected arr1 output type");
         }
         io:Error? closeResult = str.close();
-        if (closeResult is io:Error) {
+        if closeResult is io:Error {
             test:assertFail(msg = "Error while closing stream in secure `get` operation.");
         }
     } else {
@@ -184,7 +184,7 @@ public function testSecurePutFileContent() returns error? {
 public function testSecureDeleteFileContent() returns error? {
 
     Error? response = sftpClientEp->delete("/tempFile1.txt");
-    if (response is Error) {
+    if response is Error {
         test:assertFail(msg = "Error in secure `delete` operation");
     }
     log:printInfo("Executed secure `delete` operation");
@@ -196,15 +196,15 @@ public function testSecureDeleteFileContent() returns error? {
             string fileContent = check strings:fromBytes(arr1.value);
             test:assertNotEquals(fileContent, "Put content",
                 msg = "File was not deleted with secure `delete` operation");
-        } else if (arr1 is io:Error) {
+        } else if arr1 is io:Error {
             test:assertFail(msg = "I/O Error during secure `get` operation after secure `delete` operation");
-        } else if (arr1 is error) {
+        } else if arr1 is error {
             test:assertFail(msg = "Found unexpected output type ");
         } else {
             test:assertFail(msg = "Nil type during secure `get` operation after secure `delete` operation");
         }
         io:Error? closeResult = str.close();
-        if (closeResult is io:Error) {
+        if closeResult is io:Error {
             test:assertFail(msg = "Error while closing the stream in secure `get` operation.");
         }
     } else {
