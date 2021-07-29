@@ -41,7 +41,7 @@ public function testSecureGetFileContent() returns error? {
         }
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
-            test:assertFail(msg = "Error while closing stream in `get` operation.");
+            test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
@@ -87,7 +87,7 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
         }
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
-            test:assertFail(msg = "Error while closing stream in `get` operation.");
+            test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
         test:assertEquals(str.message(),
@@ -135,7 +135,7 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
         }
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
-            test:assertFail(msg = "Error while closing stream in `get` operation.");
+            test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
         test:assertEquals(str.message(),
@@ -152,7 +152,7 @@ public function testSecurePutFileContent() returns error? {
 
     Error? response = sftpClientEp->put("/tempFile1.txt", bStream);
     if response is Error {
-        test:assertFail(msg = "Error in secure `put` operation");
+        test:assertFail(msg = "Error in secure `put` operation" + response.message());
     }
     log:printInfo("Executed secure `put` operation");
 
@@ -171,7 +171,7 @@ public function testSecurePutFileContent() returns error? {
         }
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
-            test:assertFail(msg = "Error while closing stream in secure `get` operation.");
+            test:assertFail(msg = "Error while closing stream in secure `get` operation." + closeResult.message());
         }
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
@@ -185,7 +185,7 @@ public function testSecureDeleteFileContent() returns error? {
 
     Error? response = sftpClientEp->delete("/tempFile1.txt");
     if response is Error {
-        test:assertFail(msg = "Error in secure `delete` operation");
+        test:assertFail(msg = "Error in secure `delete` operation" + response.message());
     }
     log:printInfo("Executed secure `delete` operation");
 
@@ -197,15 +197,15 @@ public function testSecureDeleteFileContent() returns error? {
             test:assertNotEquals(fileContent, "Put content",
                 msg = "File was not deleted with secure `delete` operation");
         } else if arr1 is io:Error {
-            test:assertFail(msg = "I/O Error during secure `get` operation after secure `delete` operation");
+            test:assertFail(msg = "I/O Error during secure `get` operation after secure `delete` operation" + arr1.message());
         } else if arr1 is error {
-            test:assertFail(msg = "Found unexpected output type ");
+            test:assertFail(msg = "Found unexpected output type " + arr1.message());
         } else {
             test:assertFail(msg = "Nil type during secure `get` operation after secure `delete` operation");
         }
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
-            test:assertFail(msg = "Error while closing the stream in secure `get` operation.");
+            test:assertFail(msg = "Error while closing the stream in secure `get` operation." + closeResult.message());
         }
     } else {
         test:assertEquals(str.message(),
