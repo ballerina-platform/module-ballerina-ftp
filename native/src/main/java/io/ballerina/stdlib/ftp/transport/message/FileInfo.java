@@ -123,6 +123,10 @@ public class FileInfo {
         this.isHidden = fileObject.isHidden();
         this.isReadable = fileObject.isReadable();
         this.isWritable = fileObject.isWriteable();
+        this.lastModifiedTime = fileObject.getContent().getLastModifiedTime();
+        if (this.isFile) {
+            this.fileSize = fileObject.getContent().getSize();
+        }
     }
 
     /**
