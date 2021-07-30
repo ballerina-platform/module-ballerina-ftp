@@ -506,6 +506,7 @@ public function testListFiles() {
     string[] resourceNames
         = ["child_directory", "test1.txt", "complexDirectory", "test", "folder1", "test3.zip", "childDirectory",
             "test2.txt", "test3.txt"];
+    int[] fileSizes = [0, 61, 0, 0, 0, 145, 0, 16400, 12];
     FileInfo[]|Error response = clientEp->list("/home/in");
     if response is FileInfo[] {
         log:printInfo("List of files/directories: ");
@@ -513,7 +514,11 @@ public function testListFiles() {
         foreach var fileInfo in response {
             log:printInfo(fileInfo.toString());
             test:assertEquals(fileInfo.path, "/home/in/" + resourceNames[i],
-                msg = "File path is not matched during `list` operation");
+                msg = "File path is not matched during the `list` operation");
+            test:assertTrue(fileInfo.lastModifiedTimestamp > 0,
+                msg = "Last Modified Timestamp of the file is not correct during the `list` operation");
+            test:assertEquals(fileInfo.size, fileSizes[i],
+                msg = "File size is not matched during the `list` operation");
             i = i + 1;
         }
         log:printInfo("Executed `list` operation");
