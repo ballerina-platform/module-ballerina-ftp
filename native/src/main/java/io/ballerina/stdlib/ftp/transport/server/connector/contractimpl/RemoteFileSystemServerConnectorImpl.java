@@ -18,7 +18,7 @@
 
 package io.ballerina.stdlib.ftp.transport.server.connector.contractimpl;
 
-import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.server.RemoteFileSystemConsumer;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
@@ -58,5 +58,9 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
         } catch (RemoteFileSystemConnectorException e) {
             log.error("Error executing the polling cycle of RemoteFileSystemServer for service: " + id, e);
         }
+    }
+
+    public void stop() throws RemoteFileSystemConnectorException {
+        consumer.close();
     }
 }

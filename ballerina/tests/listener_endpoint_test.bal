@@ -57,8 +57,8 @@ service "ftpServerConnector" on remoteServer {
 public function testAddedFileCount() {
     int timeoutInSeconds = 300;
     // Test fails in 5 minutes if failed to receive watchEvent
-    while (timeoutInSeconds > 0) {
-        if (watchEventReceived) {
+    while timeoutInSeconds > 0 {
+        if watchEventReceived {
             log:printInfo("Added file count: " + addedFileCount.toString());
             test:assertEquals(3, addedFileCount);
             break;
@@ -67,8 +67,37 @@ public function testAddedFileCount() {
             timeoutInSeconds = timeoutInSeconds - 1;
         }
     }
-    if (timeoutInSeconds == 0) {
+    if timeoutInSeconds == 0 {
         test:assertFail("Failed to receive WatchEvent for 5 minuetes.");
+    }
+}
+
+listener Listener detachFtpServer = new({
+    protocol: FTP,
+    host: "127.0.0.1",
+    auth: {
+        credentials: {
+            username: "wso2",
+            password: "wso2123"
+        }
+    },
+    port: 21212,
+    path: "/home/in",
+    pollingInterval: 2,
+    fileNamePattern: "(.*).txt"
+});
+
+@test:Config {}
+public function testFtpServerDeregistration() {
+    service object {} detachService = service object { function onFileChange(WatchEvent event) {} };
+    error? result1 = detachFtpServer.attach(detachService, "remote-server");
+    if result1 is error {
+        test:assertFail("Failed to attach to the FTP server: " + result1.message());
+    } else {
+        error? result2 = detachFtpServer.detach(detachService);
+        if result2 is error {
+            test:assertFail("Failed to detach from the FTP server: " + result2.message());
+        }
     }
 }
 
@@ -92,7 +121,7 @@ public function testServerRegisterFailureEmptyPassword() {
     error? result = emptyPasswordServer.attach(service object {
           function onFileChange(WatchEvent event) {}
     }, "remote-server");
-    if (result is error) {
+    if result is error {
         test:assertEquals(result.message(), "Failed to initialize File server connector for Service: remote-server");
     } else {
         test:assertFail("Empty password set to basic auth. Test should fail");
@@ -119,7 +148,7 @@ public function testServerRegisterFailureEmptyUsername() {
     error? result = emptyUsernameServer.attach(service object {
           function onFileChange(WatchEvent event) {}
     }, "remote-server");
-    if (result is error) {
+    if result is error {
         test:assertEquals(result.message(), "Username cannot be empty");
     } else {
         test:assertFail("Empty username set to basic auth. Test should fail");

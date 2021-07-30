@@ -20,7 +20,6 @@ package io.ballerina.stdlib.ftp.util;
 
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BString;
-import io.ballerina.stdlib.ftp.transport.Constants;
 
 /**
  * Constants for FTP operations.
@@ -33,11 +32,16 @@ public class FtpConstants {
 
     public static final String SUCCESSFULLY_FINISHED_THE_ACTION = "Successfully finished the action.";
 
-    public static final String PROPERTY_URI = Constants.URI;
-    public static final String PROPERTY_DESTINATION = Constants.DESTINATION;
-    public static final String FTP_PASSIVE_MODE = Constants.PASSIVE_MODE;
-    public static final String USER_DIR_IS_ROOT = Constants.USER_DIR_IS_ROOT;
-    public static final String AVOID_PERMISSION_CHECK = Constants.AVOID_PERMISSION_CHECK;
+    public static final String FILE_NAME_PATTERN = "fileNamePattern";
+    public static final String SCHEME_SFTP = "sftp";
+    public static final String SCHEME_FTP = "ftp";
+    public static final String URI = "uri";
+    public static final String PASSIVE_MODE = "PASSIVE_MODE";
+    public static final String USER_DIR_IS_ROOT = "USER_DIR_IS_ROOT";
+    public static final String DESTINATION = "destination";
+    public static final String IDENTITY = "IDENTITY";
+    public static final String IDENTITY_PASS_PHRASE = "IDENTITY_PASS_PHRASE";
+    public static final String AVOID_PERMISSION_CHECK = "AVOID_PERMISSION_CHECK";
     public static final String PROPERTY_MAP = "map";
     public static final String FTP_ORG_NAME = "ballerina";
     public static final String FTP_MODULE_NAME = "ftp";

@@ -31,10 +31,10 @@ import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BStream;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemBaseMessage;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
-import io.ballerina.stdlib.ftp.util.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.util.BufferHolder;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
@@ -319,7 +319,7 @@ class FtpClientHelper {
     static RemoteFileSystemMessage getUncompressedMessage(BObject clientConnector, String filePath,
             Map<String, String> propertyMap, InputStream stream) throws BallerinaFtpException {
         String url = FtpUtil.createUrl(clientConnector, filePath);
-        propertyMap.put(FtpConstants.PROPERTY_URI, url);
+        propertyMap.put(FtpConstants.URI, url);
         return new RemoteFileSystemMessage(stream);
     }
 
@@ -330,7 +330,7 @@ class FtpClientHelper {
         try {
             String compressedFilePath = FtpUtil.getCompressedFileName(filePath);
             String url = FtpUtil.createUrl(clientConnector, compressedFilePath);
-            propertyMap.put(FtpConstants.PROPERTY_URI, url);
+            propertyMap.put(FtpConstants.URI, url);
             return new RemoteFileSystemMessage(compressedStream);
         } catch (BallerinaFtpException e) {
             log.error(e.getMessage());

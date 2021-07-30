@@ -76,3 +76,9 @@ isolated function register(Listener listenerEndpoint, ListenerConfiguration conf
     name: "register",
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
 } external;
+
+isolated function deregister(Listener listenerEndpoint, service object {} ftpService)
+        returns Error? = @java:Method{
+    name: "deregister",
+    'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
+} external;

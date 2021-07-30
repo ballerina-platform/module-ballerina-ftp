@@ -22,12 +22,11 @@ import io.ballerina.runtime.api.Runtime;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
-import io.ballerina.stdlib.ftp.transport.Constants;
+import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
-import io.ballerina.stdlib.ftp.transport.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
-import io.ballerina.stdlib.ftp.util.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 
@@ -85,7 +84,7 @@ public class FtpListenerHelper {
         BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String url = FtpUtil.createUrl(serviceEndpointConfig);
-        params.put(Constants.URI, url);
+        params.put(FtpConstants.URI, url);
         addStringProperty(serviceEndpointConfig, params);
         if (auth != null) {
             final BMap privateKey = auth.getMapValue(StringUtils.fromString(
@@ -93,17 +92,17 @@ public class FtpListenerHelper {
             if (privateKey != null) {
                 final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PATH))).getValue();
-                params.put(Constants.IDENTITY, privateKeyPath);
+                params.put(FtpConstants.IDENTITY, privateKeyPath);
                 final String privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
                 if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
-                    params.put(Constants.IDENTITY_PASS_PHRASE, privateKeyPassword);
+                    params.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword);
                 }
             }
         }
-        params.put(Constants.USER_DIR_IS_ROOT, String.valueOf(false));
-        params.put(Constants.AVOID_PERMISSION_CHECK, String.valueOf(true));
-        params.put(Constants.PASSIVE_MODE, String.valueOf(true));
+        params.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(false));
+        params.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
+        params.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
         return params;
     }
 
@@ -112,7 +111,7 @@ public class FtpListenerHelper {
         final String value = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN)))
                 .getValue();
         if (value != null && !value.isEmpty()) {
-            params.put(Constants.FILE_NAME_PATTERN, value);
+            params.put(FtpConstants.FILE_NAME_PATTERN, value);
         }
     }
 
@@ -124,7 +123,25 @@ public class FtpListenerHelper {
             connector.poll();
         } catch (RemoteFileSystemConnectorException e) {
             throw new BallerinaFtpException(e.getMessage());
-
         }
     }
+
+    public static Object deregister(BObject ftpListener, BObject service) {
+        try {
+            Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+            if (serverConnectorObject instanceof RemoteFileSystemServerConnector) {
+                RemoteFileSystemServerConnector serverConnector
+                        = (RemoteFileSystemServerConnector) serverConnectorObject;
+                serverConnector.stop();
+            }
+        } catch (RemoteFileSystemConnectorException e) {
+            Throwable rootCause = findRootCause(e);
+            String detail = (rootCause != null) ? rootCause.getMessage() : null;
+            return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
+        } finally {
+            ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
+        }
+        return null;
+    }
+
 }

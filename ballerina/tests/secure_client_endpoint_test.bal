@@ -34,14 +34,14 @@ public function testSecureGetFileContent() returns error? {
             test:assertTrue(arr2 is (),
                 msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
         } else {
-            if (arr1 is error) {
+            if arr1 is error {
                 test:assertFail(msg = "Error while `next` operation " + arr1.message());
             }
             test:assertFail(msg = "Found unexpected arr1 output type");
         }
         io:Error? closeResult = str.close();
-        if (closeResult is io:Error) {
-            test:assertFail(msg = "Error while closing stream in `get` operation.");
+        if closeResult is io:Error {
+            test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
@@ -79,15 +79,15 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
             test:assertTrue(arr2 is (),
                 msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
         } else {
-            if (arr1 is error) {
-                log:printError("Error while `next` operation " + arr1.message());
+            if arr1 is error {
+                test:assertFail(msg = "Error while `next` operation " + arr1.message());
             } else {
                 test:assertFail(msg = "Found unexpected response type");
             }
         }
         io:Error? closeResult = str.close();
-        if (closeResult is io:Error) {
-            test:assertFail(msg = "Error while closing stream in `get` operation.");
+        if closeResult is io:Error {
+            test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
         test:assertEquals(str.message(),
@@ -127,18 +127,20 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
             test:assertTrue(arr2 is (),
                 msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
         } else {
-            if (arr1 is error) {
-                log:printError("Error while `next` operation " + arr1.message());
+            if arr1 is error {
+                test:assertFail(msg = "Error while `next` operation " + arr1.message());
             } else {
                 test:assertFail(msg = "Found unexpected response type");
             }
         }
         io:Error? closeResult = str.close();
-        if (closeResult is io:Error) {
-            test:assertFail(msg = "Error while closing stream in `get` operation.");
+        if closeResult is io:Error {
+            test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-        test:assertTrue(true);
+        test:assertEquals(str.message(),
+            "Could not connect to SFTP server at \"sftp://wso2:***@127.0.0.1:21213/\".",
+            msg = "Correct error is not given when the wrong key is used to connect.");
     }
 }
 
@@ -149,8 +151,8 @@ public function testSecurePutFileContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
     Error? response = sftpClientEp->put("/tempFile1.txt", bStream);
-    if (response is Error) {
-        log:printError("Error in secure put operation", 'error = response);
+    if response is Error {
+        test:assertFail(msg = "Error in secure `put` operation" + response.message());
     }
     log:printInfo("Executed secure `put` operation");
 
@@ -168,8 +170,8 @@ public function testSecurePutFileContent() returns error? {
             test:assertFail(msg = "Found unexpected arr1 output type");
         }
         io:Error? closeResult = str.close();
-        if (closeResult is io:Error) {
-            test:assertFail(msg = "Error while closing stream in secure `get` operation.");
+        if closeResult is io:Error {
+            test:assertFail(msg = "Error while closing stream in secure `get` operation." + closeResult.message());
         }
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
@@ -182,8 +184,8 @@ public function testSecurePutFileContent() returns error? {
 public function testSecureDeleteFileContent() returns error? {
 
     Error? response = sftpClientEp->delete("/tempFile1.txt");
-    if (response is Error) {
-        log:printError("Error in secure `delete` operation", 'error = response);
+    if response is Error {
+        test:assertFail(msg = "Error in secure `delete` operation" + response.message());
     }
     log:printInfo("Executed secure `delete` operation");
 
@@ -194,18 +196,20 @@ public function testSecureDeleteFileContent() returns error? {
             string fileContent = check strings:fromBytes(arr1.value);
             test:assertNotEquals(fileContent, "Put content",
                 msg = "File was not deleted with secure `delete` operation");
-        } else if (arr1 is io:Error) {
-            test:assertFail(msg = "I/O Error during secure `get` operation after secure `delete` operation");
-        } else if (arr1 is error) {
-            test:assertFail(msg = "Found unexpected output type ");
+        } else if arr1 is io:Error {
+            test:assertFail(msg = "I/O Error during secure `get` operation after secure `delete` operation" + arr1.message());
+        } else if arr1 is error {
+            test:assertFail(msg = "Found unexpected output type " + arr1.message());
         } else {
             test:assertFail(msg = "Nil type during secure `get` operation after secure `delete` operation");
         }
         io:Error? closeResult = str.close();
-        if (closeResult is io:Error) {
-            test:assertFail(msg = "Error while closing stream in secure `get` operation.");
+        if closeResult is io:Error {
+            test:assertFail(msg = "Error while closing the stream in secure `get` operation." + closeResult.message());
         }
     } else {
-        test:assertTrue(true);
+        test:assertEquals(str.message(),
+            "Failed to read file: sftp://wso2:wso2123@127.0.0.1:21213/tempFile1.txt not found",
+            msg = "Correct error is not given when trying to get a non-existing file.");
     }
 }
