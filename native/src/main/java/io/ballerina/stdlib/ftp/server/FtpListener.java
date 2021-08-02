@@ -52,14 +52,12 @@ public class FtpListener implements RemoteFileSystemListener {
     private final BObject service;
 
     FtpListener(Runtime runtime, BObject service) {
-
         this.runtime = runtime;
         this.service = service;
     }
 
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
-
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             BMap<BString, Object> parameters = getSignatureParameters(event);
@@ -78,7 +76,6 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     private BMap<BString, Object> getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
-
         BMap<BString, Object> watchEventStruct = ValueCreator.createRecordValue(
                 new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
                         FtpUtil.getFtpPackage().getVersion()), FtpConstants.FTP_SERVER_EVENT);

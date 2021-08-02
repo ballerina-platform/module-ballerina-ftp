@@ -26,7 +26,6 @@ import io.ballerina.stdlib.ftp.util.FtpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
@@ -37,10 +36,8 @@ import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 public class FtpClientListener implements RemoteFileSystemListener {
 
     private static final Logger log = LoggerFactory.getLogger(FtpClientListener.class);
-    private CompletableFuture<Object> future;
     private Function<RemoteFileSystemBaseMessage, Boolean> function;
     private boolean isGenericAction;
-
     private Future balFuture;
 
     FtpClientListener(Future listenerFuture, boolean isGenericAction,

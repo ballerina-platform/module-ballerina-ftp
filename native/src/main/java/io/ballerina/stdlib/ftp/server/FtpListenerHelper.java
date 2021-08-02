@@ -78,9 +78,7 @@ public class FtpListenerHelper {
 
     private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
             throws BallerinaFtpException {
-
         Map<String, String> params = new HashMap<>(12);
-
         BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String url = FtpUtil.createUrl(serviceEndpointConfig);
@@ -107,7 +105,6 @@ public class FtpListenerHelper {
     }
 
     private static void addStringProperty(BMap config, Map<String, String> params) {
-
         final String value = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN)))
                 .getValue();
         if (value != null && !value.isEmpty()) {
@@ -116,7 +113,6 @@ public class FtpListenerHelper {
     }
 
     public static void poll(BMap<Object, Object> config) throws BallerinaFtpException {
-
         RemoteFileSystemServerConnector connector = (RemoteFileSystemServerConnector) config.
                 getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         try {
