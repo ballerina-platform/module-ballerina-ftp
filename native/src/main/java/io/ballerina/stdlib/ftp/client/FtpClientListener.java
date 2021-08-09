@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.client;
 
 import io.ballerina.runtime.api.Future;
+import io.ballerina.runtime.api.values.BError;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemBaseMessage;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
@@ -60,10 +61,11 @@ public class FtpClientListener implements RemoteFileSystemListener {
     }
 
     @Override
-    public void done() {
+    public BError done() {
         if (isGenericAction) {
             balFuture.complete(null);
         }
         log.debug(FtpConstants.SUCCESSFULLY_FINISHED_THE_ACTION);
+        return null;
     }
 }

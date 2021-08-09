@@ -193,7 +193,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                 try {
                     path.close();
                 } catch (FileSystemException e) {
-                    //Do nothing.
+                    logger.error("Error while closing the remote file.");
                 }
             }
             closeQuietly(outputStream);
@@ -211,7 +211,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                 closeable.close();
             }
         } catch (IOException e) {
-            // Do nothing.
+            logger.error("Error while closing the stream.");
         }
     }
 }

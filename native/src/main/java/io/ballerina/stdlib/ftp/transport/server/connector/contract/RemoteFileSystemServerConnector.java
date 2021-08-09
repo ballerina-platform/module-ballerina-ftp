@@ -39,5 +39,5 @@ public interface RemoteFileSystemServerConnector {
      *
      * @throws RemoteFileSystemConnectorException if execution failed.
      */
-    void stop() throws RemoteFileSystemConnectorException;
+    Object stop() throws RemoteFileSystemConnectorException;
 }

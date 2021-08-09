@@ -20,6 +20,7 @@ package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Runtime;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
@@ -67,7 +68,7 @@ public class FtpListenerHelper {
         }
     }
 
-    private static Throwable findRootCause(Throwable throwable) {
+    protected static Throwable findRootCause(Throwable throwable) {
         Objects.requireNonNull(throwable);
         Throwable rootCause = throwable;
         while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
@@ -128,7 +129,10 @@ public class FtpListenerHelper {
             if (serverConnectorObject instanceof RemoteFileSystemServerConnector) {
                 RemoteFileSystemServerConnector serverConnector
                         = (RemoteFileSystemServerConnector) serverConnectorObject;
-                serverConnector.stop();
+                Object stopError = serverConnector.stop();
+                if (stopError instanceof BError) {
+                    return stopError;
+                }
             }
         } catch (RemoteFileSystemConnectorException e) {
             Throwable rootCause = findRootCause(e);
