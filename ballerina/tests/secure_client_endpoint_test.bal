@@ -67,7 +67,7 @@ public function testSecureConnectWithWrongPassword() returns error? {
     };
 
     Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if (incorrectSftpClientEp is Error) {
+    if incorrectSftpClientEp is Error {
         test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
     } else {
@@ -94,7 +94,7 @@ public function testSecureConnectWithWrongKey() returns error? {
     };
 
     Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if (incorrectSftpClientEp is Error) {
+    if incorrectSftpClientEp is Error {
         test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with an invalid key. " + incorrectSftpClientEp.message());
     } else {
