@@ -16,7 +16,6 @@
 
 import ballerina/io;
 import ballerina/test;
-// import ballerina/log;
 
 @test:Config{
     dependsOn: [testReadBlockNonFittingContent]
