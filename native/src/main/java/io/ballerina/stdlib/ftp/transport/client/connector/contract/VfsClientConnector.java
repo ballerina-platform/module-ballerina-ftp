@@ -31,6 +31,8 @@ public interface VfsClientConnector {
      * @param message {@link RemoteFileSystemMessage} which contains relevant information which need to send to target
      *                file system.
      * @param action FTP action that need to perform.
+     * @param filePath path of the file or the directory to be invoked on.
+     * @param destination path of the file or the directory after getting changed if applicable.
      */
-    void send(RemoteFileSystemMessage message, FtpAction action);
+    void send(RemoteFileSystemMessage message, FtpAction action, String filePath, String destination);
 }

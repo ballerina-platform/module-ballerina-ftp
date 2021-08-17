@@ -18,6 +18,7 @@
 
 package io.ballerina.stdlib.ftp.transport.client.connector.contractimpl;
 
+import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.FtpAction;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
@@ -54,42 +55,59 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
     private Map<String, String> connectorConfig;
     private RemoteFileSystemListener remoteFileSystemListener;
     private FileSystemOptions opts;
+    private FileObject path = null;
+    private FileSystemManager fsManager;
 
-    public VfsClientConnectorImpl(Map<String, String> config, RemoteFileSystemListener listener)
+    public VfsClientConnectorImpl(Map<String, String> config)
             throws RemoteFileSystemConnectorException {
         this.connectorConfig = config;
-        this.remoteFileSystemListener = listener;
         opts = FileTransportUtils.attachFileSystemOptions(config);
+        String fileURI = null;
+        try {
+            fsManager = VFS.getManager();
+            fileURI = connectorConfig.get(FtpConstants.URI);
+            path = fsManager.resolveFile(fileURI, opts);
+        } catch (FileSystemException e) {
+            throw new RemoteFileSystemConnectorException("Error while connecting to the FTP server with URL: "
+                    + (fileURI != null ? fileURI : ""));
+        }
+    }
+
+    public void addListener(RemoteFileSystemListener listener) {
+        this.remoteFileSystemListener = listener;
     }
 
     @Override
-    public void send(RemoteFileSystemMessage message, FtpAction action) {
-        String fileURI = connectorConfig.get(FtpConstants.URI);
+    public void send(RemoteFileSystemMessage message, FtpAction action, String filePath, String destination) {
         InputStream inputStream;
         OutputStream outputStream = null;
         ByteBuffer byteBuffer;
-        FileObject path = null;
+        FileObject fileObject = null;
         boolean pathClose = true;
         try {
-            FileSystemManager fsManager = VFS.getManager();
-            path = fsManager.resolveFile(fileURI, opts);
+            try {
+                fileObject = path.resolveFile(filePath);
+            } catch (FileSystemException e) {
+                throw new BallerinaFtpException(e.getMessage());
+            }
             switch (action) {
                 case MKDIR:
-                    if (path.exists()) {
-                        throw new RemoteFileSystemConnectorException("Directory exists: " + path.getName().getURI());
+                    if (fileObject.exists()) {
+                        throw new RemoteFileSystemConnectorException("Directory exists: "
+                                + fileObject.getName().getURI());
                     }
-                    path.createFolder();
+                    fileObject.createFolder();
                     break;
                 case PUT:
                 case APPEND:
-                    if (!path.exists()) {
-                        path.createFile();
-                        path.refresh();
+                    if (!fileObject.exists()) {
+                        fileObject.createFile();
+                        fileObject.refresh();
                     }
                     if (FtpAction.APPEND.equals(action)) {
-                        outputStream = path.getContent().getOutputStream(true);
+                        outputStream = fileObject.getContent().getOutputStream(true);
                     } else {
-                        outputStream = path.getContent().getOutputStream();
+                        outputStream = fileObject.getContent().getOutputStream();
                     }
                     inputStream = message.getInputStream();
                     byteBuffer = message.getBytes();
@@ -105,30 +123,29 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                     outputStream.flush();
                     break;
                 case DELETE:
-                    if (path.exists()) {
-                        int filesDeleted = path.delete(Selectors.SELECT_SELF);
+                    if (fileObject.exists()) {
+                        int filesDeleted = fileObject.delete(Selectors.SELECT_SELF);
                         if (logger.isDebugEnabled()) {
                             logger.debug(filesDeleted + " files successfully deleted");
                         }
                     } else {
                         throw new RemoteFileSystemConnectorException(
-                                "Failed to delete file: " + path.getName().getURI() + " not found");
+                                "Failed to delete file: " + fileObject.getName().getURI() + " not found");
                     }
                     break;
                 case RMDIR:
-                    if (path.exists()) {
-                        int filesDeleted = path.delete(Selectors.SELECT_ALL);
+                    if (fileObject.exists()) {
+                        int filesDeleted = fileObject.delete(Selectors.SELECT_ALL);
                         if (logger.isDebugEnabled()) {
                             logger.debug(filesDeleted + " files successfully deleted");
                         }
                     } else {
                         throw new RemoteFileSystemConnectorException(
-                                "Failed to delete directory: " + path.getName().getURI() + " not found");
+                                "Failed to delete directory: " + fileObject.getName().getURI() + " not found");
                     }
                     break;
                 case RENAME:
-                    if (path.exists()) {
-                        String destination = connectorConfig.get(FtpConstants.DESTINATION);
+                    if (fileObject.exists()) {
                         try (FileObject newPath = fsManager.resolveFile(destination, opts);
                                 FileObject parent = newPath.getParent()) {
                             if (parent != null) {
@@ -137,7 +154,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                                 }
                                 try (FileObject finalPath = parent.resolveFile(newPath.getName().getBaseName())) {
                                     if (!finalPath.exists()) {
-                                        path.moveTo(finalPath);
+                                        fileObject.moveTo(finalPath);
                                     } else {
                                         throw new RemoteFileSystemConnectorException(
                                                 "The file at " + newPath.getURL().toString()
@@ -148,13 +165,13 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         }
                     } else {
                         throw new RemoteFileSystemConnectorException(
-                                "Failed to rename file: " + path.getName().getURI() + " not found");
+                                "Failed to rename file: " + fileObject.getName().getURI() + " not found");
                     }
                     break;
                 case GET:
-                    if (path.exists()) {
-                        inputStream = path.getContent().getInputStream();
-                        FileObjectInputStream objectInputStream = new FileObjectInputStream(inputStream, path);
+                    if (fileObject.exists()) {
+                        inputStream = fileObject.getContent().getInputStream();
+                        FileObjectInputStream objectInputStream = new FileObjectInputStream(inputStream, fileObject);
                         RemoteFileSystemMessage fileContent = new RemoteFileSystemMessage(objectInputStream);
                         remoteFileSystemListener.onMessage(fileContent);
                         // We can't close the FileObject or InputStream at the end. This InputStream will pass to upper
@@ -163,35 +180,38 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         pathClose = false;
                     } else {
                         throw new RemoteFileSystemConnectorException(
-                                "Failed to read file: " + path.getName().getURI() + " not found");
+                                "Failed to read file: " + fileObject.getName().getURI() + " not found");
                     }
                     break;
                 case SIZE:
-                    remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(path.getContent().getSize()));
+                    remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.getContent().getSize()));
                     break;
                 case LIST:
-                    final FileObject[] fileObjects = path.getChildren();
+                    final FileObject[] fileObjects = fileObject.getChildren();
                     Map<String, FileInfo> childrenInfo = new HashMap<>();
-                    for (FileObject fileObject : fileObjects) {
-                        FileInfo fileInfo = new FileInfo(fileObject);
+                    for (FileObject tmpFileObject : fileObjects) {
+                        FileInfo fileInfo = new FileInfo(tmpFileObject);
                         childrenInfo.put(fileInfo.getBaseName(), fileInfo);
                     }
                     RemoteFileSystemMessage children = new RemoteFileSystemMessage(childrenInfo);
                     remoteFileSystemListener.onMessage(children);
                     break;
                 case ISDIR:
-                    remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(path.isFolder()));
+                    if (!fileObject.exists()) {
+                        throw new BallerinaFtpException(filePath + " does not exists to check if it is a directory.");
+                    }
+                    remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.isFolder()));
                     break;
                 default:
                     break;
             }
             remoteFileSystemListener.done();
-        } catch (RemoteFileSystemConnectorException | IOException e) {
+        } catch (BallerinaFtpException | RemoteFileSystemConnectorException | IOException e) {
             remoteFileSystemListener.onError(e);
         } finally {
-            if (path != null && pathClose) {
+            if (fileObject != null && pathClose) {
                 try {
-                    path.close();
+                    fileObject.close();
                 } catch (FileSystemException e) {
                     logger.error("Error while closing the remote file.");
                 }
@@ -214,4 +234,5 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             logger.error("Error while closing the stream.");
         }
     }
+
 }

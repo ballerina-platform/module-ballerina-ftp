@@ -43,6 +43,7 @@ public class FtpConstants {
     public static final String IDENTITY_PASS_PHRASE = "IDENTITY_PASS_PHRASE";
     public static final String AVOID_PERMISSION_CHECK = "AVOID_PERMISSION_CHECK";
     public static final String PROPERTY_MAP = "map";
+    public static final String VFS_CLIENT_CONNECTOR = "VfsClientConnector";
     public static final String FTP_ORG_NAME = "ballerina";
     public static final String FTP_MODULE_NAME = "ftp";
     public static final String ENTITY_BYTE_STREAM = "entity_byte_stream";
