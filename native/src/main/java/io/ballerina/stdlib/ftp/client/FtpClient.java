@@ -300,15 +300,8 @@ public class FtpClient {
     }
 
     public static Object size(Environment env, BObject clientConnector, BString filePath) {
-        String url;
-        try {
-            url = FtpUtil.createUrl(clientConnector, filePath.getValue());
-        } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), Error.errorType());
-        }
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-        propertyMap.put(FtpConstants.URI, url);
         propertyMap.put(FtpConstants.PASSIVE_MODE, Boolean.TRUE.toString());
         Future balFuture = env.markAsync();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->

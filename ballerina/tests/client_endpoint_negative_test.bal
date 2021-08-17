@@ -16,7 +16,7 @@
 
 import ballerina/io;
 import ballerina/test;
-import ballerina/log;
+// import ballerina/log;
 
 @test:Config{
     dependsOn: [testReadBlockNonFittingContent]
@@ -29,10 +29,30 @@ public function testConnectionWithNonExistingServer() returns error? {
             auth: {credentials: {username: "wso2", password: "wso2123"}}
     };
     Client|Error nonExistingServerClientEp = new(nonExistingServerConfig);
-    if (nonExistingServerClientEp is error) {
-        log:printInfo("Received error: " + nonExistingServerClientEp.message());
+    if (nonExistingServerClientEp is Error) {
+        test:assertTrue(nonExistingServerClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error when tried to connect to a non existing server. " + nonExistingServerClientEp.message());
     } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
+        test:assertFail(msg = "Found a non-error response when tried to connect to a non existing server.");
+    }
+}
+
+@test:Config{
+    dependsOn: [testReadBlockNonFittingContent]
+}
+public function testConnectionWithInvalidConfiguration() returns error? {
+    ClientConfiguration invalidConfig = {
+            protocol: FTP,
+            host: "!@#$%^&*()",
+            port: 21212,
+            auth: {credentials: {username: "wso2", password: "wso2123"}}
+    };
+    Client|Error invalidServerClientEp = new(invalidConfig);
+    if (invalidServerClientEp is Error) {
+        test:assertTrue(invalidServerClientEp.message().startsWith("Error occurred while constructing a URI from host: "),
+            msg = "Unexpected error when tried to connect with invalid parameters. " + invalidServerClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response when tried to connect with invalid parameters.");
     }
 }
 
