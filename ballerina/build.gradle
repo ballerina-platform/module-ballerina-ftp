@@ -35,9 +35,7 @@ def packageName = "ftp"
 def packageOrg = "ballerina"
 def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
 def ballerinaConfigFile = new File("$project.projectDir/Ballerina.toml")
-def ballerinaDependencyFile = new File("$project.projectDir/Dependencies.toml")
 def originalConfig = ballerinaConfigFile.text
-def originalDependencyConfig = ballerinaDependencyFile.text
 
 def stripBallerinaExtensionVersion(String extVersion) {
     if (extVersion.matches(project.ext.timestampedVersionRegex)) {
@@ -112,10 +110,6 @@ dependencies {
 
 task updateTomlFiles {
     doLast {
-        def stdlibDependentTaskVersion = stripBallerinaExtensionVersion(project.stdlibTaskVersion)
-        def stdlibDependentLogVersion = stripBallerinaExtensionVersion(project.stdlibLogVersion)
-        def stdlibDependentIoVersion = stripBallerinaExtensionVersion(project.stdlibIoVersion)
-
         def stdlibDependentCommonsVfsVersion = project.commonsVfsVersion
         def stdlibDependentCommonsLang3Version = project.commonsLang3Version
         def stdlibDependentJschVersion = project.jschVersion
@@ -147,18 +141,12 @@ task updateTomlFiles {
         newConfig = newConfig.replace("@jcl.slf4j.version@", stdlibDependentJclSlf4jVersion)
 
         ballerinaConfigFile.text = newConfig
-
-        def newDependencyConfig = ballerinaDependencyFile.text.replace("@stdlib.io.version@", stdlibDependentIoVersion)
-        newDependencyConfig = newDependencyConfig.replace("@stdlib.log.version@", stdlibDependentLogVersion)
-        newDependencyConfig = newDependencyConfig.replace("@stdlib.task.version@", stdlibDependentTaskVersion)
-        ballerinaDependencyFile.text = newDependencyConfig
     }
 }
 
 task revertTomlFiles {
     doLast {
         ballerinaConfigFile.text = originalConfig
-        ballerinaDependencyFile.text = originalDependencyConfig
     }
 }
 

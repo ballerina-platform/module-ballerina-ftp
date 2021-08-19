@@ -2,6 +2,7 @@
 org = "ballerina"
 name = "ftp"
 version = "@toml.version@"
+distribution = "slbeta3"
 
 [[platform.java11.dependency]]
 path = "./lib/commons-vfs2-@commons.vfs2.version@.jar"
