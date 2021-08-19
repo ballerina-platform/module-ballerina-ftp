@@ -16,42 +16,42 @@
 
 import ballerina/io;
 import ballerina/test;
-import ballerina/log;
-
-// Create the incorrect config with invalid host
-ClientConfiguration wrongConfig = {
-        protocol: FTP,
-        host: "#!@$%^&*(_+",
-        port: 21212,
-        auth: {credentials: {username: "wso2", password: "wso2123"}}
-};
-
-Client wrongClientEp = new(wrongConfig);
-
-// Create the incorrect config for non-existing server
-ClientConfiguration nonExistingServerConfig = {
-        protocol: FTP,
-        host: "127.0.0.1",
-        port: 21218,
-        auth: {credentials: {username: "wso2", password: "wso2123"}}
-};
-
-Client nonExistingServerClientEp = new(nonExistingServerConfig);
 
 @test:Config{
     dependsOn: [testReadBlockNonFittingContent]
 }
-public function testReadWithWrongUrl() returns error? {
-    stream<byte[] & readonly, io:Error?>|Error str = wrongClientEp->get(filePath, 6);
-    if (str is stream<byte[] & readonly, io:Error?>) {
-        var receivedError = trap str.next();
-        if receivedError is error {
-            test:assertFail(msg = "Found unexpected response type" + receivedError.message());
-        } else {
-            test:assertFail(msg = "Found a non-error response with a wrong URL");
-        }
+public function testConnectionWithNonExistingServer() returns error? {
+    ClientConfiguration nonExistingServerConfig = {
+            protocol: FTP,
+            host: "127.0.0.1",
+            port: 21218,
+            auth: {credentials: {username: "wso2", password: "wso2123"}}
+    };
+    Client|Error nonExistingServerClientEp = new(nonExistingServerConfig);
+    if nonExistingServerClientEp is Error {
+        test:assertTrue(nonExistingServerClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error when tried to connect to a non existing server. " + nonExistingServerClientEp.message());
     } else {
-       log:printInfo("Received error: " + str.message());
+        test:assertFail(msg = "Found a non-error response when tried to connect to a non existing server.");
+    }
+}
+
+@test:Config{
+    dependsOn: [testReadBlockNonFittingContent]
+}
+public function testConnectionWithInvalidConfiguration() returns error? {
+    ClientConfiguration invalidConfig = {
+            protocol: FTP,
+            host: "!@#$%^&*()",
+            port: 21212,
+            auth: {credentials: {username: "wso2", password: "wso2123"}}
+    };
+    Client|Error invalidServerClientEp = new(invalidConfig);
+    if invalidServerClientEp is Error {
+        test:assertTrue(invalidServerClientEp.message().startsWith("Error occurred while constructing a URI from host: "),
+            msg = "Unexpected error when tried to connect with invalid parameters. " + invalidServerClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response when tried to connect with invalid parameters.");
     }
 }
 
@@ -60,166 +60,120 @@ public function testReadWithWrongUrl() returns error? {
 }
 public function testReadNonExistingFile() returns error? {
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get("/home/in/nonexisting.txt", 6);
-    if (str is stream<byte[] & readonly, io:Error?>) {
-        var receivedError = trap str.next();
-        if receivedError is error {
-            test:assertFail(msg = "Found unexpected response type" + receivedError.message());
-        } else {
-            test:assertFail(msg = "Found a non-error response from a non-existing file path");
-        }
+    if str is Error {
+        test:assertEquals(str.message(), "Failed to read file: ftp://wso2:wso2123@127.0.0.1:21212/home/in/nonexisting.txt not found",
+            msg = "Unexpected error during the `get` operation of an non-existing file.");
     } else {
-       log:printInfo("Received error: " + str.message());
+        test:assertFail(msg = "Found a non-error response while accessing a non-existing file path");
     }
 }
 
 @test:Config{
     dependsOn: [testAppendContent]
 }
-public function testAppendContentWithWrongUrl() returns error? {
+public function testAppendContentToNonExistingFile() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(appendFilePath, 7);
-
-    Error? receivedError =  wrongClientEp->append(filePath, bStream);
+    Error? receivedError =  clientEp->append("/../invalidFile", bStream);
     if receivedError is Error {
-        log:printInfo("Received error: " + receivedError.message());
+        test:assertEquals(receivedError.message(), "Invalid relative file name.",
+            msg = "Unexpected error during the `append` operation of an invalid file.");
     } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
+        test:assertFail(msg = "Found a non-error response while accessing a non-existing file path");
     }
 }
 
 @test:Config{
     dependsOn: [testPutFileContent]
 }
-public function testPutFileContentWithWrongUrl() returns error? {
+public function testPutFileContentAtInvalidFileLocation() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-
-    Error? receivedError = wrongClientEp->put(newFilePath, bStream);
-
+    Error? receivedError = clientEp->put("/../InvalidFile", bStream);
     if receivedError is Error {
-        log:printInfo("Received error: " + receivedError.message());
+        test:assertEquals(receivedError.message(), "Invalid relative file name.",
+            msg = "Unexpected error during the `put` operation of an invalid file.");
     } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
+        test:assertFail(msg = "Found a non-error response while accessing a non-existing file path");
     }
 }
 
 @test:Config{
     dependsOn: [testIsDirectory]
 }
-public function testIsDirectoryWithWrongUrl() {
-    boolean|Error receivedError = wrongClientEp->isDirectory("/home/in");
+public function testIsDirectoryWithNonExistingDirectory() {
+    boolean|Error receivedError = clientEp->isDirectory("/home/in/nonexisting");
     if receivedError is Error {
-        log:printInfo("Received error: " + receivedError.message());
+        test:assertEquals(receivedError.message(), "/home/in/nonexisting does not exists to check if it is a directory.",
+            msg = "Unexpected error during the `isDirectory` operation of an non-existing directory. " + receivedError.message());
     } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
-    }
-}
-
-@test:Config{
-    dependsOn: [testIsDirectory]
-}
-public function testIsDirectoryWithNonExistingServer() {
-    boolean|Error receivedError = nonExistingServerClientEp->isDirectory("/home/in");
-    if receivedError is Error {
-        log:printInfo("Received error for non-existing server: " + receivedError.message());
-    } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
+        test:assertFail(msg = "Found a non-error response while accessing a non-existing directory path.");
     }
 }
 
 @test:Config{
     dependsOn: [testCreateDirectory]
 }
-public function testCreateDirectoryWithWrongUrl() {
-    Error? response = wrongClientEp->mkdir("/home/in/out");
-    if response is Error {
-        log:printInfo("Received error: " + response.message());
-    } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
-    }
-}
-
-@test:Config{
-    dependsOn: [testCreateDirectoryWithWrongUrl]
-}
-public function testCreateDirectoryWithNonExistingServer() {
-    Error? receivedError = nonExistingServerClientEp->mkdir("/home/in/out");
+public function testCreateDirectoryAtInvalidLocation() {
+    Error? receivedError = clientEp->mkdir("/../InvalidDirectory");
     if receivedError is Error {
-        log:printInfo("Received error for non-existing server: " + receivedError.message());
+        test:assertEquals(receivedError.message(), "Invalid relative file name.",
+            msg = "Unexpected error during the `mkdir` operation of an non-existing directory. " + receivedError.message());
     } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
+        test:assertFail(msg = "Found a non-error response while accessing a non-existing directory path.");
     }
 }
 
 @test:Config{
     dependsOn: [testRenameDirectory]
 }
-public function testRenameDirectoryWithWrongUrl() {
-    string existingName = "/home/in/out";
-    string newName = "/home/in/test";
-    Error? receivedError = wrongClientEp->rename(existingName, newName);
+public function testRenameNonExistingDirectory() {
+    string existingName = "/nonExistingDirectory";
+    string newName = "/home/in/differentDirectory";
+    Error? receivedError = clientEp->rename(existingName, newName);
+
     if receivedError is Error {
-        log:printInfo("Received error: " + receivedError.message());
+        test:assertTrue(receivedError.message().startsWith("Failed to rename file: "),
+            msg = "Unexpected error during the `rename` operation of an non-existing file. " + receivedError.message());
     } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
+        test:assertFail(msg = "Found a non-error response while accessing a non existing directory path.");
     }
 }
 
 @test:Config{
     dependsOn: [testGetFileSize]
 }
-public function testGetFileSizeWithWrongUrl() {
-    int|Error receivedError = wrongClientEp->size(filePath);
+public function testGetFileSizeFromNonExistingFile() {
+    int|Error receivedError = clientEp->size("/nonExistingFile");
     if receivedError is Error {
-        log:printInfo("Received error: " + receivedError.message());
+        test:assertTrue(receivedError.message().startsWith("Could not determine the size of "),
+            msg = "Unexpected error during the `size` operation of an non-existing file. " + receivedError.message());
     } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
-    }
-}
-
-@test:Config{
-    dependsOn: [testGetFileSize]
-}
-public function testGetFileSizeWithNonExistingServer() {
-    int|Error receivedError = nonExistingServerClientEp->size(filePath);
-    if receivedError is Error {
-        log:printInfo("Received error for non-existing server: " + receivedError.message());
-    } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
+        test:assertFail(msg = "Found a non-error response while accessing a non-existing file path.");
     }
 }
 
 @test:Config{
     dependsOn: [testListFiles]
 }
-public function testListFilesWithWrongUrl() {
-    FileInfo[]|Error receivedError = wrongClientEp->list("/home/in");
+public function testListFilesFromNonExistingDirectory() {
+    FileInfo[]|Error receivedError = clientEp->list("/nonExistingDirectory");
     if receivedError is Error {
-        log:printInfo("Received error: " + receivedError.message());
+        test:assertTrue(receivedError.message().startsWith("Could not list the contents of "),
+            msg = "Unexpected error during the `list` operation of an non-existing directory. " + receivedError.message());
     } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
-    }
-}
-
-@test:Config{
-    dependsOn: [testListFiles]
-}
-public function testListFilesWithNonExistingServer() {
-    FileInfo[]|Error receivedError = nonExistingServerClientEp->list("/home/in");
-    if receivedError is Error {
-        log:printInfo("Received error for non-existing server: " + receivedError.message());
-    } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
+        test:assertFail(msg = "Found a non-error response while accessing a non-existing directory path.");
     }
 }
 
 @test:Config{
     dependsOn: [testDeleteFile]
 }
-public function testDeleteFileWithWrongUrl() returns error? {
-    Error? receivedError = wrongClientEp->delete(filePath);
+public function testDeleteFileAtNonExistingLocation() returns error? {
+    Error? receivedError = clientEp->delete("/nonExistingFile");
     if receivedError is Error {
-        log:printInfo("Received error: " + receivedError.message());
+        test:assertTrue(receivedError.message().startsWith("Failed to delete file: "),
+            msg = "Unexpected error during the `delete` operation of an non-existing file. " + receivedError.message());
     } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
+        // test:assertFail(msg = "Found a non-error response while accessing a non-existing file path.");
     }
 }
 
@@ -227,10 +181,11 @@ public function testDeleteFileWithWrongUrl() returns error? {
     dependsOn: [testRemoveDirectory]
 }
 public function testRemoveDirectoryWithWrongUrl() {
-    Error? receivedError = wrongClientEp->rmdir("/home/in/test");
+    Error? receivedError = clientEp->rmdir("/nonExistingDirectory");
     if receivedError is Error {
-        log:printInfo("Received error: " + receivedError.message());
+        test:assertTrue(receivedError.message().startsWith("Failed to delete directory: "),
+            msg = "Unexpected error during the `rmdir` operation of a non-existing directory. " + receivedError.message());
     } else {
-        test:assertFail(msg = "Found a non-error response with a wrong URL");
+        test:assertFail(msg = "Found a non-error response while accessing a non-existing directory path.");
     }
 }

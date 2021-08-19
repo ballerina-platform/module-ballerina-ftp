@@ -17,7 +17,6 @@
 // FTP client.
 
 import ballerina/io;
-import ballerina/log;
 
 # Represents an FTP client that intracts with an FTP server
 public isolated client class Client {
@@ -26,12 +25,12 @@ public isolated client class Client {
     # Gets invoked during object initialization.
     #
     # + clientConfig - Configurations for FTP client
-    public isolated function init(ClientConfiguration clientConfig) {
+    # + return - `ftp:Error` in case of errors or `()` otherwise
+    public isolated function init(ClientConfiguration clientConfig) returns Error? {
         self.config = clientConfig.cloneReadOnly();
         Error? response = initEndpoint(self, self.config);
         if (response is Error) {
-            log:printError("Invalid config provided");
-            panic response;
+            return response;
         }
     }
 
@@ -152,7 +151,7 @@ public isolated client class Client {
     #
     # + path - The resource path
     # + return - `true` if given resource is a direcotry or an `ftp:Error` if
-    #            failed to establish the communication with the FTP server
+    #            an error occurred while checking the path
     remote isolated function isDirectory(string path) returns boolean|Error {
         return isDirectory(self, path);
     }

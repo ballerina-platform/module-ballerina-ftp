@@ -43,6 +43,7 @@ public class FtpConstants {
     public static final String IDENTITY_PASS_PHRASE = "IDENTITY_PASS_PHRASE";
     public static final String AVOID_PERMISSION_CHECK = "AVOID_PERMISSION_CHECK";
     public static final String PROPERTY_MAP = "map";
+    public static final String VFS_CLIENT_CONNECTOR = "VfsClientConnector";
     public static final String FTP_ORG_NAME = "ballerina";
     public static final String FTP_MODULE_NAME = "ftp";
     public static final String ENTITY_BYTE_STREAM = "entity_byte_stream";
@@ -53,17 +54,11 @@ public class FtpConstants {
     public static final String STREAM_ENTRY_RECORD = "StreamEntry";
     public static final BString FIELD_VALUE = StringUtils.fromString("value");
 
-    /**
-     * ftp standard library version.
-     * @deprecated Use FTPUtil.getFtpPackage().getVersion(),
-     */
-    @Deprecated
-    public static final String FTP_MODULE_VERSION = "1.0.3";
-
-    public static final String FTP_LISTENER = "Listener";
     public static final String FTP_SERVER_EVENT = "WatchEvent";
     public static final String FTP_FILE_INFO = "FileInfo";
     public static final String FTP_SERVER_CONNECTOR = "serverConnector";
+    public static final String FTP_ANONYMOUS_USERNAME = "anonymous";
+    public static final String FTP_ANONYMOUS_PASSWORD = "";
 
     public static final String ENDPOINT_CONFIG_PROTOCOL = "protocol";
     public static final String ENDPOINT_CONFIG_HOST = "host";
@@ -81,12 +76,5 @@ public class FtpConstants {
     public static final String INPUT_CONTENT_FILE_CONTENT_KEY = "fileContent";
     public static final String INPUT_CONTENT_TEXT_CONTENT_KEY = "textContent";
     public static final String INPUT_CONTENT_COMPRESS_INPUT_KEY = "compressInput";
-
-    /**
-     * ftp standard library version.
-     * @deprecated Use IOUtils.getIOPackage().getVersion(),
-     */
-    @Deprecated
-    public static final String IO_MODULE_VERSION = "0.5.4";
 
 }

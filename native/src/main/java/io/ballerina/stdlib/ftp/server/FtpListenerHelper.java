@@ -20,6 +20,7 @@ package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Runtime;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
@@ -67,7 +68,7 @@ public class FtpListenerHelper {
         }
     }
 
-    private static Throwable findRootCause(Throwable throwable) {
+    protected static Throwable findRootCause(Throwable throwable) {
         Objects.requireNonNull(throwable);
         Throwable rootCause = throwable;
         while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
@@ -78,9 +79,7 @@ public class FtpListenerHelper {
 
     private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
             throws BallerinaFtpException {
-
         Map<String, String> params = new HashMap<>(12);
-
         BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String url = FtpUtil.createUrl(serviceEndpointConfig);
@@ -107,7 +106,6 @@ public class FtpListenerHelper {
     }
 
     private static void addStringProperty(BMap config, Map<String, String> params) {
-
         final String value = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN)))
                 .getValue();
         if (value != null && !value.isEmpty()) {
@@ -116,7 +114,6 @@ public class FtpListenerHelper {
     }
 
     public static void poll(BMap<Object, Object> config) throws BallerinaFtpException {
-
         RemoteFileSystemServerConnector connector = (RemoteFileSystemServerConnector) config.
                 getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         try {
@@ -132,7 +129,10 @@ public class FtpListenerHelper {
             if (serverConnectorObject instanceof RemoteFileSystemServerConnector) {
                 RemoteFileSystemServerConnector serverConnector
                         = (RemoteFileSystemServerConnector) serverConnectorObject;
-                serverConnector.stop();
+                Object stopError = serverConnector.stop();
+                if (stopError instanceof BError) {
+                    return stopError;
+                }
             }
         } catch (RemoteFileSystemConnectorException e) {
             Throwable rootCause = findRootCause(e);

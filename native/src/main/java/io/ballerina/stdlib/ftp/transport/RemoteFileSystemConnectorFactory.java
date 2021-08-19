@@ -43,11 +43,9 @@ public interface RemoteFileSystemConnectorFactory {
 
     /**
      * @param connectorConfig          properties required for the {@link VfsClientConnector}.
-     * @param remoteFileSystemListener listener which gets triggered when message comes.
      * @return VFSClientConnector instance
      * @throws RemoteFileSystemConnectorException if any error occurred when initializing the server connector.
      */
-    VfsClientConnector createVfsClientConnector(Map<String, String> connectorConfig,
-                                                RemoteFileSystemListener remoteFileSystemListener)
+    VfsClientConnector createVfsClientConnector(Map<String, String> connectorConfig)
             throws RemoteFileSystemConnectorException;
 }

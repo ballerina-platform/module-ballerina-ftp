@@ -29,10 +29,12 @@ import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemBaseMessage;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
+import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import org.slf4j.Logger;
@@ -41,6 +43,9 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static io.ballerina.stdlib.ftp.server.FtpListenerHelper.findRootCause;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
 /**
  * FTP File System connector listener for Ballerina.
@@ -52,14 +57,12 @@ public class FtpListener implements RemoteFileSystemListener {
     private final BObject service;
 
     FtpListener(Runtime runtime, BObject service) {
-
         this.runtime = runtime;
         this.service = service;
     }
 
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
-
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             BMap<BString, Object> parameters = getSignatureParameters(event);
@@ -78,7 +81,6 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     private BMap<BString, Object> getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
-
         BMap<BString, Object> watchEventStruct = ValueCreator.createRecordValue(
                 new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
                         FtpUtil.getFtpPackage().getVersion()), FtpConstants.FTP_SERVER_EVENT);
@@ -116,7 +118,25 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     @Override
-    public void done() {
+    public BError done() {
+        try {
+            Object serverConnectorObject = service.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+            if (serverConnectorObject instanceof RemoteFileSystemServerConnector) {
+                RemoteFileSystemServerConnector serverConnector
+                        = (RemoteFileSystemServerConnector) serverConnectorObject;
+                Object stopError = serverConnector.stop();
+                if (stopError instanceof BError) {
+                    return (BError) stopError;
+                }
+            }
+        } catch (RemoteFileSystemConnectorException e) {
+            Throwable rootCause = findRootCause(e);
+            String detail = (rootCause != null) ? rootCause.getMessage() : null;
+            return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
+        } finally {
+            service.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
+        }
         log.debug(FtpConstants.SUCCESSFULLY_FINISHED_THE_ACTION);
+        return null;
     }
 }

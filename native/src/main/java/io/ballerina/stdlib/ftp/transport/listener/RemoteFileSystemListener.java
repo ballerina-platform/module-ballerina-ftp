@@ -18,6 +18,7 @@
 
 package io.ballerina.stdlib.ftp.transport.listener;
 
+import io.ballerina.runtime.api.values.BError;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemBaseMessage;
 
 /**
@@ -43,6 +44,7 @@ public interface RemoteFileSystemListener {
     /**
      * Notify to the caller once the underlying task is successfully finished. Error situation need to handle through
      * {@link #onError(Throwable)} method.
+     * @return
      */
-    void done();
+    BError done();
 }

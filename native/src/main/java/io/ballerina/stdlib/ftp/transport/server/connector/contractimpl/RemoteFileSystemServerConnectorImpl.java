@@ -60,7 +60,7 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
         }
     }
 
-    public void stop() throws RemoteFileSystemConnectorException {
-        consumer.close();
+    public Object stop() {
+        return consumer.close();
     }
 }

@@ -51,7 +51,7 @@ public function testSecureGetFileContent() returns error? {
 @test:Config{
     dependsOn: [testSecureGetFileContent]
 }
-public function testSecureGetFileContentWithWrongPassword() returns error? {
+public function testSecureConnectWithWrongPassword() returns error? {
 
     ClientConfiguration incorrectSftpConfig = {
         protocol: SFTP,
@@ -66,40 +66,19 @@ public function testSecureGetFileContentWithWrongPassword() returns error? {
         }
     };
 
-    Client incorrectSftpClientEp = new(incorrectSftpConfig);
-
-    stream<byte[] & readonly, io:Error?>|Error str = incorrectSftpClientEp->get("/file2.txt", 11);
-    if (str is stream<byte[] & readonly, io:Error?>) {
-        record {|byte[] value;|}|error? arr1 = trap str.next();
-        if (arr1 is record {|byte[] value;|}) {
-            string fileContent = check strings:fromBytes(arr1.value);
-            test:assertNotEquals(fileContent, "Put content",
-                msg = "Insecurely invoked secure `get` operation for an incorrect password");
-            record {|byte[] value;|}|io:Error? arr2 = str.next();
-            test:assertTrue(arr2 is (),
-                msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
-        } else {
-            if arr1 is error {
-                test:assertFail(msg = "Error while `next` operation " + arr1.message());
-            } else {
-                test:assertFail(msg = "Found unexpected response type");
-            }
-        }
-        io:Error? closeResult = str.close();
-        if closeResult is io:Error {
-            test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
-        }
+    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
+    if incorrectSftpClientEp is Error {
+        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
     } else {
-        test:assertEquals(str.message(),
-            "Could not connect to SFTP server at \"sftp://wso2:***@127.0.0.1:21213/\".",
-            msg = "Correct error is not given when the incorrect password is used to connect.");
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with wrong password.");
     }
 }
 
 @test:Config{
-    dependsOn: [testSecureGetFileContentWithWrongPassword]
+    dependsOn: [testSecureConnectWithWrongPassword]
 }
-public function testSecureGetFileContentWithWrongKey() returns error? {
+public function testSecureConnectWithWrongKey() returns error? {
 
     ClientConfiguration incorrectSftpConfig = {
         protocol: SFTP,
@@ -114,33 +93,12 @@ public function testSecureGetFileContentWithWrongKey() returns error? {
         }
     };
 
-    Client incorrectSftpClientEp = new(incorrectSftpConfig);
-
-    stream<byte[] & readonly, io:Error?>|Error str = incorrectSftpClientEp->get("/file2.txt", 11);
-    if (str is stream<byte[] & readonly, io:Error?>) {
-        record {|byte[] value;|}|error? arr1 = trap str.next();
-        if (arr1 is record {|byte[] value;|}) {
-            string fileContent = check strings:fromBytes(arr1.value);
-            test:assertNotEquals(fileContent, "Put content",
-                msg = "Insecurely invoked secure `get` operation for an incorrect key");
-            record {|byte[] value;|}|io:Error? arr2 = str.next();
-            test:assertTrue(arr2 is (),
-                msg = "Unexpected content from 2nd `next` method of `get` operation after `put` operation");
-        } else {
-            if arr1 is error {
-                test:assertFail(msg = "Error while `next` operation " + arr1.message());
-            } else {
-                test:assertFail(msg = "Found unexpected response type");
-            }
-        }
-        io:Error? closeResult = str.close();
-        if closeResult is io:Error {
-            test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
-        }
+    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
+    if incorrectSftpClientEp is Error {
+        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with an invalid key. " + incorrectSftpClientEp.message());
     } else {
-        test:assertEquals(str.message(),
-            "Could not connect to SFTP server at \"sftp://wso2:***@127.0.0.1:21213/\".",
-            msg = "Correct error is not given when the wrong key is used to connect.");
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid key.");
     }
 }
 

@@ -43,6 +43,8 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ANONYMOUS_PASSWORD;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ANONYMOUS_USERNAME;
 import static io.ballerina.stdlib.ftp.util.ModuleUtils.getModule;
 
 /**
@@ -58,18 +60,15 @@ public class FtpUtil {
     }
 
     public static String createUrl(BObject clientConnector, String filePath) throws BallerinaFtpException {
-
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASS_KEY);
         String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
         int port = (Integer) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
         String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
-
         return createUrl(protocol, host, port, username, password, filePath);
     }
 
     public static String createUrl(BMap config) throws BallerinaFtpException {
-
         final String filePath = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PATH)))
                 .getValue();
         String protocol = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL)))
@@ -77,7 +76,6 @@ public class FtpUtil {
         final String host = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_HOST)))
                 .getValue();
         int port = extractPortValue(config.getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
-
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = null;
@@ -100,9 +98,8 @@ public class FtpUtil {
 
     private static String createUrl(String protocol, String host, int port, String username, String password,
                                     String filePath) throws BallerinaFtpException {
-
         String userInfo = username + ":" + password;
-        URI uri = null;
+        URI uri;
         try {
             uri = new URI(protocol, userInfo, host, port, filePath, null, null);
         } catch (URISyntaxException e) {
@@ -113,11 +110,10 @@ public class FtpUtil {
     }
 
     public static Map<String, String> getAuthMap(BMap config) {
-
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
-        String username = "anonymous";
-        String password = "";
+        String username = FTP_ANONYMOUS_USERNAME;
+        String password = FTP_ANONYMOUS_PASSWORD;
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
@@ -131,7 +127,6 @@ public class FtpUtil {
         Map<String, String> authMap = new HashMap<>();
         authMap.put(FtpConstants.ENDPOINT_CONFIG_USERNAME, username);
         authMap.put(FtpConstants.ENDPOINT_CONFIG_PASS_KEY, password);
-
         return authMap;
     }
 
@@ -159,7 +154,6 @@ public class FtpUtil {
      * @return the relevant int value from the config
      */
     public static int extractPortValue(long longValue) {
-
         if (longValue <= 0 || longValue > MAX_PORT) {
             log.error("Invalid port number given in configuration");
             return -1;
@@ -179,7 +173,6 @@ public class FtpUtil {
      * @return FileInfo record type object
      */
     public static Type getFileInfoType() {
-
         BMap<BString, Object> fileInfoStruct = ValueCreator.createRecordValue(new Module(
                 FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME, FtpUtil.getFtpPackage().getVersion()),
                 FtpConstants.FTP_FILE_INFO);
@@ -187,19 +180,17 @@ public class FtpUtil {
     }
 
     public static ByteArrayInputStream compress(InputStream inputStream, String targetFilePath) {
-
         String fileName = new File(targetFilePath).getName();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
-
         try {
             zipOutputStream.putNextEntry(new ZipEntry(fileName));
             byte[] buffer = new byte[1000];
-            int len;
+            int length;
             // This should ideally be wrapped from a BufferedInputStream. but currently
             // not working due to missing method implementations in the implemented custom ByteArrayInputStream.
-            while ((len = inputStream.read(buffer)) > 0) {
-                zipOutputStream.write(buffer, 0, len);
+            while ((length = inputStream.read(buffer)) > 0) {
+                zipOutputStream.write(buffer, 0, length);
             }
         } catch (IOException ex) {
             log.error("The file does not exist");
@@ -209,14 +200,13 @@ public class FtpUtil {
                 zipOutputStream.closeEntry();
                 zipOutputStream.close();
             } catch (IOException e) {
-                log.error("Error in closing stream");
+                log.error("Error in closing the stream");
             }
         }
         return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     }
 
     public static String getCompressedFileName(String fileName) {
-
         return fileName.substring(0, fileName.lastIndexOf('.')).concat(".zip");
     }
 

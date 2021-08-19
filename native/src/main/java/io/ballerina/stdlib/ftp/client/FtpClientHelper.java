@@ -87,8 +87,8 @@ class FtpClientHelper {
         try {
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
                 final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
-                ByteChannel byteChannel = new FTPByteChannel(in);
-                Channel channel = new FTPChannel(byteChannel);
+                ByteChannel byteChannel = new FtpByteChannel(in);
+                Channel channel = new FtpChannel(byteChannel);
                 InputStream inputStream = channel.getInputStream();
                 clientConnector.addNativeData(READ_INPUT_STREAM, inputStream);
                 long arraySize = (long) clientConnector.getNativeData(ARRAY_SIZE);
@@ -128,7 +128,6 @@ class FtpClientHelper {
 
     static boolean executeIsDirectoryAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
                                             Future balFuture) {
-
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             balFuture.complete(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).isDirectory());
         }
@@ -137,7 +136,6 @@ class FtpClientHelper {
 
     static boolean executeListAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
                                      Future balFuture) {
-
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
             Map<String, FileInfo> childrenInfo = message.getChildrenInfo();
@@ -185,7 +183,6 @@ class FtpClientHelper {
 
     static boolean executeSizeAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
                                      Future balFuture) {
-
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
             balFuture.complete((int) message.getSize());
@@ -326,7 +323,6 @@ class FtpClientHelper {
     static RemoteFileSystemMessage getCompressedMessage(BObject clientConnector, String filePath,
                                                         Map<String, String> propertyMap,
                                                         ByteArrayInputStream compressedStream) {
-
         try {
             String compressedFilePath = FtpUtil.getCompressedFileName(filePath);
             String url = FtpUtil.createUrl(clientConnector, compressedFilePath);
@@ -341,28 +337,24 @@ class FtpClientHelper {
     /**
      * Concrete implementation of the {@link Channel}.
      */
-    private static class FTPChannel extends Channel {
+    private static class FtpChannel extends Channel {
 
-        FTPChannel(ByteChannel channel) {
-
+        FtpChannel(ByteChannel channel) {
             super(channel);
         }
 
         @Override
         public void transfer(int i, int i1, WritableByteChannel writableByteChannel) {
-
             throw new UnsupportedOperationException();
         }
 
         @Override
         public Channel getChannel() {
-
             return this;
         }
 
         @Override
         public boolean remaining() {
-
             return false;
         }
     }
@@ -370,38 +362,33 @@ class FtpClientHelper {
     /**
      * Create ByteChannel by encapsulating InputStream which comes from transport layer.
      */
-    private static class FTPByteChannel implements ByteChannel {
+    private static class FtpByteChannel implements ByteChannel {
 
         private InputStream inputStream;
         private ReadableByteChannel inputChannel;
 
-        FTPByteChannel(InputStream inputStream) {
-
+        FtpByteChannel(InputStream inputStream) {
             this.inputStream = inputStream;
             this.inputChannel = Channels.newChannel(inputStream);
         }
 
         @Override
         public int read(ByteBuffer dst) throws IOException {
-
             return inputChannel.read(dst);
         }
 
         @Override
         public int write(ByteBuffer src) {
-
             return 0;
         }
 
         @Override
         public boolean isOpen() {
-
             return inputChannel.isOpen();
         }
 
         @Override
         public void close() throws IOException {
-
             inputChannel.close();
             inputStream.close();
         }

@@ -69,7 +69,6 @@ public class RemoteFileSystemConsumer {
             throws RemoteFileSystemConnectorException {
         this.serviceName = id;
         this.remoteFileSystemListener = listener;
-        validateParam(fileProperties);
         listeningDirURI = fileProperties.get(FtpConstants.URI);
         try {
             FileSystemManager fsManager = VFS.getManager();
@@ -90,21 +89,6 @@ public class RemoteFileSystemConsumer {
         }
         if (fileProperties.get(FtpConstants.FILE_NAME_PATTERN) != null) {
             fileNamePattern = fileProperties.get(FtpConstants.FILE_NAME_PATTERN);
-        }
-    }
-
-    private void validateParam(Map<String, String> fileProperties) throws RemoteFileSystemConnectorException {
-        if (fileProperties.get(FtpConstants.URI) == null) {
-            final RemoteFileSystemConnectorException e = new RemoteFileSystemConnectorException(
-                    FtpConstants.URI + " is a mandatory parameter for FTP transport.");
-            remoteFileSystemListener.onError(e);
-            throw e;
-        } else if (fileProperties.get(FtpConstants.URI).trim().isEmpty()) {
-            final RemoteFileSystemConnectorException e = new RemoteFileSystemConnectorException(
-                    "[" + serviceName + "] " + FtpConstants.URI
-                            + " parameter cannot be empty for FTP transport.");
-            remoteFileSystemListener.onError(e);
-            throw e;
         }
     }
 
@@ -134,7 +118,7 @@ public class RemoteFileSystemConsumer {
                 if (children == null || children.length == 0) {
                     logDebugNoChildrenFromDirWhileConsuming();
                 } else {
-                    directoryHandler(children);
+                    handleDirectory(children);
                     List<String> deleted = new ArrayList<>();
                     if (processed.size() != current.size()) {
                         final Iterator<String> it = processed.iterator();
@@ -180,9 +164,9 @@ public class RemoteFileSystemConsumer {
      *
      * @throws RemoteFileSystemConnectorException for all the error situation.
      */
-    public void close() throws RemoteFileSystemConnectorException {
+    public Object close() {
         closeDirectories();
-        remoteFileSystemListener.done();
+        return remoteFileSystemListener.done();
     }
 
     private void closeDirectories() {
@@ -201,27 +185,27 @@ public class RemoteFileSystemConsumer {
      *
      * @param children The array containing child elements of a folder
      */
-    private void directoryHandler(FileObject[] children) throws FileSystemException {
+    private void handleDirectory(FileObject[] children) throws FileSystemException {
         for (FileObject child : children) {
             if (!(fileNamePattern == null || child.getName().getBaseName().matches(fileNamePattern))) {
                 logDebugDirFileNamePatternNotMatchedInDirHandler();
             } else {
                 FileType childType = child.getType();
                 if (childType == FileType.FOLDER) {
-                    FileObject[] c = null;
+                    FileObject[] childFileObject = null;
                     try {
-                        c = child.getChildren();
+                        childFileObject = child.getChildren();
                     } catch (FileSystemException ignored) {
                         logDebugErrorWhileGetChildrenInDirHandler(ignored);
                     }
-                    if (c == null || c.length == 0) {
+                    if (childFileObject == null || childFileObject.length == 0) {
                         logDebugNoChildrenFromDirInDirHandler(child);
                     } else {
-                        directoryHandler(c);
+                        handleDirectory(childFileObject);
                     }
                 } else {
                     current.add(child.getName().getURI());
-                    fileHandler(child);
+                    handleFile(child);
                 }
             }
         }
@@ -232,7 +216,7 @@ public class RemoteFileSystemConsumer {
      *
      * @param file A single file to be processed
      */
-    private void fileHandler(FileObject file) throws FileSystemException {
+    private void handleFile(FileObject file) throws FileSystemException {
         String path = file.getName().getURI();
         if (processed.contains(path)) {
             return;

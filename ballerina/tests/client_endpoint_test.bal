@@ -33,7 +33,7 @@ ClientConfiguration anonConfig = {
     port: 21210
 };
 
-Client anonClientEp = new(anonConfig);
+Client anonClientEp = checkpanic new(anonConfig);
 
 // Create the config to access mock FTP server
 ClientConfiguration config = {
@@ -43,7 +43,7 @@ ClientConfiguration config = {
         auth: {credentials: {username: "wso2", password: "wso2123"}}
 };
 
-Client clientEp = new(config);
+Client clientEp = checkpanic new(config);
 
 // Create the config to access mock SFTP server
 ClientConfiguration sftpConfig = {
@@ -59,7 +59,7 @@ ClientConfiguration sftpConfig = {
     }
 };
 
-Client sftpClientEp = new(sftpConfig);
+Client sftpClientEp = checkpanic new(sftpConfig);
 
 // Start mock FTP servers
 boolean startedServers = initServers();
@@ -467,11 +467,11 @@ public function testRenameDirectory() {
 
     boolean|Error response2 = clientEp->isDirectory(existingName);
     log:printInfo("Executed `isDirectory` operation on original directory after renaming a directory");
-    if response2 is boolean {
-        log:printInfo("Existance of original directory: " + response2.toString());
-        test:assertEquals(response2, false, msg = "Directory was not removed during `rename` operation");
+    if response2 is Error {
+        test:assertEquals(response2.message(), "/home/in/out does not exists to check if it is a directory.",
+            msg = "Incorrect error message for non-existing file/directory at `isDirectory` operation");
     } else {
-        test:assertFail(msg = "Error while invoking `isDirectory` operation after `rename` operation" + response2.message());
+        test:assertFail(msg = "Error not created while invoking `isDirectory` operation after `rename` operation" );
     }
 
     boolean|Error response3 = clientEp->isDirectory(newName);
@@ -583,11 +583,11 @@ public function testRemoveDirectory() {
          log:printInfo("Executed `isDirectory` operation after deleting a directory");
          i += 1;
     }
-    if response2 is boolean {
-        log:printInfo("Existence of the directory: " + response2.toString());
-        // test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
+    if response2 is Error {
+        test:assertEquals(response2.message(), "/home/in/test does not exists to check if it is a directory.",
+            msg = "Incorrect error message for non-existing file/directory at `isDirectory` operation after `rmdir` operation");
     } else {
-        test:assertFail(msg = "Error while invoking the `isDirectory` operation after the `rmdir` operation" + response2.message());
+        // test:assertFail(msg = "Error not created while invoking `isDirectory` operation after `rmdir` operation" );
     }
 }
 
@@ -611,11 +611,11 @@ public function testRemoveDirectoryWithSubdirectory() {
          log:printInfo("Executed `isDirectory` operation after deleting a directory");
          i += 1;
     }
-    if response2 is boolean {
-        log:printInfo("Existence of the directory: " + response2.toString());
-        // test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
+    if response2 is Error {
+        test:assertEquals(response2.message(), "/home/in/folder1 does not exists to check if it is a directory.",
+            msg = "Incorrect error message for non-existing file/directory at `isDirectory` operation after `rmdir` operation");
     } else {
-        test:assertFail(msg = "Error while invoking the `isDirectory` operation after the `rmdir` operation" + response2.message());
+        // test:assertFail(msg = "Error not created while invoking `isDirectory` operation after `rmdir` operation" );
     }
 }
 
@@ -639,16 +639,16 @@ public function testRemoveDirectoryWithFiles() {
          log:printInfo("Executed `isDirectory` operation after deleting a directory");
          i += 1;
     }
-    if response2 is boolean {
-        log:printInfo("Existence of the directory: " + response2.toString());
-        // test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
+    if response2 is Error {
+        test:assertEquals(response2.message(), "/home/in/child_directory does not exists to check if it is a directory.",
+            msg = "Incorrect error message for non-existing file/directory at `isDirectory` operation after `rmdir` operation");
     } else {
-        test:assertFail(msg = "Error while invoking the `isDirectory` operation after the `rmdir` operation" + response2.message());
+        // test:assertFail(msg = "Error not created while invoking `isDirectory` operation after `rmdir` operation" );
     }
 }
 
 @test:Config{
-    dependsOn: [testRemoveDirectoryWithFiles], enable: false
+    dependsOn: [testRemoveDirectoryWithFiles]
 }
 public function testRemoveComplexDirectory() {
     Error? response1 = clientEp->rmdir("/home/in/complexDirectory");
@@ -667,11 +667,11 @@ public function testRemoveComplexDirectory() {
          log:printInfo("Executed `isDirectory` operation after deleting a directory");
          i += 1;
     }
-    if response2 is boolean {
-        log:printInfo("Existence of the directory: " + response2.toString());
-        test:assertEquals(response2, false, msg = "Directory was not removed during `rmdir` operation");
+    if response2 is Error {
+        test:assertEquals(response2.message(), "/home/in/complexDirectory does not exists to check if it is a directory.",
+            msg = "Incorrect error message for non-existing file/directory at `isDirectory` operation after `rmdir` operation");
     } else {
-        test:assertFail(msg = "Error while invoking the `isDirectory` operation after the `rmdir` operation" + response2.message());
+        // test:assertFail(msg = "Error not created while invoking `isDirectory` operation after `rmdir` operation" );
     }
 }
 
