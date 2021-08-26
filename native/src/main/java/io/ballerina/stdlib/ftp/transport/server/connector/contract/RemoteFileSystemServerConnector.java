@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.transport.server.connector.contract;
 
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.server.FtpListener;
 
 /**
  * RemoteFileSystemServer Connector interface to poll information from given the directory location.
@@ -40,4 +41,10 @@ public interface RemoteFileSystemServerConnector {
      * @throws RemoteFileSystemConnectorException if execution failed.
      */
     Object stop() throws RemoteFileSystemConnectorException;
+
+    /**
+     * This method will stops the listeners to the given directory location.
+     *
+     */
+    FtpListener getFtpListener();
 }

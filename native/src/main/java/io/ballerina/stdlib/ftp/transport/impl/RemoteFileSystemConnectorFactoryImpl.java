@@ -34,10 +34,10 @@ import java.util.Map;
 public class RemoteFileSystemConnectorFactoryImpl implements RemoteFileSystemConnectorFactory {
 
     @Override
-    public RemoteFileSystemServerConnector createServerConnector(String serviceId, Map<String, String> connectorConfig,
+    public RemoteFileSystemServerConnector createServerConnector(Map<String, String> connectorConfig,
                                                                  RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException {
-        return new RemoteFileSystemServerConnectorImpl(serviceId, connectorConfig, remoteFileSystemListener);
+        return new RemoteFileSystemServerConnectorImpl(connectorConfig, remoteFileSystemListener);
     }
 
     @Override
