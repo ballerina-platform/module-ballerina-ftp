@@ -142,10 +142,9 @@ public class RemoteFileSystemConsumer {
                 }
             } else {
                 remoteFileSystemListener.onError(new RemoteFileSystemConnectorException(
-                        "Unable to access or read file or directory : " + FileTransportUtils
-                                .maskUrlPassword(listeningDirURI) + ". Reason: " + (isFileExists ?
-                                "The file can not be read!" :
-                                "The file does not exist!")));
+                        String.format("Unable to access or read file or directory :  %s. Reason: %s",
+                                FileTransportUtils.maskUrlPassword(listeningDirURI),
+                                (isFileExists ? "The file can not be read!" : "The file does not exist!"))));
             }
         } catch (FileSystemException e) {
             remoteFileSystemListener.onError(e);

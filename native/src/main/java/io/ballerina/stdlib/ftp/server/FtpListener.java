@@ -67,9 +67,7 @@ public class FtpListener implements RemoteFileSystemListener {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             BMap<BString, Object> parameters = getSignatureParameters(event);
             if (runtime != null) {
-                Set<Map.Entry<String, BObject>> serviceEntries = registeredServices.entrySet();
-                for (Map.Entry<String, BObject> serviceEntry : serviceEntries) {
-                    BObject service = serviceEntry.getValue();
+                registeredServices.values().forEach(service -> {
                     runtime.invokeMethodAsync(service, service.getType().getMethods()[0].getName(), null,
                             null, new Callback() {
                                 @Override
@@ -80,7 +78,7 @@ public class FtpListener implements RemoteFileSystemListener {
                                     log.error("Error while invoking FTP onMessage method.");
                                 }
                             }, parameters, true);
-                }
+                });
             } else {
                 log.error("Runtime should not be null.");
             }
