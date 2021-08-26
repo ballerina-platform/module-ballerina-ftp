@@ -23,6 +23,7 @@ import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
+import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
@@ -46,26 +47,34 @@ public class FtpListenerHelper {
         // private constructor
     }
 
-    public static Object register(BObject ftpListener, BMap<Object, Object> serviceEndpointConfig, BObject service,
-            String name) {
+    /**
+     * Initialize a new FTP Connector for the listener.
+     * @param ftpListener Listener that places `ftp:WatchEvent` by Ballerina runtime
+     * @param serviceEndpointConfig FTP server endpoint configuration
+     */
+    public static Object init(BObject ftpListener, BMap<BString, Object> serviceEndpointConfig) {
         try {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-            final FtpListener listener = new FtpListener(Runtime.getCurrentRuntime(), service);
-            if (name == null || name.isEmpty()) {
-                name = service.getType().getName();
-            }
+            final FtpListener listener = new FtpListener(Runtime.getCurrentRuntime());
             RemoteFileSystemServerConnector serverConnector = fileSystemConnectorFactory
-                    .createServerConnector(name, paramMap, listener);
+                    .createServerConnector(paramMap, listener);
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             // This is a temporary solution
-            serviceEndpointConfig.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
-            return serverConnector;
+            return null;
         } catch (RemoteFileSystemConnectorException | BallerinaFtpException e) {
             Throwable rootCause = findRootCause(e);
             String detail = (rootCause != null) ? rootCause.getMessage() : null;
             return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
         }
+    }
+
+    public static Object register(BObject ftpListener, BObject service) {
+        RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) ftpListener.getNativeData(
+                FtpConstants.FTP_SERVER_CONNECTOR);
+        FtpListener listener = ftpConnector.getFtpListener();
+        listener.addService(service);
+        return null;
     }
 
     protected static Throwable findRootCause(Throwable throwable) {
@@ -113,8 +122,8 @@ public class FtpListenerHelper {
         }
     }
 
-    public static void poll(BMap<Object, Object> config) throws BallerinaFtpException {
-        RemoteFileSystemServerConnector connector = (RemoteFileSystemServerConnector) config.
+    public static void poll(BObject ftpListener) throws BallerinaFtpException {
+        RemoteFileSystemServerConnector connector = (RemoteFileSystemServerConnector) ftpListener.
                 getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         try {
             connector.poll();

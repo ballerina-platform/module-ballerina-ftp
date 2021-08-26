@@ -31,13 +31,12 @@ import java.util.Map;
 public interface RemoteFileSystemConnectorFactory {
 
     /**
-     * @param serviceId          id used to identify the server connector instance.
      * @param connectorConfig    properties required for the {@link RemoteFileSystemServerConnector}.
      * @param remoteFileSystemListener listener which gets triggered when message comes.
      * @return RemoteFileSystemServerConnector RemoteFileSystemServerConnector instance.
      * @throws RemoteFileSystemConnectorException if any error occurred when creating the server connector.
      */
-    RemoteFileSystemServerConnector createServerConnector(String serviceId, Map<String, String> connectorConfig,
+    RemoteFileSystemServerConnector createServerConnector(Map<String, String> connectorConfig,
                                                           RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException;
 

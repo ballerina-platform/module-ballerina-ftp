@@ -22,7 +22,7 @@ int addedFileCount = 0;
 int deletedFileCount = 0;
 boolean watchEventReceived = false;
 
-listener Listener remoteServer = new({
+listener Listener remoteServer = check new({
     protocol: FTP,
     host: "127.0.0.1",
     auth: {
@@ -72,23 +72,24 @@ public function testAddedFileCount() {
     }
 }
 
-listener Listener detachFtpServer = new({
-    protocol: FTP,
-    host: "127.0.0.1",
-    auth: {
-        credentials: {
-            username: "wso2",
-            password: "wso2123"
-        }
-    },
-    port: 21212,
-    path: "/home/in",
-    pollingInterval: 2,
-    fileNamePattern: "(.*).txt"
-});
-
 @test:Config {}
-public function testFtpServerDeregistration() {
+public function testFtpServerDeregistration() returns error? {
+
+    Listener detachFtpServer = check new({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: "wso2123"
+            }
+        },
+        port: 21212,
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
     service object {} detachService = service object { function onFileChange(WatchEvent event) {} };
     error? result1 = detachFtpServer.attach(detachService, "remote-server");
     if result1 is error {
@@ -101,56 +102,52 @@ public function testFtpServerDeregistration() {
     }
 }
 
-listener Listener emptyPasswordServer = new({
-    protocol: FTP,
-    host: "127.0.0.1",
-    auth: {
-        credentials: {
-            username: "wso2",
-            password: ""
-        }
-    },
-    port: 21212,
-    path: "/home/in",
-    pollingInterval: 2,
-    fileNamePattern: "(.*).txt"
-});
-
 @test:Config {}
-public function testServerRegisterFailureEmptyPassword() {
-    error? result = emptyPasswordServer.attach(service object {
-          function onFileChange(WatchEvent event) {}
-    }, "remote-server");
-    if result is error {
-        test:assertEquals(result.message(), "Failed to initialize File server connector for Service: remote-server");
+public function testServerRegisterFailureEmptyPassword() returns error? {
+
+    Listener|Error emptyPasswordServer = new({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: ""
+            }
+        },
+        port: 21212,
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if emptyPasswordServer is Error {
+        test:assertEquals(emptyPasswordServer.message(), "Failed to initialize File server connector.");
     } else {
-        test:assertFail("Empty password set to basic auth. Test should fail");
+        test:assertFail("Non-error result when empty password is used for creating a Listener.");
     }
 }
 
-listener Listener emptyUsernameServer = new({
-    protocol: FTP,
-    host: "127.0.0.1",
-    auth: {
-        credentials: {
-            username: "",
-            password: "wso2"
-        }
-    },
-    port: 21212,
-    path: "/home/in",
-    pollingInterval: 2,
-    fileNamePattern: "(.*).txt"
-});
-
 @test:Config {}
-public function testServerRegisterFailureEmptyUsername() {
-    error? result = emptyUsernameServer.attach(service object {
-          function onFileChange(WatchEvent event) {}
-    }, "remote-server");
-    if result is error {
-        test:assertEquals(result.message(), "Username cannot be empty");
+public function testServerRegisterFailureEmptyUsername() returns error? {
+
+    Listener|Error emptyUsernameServer = new({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {
+            credentials: {
+                username: "",
+                password: "wso2"
+            }
+        },
+        port: 21212,
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if emptyUsernameServer is Error {
+        test:assertEquals(emptyUsernameServer.message(), "Username cannot be empty");
     } else {
-        test:assertFail("Empty username set to basic auth. Test should fail");
+        test:assertFail("Non-error result when empty username is used for creating a Listener.");
     }
 }

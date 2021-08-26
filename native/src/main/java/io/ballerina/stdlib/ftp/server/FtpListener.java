@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static io.ballerina.stdlib.ftp.server.FtpListenerHelper.findRootCause;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
@@ -54,11 +55,10 @@ public class FtpListener implements RemoteFileSystemListener {
 
     private static final Logger log = LoggerFactory.getLogger(FtpListener.class);
     private final Runtime runtime;
-    private final BObject service;
+    private Map<String, BObject> registeredServices = new HashMap<>();
 
-    FtpListener(Runtime runtime, BObject service) {
+    FtpListener(Runtime runtime) {
         this.runtime = runtime;
-        this.service = service;
     }
 
     @Override
@@ -66,16 +66,22 @@ public class FtpListener implements RemoteFileSystemListener {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             BMap<BString, Object> parameters = getSignatureParameters(event);
-            runtime.invokeMethodAsync(service, service.getType().getMethods()[0].getName(), null,
-                    null, new Callback() {
-                @Override
-                public void notifySuccess(Object o) {}
+            if (runtime != null) {
+                registeredServices.values().forEach(service -> {
+                    runtime.invokeMethodAsync(service, service.getType().getMethods()[0].getName(), null,
+                            null, new Callback() {
+                                @Override
+                                public void notifySuccess(Object o) {}
 
-                @Override
-                public void notifyFailure(BError error) {
-                    log.error("Error while invoking FTP onMessage method.");
-                }
-            }, parameters, true);
+                                @Override
+                                public void notifyFailure(BError error) {
+                                    log.error("Error while invoking FTP onMessage method.");
+                                }
+                            }, parameters, true);
+                });
+            } else {
+                log.error("Runtime should not be null.");
+            }
         }
         return true;
     }
@@ -119,24 +125,34 @@ public class FtpListener implements RemoteFileSystemListener {
 
     @Override
     public BError done() {
-        try {
-            Object serverConnectorObject = service.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
-            if (serverConnectorObject instanceof RemoteFileSystemServerConnector) {
-                RemoteFileSystemServerConnector serverConnector
-                        = (RemoteFileSystemServerConnector) serverConnectorObject;
-                Object stopError = serverConnector.stop();
-                if (stopError instanceof BError) {
-                    return (BError) stopError;
+        Set<Map.Entry<String, BObject>> serviceEntries = registeredServices.entrySet();
+        for (Map.Entry<String, BObject> serviceEntry : serviceEntries) {
+            BObject service = serviceEntry.getValue();
+            try {
+                Object serverConnectorObject = service.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+                if (serverConnectorObject instanceof RemoteFileSystemServerConnector) {
+                    RemoteFileSystemServerConnector serverConnector
+                            = (RemoteFileSystemServerConnector) serverConnectorObject;
+                    Object stopError = serverConnector.stop();
+                    if (stopError instanceof BError) {
+                        return (BError) stopError;
+                    }
                 }
+            } catch (RemoteFileSystemConnectorException e) {
+                Throwable rootCause = findRootCause(e);
+                String detail = (rootCause != null) ? rootCause.getMessage() : null;
+                return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
+            } finally {
+                service.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
             }
-        } catch (RemoteFileSystemConnectorException e) {
-            Throwable rootCause = findRootCause(e);
-            String detail = (rootCause != null) ? rootCause.getMessage() : null;
-            return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
-        } finally {
-            service.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
         }
         log.debug(FtpConstants.SUCCESSFULLY_FINISHED_THE_ACTION);
         return null;
+    }
+
+    protected void addService(BObject service) {
+        if (service != null && service.getType() != null && service.getType().getName() != null) {
+            registeredServices.put(service.getType().getName(), service);
+        }
     }
 }

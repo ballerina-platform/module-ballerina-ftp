@@ -29,8 +29,10 @@ public class Listener {
     # Gets invoked during object initialization.
     #
     # + listenerConfig - Configurations for FTP listener
-    public isolated function init(ListenerConfiguration listenerConfig) {
+    # + return - `()` or else an `ftp:Error` upon failure to initialize the listener
+    public isolated function init(ListenerConfiguration listenerConfig) returns Error? {
         self.config = listenerConfig;
+        return initListener(self, self.config);
     }
 
     # Starts the `ftp:Listener`.
@@ -41,16 +43,6 @@ public class Listener {
     # + return - `()` or else an `error` upon failure to start the listener
     public isolated function 'start() returns error? {
         return self.internalStart();
-    }
-
-    # Stops the `ftp:Listener`.
-    # ```ballerina
-    # error? response = listener->__stop();
-    # ```
-    #
-    # + return - `()` or else an `error` upon failure to stop the listener
-    public isolated function __stop() returns error? {
-        check self.stop();
     }
 
     # Binds a service to the `ftp:Listener`.
@@ -121,7 +113,7 @@ public class Listener {
     # + return - An `error` if failed to establish communication with the FTP
     #            server
     public isolated function poll() returns error? {
-        return poll(self.config);
+        return poll(self);
     }
 
     # Register a FTP service in an FTP listener
@@ -135,35 +127,24 @@ public class Listener {
     # + return - An `error` if failed to establish communication with the FTP
     #            server
     public isolated function register(service object {} ftpService, string? name) returns error? {
-        error? response = ();
-        handle serviceName = self.EMPTY_JAVA_STRING;
-        if(name is string){
-            serviceName = java:fromString(name);
-        }
-        handle|error result = register(self, self.config, ftpService, serviceName);
-        if(result is handle){
-            self.config.serverConnector = result;
-        } else {
-            response = result;
-        }
-        return response;
+        return register(self, ftpService);
     }
 }
 
 class Job {
 
     *task:Job;
-    private Listener l;
+    private Listener ftpListener;
 
     public isolated function execute() {
-        var result = self.l.poll();
+        var result = self.ftpListener.poll();
         if (result is error) {
             log:printError("Error while executing poll function", 'error = result);
         }
     }
 
-    public isolated function init(Listener l) {
-        self.l = l;
+    public isolated function init(Listener initializedListener) {
+        self.ftpListener = initializedListener;
     }
 }
 
@@ -185,5 +166,4 @@ public type ListenerConfiguration record {|
     string path = "/home";
     string fileNamePattern = "(.*).txt";
     decimal pollingInterval = 60;
-    handle serverConnector?;
 |};

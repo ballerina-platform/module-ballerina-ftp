@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.transport.server.connector.contractimpl;
 
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.server.FtpListener;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.server.RemoteFileSystemConsumer;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Implementation of the {@link RemoteFileSystemServerConnector} interface.
@@ -36,31 +38,40 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
             .contractimpl.RemoteFileSystemServerConnectorImpl.class);
 
     private RemoteFileSystemConsumer consumer;
-    private String id;
+    private AtomicBoolean isPollOperationOccupied = new AtomicBoolean(false);
 
-    public RemoteFileSystemServerConnectorImpl(String id, Map<String, String> properties,
+    public RemoteFileSystemServerConnectorImpl(Map<String, String> properties,
             RemoteFileSystemListener remoteFileSystemListener) throws RemoteFileSystemConnectorException {
-        this.id = id;
         try {
-            consumer = new RemoteFileSystemConsumer(id, properties, remoteFileSystemListener);
+            consumer = new RemoteFileSystemConsumer(properties, remoteFileSystemListener);
         } catch (RemoteFileSystemConnectorException e) {
             throw new RemoteFileSystemConnectorException(
-                    "Failed to initialize File server connector " + "for Service: " + id, e);
+                    "Failed to initialize File server connector.", e);
         }
     }
 
     public void poll() {
-        try {
-            if (log.isDebugEnabled()) {
-                log.debug("Poll method invoke for " + id);
+        if (isPollOperationOccupied.compareAndSet(false, true)) {
+            try {
+                if (log.isDebugEnabled()) {
+                    log.debug("Poll method invoked.");
+                }
+                consumer.consume();
+            } catch (Exception e) {
+                log.error("Error executing the polling cycle", e);
+            } finally {
+                isPollOperationOccupied.set(false);
             }
-            consumer.consume();
-        } catch (RemoteFileSystemConnectorException e) {
-            log.error("Error executing the polling cycle of RemoteFileSystemServer for service: " + id, e);
+        } else {
+            log.warn("A scheduled email polling job was skipped as the previous job was still processing.");
         }
     }
 
     public Object stop() {
         return consumer.close();
+    }
+
+    public FtpListener getFtpListener() {
+        return consumer.getFtpListener();
     }
 }

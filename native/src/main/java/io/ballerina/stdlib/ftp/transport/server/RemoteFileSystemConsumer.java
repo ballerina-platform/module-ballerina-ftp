@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.transport.server;
 
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.server.FtpListener;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
@@ -47,7 +48,6 @@ public class RemoteFileSystemConsumer {
     private static final Logger log = LoggerFactory.getLogger(
             io.ballerina.stdlib.ftp.transport.server.RemoteFileSystemConsumer.class);
 
-    private String serviceName;
     private RemoteFileSystemListener remoteFileSystemListener;
     private String listeningDirURI;
     private FileObject listeningDir;
@@ -60,14 +60,12 @@ public class RemoteFileSystemConsumer {
     /**
      * Constructor for the RemoteFileSystemConsumer.
      *
-     * @param id             Name of the service that creates the consumer
      * @param fileProperties Map of property values
      * @param listener       RemoteFileSystemListener instance to send callback
      * @throws RemoteFileSystemConnectorException if unable to start the connect to the remote server
      */
-    public RemoteFileSystemConsumer(String id, Map<String, String> fileProperties, RemoteFileSystemListener listener)
+    public RemoteFileSystemConsumer(Map<String, String> fileProperties, RemoteFileSystemListener listener)
             throws RemoteFileSystemConnectorException {
-        this.serviceName = id;
         this.remoteFileSystemListener = listener;
         listeningDirURI = fileProperties.get(FtpConstants.URI);
         try {
@@ -76,7 +74,7 @@ public class RemoteFileSystemConsumer {
             listeningDir = fsManager.resolveFile(listeningDirURI, fso);
             FileType fileType = listeningDir.getType();
             if (fileType != FileType.FOLDER) {
-                String errorMsg = "[" + serviceName + "] File system server connector is used to "
+                String errorMsg = "File system server connector is used to "
                         + "listen to a folder. But the given path does not refer to a folder.";
                 final RemoteFileSystemConnectorException e = new RemoteFileSystemConnectorException(errorMsg);
                 remoteFileSystemListener.onError(e);
@@ -85,7 +83,7 @@ public class RemoteFileSystemConsumer {
         } catch (FileSystemException e) {
             remoteFileSystemListener.onError(e);
             throw new RemoteFileSystemConnectorException(
-                    "[" + serviceName + "] Unable to initialize " + "the connection with server.", e);
+                    "Unable to initialize the connection with the server.", e);
         }
         if (fileProperties.get(FtpConstants.FILE_NAME_PATTERN) != null) {
             fileNamePattern = fileProperties.get(FtpConstants.FILE_NAME_PATTERN);
@@ -143,16 +141,15 @@ public class RemoteFileSystemConsumer {
 
                 }
             } else {
-                remoteFileSystemListener.onError(new RemoteFileSystemConnectorException(
-                        "[" + serviceName + "] Unable to access or read file or directory : " + FileTransportUtils
-                                .maskUrlPassword(listeningDirURI) + ". Reason: " + (isFileExists ?
-                                "The file can not be read!" :
-                                "The file does not exist!")));
+                String errorMsg = String.format("Unable to access or read file or directory :  %s. Reason: %s",
+                                FileTransportUtils.maskUrlPassword(listeningDirURI),
+                                (isFileExists ? "The file can not be read!" : "The file does not exist!"));
+                remoteFileSystemListener.onError(new RemoteFileSystemConnectorException(errorMsg));
             }
         } catch (FileSystemException e) {
             remoteFileSystemListener.onError(e);
             throw new RemoteFileSystemConnectorException(
-                    "[" + serviceName + "] Unable to get details from remote server.", e);
+                    "Unable to get details from remote server.", e);
         } finally {
             closeDirectories();
         }
@@ -169,13 +166,21 @@ public class RemoteFileSystemConsumer {
         return remoteFileSystemListener.done();
     }
 
+    /**
+     * Get the FTP Listener of the FTP consumer.
+     *
+     */
+    public FtpListener getFtpListener() {
+        return (FtpListener) remoteFileSystemListener;
+    }
+
     private void closeDirectories() {
         try {
             if (listeningDir != null) {
                 listeningDir.close();
             }
         } catch (FileSystemException e) {
-            log.warn("[" + serviceName + "] Could not close file at URI: " + FileTransportUtils
+            log.warn("Could not close file at URI: " + FileTransportUtils
                     .maskUrlPassword(listeningDirURI), e);
         }
     }
@@ -231,7 +236,7 @@ public class RemoteFileSystemConsumer {
     @ExcludeCoverageFromGeneratedReport
     private void logDebugErrorWhileGetChildrenFromDirListener(FileSystemException ignored) {
         if (log.isDebugEnabled()) {
-            log.debug("[" + serviceName + "] The file does not exist, or is not a folder, or an error "
+            log.debug("The file does not exist, or is not a folder, or an error "
                     + "has occurred when trying to list the children. File URI : " + FileTransportUtils
                     .maskUrlPassword(listeningDirURI), ignored);
         }
@@ -241,7 +246,7 @@ public class RemoteFileSystemConsumer {
     private void logDebugNoChildrenFromDirWhileConsuming() {
         if (log.isDebugEnabled()) {
             log.debug(
-                    "[" + serviceName + "] Folder at " + FileTransportUtils.maskUrlPassword(listeningDirURI)
+                    "Folder at " + FileTransportUtils.maskUrlPassword(listeningDirURI)
                             + " is empty.");
         }
     }
@@ -282,7 +287,7 @@ public class RemoteFileSystemConsumer {
     @ExcludeCoverageFromGeneratedReport
     private void logDebugConsumeStopped() {
         if (log.isDebugEnabled()) {
-            log.debug("[" + serviceName + "] End : Scanning directory or file : " + FileTransportUtils
+            log.debug("End : Scanning directory or file : " + FileTransportUtils
                     .maskUrlPassword(listeningDirURI));
         }
     }
