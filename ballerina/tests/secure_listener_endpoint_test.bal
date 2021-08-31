@@ -22,7 +22,7 @@ int secureAddedFileCount = 0;
 int secureDeletedFileCount = 0;
 boolean secureWatchEventReceived = false;
 
-listener Listener secureRemoteServer = new({
+listener Listener secureRemoteServer = check new({
     protocol: SFTP,
     host: "127.0.0.1",
     auth: {
