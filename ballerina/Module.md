@@ -32,7 +32,7 @@ ftp:ClientConfiguration ftpConfig = {
 };
 
 // Create the FTP client.
-ftp:Client ftpClient = new(ftpConfig);
+ftp:Client|ftp:Error ftpClient = new(ftpConfig);
 ```
 
 ##### Creating a Directory
@@ -138,7 +138,7 @@ The FTP Listener can be used to listen to a remote directory. It will keep liste
 notify on file addition and deletion periodically.
 
 ```ballerina
-listener ftp:Listener remoteServer = new({
+listener ftp:Listener remoteServer = check new({
     protocol: ftp:FTP,
     host: "<The FTP host>",
     auth: {
@@ -194,7 +194,7 @@ ftp:ClientConfiguration sftpConfig = {
 #### SFTP Listener Configuration
 
 ```ballerina
-listener ftp:Listener remoteServer = new({
+listener ftp:Listener remoteServer = check new({
     protocol: ftp:SFTP,
     host: "<The SFTP host>",
     port: <The SFTP port>,
