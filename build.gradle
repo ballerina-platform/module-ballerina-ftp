@@ -38,7 +38,6 @@ ext.mockFtpServerVersion = project.mockFtpServerVersion
 ext.sshdMinaVersion = project.sshdMinaVersion
 ext.ftpServerVersion = project.ftpServerVersion
 ext.jcraftVersion = project.jcraftVersion
-ext.bouncycastleVersion = project.bouncycastleVersion
 ext.sshdCoreVersion = project.sshdCoreVersion
 ext.ftpletApiVersion = project.ftpletApiVersion
 ext.minaCoreVersion = project.minaCoreVersion

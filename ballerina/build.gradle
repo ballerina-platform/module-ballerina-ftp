@@ -79,9 +79,6 @@ dependencies {
     externalJars(group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}") {
         transitive = false
     }
-    externalJars(group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: "${bouncycastleVersion}") {
-        transitive = false
-    }
     externalJars(group: 'org.apache.sshd', name: 'sshd-core', version: "${sshdCoreVersion}") {
         transitive = false
     }
@@ -116,7 +113,6 @@ task updateTomlFiles {
         def stdlibDependentCommonsNetVersion = project.commonsNetVersion
         def stdlibDependentTestngVersion = project.testngVersion
         def stdlibDependentMockFtpServerVersion = project.mockFtpServerVersion
-        def stdlibDependentBouncycastleVersion = project.bouncycastleVersion
         def stdlibDependentSshdCoreVersion = project.sshdCoreVersion
         def stdlibDependentFtpServerVersion = project.ftpServerVersion
         def stdlibDependentFtpletApiVersion = project.ftpletApiVersion
@@ -132,7 +128,6 @@ task updateTomlFiles {
         newConfig = newConfig.replace("@commons.net.version@", stdlibDependentCommonsNetVersion)
         newConfig = newConfig.replace("@testng.version@", stdlibDependentTestngVersion)
         newConfig = newConfig.replace("@mockftpserver.version@", stdlibDependentMockFtpServerVersion)
-        newConfig = newConfig.replace("@bouncycastle.version@", stdlibDependentBouncycastleVersion)
         newConfig = newConfig.replace("@sshd.core.version@", stdlibDependentSshdCoreVersion)
         newConfig = newConfig.replace("@ftpserver.core.version@", stdlibDependentFtpServerVersion)
         newConfig = newConfig.replace("@ftplet.api.version@", stdlibDependentFtpletApiVersion)
