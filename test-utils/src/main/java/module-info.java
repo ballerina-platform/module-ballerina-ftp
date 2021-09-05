@@ -26,6 +26,5 @@ module io.ballerina.stdlib.ftp.testutils {
     requires ftpserver.core;
     requires ftplet.api;
     requires sshd.core;
-    requires bcprov.jdk15on;
     exports io.ballerina.stdlib.ftp.testutils.mockServerUtils;
 }
