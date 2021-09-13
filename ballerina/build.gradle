@@ -14,6 +14,9 @@
  * limitations under the License.
  *
  */
+
+import org.apache.tools.ant.taskdefs.condition.Os
+
 buildscript {
     repositories {
         maven {
@@ -34,8 +37,8 @@ description = 'Ballerina - Ballerina FTP Library'
 def packageName = "ftp"
 def packageOrg = "ballerina"
 def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
-def ballerinaConfigFile = new File("$project.projectDir/Ballerina.toml")
-def originalConfig = ballerinaConfigFile.text
+def ballerinaTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/Ballerina.toml")
+def ballerinaTomlFile = new File("$project.projectDir/Ballerina.toml")
 
 def stripBallerinaExtensionVersion(String extVersion) {
     if (extVersion.matches(project.ext.timestampedVersionRegex)) {
@@ -120,7 +123,7 @@ task updateTomlFiles {
         def stdlibDependentAopallianceVersion = project.aopallianceVersion
         def stdlibDependentJclSlf4jVersion = project.jclSlf4jVersion
 
-        def newConfig = ballerinaConfigFile.text.replace("@project.version@", project.version)
+        def newConfig = ballerinaTomlFilePlaceHolder.text.replace("@project.version@", project.version)
         newConfig = newConfig.replace("@toml.version@", tomlVersion)
         newConfig = newConfig.replace("@commons.vfs2.version@", stdlibDependentCommonsVfsVersion)
         newConfig = newConfig.replace("@commons.lang3.version@", stdlibDependentCommonsLang3Version)
@@ -135,13 +138,20 @@ task updateTomlFiles {
         newConfig = newConfig.replace("@aopalliance.version@", stdlibDependentAopallianceVersion)
         newConfig = newConfig.replace("@jcl.slf4j.version@", stdlibDependentJclSlf4jVersion)
 
-        ballerinaConfigFile.text = newConfig
+        ballerinaTomlFile.text = newConfig
     }
 }
 
-task revertTomlFiles {
+task commitTomlFiles {
     doLast {
-        ballerinaConfigFile.text = originalConfig
+        project.exec {
+            ignoreExitValue true
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "git commit Ballerina.toml Dependencies.toml -m \"[Automated] Update the native jar versions\""
+            } else {
+                commandLine 'sh', '-c', "git commit Ballerina.toml Dependencies.toml -m '[Automated] Update the native jar versions'"
+            }
+        }
     }
 }
 
