@@ -27,7 +27,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          scan-ref: '/github/workspace/ballerina/lib'
+          scan-ref: '/github/workspace/ballerina'
           format: 'table'
           exit-code: '1'
       - name: Set version env variable
