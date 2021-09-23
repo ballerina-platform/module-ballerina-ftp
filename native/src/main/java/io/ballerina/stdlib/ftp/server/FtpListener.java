@@ -24,6 +24,7 @@ import io.ballerina.runtime.api.Runtime;
 import io.ballerina.runtime.api.async.Callback;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
@@ -46,6 +47,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.ballerina.stdlib.ftp.server.FtpListenerHelper.findRootCause;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
 /**
@@ -67,18 +69,24 @@ public class FtpListener implements RemoteFileSystemListener {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             BMap<BString, Object> parameters = getSignatureParameters(event);
             if (runtime != null) {
-                registeredServices.values().forEach(service -> {
-                    runtime.invokeMethodAsync(service, service.getType().getMethods()[0].getName(), null,
-                            null, new Callback() {
-                                @Override
-                                public void notifySuccess(Object o) {}
+                for (BObject service : registeredServices.values()) {
+                    MethodType[] methodTypes = service.getType().getMethods();
+                    for (MethodType remoteFunc : methodTypes) {
+                        if (remoteFunc.getName().equals(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
+                            runtime.invokeMethodAsync(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
+                                null, new Callback() {
+                                    @Override
+                                    public void notifySuccess(Object o) {
+                                    }
 
-                                @Override
-                                public void notifyFailure(BError error) {
-                                    log.error("Error while invoking FTP onMessage method.");
-                                }
+                                    @Override
+                                    public void notifyFailure(BError error) {
+                                        log.error("Error while invoking FTP onMessage method.");
+                                    }
                             }, parameters, true);
-                });
+                        }
+                    }
+                }
             } else {
                 log.error("Runtime should not be null.");
             }

@@ -77,4 +77,6 @@ public class FtpConstants {
     public static final String INPUT_CONTENT_TEXT_CONTENT_KEY = "textContent";
     public static final String INPUT_CONTENT_COMPRESS_INPUT_KEY = "compressInput";
 
+    public static final String ON_FILE_CHANGE_REMOTE_FUNCTION = "onFileChange";
+
 }
