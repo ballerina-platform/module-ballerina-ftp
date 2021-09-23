@@ -8,24 +8,6 @@ dependencies-toml-version = "2"
 
 [[package]]
 org = "ballerina"
-name = "ftp"
-version = "2.0.0"
-transitive = false
-dependencies = [
-	{org = "ballerina", name = "io"},
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "lang.runtime"},
-	{org = "ballerina", name = "lang.string"},
-	{org = "ballerina", name = "log"},
-	{org = "ballerina", name = "task"},
-	{org = "ballerina", name = "test"}
-]
-modules = [
-	{org = "ballerina", packageName = "ftp", moduleName = "ftp"}
-]
-
-[[package]]
-org = "ballerina"
 name = "io"
 version = "1.0.0"
 transitive = false
@@ -118,7 +100,6 @@ name = "log"
 version = "2.0.0"
 transitive = false
 dependencies = [
-	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "observe"}
 ]
