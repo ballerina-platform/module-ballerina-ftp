@@ -91,8 +91,7 @@ class FtpClientHelper {
                 Channel channel = new FtpChannel(byteChannel);
                 InputStream inputStream = channel.getInputStream();
                 clientConnector.addNativeData(READ_INPUT_STREAM, inputStream);
-                long arraySize = (long) clientConnector.getNativeData(ARRAY_SIZE);
-                BMap<BString, Object> streamEntry = generateInputStreamEntry(inputStream, arraySize);
+                BMap<BString, Object> streamEntry = generateInputStreamEntry(inputStream);
                 clientConnector.addNativeData(ENTITY_BYTE_STREAM, streamEntry);
                 balFuture.complete(streamEntry);
             }
@@ -102,11 +101,10 @@ class FtpClientHelper {
         return true;
     }
 
-    public static BMap<BString, Object> generateInputStreamEntry(InputStream inputStream, long arraySize) {
+    public static BMap<BString, Object> generateInputStreamEntry(InputStream inputStream) {
         BMap<BString, Object> streamEntry = ValueCreator.createRecordValue(getFtpPackage(), STREAM_ENTRY_RECORD);
-        int arraySizeInt = (int) arraySize;
         try {
-            byte[] buffer = new byte[arraySizeInt];
+            byte[] buffer = new byte[ARRAY_SIZE];
             int readNumber = inputStream.read(buffer);
             if (readNumber == -1) {
                 inputStream.close();
@@ -114,7 +112,7 @@ class FtpClientHelper {
                 return null;
             }
             byte[] returnArray;
-            if (readNumber < arraySizeInt) {
+            if (readNumber < ARRAY_SIZE) {
                 returnArray = Arrays.copyOfRange(buffer, 0, readNumber);
             } else {
                 returnArray = buffer;

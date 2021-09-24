@@ -140,14 +140,19 @@ public class MockFtpServer {
         ftpServer = new FakeFtpServer();
         ftpServer.setServerControlPort(port);
         String rootFolder = "/home/in";
-        String content = "File content";
+        String content1 = "File content";
+        String content2 = "";
+        for (int i = 0; i < 1000; i++) {
+            content2 += "123456789";
+        }
 
         ftpServer.addUserAccount(new UserAccount(username, password, rootFolder));
         FileSystem fileSystem = new UnixFakeFileSystem();
         fileSystem.add(new DirectoryEntry(rootFolder));
-        fileSystem.add(new FileEntry("/home/in/test1.txt", content));
-        fileSystem.add(new FileEntry("/home/in/test2.txt", content));
-        fileSystem.add(new FileEntry("/home/in/test3.txt", content));
+        fileSystem.add(new FileEntry("/home/in/test1.txt", content1));
+        fileSystem.add(new FileEntry("/home/in/test2.txt", content1));
+        fileSystem.add(new FileEntry("/home/in/test3.txt", content1));
+        fileSystem.add(new FileEntry("/home/in/test4.txt", content2));
         fileSystem.add(new DirectoryEntry("/home/in/folder1"));
         fileSystem.add(new DirectoryEntry("/home/in/folder1/subfolder1"));
         fileSystem.add(new DirectoryEntry("/home/in/childDirectory"));
