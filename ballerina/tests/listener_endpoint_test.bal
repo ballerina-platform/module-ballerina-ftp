@@ -60,7 +60,7 @@ public function testAddedFileCount() {
     while timeoutInSeconds > 0 {
         if watchEventReceived {
             log:printInfo("Added file count: " + addedFileCount.toString());
-            test:assertEquals(3, addedFileCount);
+            test:assertEquals(4, addedFileCount);
             break;
         } else {
             runtime:sleep(1);

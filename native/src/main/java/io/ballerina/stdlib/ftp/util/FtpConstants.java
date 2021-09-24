@@ -48,7 +48,7 @@ public class FtpConstants {
     public static final String FTP_MODULE_NAME = "ftp";
     public static final String ENTITY_BYTE_STREAM = "entity_byte_stream";
     public static final String READ_INPUT_STREAM = "readInputStream";
-    public static final String ARRAY_SIZE = "arraySize";
+    public static final int ARRAY_SIZE = 8192;
     public static final String BYTE_STREAM_NEXT_FUNC = "next";
     public static final String BYTE_STREAM_CLOSE_FUNC = "close";
     public static final String STREAM_ENTRY_RECORD = "StreamEntry";

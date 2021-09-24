@@ -157,7 +157,6 @@ class Job {
 # + path - Remote FTP directory location
 # + fileNamePattern - File name pattern that event need to trigger
 # + pollingInterval - Periodic time interval to check new update
-# + serverConnector - Server connector for service
 public type ListenerConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";

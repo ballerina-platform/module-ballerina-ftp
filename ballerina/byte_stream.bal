@@ -29,7 +29,6 @@ type StreamEntry record {|
 class ByteStream {
 
     private Client entity;
-    private int arraySize;
     private boolean isClosed = false;
     private string resourcePath;
     private boolean initialStreamEntryConsumed = false;
@@ -40,12 +39,11 @@ class ByteStream {
     # + entity - The `ftp:Client` which contains the byte stream
     # + resourcePath - The local path of the file/directory
     # + arraySize - The size of a byte array as an integer
-    public isolated function init(Client entity, string resourcePath, int arraySize) returns Error? {
+    public isolated function init(Client entity, string resourcePath) returns Error? {
         self.entity = entity;
-        self.arraySize = arraySize;
         self.resourcePath = resourcePath;
         record {|byte[] & readonly value;|}|Error? tempInitialStreamEntity
-            = externInitialGetStreamEntryRecord(self.entity, self.resourcePath, self.arraySize);
+            = externInitialGetStreamEntryRecord(self.entity, self.resourcePath);
         if (tempInitialStreamEntity is Error) {
             return tempInitialStreamEntity;
         } else {
@@ -59,7 +57,7 @@ class ByteStream {
     #            `()` if the stream has reached the end or else an `io:Error`
     public isolated function next() returns record {|byte[] & readonly value;|}|io:Error? {
         if (self.initialStreamEntryConsumed) {
-            return externGetStreamEntryRecord(self.entity, self.arraySize);
+            return externGetStreamEntryRecord(self.entity);
         } else {
             self.initialStreamEntryConsumed = true;
             return self.initialStreamEntry;
@@ -82,13 +80,13 @@ class ByteStream {
     }
 }
 
-isolated function externGetStreamEntryRecord(Client entity, int arraySize)
+isolated function externGetStreamEntryRecord(Client entity)
         returns record {|byte[] & readonly value;|}|io:Error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.client.FtpClient",
     name: "get"
 } external;
 
-isolated function externInitialGetStreamEntryRecord(Client entity, string path, int arraySize)
+isolated function externInitialGetStreamEntryRecord(Client entity, string path)
         returns record {|byte[] & readonly value;|}|Error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.client.FtpClient",
     name: "getFirst"
