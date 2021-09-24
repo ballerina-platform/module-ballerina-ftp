@@ -19,7 +19,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
  - [[#1782] Throw an error when file/directory does not exist in the `isDirectory` method](https://github.com/ballerina-platform/ballerina-standard-library/issues/1782)
  - [[#1703] Revamp the logic of the FTP Listener](https://github.com/ballerina-platform/ballerina-standard-library/issues/1703)
  - [[#1940] Remove `arraySize` parameter from the `get` method of the FTP Client API](https://github.com/ballerina-platform/ballerina-standard-library/issues/1940)
- - [[#1955] Make the access to the `WatchEvent` as `readonly` in the FTP Listener](https://github.com/ballerina-platform/ballerina-standard-library/issues/1955)
 
 ### Fixed
  - [[#1518] Remove thrown exceptions and make then return](https://github.com/ballerina-platform/ballerina-standard-library/issues/1518)
