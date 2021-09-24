@@ -243,7 +243,7 @@ isolated function matchStreamContent(stream<byte[] & readonly, io:Error?> binary
             break;
         } else if (binaryArray is ()) {
             break;
-        }else {
+        } else {
             tempContent = check strings:fromBytes(binaryArray.value);
             fullContent = fullContent + tempContent;
             maxLoopCount -= 1;
