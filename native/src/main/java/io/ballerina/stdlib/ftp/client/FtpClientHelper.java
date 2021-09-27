@@ -267,7 +267,7 @@ class FtpClientHelper {
 
     private static void callStreamNext(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj, CountDownLatch latch) {
-        env.getRuntime().invokeMethodAsync(iteratorObj, BYTE_STREAM_NEXT_FUNC, null, null, new Callback() {
+        env.getRuntime().invokeMethodAsyncConcurrently(iteratorObj, BYTE_STREAM_NEXT_FUNC, null, null, new Callback() {
             @Override
             public void notifySuccess(Object result) {
                 if (result == bufferHolder.getTerminalType()) {
@@ -287,12 +287,12 @@ class FtpClientHelper {
             public void notifyFailure(BError bError) {
                 latch.countDown();
             }
-        });
+        }, null, null, null, true);
     }
 
     private static void callStreamClose(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj, CountDownLatch latch) {
-        env.getRuntime().invokeMethodAsync(iteratorObj, BYTE_STREAM_CLOSE_FUNC, null, null, new Callback() {
+        env.getRuntime().invokeMethodAsyncConcurrently(iteratorObj, BYTE_STREAM_CLOSE_FUNC, null, null, new Callback() {
             @Override
             public void notifySuccess(Object result) {
                 this.terminateStream();
@@ -308,7 +308,7 @@ class FtpClientHelper {
                 bufferHolder.setTerminal(true);
                 latch.countDown();
             }
-        });
+        }, null, null, null, true);
     }
 
     static RemoteFileSystemMessage getUncompressedMessage(BObject clientConnector, String filePath,

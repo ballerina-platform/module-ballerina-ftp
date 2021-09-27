@@ -181,13 +181,9 @@ public class FtpClient {
             if (compressInput) {
                 compressedStream = FtpUtil.compress(stream, (inputContent.getStringValue(StringUtils.fromString(
                         FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue());
-                if (compressedStream != null) {
-                    message = FtpClientHelper.getCompressedMessage(clientConnector, (inputContent.getStringValue(
-                            StringUtils.fromString(FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(),
-                            propertyMap, compressedStream);
-                } else {
-                    return FtpUtil.createError("Error while compressing a file", Error.errorType());
-                }
+                message = FtpClientHelper.getCompressedMessage(clientConnector, (inputContent.getStringValue(
+                        StringUtils.fromString(FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(),
+                        propertyMap, compressedStream);
             } else {
                 try {
                     message = FtpClientHelper.getUncompressedMessage(clientConnector, (inputContent.getStringValue(
@@ -213,9 +209,7 @@ public class FtpClient {
         }
         connector.send(message, FtpAction.PUT, filePath, null);
         try {
-            if (stream != null) {
-                stream.close();
-            }
+            stream.close();
             if (compressedStream != null) {
                 compressedStream.close();
             }

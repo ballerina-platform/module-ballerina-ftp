@@ -73,12 +73,18 @@ public isolated client class Client {
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + compressInput - True if file should be compressed before uploading
+    # + compressionType - Type of the compression to be used, if
+    #                     the file should be compressed before
+    #                     uploading
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
-            |string|xml|json content, boolean compressInput=false) returns Error? {
-        return put(self, getInputContent(path, content, compressInput));
+            |string|xml|json content, Compression compressionType=NONE) returns Error? {
+        boolean compress = false;
+        if compressionType != NONE {
+            compress = true;
+        }
+        return put(self, getInputContent(path, content, compress));
     }
 
     # Creates a new direcotry in an FTP server.
@@ -166,6 +172,15 @@ public isolated client class Client {
     remote isolated function delete(string path) returns Error? {
         return delete(self, path);
     }
+}
+
+# Compression type.
+#
+# + ZIP - Zip compression
+# + NONE - No compression used
+public enum Compression {
+    ZIP,
+    NONE
 }
 
 # Configuration for FTP client.
