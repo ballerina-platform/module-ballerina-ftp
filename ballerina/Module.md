@@ -62,7 +62,7 @@ The following code compresses and uploads a file to a remote FTP server.
 stream<io:Block, io:Error?> fileByteStream
     = check io:fileReadBlocksAsStream(putFilePath, <Block size>);
 ftp:Error? compressedPutResponse = ftpClient->put("<Resource path>",
-    fileByteStream, true);
+    fileByteStream, compressionType=ZIP);
 ```
 
 ##### Getting the Size of a Remote File
@@ -78,7 +78,7 @@ int|ftp:Error sizeResponse = ftpClient->size("<The resource path>");
 The following code reads the content of a file in a remote FTP server.
 
 ```ballerina
-stream<byte[], io:Error?>|Error str = clientEP -> get("<The file path>", <Block size>);
+stream<byte[], io:Error?>|Error str = clientEP -> get("<The file path>");
 if (str is stream<byte[], io:Error?>) {
     record {|byte[] value;|}|io:Error? arr1 = str.next();
     if (arr1 is record {|byte[] value;|}) {
@@ -153,8 +153,8 @@ listener ftp:Listener remoteServer = check new({
     fileNamePattern: "<File name pattern>"
 });
 
-service ftpServerConnector on remoteServer {
-    resource function onFileChange(ftp:WatchEvent fileEvent) {
+service on remoteServer {
+    remote function onFileChange(ftp:WatchEvent fileEvent) {
 
         foreach ftp:FileInfo addedFile in fileEvent.addedFiles {
             log:print("Added file path: " + addedFile.path);
