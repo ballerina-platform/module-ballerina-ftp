@@ -184,7 +184,7 @@ public function testPutFileContent() returns error? {
 public function testPutCompressedFileContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
-    Error? response = clientEp->put("/home/in/test3.txt", bStream, compressInput=true);
+    Error? response = clientEp->put("/home/in/test3.txt", bStream, compressionType=ZIP);
     if response is Error {
         test:assertFail(msg = "Found unexpected response type from compressed `put` operation" + response.message());
     }

@@ -68,7 +68,7 @@ public type FileInfo record {|
 #
 # + addedFiles - Array of `ftp:FileInfo` that represents newly added files
 # + deletedFiles - Array of strings that contains deleted file names
-public type WatchEvent record {|
+public type WatchEvent readonly & record {|
     FileInfo[] addedFiles;
     string[] deletedFiles;
 |};
