@@ -24,7 +24,6 @@ public class Listener {
     private handle EMPTY_JAVA_STRING = java:fromString("");
     private ListenerConfiguration config = {};
     private task:JobId? jobId = ();
-    private handle? serverConnector = ();
 
     # Gets invoked during object initialization.
     #
