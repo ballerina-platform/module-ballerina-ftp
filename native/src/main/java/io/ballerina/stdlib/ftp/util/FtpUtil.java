@@ -144,7 +144,7 @@ public class FtpUtil {
 
     public static BError createError(String message, String details, String errorTypeName) {
         return ErrorCreator.createError(ModuleUtils.getModule(), errorTypeName, StringUtils.fromString(message), null,
-                StringUtils.fromString(details));
+                null);
     }
 
     /**
