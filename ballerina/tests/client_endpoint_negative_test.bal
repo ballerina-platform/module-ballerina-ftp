@@ -34,6 +34,7 @@ public function testConnectionWithNonExistingServer() returns error? {
     } else {
         test:assertFail(msg = "Found a non-error response when tried to connect to a non existing server.");
     }
+    return;
 }
 
 @test:Config{
@@ -53,6 +54,7 @@ public function testConnectionWithInvalidConfiguration() returns error? {
     } else {
         test:assertFail(msg = "Found a non-error response when tried to connect with invalid parameters.");
     }
+    return;
 }
 
 @test:Config{
@@ -66,6 +68,7 @@ public function testReadNonExistingFile() returns error? {
     } else {
         test:assertFail(msg = "Found a non-error response while accessing a non-existing file path");
     }
+    return;
 }
 
 @test:Config{
@@ -80,6 +83,7 @@ public function testAppendContentToNonExistingFile() returns error? {
     } else {
         test:assertFail(msg = "Found a non-error response while accessing a non-existing file path");
     }
+    return;
 }
 
 @test:Config{
@@ -94,6 +98,7 @@ public function testPutFileContentAtInvalidFileLocation() returns error? {
     } else {
         test:assertFail(msg = "Found a non-error response while accessing a non-existing file path");
     }
+    return;
 }
 
 @test:Config{
@@ -175,6 +180,7 @@ public function testDeleteFileAtNonExistingLocation() returns error? {
     } else {
         // test:assertFail(msg = "Found a non-error response while accessing a non-existing file path.");
     }
+    return;
 }
 
 @test:Config{
