@@ -32,6 +32,7 @@ public isolated client class Client {
         if (response is Error) {
             return response;
         }
+        return;
     }
 
     # Retrieves the file content from a remote resource.

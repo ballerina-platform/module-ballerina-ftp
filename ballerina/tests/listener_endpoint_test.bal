@@ -100,6 +100,7 @@ public function testFtpServerDeregistration() returns error? {
             test:assertFail("Failed to detach from the FTP server: " + result2.message());
         }
     }
+    return;
 }
 
 @test:Config {}
@@ -125,6 +126,7 @@ public function testServerRegisterFailureEmptyPassword() returns error? {
     } else {
         test:assertFail("Non-error result when empty password is used for creating a Listener.");
     }
+    return;
 }
 
 @test:Config {}
@@ -150,4 +152,5 @@ public function testServerRegisterFailureEmptyUsername() returns error? {
     } else {
         test:assertFail("Non-error result when empty username is used for creating a Listener.");
     }
+    return;
 }

@@ -86,6 +86,7 @@ public function testReadFromAnonServer() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
+    return;
 }
 
 @test:Config{
@@ -103,6 +104,7 @@ public function testReadBlockFittingContent() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
+    return;
 }
 
 @test:Config{
@@ -125,6 +127,7 @@ public function testReadBlockNonFittingContent() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
+    return;
 }
 
 @test:Config{
@@ -151,6 +154,7 @@ public function testAppendContent() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
+    return;
 }
 
 @test:Config{
@@ -176,6 +180,7 @@ public function testPutFileContent() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
+    return;
 }
 
 @test:Config{
@@ -194,6 +199,7 @@ public function testPutCompressedFileContent() returns error? {
     if str is Error {
         test:assertFail(msg = "Error occurred during compressed `put` operation" + str.message());
     }
+    return;
 }
 
 @test:Config{
@@ -230,6 +236,7 @@ public function testPutLargeFileContent() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
+    return;
 }
 
 isolated function matchStreamContent(stream<byte[] & readonly, io:Error?> binaryStream, string matchedString) returns boolean|error {
@@ -275,6 +282,7 @@ public function testPutTextContent() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
+    return;
 }
 
 @test:Config{
@@ -300,6 +308,7 @@ public function testPutJsonContent() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
+    return;
 }
 
 @test:Config{
@@ -325,6 +334,7 @@ public function testPutXMLContent() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
+    return;
 }
 
 @test:Config{
@@ -472,6 +482,7 @@ public function testDeleteFile() returns error? {
             "Failed to read file: ftp://wso2:wso2123@127.0.0.1:21212/home/in/test1.txt not found",
             msg = "Correct error is not given when the file is deleted." + str.message());
     }
+    return;
 }
 
 @test:Config{
@@ -540,6 +551,7 @@ function testGenericRmdir(string path) returns error? {
     } else {
         // test:assertFail(msg = "Error not created while invoking `isDirectory` operation after `rmdir` operation on " + path );
     }
+    return;
 }
 
 @test:AfterSuite{}
@@ -547,6 +559,7 @@ public function stopServer() returns error? {
     error? response0 = stopAnonymousFtpServer();
     error? response1 = stopFtpServer();
     error? response2 = stopSftpServer();
+    return;
 }
 
 function initAnonymousFtpServer(map<anydata> config) returns Error? = @java:Method{
