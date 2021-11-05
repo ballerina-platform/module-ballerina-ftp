@@ -33,7 +33,6 @@ public function testSecureGetFileContent() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
-    return;
 }
 
 @test:Config{
@@ -61,7 +60,6 @@ public function testSecureConnectWithWrongPassword() returns error? {
     } else {
         test:assertFail(msg = "Found a non-error response while initializing SFTP client with wrong password.");
     }
-    return;
 }
 
 @test:Config{
@@ -89,7 +87,6 @@ public function testSecureConnectWithWrongKey() returns error? {
     } else {
         test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid key.");
     }
-    return;
 }
 
 @test:Config{
@@ -115,7 +112,6 @@ public function testSecurePutFileContent() returns error? {
     } else {
        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
-    return;
 }
 
 @test:Config{
@@ -142,5 +138,4 @@ public function testSecureDeleteFileContent() returns error? {
             "Failed to read file: sftp://wso2:wso2123@127.0.0.1:21213/tempFile1.txt not found",
             msg = "Correct error is not given when trying to get a non-existing file.");
     }
-    return;
 }
