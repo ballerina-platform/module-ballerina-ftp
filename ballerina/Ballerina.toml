@@ -11,9 +11,6 @@ distribution = "slbeta3"
 [[platform.java11.dependency]]
 path = "./lib/commons-vfs2-2.8.0.jar"
 
-# [[platform.java11.dependency]]
-# path = "./lib/commons-lang3-@commons.lang3.version@.jar"
-
 [[platform.java11.dependency]]
 path = "./lib/jsch-0.1.54.jar"
 
