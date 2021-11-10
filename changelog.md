@@ -29,3 +29,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
  - [[#1546] Correctly handle errors of `get` method](https://github.com/ballerina-platform/ballerina-standard-library/issues/1546)
  - [[#108] Implement the `stop` functionality to the FTP connector](https://github.com/ballerina-platform/ballerina-standard-library/issues/108)
  - [[#106] Correctly set the `lastModifiedTime` and `fileSize` to the `FileInfo` object](https://github.com/ballerina-platform/ballerina-standard-library/issues/106)
+ - [[#2245] Remove warnings in both build and runtime](https://github.com/ballerina-platform/ballerina-standard-library/issues/2245)

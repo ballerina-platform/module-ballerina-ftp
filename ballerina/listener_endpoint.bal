@@ -57,7 +57,6 @@ public class Listener {
         if (name is string?) {
             return self.register(ftpService, name);
         }
-        return;
     }
 
     # Stops consuming messages and detaches the service from the `ftp:Listener`.
@@ -80,7 +79,6 @@ public class Listener {
     # + return - `()` or else an `error` upon failure to stop the listener
     public isolated function immediateStop() returns error? {
         check self.stop();
-        return;
     }
 
     # Stops the `ftp:Listener` gracefully.
@@ -91,13 +89,11 @@ public class Listener {
     # + return - `()` or else an `error` upon failure to stop the listener
     public isolated function gracefulStop() returns error? {
         check self.stop();
-        return;
     }
 
     isolated function internalStart() returns error? {
         self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), self.config.pollingInterval);
         log:printInfo("Listening to remote server at " + self.config.host + "...");
-        return;
     }
 
     isolated function stop() returns error? {
@@ -106,7 +102,6 @@ public class Listener {
             check task:unscheduleJob(id);
         }
         log:printInfo("Stopped listening to remote server at " + self.config.host);
-        return;
     }
 
     # Poll new files from a FTP server.

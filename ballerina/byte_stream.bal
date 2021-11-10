@@ -49,7 +49,6 @@ class ByteStream {
         } else {
             self.initialStreamEntry = tempInitialStreamEntity;
         }
-        return;
     }
 
     # The next function reads and return the next `byte[]` of the related stream.
