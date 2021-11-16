@@ -93,7 +93,6 @@ public class Listener {
 
     isolated function internalStart() returns error? {
         self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), self.config.pollingInterval);
-        log:printInfo("Listening to remote server at " + self.config.host + "...");
     }
 
     isolated function stop() returns error? {
@@ -101,7 +100,6 @@ public class Listener {
         if (id is task:JobId) {
             check task:unscheduleJob(id);
         }
-        log:printInfo("Stopped listening to remote server at " + self.config.host);
     }
 
     # Poll new files from a FTP server.
