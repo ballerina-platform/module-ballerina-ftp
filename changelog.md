@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
  - [[#1940] Remove `arraySize` parameter from the `get` method of the FTP Client API](https://github.com/ballerina-platform/ballerina-standard-library/issues/1940)
  - [[#1957] Change `boolean` typed `compressInput` parameter of the `put` method of FTP Client to an `enum` type with the name, `compressionType`](https://github.com/ballerina-platform/ballerina-standard-library/issues/1957)
  - [[#1955] Make the access to the `WatchEvent` as `readonly` in the FTP Listener](https://github.com/ballerina-platform/ballerina-standard-library/issues/1955)
+ - [[#2398]Mark Service type as distinct](https://github.com/ballerina-platform/ballerina-standard-library/issues/2398)
 
 ### Fixed
  - [[#1518] Remove thrown exceptions and make then return](https://github.com/ballerina-platform/ballerina-standard-library/issues/1518)

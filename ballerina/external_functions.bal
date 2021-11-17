@@ -77,13 +77,13 @@ isolated function initListener(Listener listenerEndpoint, ListenerConfiguration 
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
 } external;
 
-isolated function register(Listener listenerEndpoint, service object {} ftpService)
+isolated function register(Listener listenerEndpoint, Service ftpService)
         returns Error? = @java:Method{
     name: "register",
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
 } external;
 
-isolated function deregister(Listener listenerEndpoint, service object {} ftpService)
+isolated function deregister(Listener listenerEndpoint, Service ftpService)
         returns Error? = @java:Method{
     name: "deregister",
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
