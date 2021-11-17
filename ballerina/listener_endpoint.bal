@@ -52,7 +52,7 @@ public class Listener {
     # + ftpService - Service to be detached from the listener
     # + name - Name of the service to be detached from the listener
     # + return - `()` or else an `error` upon failure to register the listener
-    public isolated function attach(service object {} ftpService, string[]|string? name = ())
+    public isolated function attach(Service ftpService, string[]|string? name = ())
             returns error? {
         if (name is string?) {
             return self.register(ftpService, name);
@@ -66,7 +66,7 @@ public class Listener {
     #
     # + ftpService - Service to be detached from the listener
     # + return - `()` or else an `error` upon failure to detach the service
-    public isolated function detach(service object {} ftpService) returns error? {
+    public isolated function detach(Service ftpService) returns error? {
         check self.stop();
         return deregister(self, ftpService);
     }
@@ -123,7 +123,7 @@ public class Listener {
     # + name - Name of the FTP service
     # + return - An `error` if failed to establish communication with the FTP
     #            server
-    public isolated function register(service object {} ftpService, string? name) returns error? {
+    public isolated function register(Service ftpService, string? name) returns error? {
         return register(self, ftpService);
     }
 }
@@ -163,3 +163,7 @@ public type ListenerConfiguration record {|
     string fileNamePattern = "(.*).txt";
     decimal pollingInterval = 60;
 |};
+
+# Represents a FTP service.
+public type Service distinct service object {
+};
