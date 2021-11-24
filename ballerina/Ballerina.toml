@@ -37,7 +37,7 @@ path = "./lib/ftplet-api-1.1.1.jar"
 scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "./lib/mina-core-2.0.16.jar"
+path = "./lib/mina-core-2.1.5.jar"
 scope = "testOnly"
 
 [[platform.java11.dependency]]
