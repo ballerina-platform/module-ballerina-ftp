@@ -68,6 +68,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+
 /**
  * Creates a Mock FTP Servers
  */
@@ -84,7 +86,7 @@ public class MockFtpServer {
     private static FtpServer ftpsServer;
     private static SftpAuthStatusHolder sftpAuthStatusHolder = new SftpAuthStatusHolder();
 
-    public static void initAnonymousFtpServer(BMap<Object, Object> config) throws BallerinaFtpException {
+    public static Object initAnonymousFtpServer(BMap<Object, Object> config) {
         int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_PORT)));
         anonFtpServer = new FakeFtpServer();
@@ -109,13 +111,14 @@ public class MockFtpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new BallerinaFtpException("Error in starting anonymous mock FTP server");
+                return FtpUtil.createError("Error in starting anonymous mock FTP server: " + e.getMessage(), null, Error.errorType());
             }
         }
         logger.info("Started Anonymous Mock FTP server");
+        return null;
     }
 
-    public static void initFtpServer(BMap<Object, Object> config) throws BallerinaFtpException {
+    public static Object initFtpServer(BMap<Object, Object> config) {
         int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
@@ -134,7 +137,7 @@ public class MockFtpServer {
         }
 
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-            throw new BallerinaFtpException("Username and password cannot be empty");
+            return FtpUtil.createError("Error in starting anonymous mock FTP server", null, Error.errorType());
         }
 
         ftpServer = new FakeFtpServer();
@@ -175,10 +178,12 @@ public class MockFtpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new BallerinaFtpException("Error in starting mock FTP server");
+                return FtpUtil.createError("Error in starting mock FTP server: " + e.getMessage(), null,
+                        Error.errorType());
             }
         }
         logger.info("Started Mock FTP server");
+        return null;
     }
 
     public static void startFtpsServer(BMap<Object, Object> config) throws FtpException, BallerinaFtpException {
@@ -246,8 +251,7 @@ public class MockFtpServer {
         }
     }
 
-    public static void initSftpServer(BMap<Object, Object> config) throws IOException, BallerinaFtpException,
-            UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException {
+    public static Object initSftpServer(BMap<Object, Object> config) {
         int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
@@ -266,7 +270,7 @@ public class MockFtpServer {
         }
 
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-            throw new BallerinaFtpException("Username and password cannot be empty");
+            return FtpUtil.createError("Username and password cannot be empty", null, Error.errorType());
         }
 
         File homeFolder = new File("tests/resources/datafiles/");
@@ -279,16 +283,20 @@ public class MockFtpServer {
         sftpServer.setPort(port);
         sftpServer.setSubsystemFactories(Collections.singletonList(new SftpSubsystemFactory()));
         sftpServer.setCommandFactory(new ScpCommandFactory());
-        sftpServer.setKeyPairProvider(getKeyPairProvider());
-        sftpServer.setPublickeyAuthenticator(new TwoFactorAuthorizedKeysAuthenticator(
-                new File("tests/resources/authorized_keys"), sftpAuthStatusHolder));
-        String finalUsername = username;
-        String finalPassword = password;
-        sftpServer.setPasswordAuthenticator(
-                (authUsername, authPassword, session) -> sftpAuthStatusHolder.isPublicKeyAuthenticated()
-                        && finalUsername.equals(authUsername) && finalPassword.equals(authPassword));
-        sftpServer.setShellFactory(new ProcessShellFactory("/bin/sh", "-i", "-l"));
-        sftpServer.start();
+        try {
+            sftpServer.setKeyPairProvider(getKeyPairProvider());
+            sftpServer.setPublickeyAuthenticator(new TwoFactorAuthorizedKeysAuthenticator(
+                    new File("tests/resources/authorized_keys"), sftpAuthStatusHolder));
+            String finalUsername = username;
+            String finalPassword = password;
+            sftpServer.setPasswordAuthenticator(
+                    (authUsername, authPassword, session) -> sftpAuthStatusHolder.isPublicKeyAuthenticated()
+                            && finalUsername.equals(authUsername) && finalPassword.equals(authPassword));
+            sftpServer.setShellFactory(new ProcessShellFactory("/bin/sh", "-i", "-l"));
+            sftpServer.start();
+        } catch (Exception e) {
+            return FtpUtil.createError("Error while starting SFTP server: " + e.getMessage(), null, Error.errorType());
+        }
 
         int i = 0;
         while (!sftpServer.isOpen() && i < 10) {
@@ -297,10 +305,12 @@ public class MockFtpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new BallerinaFtpException("Error in starting mock FTP server");
+                return FtpUtil.createError("Error in starting mock FTP server: " + e.getMessage(), null,
+                        Error.errorType());
             }
         }
         logger.info("Started Mock SFTP server");
+        return null;
     }
 
     private static KeyPairProvider getKeyPairProvider() throws IOException, CertificateException, NoSuchAlgorithmException,
