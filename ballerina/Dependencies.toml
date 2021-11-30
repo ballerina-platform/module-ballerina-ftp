@@ -100,7 +100,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "task"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "time"}
