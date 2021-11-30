@@ -122,14 +122,15 @@ public class FtpListenerHelper {
         }
     }
 
-    public static void poll(BObject ftpListener) throws BallerinaFtpException {
+    public static Object poll(BObject ftpListener) {
         RemoteFileSystemServerConnector connector = (RemoteFileSystemServerConnector) ftpListener.
                 getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         try {
             connector.poll();
         } catch (RemoteFileSystemConnectorException e) {
-            throw new BallerinaFtpException(e.getMessage());
+            return FtpUtil.createError("Error during the poll operation: " + e.getMessage(), null, Error.errorType());
         }
+        return null;
     }
 
     public static Object deregister(BObject ftpListener, BObject service) {
