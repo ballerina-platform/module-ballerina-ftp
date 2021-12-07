@@ -19,7 +19,7 @@ import ballerina/io;
 
 public function main() returns error? {
     // Creates the client with the connection parameters, host, port,
-    // password and username. An error is returned in a failure.
+    // password, and username. An error is returned in a failure.
     ftp:ClientConfiguration config = {
         protocol: ftp:FTP,
         host: "localhost",
@@ -40,7 +40,7 @@ public function main() returns error? {
     stream<byte[] & readonly, io:Error?> fileStream
         = check clientEp->get("/home/in/dog.png");
 
-    // Writes the received image to the local instance
+    // Writes the received image to the local instance.
     check io:fileWriteBlocksFromStream("localDog.png", fileStream);
 
     // Closes the file stream to finish the `get` operation.
