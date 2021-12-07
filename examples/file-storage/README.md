@@ -47,7 +47,7 @@ Then navigate to the [`examples/gmail-smtp-client/client`](./client) directory, 
 $ bal run
 ```
 
-The successful execution of the service should show the output below.
+The successful execution of the client should show the output below.
 ```shell
 Compiling source
 	ftp/file_storage:1.0.0
