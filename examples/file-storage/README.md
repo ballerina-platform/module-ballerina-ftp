@@ -36,13 +36,13 @@ When all the file-related operations are finished, the byte stream corresponding
 ## Testing
 
 You can run the above code in your local environment. Navigate to the
-[`examples/gmail-smtp-client/server`](./server)  directory, and start the FTP server by building and running the Gradle-based code
+[`examples/file-storage/server`](./server)  directory, and start the FTP server by building and running the Gradle-based code
 with the following command.
 ```shell
 $ ./gradlew run
 ```
 
-Then, navigate to the [`examples/gmail-smtp-client/client`](./client) directory, and execute the command below.
+Then, navigate to the [`examples/file-storage/client`](./client) directory, and execute the command below.
 ```shell
 $ bal run
 ```
