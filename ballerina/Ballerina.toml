@@ -1,12 +1,12 @@
 [package]
 org = "ballerina"
 name = "ftp"
-version = "2.0.2"
+version = "2.1.0"
 authors = ["Ballerina"]
 keywords = ["FTP", "SFTP", "remote file", "file transfer", "client", "service"]
 repository = "https://github.com/ballerina-platform/module-ballerina-ftp"
 license = ["Apache-2.0"]
-distribution = "slbeta3"
+distribution = "slbeta6"
 
 [[platform.java11.dependency]]
 path = "./lib/commons-vfs2-2.8.0.jar"
@@ -49,8 +49,8 @@ path = "./lib/jcl-over-slf4j-1.7.21.jar"
 scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "../native/build/libs/ftp-native-2.0.2-SNAPSHOT.jar"
+path = "../native/build/libs/ftp-native-2.1.0-SNAPSHOT.jar"
 
 [[platform.java11.dependency]]
-path = "../test-utils/build/libs/ftp-test-utils-2.0.2-SNAPSHOT.jar"
+path = "../test-utils/build/libs/ftp-test-utils-2.1.0-SNAPSHOT.jar"
 scope = "testOnly"
