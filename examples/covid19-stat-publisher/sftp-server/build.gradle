@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'ftp'
+version '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.mockftpserver', name: 'MockFtpServer', version: '3.0.0'
+    implementation group: 'org.apache.ftpserver', name: 'ftpserver-core', version: "1.1.1"
+    implementation group: 'org.apache.sshd', name: 'sshd-core', version: '1.7.0'
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: '1.7.30'
+    implementation group: 'commons-net', name: 'commons-net', version: '3.6'
+    implementation group: 'org.apache.commons', name: 'commons-vfs2', version: "2.8.0"
+    implementation group: 'com.jcraft', name: 'jsch', version: '0.1.54'
+}
+
+mainClassName = 'SftpServer'
