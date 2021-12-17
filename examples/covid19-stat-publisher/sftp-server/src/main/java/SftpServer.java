@@ -50,25 +50,7 @@ public class SftpServer {
 
     public static void main(String args[]) throws InterruptedException, UnrecoverableKeyException, CertificateException,
             IOException, NoSuchAlgorithmException, KeyStoreException {
-//        ftpServer = new FakeFtpServer();
-//        ftpServer.setServerControlPort(20210);
-//        String rootFolder = "/home/in";
-//        ftpServer.addUserAccount(new UserAccount("wso2", "wso2123", rootFolder));
-//        FileSystem fileSystem = new UnixFakeFileSystem();
-//        ftpServer.setFileSystem(fileSystem);
-//        fileSystem.add(new DirectoryEntry(rootFolder));
-//        ftpServer.start();
-//        int i = 0;
-//        while (!ftpServer.isStarted() && i < 10) {
-//            TimeUnit.MILLISECONDS.sleep(500);
-//            i++;
-//        }
         initSftpServer();
-        //        int i = 0;
-//        while (!ftpServer.isStarted() && i < 10) {
-//            TimeUnit.MILLISECONDS.sleep(500);
-//            i++;
-//        }
         logger.info("Started Example SFTP server");
     }
 
@@ -100,7 +82,6 @@ public class SftpServer {
             sftpServer.start();
         } catch (Exception e) {
             throw e;
-            //return FtpUtil.createError("Error while starting SFTP server: " + e.getMessage(), null, Error.errorType());
         }
 
         int i = 0;
@@ -110,8 +91,6 @@ public class SftpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-//                return FtpUtil.createError("Error in starting mock FTP server: " + e.getMessage(), null,
-//                        Error.errorType());
                 throw e;
             }
         }
@@ -120,7 +99,6 @@ public class SftpServer {
             Thread.sleep(1000);
         }
 
-//        return null;
     }
 
     private static KeyPairProvider getKeyPairProvider() throws IOException, CertificateException, NoSuchAlgorithmException,
