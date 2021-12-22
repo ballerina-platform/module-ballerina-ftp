@@ -20,8 +20,8 @@ The implementation of the complete scenario is implemented as described below.
     1. Country name where the new COVID-19 patients are diagnosed
     2. Date of diagnosis
     3. Total number of patients identified in that day in that country
-  - Aggregate the above extracted data and concatenate as a comma-separated-value string.
-  - This string value is published to an external RabbitMQ server.
+  - Aggregate the above extracted data and build a JSON serialized to binary.
+  - This binary value is published to an external RabbitMQ server.
   - Clean the processed file by deleting it.
 
 ## Execution Order
@@ -97,4 +97,4 @@ Now, copy the `examples/covid19-stat-publisher/sftp-server/src/main/resources/da
 `examples/covid19-stat-publisher/sftp-server/src/main/resources/input` location. This would publish the messages to the queue
 after some time.
 
-After successfully publishing all the events to the queue, there should be 139796 messages in the `InfectionQueue`.
+After successfully publishing all the events to the queue, there should be 132034 messages in the `InfectionQueue`.

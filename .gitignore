@@ -35,6 +35,7 @@ velocity.log*
 *Ballerina.lock
 
 # VSCode
+.vscode
 .project
 .settings/
 ballerina/.project
