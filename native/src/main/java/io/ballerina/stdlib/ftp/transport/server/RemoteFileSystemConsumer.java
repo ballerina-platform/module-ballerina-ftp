@@ -229,6 +229,18 @@ public class RemoteFileSystemConsumer {
         FileInfo info = new FileInfo(path);
         info.setFileSize(file.getContent().getSize());
         info.setLastModifiedTime(file.getContent().getLastModifiedTime());
+        info.setFileName(file.getName());
+        info.setFolder(file.isFolder());
+        info.setFile(file.isFile());
+        info.setPublicURIString(file.getPublicURIString());
+        info.setFileType(file.getType());
+        info.setAttached(file.isAttached());
+        info.setContentOpen(file.isContentOpen());
+        info.setExecutable(file.isExecutable());
+        info.setHidden(file.isHidden());
+        info.setReadable(file.isReadable());
+        info.setWritable(file.isWriteable());
+        info.setUrl(file.getURL());
         addedFileInfo.add(info);
         processed.add(path);
     }
