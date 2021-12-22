@@ -3,7 +3,8 @@
 ## Overview
 
 This guide explains how to listen to remotely located files, receive them, process, and publish their content to a RabbitMQ queue using Ballerina.
-This example explains how to write a simple file listener using FTP and fetch files using an FTP client. The figure below illustrates the high-level design diagram of the system.
+This example explains how to write a simple file listener using FTP, fetch files using an FTP client, process, and publish them to a RabbitMQ queue.
+The figure below illustrates the high-level design diagram of the system.
 
 <div align="center"><img src="covid19-stat-publisher.jpg" alt="Publishing COVID-19 Statistics to RabbitMQ" width="500"/></div>
 
@@ -13,9 +14,8 @@ Note that the data file is taken from https://ourworldindata.org/covid-vaccinati
 
 The implementation of the complete scenario is implemented as described below.
 - Initially, the FTP listener is listening to an external FTP server for newly available files having the `.csv` extension.
-  - When such a file is detected, this file is fetched to the local instance using the FTP client.
-- There is a scheduled task running periodically looking for locally available CSV files.
-  - When such a file is detected in the local instance, the file is started to read as a stream.
+- When such a file is detected, this file is fetched to the local instance using the FTP client.
+- Then the file is started to read as a stream.
   - Each line of the CSV file is processed individually, extracting the fields related to,
     1. Country name where the new COVID-19 patients are diagnosed
     2. Date of diagnosis
@@ -39,14 +39,14 @@ Execute the run command of the Ballerina FTP server project. This would start th
 
 ### Step 3 - Start the Processor
 
-In order to listen to the FTP server, an FTP listener has to be initialized with the file processor related scheduled task.
-This will start to listen to the started FTP server for new CSV files and the scheduler task for processing files.
+In order to listen to the FTP server, an FTP listener has to be initialized with the file processor.
+This will start to listen to the started FTP server for new CSV files, fetch them process them, and publish them.
 
 ### Step 4 - Add New Files
 
 Add a CSV file to the `examples/covid19-stat-publisher/sftp-server/src/main/resources/input` location.
 This would trigger the FTP listener which would fetch the file from the FTP server to a local location.
-When the scheduled task finds the newly added file it would process the file and publish messages to the RabbitMQ queue.
+Then the newly added file would get processed by an asynchronous method and publish messages to the RabbitMQ queue.
 
 
 ## Testing

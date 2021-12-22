@@ -76,7 +76,7 @@ service "Covid19UpdateDownloader" on secureRemoteServer {
 
     function onFileChange(ftp:WatchEvent event) {
         foreach ftp:FileInfo addedFile in event.addedFiles {
-            string fileName = addedFile.extension.clone();
+            string fileName = addedFile.name.clone();
             log:printInfo("Added file: " + fileName);
             stream<byte[] & readonly, io:Error?>|error fileStream = self.sftpClient->get(fileName);
             if fileStream is stream<byte[] & readonly, io:Error?> {
