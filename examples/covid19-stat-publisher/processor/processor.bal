@@ -56,6 +56,24 @@ service "Covid19UpdateDownloader" on secureRemoteServer {
         log:printInfo("Initialized the process job.");
     }
 
+    function onFileChange(ftp:WatchEvent event) {
+        foreach ftp:FileInfo addedFile in event.addedFiles {
+            string fileName = addedFile.name.clone();
+            log:printInfo("Added file: " + fileName);
+            stream<byte[] & readonly, io:Error?>|error fileStream = self.sftpClient->get(fileName);
+            if fileStream is stream<byte[] & readonly, io:Error?> {
+                error? writeResult = io:fileWriteBlocksFromStream(fileName, fileStream, option = io:APPEND);
+                error? fileCloseResult = fileStream.close();
+                if writeResult is error || fileCloseResult is error {
+                    continue;
+                }
+                _ = start self.publishToRabbitmq(fileName);
+            } else {
+                log:printInfo(fileStream.message());
+            }
+        }
+    }
+
     private function publishToRabbitmq(string newFileName) returns error? {
         log:printInfo("Going to process new file: " + newFileName);
         stream<string[], io:Error?> csvStream = check io:fileReadCsvAsStream(newFileName);
@@ -74,21 +92,4 @@ service "Covid19UpdateDownloader" on secureRemoteServer {
         check file:remove(newFileName);
     }
 
-    function onFileChange(ftp:WatchEvent event) {
-        foreach ftp:FileInfo addedFile in event.addedFiles {
-            string fileName = addedFile.name.clone();
-            log:printInfo("Added file: " + fileName);
-            stream<byte[] & readonly, io:Error?>|error fileStream = self.sftpClient->get(fileName);
-            if fileStream is stream<byte[] & readonly, io:Error?> {
-                error? writeResult = io:fileWriteBlocksFromStream(fileName, fileStream, option = io:APPEND);
-                error? fileCloseResult = fileStream.close();
-                if writeResult is error || fileCloseResult is error {
-                    continue;
-                }
-                _ = start self.publishToRabbitmq(fileName);
-            } else {
-                log:printInfo(fileStream.message());
-            }
-        }
-    }
 }
