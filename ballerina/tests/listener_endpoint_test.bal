@@ -19,6 +19,7 @@ import ballerina/log;
 import ballerina/test;
 
 int addedFileCount = 0;
+FileInfo? anonServerAddedFileInfo = ();
 int deletedFileCount = 0;
 boolean watchEventReceived = false;
 
@@ -49,6 +50,74 @@ service on remoteServer {
         foreach string deletedFile in event.deletedFiles {
             log:printInfo("Deleted file path: " + deletedFile);
         }
+    }
+}
+
+listener Listener anonymousRemoteServer = check new({
+    protocol: FTP,
+    host: "127.0.0.1",
+    auth: {
+        credentials: {
+            username: "anonymous",
+            password: "anything"
+        }
+    },
+    port: 21210,
+    path: "/home/in",
+    pollingInterval: 2,
+    fileNamePattern: "(.*).txt"
+});
+
+service on anonymousRemoteServer {
+    remote function onFileChange(WatchEvent event) {
+        if event.addedFiles.length() == 1 && anonServerAddedFileInfo == () {
+            anonServerAddedFileInfo = event.addedFiles[0];
+        } else {
+            anonServerAddedFileInfo = ();
+        }
+    }
+}
+
+@test:Config{
+}
+public function testAnonServerAddedFile() {
+    int timeoutInSeconds = 300;
+    while timeoutInSeconds > 0 {
+        if anonServerAddedFileInfo is FileInfo {
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).path,
+                "ftp://anonymous:anything@127.0.0.1:21210/home/in/test1.txt");
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).size, 12);
+            test:assertTrue((<FileInfo>anonServerAddedFileInfo).lastModifiedTimestamp > 0);
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).name, "test1.txt");
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).isFolder, false);
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).isFile, true);
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).pathDecoded, "/home/in/test1.txt");
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).extension, "txt");
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).publicURIString,
+                "ftp://anonymous:***@127.0.0.1:21210/home/in/test1.txt");
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).fileType, "file");
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).isAttached, true);
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).isContentOpen, false);
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).isExecutable, false);
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).isHidden, false);
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).isReadable, true);
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).isWritable, true);
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).depth, 4);
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).scheme, "ftp");
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).uri,
+                "//anonymous:anything@127.0.0.1:21210/home/in/test1.txt");
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).rootURI,
+                "ftp://anonymous:anything@127.0.0.1:21210/");
+            test:assertEquals((<FileInfo>anonServerAddedFileInfo).friendlyURI,
+                "ftp://anonymous:***@127.0.0.1:21210/home/in/test1.txt");
+            break;
+        } else {
+            runtime:sleep(1);
+            timeoutInSeconds -= 1;
+        }
+    }
+    if timeoutInSeconds == 0 {
+        test:assertFail("Failed to receive the `FileInfo` for 5 minuetes.");
     }
 }
 

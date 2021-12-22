@@ -38,6 +38,7 @@ import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
+import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +107,28 @@ public class FtpListener implements RemoteFileSystemListener {
             fileInfoParams.put("path", info.getPath());
             fileInfoParams.put("size", info.getFileSize());
             fileInfoParams.put("lastModifiedTimestamp", info.getLastModifiedTime());
+            fileInfoParams.put("name", info.getFileName().getBaseName());
+            fileInfoParams.put("isFolder", info.isFolder());
+            fileInfoParams.put("isFile", info.isFile());
+            try {
+                fileInfoParams.put("pathDecoded", info.getFileName().getPathDecoded());
+            } catch (FileSystemException e) {
+                fileInfoParams.put("pathDecoded", info.getPath());
+            }
+            fileInfoParams.put("extension", info.getFileName().getExtension());
+            fileInfoParams.put("publicURIString", info.getPublicURIString());
+            fileInfoParams.put("fileType", info.getFileType().getName());
+            fileInfoParams.put("isAttached", info.isAttached());
+            fileInfoParams.put("isContentOpen", info.isContentOpen());
+            fileInfoParams.put("isExecutable", info.isExecutable());
+            fileInfoParams.put("isHidden", info.isHidden());
+            fileInfoParams.put("isReadable", info.isReadable());
+            fileInfoParams.put("isWritable", info.isWritable());
+            fileInfoParams.put("depth", info.getFileName().getDepth());
+            fileInfoParams.put("scheme", info.getFileName().getScheme());
+            fileInfoParams.put("uri", info.getUrl().getPath());
+            fileInfoParams.put("rootURI", info.getFileName().getRootURI());
+            fileInfoParams.put("friendlyURI", info.getFileName().getFriendlyURI());
 
             final BMap<BString, Object> fileInfo = ValueCreator.createReadonlyRecordValue(
                     new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,

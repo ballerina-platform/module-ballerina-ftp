@@ -280,4 +280,88 @@ public class FileInfo {
     public boolean isWritable() {
         return isWritable;
     }
+
+    /**
+     * Set the file name.
+     */
+    public void setFileName(FileName fileName) {
+        this.fileName = fileName;
+    }
+
+    /**
+     * Set the URI String for public display.
+     */
+    public void setPublicURIString(String publicURIString) {
+        this.publicURIString = publicURIString;
+    }
+
+    /**
+     * Set the file type.
+     */
+    public void setFileType(FileType fileType) {
+        this.fileType = fileType;
+    }
+
+    /**
+     * Set whether the file is attached.
+     */
+    public void setAttached(boolean isAttached) {
+        this.isAttached = isAttached;
+    }
+
+    /**
+     * Set whether the file is opened.
+     */
+    public void setContentOpen(boolean isContentOpen) {
+        this.isContentOpen = isContentOpen;
+    }
+
+    /**
+     * Set whether the file is executable.
+     */
+    public void setExecutable(boolean executable) {
+        this.isExecutable = executable;
+    }
+
+    /**
+     * Set whether the file is of typed of a file.
+     */
+    public void setFile(boolean isFile) {
+        this.isFile = isFile;
+    }
+
+    /**
+     * Set whether the file is of typed of a folder.
+     */
+    public void setFolder(boolean isFolder) {
+        this.isFolder = isFolder;
+    }
+
+    /**
+     * Set whether the file is hidden.
+     */
+    public void setHidden(boolean isHidden) {
+        this.isHidden = isHidden;
+    }
+
+    /**
+     * Set whether the file is readable.
+     */
+    public void setReadable(boolean isReadable) {
+        this.isReadable = isReadable;
+    }
+
+    /**
+     * Set whether the file is writable.
+     */
+    public void setWritable(boolean isWritable) {
+        this.isWritable = isWritable;
+    }
+
+    /**
+     * Set the URL.
+     */
+    public void setUrl(URL url) {
+        this.url = url;
+    }
 }
