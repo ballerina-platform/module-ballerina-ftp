@@ -77,7 +77,8 @@ service "Covid19UpdateDownloader" on secureRemoteServer {
     private function publishToRabbitmq(string newFileName) returns error? {
         log:printInfo("Going to process new file: " + newFileName);
         stream<string[], io:Error?> csvStream = check io:fileReadCsvAsStream(newFileName);
-        _ = check from var entry in csvStream where entry[2] != "" && entry[3] != "" && entry[4] != ""
+        _ = check from var entry in csvStream
+        where entry[2] != "" && entry[3] != "" && entry[4] != ""
         do {
             json messageJson = {country: entry[2], date: entry[3], totalCases: entry[4]};
             string message = messageJson.toJsonString();
