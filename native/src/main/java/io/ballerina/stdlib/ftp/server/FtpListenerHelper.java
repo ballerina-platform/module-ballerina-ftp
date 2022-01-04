@@ -99,7 +99,7 @@ public class FtpListenerHelper {
                     FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
             if (privateKey != null) {
                 final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_PATH))).getValue();
+                        FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
                 params.put(FtpConstants.IDENTITY, privateKeyPath);
                 final String privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
@@ -115,11 +115,11 @@ public class FtpListenerHelper {
     }
 
     private static void addStringProperty(BMap config, Map<String, String> params) {
-        final String value = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN)))
-                .getValue();
-        if (value != null && !value.isEmpty()) {
-            params.put(FtpConstants.FILE_NAME_PATTERN, value);
-        }
+        BString namePatternString = config.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN));
+        String fileNamePattern = (namePatternString != null && !namePatternString.getValue().isEmpty()) ?
+                namePatternString.getValue() : "";
+        params.put(FtpConstants.FILE_NAME_PATTERN, fileNamePattern);
     }
 
     public static Object poll(BObject ftpListener) {

@@ -66,6 +66,7 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_USERNAME = "username";
     public static final String ENDPOINT_CONFIG_PASS_KEY = "password";
     public static final String ENDPOINT_CONFIG_PATH = "path";
+    public static final String ENDPOINT_CONFIG_KEY_PATH = "path";
     public static final String ENDPOINT_CONFIG_FILE_PATTERN = "fileNamePattern";
     public static final String ENDPOINT_CONFIG_AUTH = "auth";
     public static final String ENDPOINT_CONFIG_CREDENTIALS = "credentials";

@@ -40,7 +40,6 @@ listener ftp:Listener secureRemoteServer = check new({
     host: "localhost",
     auth: authConfig,
     port: 21213,
-    path: "",
     pollingInterval: 2,
     fileNamePattern: "(.*).csv"
 });
