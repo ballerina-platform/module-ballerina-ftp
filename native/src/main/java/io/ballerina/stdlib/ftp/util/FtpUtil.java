@@ -69,9 +69,8 @@ public class FtpUtil {
     }
 
     public static String createUrl(BMap config) throws BallerinaFtpException {
-        BString configFilePath = config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PATH));
-        final String filePath = (configFilePath != null && !configFilePath.getValue().isEmpty()) ?
-                configFilePath.getValue() : "";
+        final String filePath = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PATH)))
+                .getValue();
         String protocol = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL)))
                 .getValue();
         final String host = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_HOST)))

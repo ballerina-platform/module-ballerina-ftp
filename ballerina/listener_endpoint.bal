@@ -159,7 +159,7 @@ public type ListenerConfiguration record {|
     string host = "127.0.0.1";
     int port = 21;
     AuthConfiguration auth?;
-    string path?;
+    string path = "/";
     string fileNamePattern?;
     decimal pollingInterval = 60;
 |};
