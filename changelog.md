@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+ - [[#2549] Make `path` field to root and `fileNamePattern` field optional in `ftp:ListenerConfiguration`](https://github.com/ballerina-platform/ballerina-standard-library/issues/2549)
+
+## [2.0.1] - 2021-11-20
+
+### Changed
+ - [[#2398] Mark Service type as distinct](https://github.com/ballerina-platform/ballerina-standard-library/issues/2398)
+
+### Fixed
+ - [[#2245] Remove warnings in both build and runtime](https://github.com/ballerina-platform/ballerina-standard-library/issues/2245)
+
+## [2.0.0] - 2021-10-10
+
 ### Added
  - [[#1438] Add SFTP and related security](https://github.com/ballerina-platform/ballerina-standard-library/issues/1438)
  - [[#1607] Add the support for anonymous user](https://github.com/ballerina-platform/ballerina-standard-library/issues/1607)
@@ -21,7 +34,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
  - [[#1940] Remove `arraySize` parameter from the `get` method of the FTP Client API](https://github.com/ballerina-platform/ballerina-standard-library/issues/1940)
  - [[#1957] Change `boolean` typed `compressInput` parameter of the `put` method of FTP Client to an `enum` type with the name, `compressionType`](https://github.com/ballerina-platform/ballerina-standard-library/issues/1957)
  - [[#1955] Make the access to the `WatchEvent` as `readonly` in the FTP Listener](https://github.com/ballerina-platform/ballerina-standard-library/issues/1955)
- - [[#2398]Mark Service type as distinct](https://github.com/ballerina-platform/ballerina-standard-library/issues/2398)
 
 ### Fixed
  - [[#1518] Remove thrown exceptions and make then return](https://github.com/ballerina-platform/ballerina-standard-library/issues/1518)
@@ -30,4 +42,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
  - [[#1546] Correctly handle errors of `get` method](https://github.com/ballerina-platform/ballerina-standard-library/issues/1546)
  - [[#108] Implement the `stop` functionality to the FTP connector](https://github.com/ballerina-platform/ballerina-standard-library/issues/108)
  - [[#106] Correctly set the `lastModifiedTime` and `fileSize` to the `FileInfo` object](https://github.com/ballerina-platform/ballerina-standard-library/issues/106)
- - [[#2245] Remove warnings in both build and runtime](https://github.com/ballerina-platform/ballerina-standard-library/issues/2245)

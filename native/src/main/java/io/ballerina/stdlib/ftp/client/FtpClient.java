@@ -81,7 +81,7 @@ public class FtpClient {
                     FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
             if (privateKey != null) {
                 final BString privateKeyPath = privateKey.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_PATH));
+                        FtpConstants.ENDPOINT_CONFIG_KEY_PATH));
                 ftpConfig.put(FtpConstants.IDENTITY, privateKeyPath.getValue());
                 final BString privateKeyPassword = privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PASS_KEY));

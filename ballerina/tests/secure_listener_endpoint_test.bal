@@ -36,7 +36,6 @@ listener Listener secureRemoteServer = check new({
         }
     },
     port: 21213,
-    path: "",
     pollingInterval: 2,
     fileNamePattern: "(.*).txt"
 });
