@@ -8,3 +8,5 @@ coverage:
         target: 80
 ignore:
   - "test-utils/"
+  - "examples"
+  - "load-tests"
