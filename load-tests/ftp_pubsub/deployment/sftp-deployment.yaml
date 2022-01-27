@@ -1,0 +1,61 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: sftp
+  namespace: default
+  labels:
+    #environment: test
+    app: sftp
+spec:
+  selector:
+    matchLabels:
+      #environment: test
+      app: sftp
+  # how many pods and indicate which strategy we want for rolling update
+  replicas: 1
+  minReadySeconds: 10
+
+  template:
+
+    metadata:
+      labels:
+        #environment: test
+        app: sftp
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/sftp: runtime/default
+
+    spec:
+      #secrets and config
+      #volumes:
+      #- name: azure
+       # azureFile:
+        #  secretName: azure-secret
+        #  shareName: papicatbkp
+         # readOnly: false
+      
+      containers:
+        #the sftp server itself
+        - name: sftp
+          image: atmoz/sftp:latest
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: SFTP_MY_ID
+            value: "1"
+          #env:
+          #- name: PASSWORD
+           # valueFrom:
+            #  secretKeyRef:
+             #   name: sftp-server-sec
+              #  key: password
+          args: ["wso2:wso2123:1001:100:incoming,outgoing"] #create users and dirs
+          ports:
+            - containerPort: 22
+          #volumeMounts:
+           # - name: azure
+            #  mountPath: /home/sftp_user/backups
+          securityContext:
+            capabilities:
+              add: ["SYS_ADMIN"]
+          resources: {}
+

@@ -36,7 +36,7 @@ ftp:AuthConfiguration authConfig = {
 
 ftp:ClientConfiguration sftpClientConfig = {
     protocol: ftp:SFTP,
-    host: "localhost",
+    host: "bal.perf.test",
     port: 21213,
     auth: authConfig
 };
@@ -76,7 +76,7 @@ service /ftp on new http:Listener(9100) {
 function startListener() returns error? {
     ftp:Listener sftpListener = check new({
         protocol: ftp:SFTP,
-        host: "localhost",
+        host: "bal.perf.test",
         auth: authConfig,
         port: 21213,
         pollingInterval: 2,
