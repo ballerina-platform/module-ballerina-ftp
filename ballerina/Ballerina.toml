@@ -50,8 +50,8 @@ path = "./lib/jcl-over-slf4j-1.7.21.jar"
 scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "../native/build/libs/ftp-native-2.2.0-SNAPSHOT.jar"
+path = "../native/build/libs/ftp-native-2.2.0.jar"
 
 [[platform.java11.dependency]]
-path = "../test-utils/build/libs/ftp-test-utils-2.2.0-SNAPSHOT.jar"
+path = "../test-utils/build/libs/ftp-test-utils-2.2.0.jar"
 scope = "testOnly"
