@@ -150,29 +150,6 @@ task commitTomlFiles {
     }
 }
 
-task startFtpServer() {
-    doLast {
-        if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-            def stdOut = new ByteArrayOutputStream()
-            exec {
-                commandLine 'sh', '-c', "docker ps --filter name=ftp-test"
-                standardOutput = stdOut
-            }
-            if (!stdOut.toString().contains("ftp-test")) {
-                println "Starting SFTP server."
-                exec {
-                    commandLine 'sh', '-c', "docker run -p 21213:22 atmoz/sftp wso2:wso2123:::upload"
-                    standardOutput = stdOut
-                }
-                println stdOut.toString()
-                sleep(30000)
-            } else {
-                println "SFTP server is already running."
-            }
-        }
-    }
-}
-
 publishing {
     publications {
         maven(MavenPublication) {
@@ -193,8 +170,6 @@ publishing {
 }
 
 updateTomlFiles.dependsOn copyStdlibs
-
-test.dependsOn startFtpServer
 
 build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":${packageName}-native:build"
