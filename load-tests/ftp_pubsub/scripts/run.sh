@@ -20,4 +20,4 @@ set -e
 source base-scenario.sh
 
 echo "----------Running Load Test----------"
-java -jar $scriptsDir/load_test.jar "FTP Producer Consumer" "$resultsDir/summary.csv"
+java -jar $scriptsDir/load_test.jar "FTP Publisher Subscriber" "$resultsDir/summary.csv"

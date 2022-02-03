@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ftp_pubsub
+  name: ftp-pubsub
   annotations:
     kubernetes.io/ingress.class: nginx
 spec:
@@ -14,6 +14,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: simple-producer
+                name: ftp-pubsub-svc
                 port:
                   number: 9100

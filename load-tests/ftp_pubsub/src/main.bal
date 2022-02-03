@@ -31,13 +31,13 @@ time:Utc endedTime = time:utcNow();
 boolean finished = false;
 
 ftp:AuthConfiguration authConfig = {
-    credentials: {username: "wso2", password: "wso2123"}
+    credentials: {username: "ballerina", password: "password"}
 };
 
 ftp:ClientConfiguration sftpClientConfig = {
     protocol: ftp:SFTP,
-    host: "bal.perf.test",
-    port: 21213,
+    host: "sftp-server",
+    port: 23,
     auth: authConfig
 };
 
@@ -76,12 +76,12 @@ service /ftp on new http:Listener(9100) {
 function startListener() returns error? {
     ftp:Listener sftpListener = check new({
         protocol: ftp:SFTP,
-        host: "bal.perf.test",
+        host: "sftp-server",
         auth: authConfig,
-        port: 21213,
+        port: 23,
         pollingInterval: 2,
-        path: "/",
-        fileNamePattern: ""
+        path: "/upload/",
+        fileNamePattern: ".*"
     });
     check sftpListener.attach(ftpSubscriber);
     check sftpListener.start();
@@ -94,7 +94,6 @@ ftp:Service ftpSubscriber = service object {
 
     public function init() {
         self.sftpClient = checkpanic new(sftpClientConfig);
-        log:printInfo("Initialized the subscriber.");
     }
 
     function onFileChange(ftp:WatchEvent event) {
@@ -116,7 +115,6 @@ ftp:Service ftpSubscriber = service object {
                 if deleteResult is error {
                     logFtpError(deleteResult.message(), "delete");
                 } else {
-                    log:printDebug("Deleted the file: " + fileName);
                     lock {
                         deletedCount += 1;
                     }
@@ -146,8 +144,8 @@ ftp:Service ftpSubscriber = service object {
 
 public function publishMessages() {
     startedTime = time:utcNow();
-    // Sending messages for only 20 minutes to test the setup
-    int endingTimeInSecs = startedTime[0] + 1200;
+    // Sending messages for only 10 minutes to test the setup
+    int endingTimeInSecs = startedTime[0] + 600;
     ftp:Client|error fileSender = new(sftpClientConfig);
     if fileSender is error {
         log:printError("Error while creating a SFTP client.");
@@ -161,10 +159,11 @@ public function publishMessages() {
                     log:printError("Error while publishing. " + putResponse.message());
                     logFtpError(putResponse.message(), "put");
                 } else {
-                    log:printDebug("Published file: " + fileName);
+                    log:printInfo("Published file: " + fileName);
                     sentCount += 1;
                 }
             }
+            runtime:sleep(1);
         }
         stream<io:Block, io:Error?>|error fileByteStream = io:fileReadBlocksAsStream("resources/20mb_file", 1024);
         if fileByteStream is stream<io:Block, io:Error?> {

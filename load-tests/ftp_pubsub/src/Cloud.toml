@@ -8,6 +8,10 @@ max_memory="512Mi"
 min_cpu="200m"
 max_cpu="1000m"
 
+[[container.copy.files]]
+sourceFile="./resources/20mb_file"
+target="/home/ballerina/resources/20mb_file"
+
 [cloud.deployment.autoscaling]
 min_replicas=1
 max_replicas=1
