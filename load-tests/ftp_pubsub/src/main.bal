@@ -144,8 +144,8 @@ ftp:Service ftpSubscriber = service object {
 
 public function publishMessages() {
     startedTime = time:utcNow();
-    // Sending messages for only 10 minutes to test the setup
-    int endingTimeInSecs = startedTime[0] + 600;
+    // Publishing files for 1 hour
+    int endingTimeInSecs = startedTime[0] + 3600;
     ftp:Client|error fileSender = new(sftpClientConfig);
     if fileSender is error {
         log:printError("Error while creating a SFTP client.");
