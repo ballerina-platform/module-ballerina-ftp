@@ -1,0 +1,78 @@
+# Adapted from https://gist.github.com/ToMe25/ff1791bda78792b1827a6191f19e41a0 and changed as needed
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: sftp-server
+  namespace: default
+  labels:
+    environment: production
+spec:
+  type: "LoadBalancer"
+  ports:
+    - name: "ssh"
+      port: 23
+      targetPort: 22
+  selector:
+    app: sftp
+status:
+  loadBalancer: {}
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: sftp
+  namespace: default
+  labels:
+    environment: production
+    app: sftp
+spec:
+  replicas: 1
+  minReadySeconds: 10
+  selector:
+    matchLabels:
+      environment: production
+      app: sftp
+
+  template:
+    metadata:
+      labels:
+        environment: production
+        app: sftp
+
+    spec:
+      volumes:
+        - name: sftp-data
+          persistentVolumeClaim:
+            claimName: sftp-data-pvc
+      containers:
+        - name: sftp
+          image: atmoz/sftp:latest
+          imagePullPolicy: IfNotPresent
+          args: ["ballerina:password:::upload"]
+          ports:
+            - containerPort: 22
+          volumeMounts:
+            - mountPath: /home/ballerina
+              name: sftp-data
+          securityContext:
+            capabilities:
+              add: ["SYS_ADMIN"]
+          resources: {}
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sftp-data-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 20Gi

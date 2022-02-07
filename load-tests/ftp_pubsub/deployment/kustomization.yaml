@@ -1,0 +1,4 @@
+resources:
+  - ftp_pubsub.yaml
+  - ingress.yaml
+  - sftp-server.yaml

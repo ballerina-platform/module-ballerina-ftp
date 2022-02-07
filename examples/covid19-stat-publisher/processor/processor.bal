@@ -79,6 +79,7 @@ service "Covid19UpdateDownloader" on secureRemoteServer {
         _ = check from var entry in csvStream
         where entry[2] != "" && entry[3] != "" && entry[4] != ""
         do {
+            log:printInfo("Processing new file: " + newFileName);
             json messageJson = {country: entry[2], date: entry[3], totalCases: entry[4]};
             string message = messageJson.toJsonString();
             log:printInfo("Going to publish message: " + message);
