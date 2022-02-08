@@ -8,11 +8,11 @@ _Edition_: Swan Lake
 _Issue_: [#2202](https://github.com/ballerina-platform/ballerina-standard-library/issues/2202)
 
 # Introduction
-This is the specification for the FTP standard library of [Ballerina language](https://ballerina.io/), which provides FTP client/listener functionalities to send and receive files by connecting to a FTP/SFTP server.
+This is the specification for the FTP standard library of [Ballerina language](https://ballerina.io/), which provides FTP client/listener functionalities to send and receive files by connecting to FTP/SFTP server.
 
 The FTP library specification has evolved and may continue to evolve in the future. Released versions of the specification can be found under the relevant Github tag.
 
-If you have any feedback or suggestions about the library, start a discussion via a Github issue or in the [Slack channel](https://ballerina.io/community/). Based on the outcome specification and implementation can be updated. Community feedback is always welcome. Any accepted proposal which affects the specification is stored under `/docs/proposals`. Proposals under discussion can be found with the label `type/proposal` in Github.
+If you have any feedback or suggestions about the library, start a discussion via a [GitHub](https://github.com/ballerina-platform/ballerina-standard-library/issues) issue or in the [Slack channel](https://ballerina.io/community/). Based on the outcome specification and implementation can be updated. Community feedback is always welcome. Any accepted proposal which affects the specification is stored under `/docs/proposals`. Proposals under discussion can be found with the label `type/proposal` in GitHub.
 
 Conforming implementation of the specification is released and included in the distribution. Any deviation from the specification is considered a bug.
 
@@ -38,14 +38,14 @@ Conforming implementation of the specification is released and included in the d
     *  5.2. [Listening to File Changes](#52-listening-to-file-changes)
 
 ## 1. Overview
-FTP is the traditional file transfer protocol. It’s a basic way of using the Internet to share files.
+FTP is a file transfer protocol. It’s a basic way of using the Internet to share files.
 SFTP (or Secure File Transfer Protocol) is an alternative to FTP that also allows transferring files,
 but adds a layer of security to the process. SFTP uses SSH (or secure shell) encryption to protect data as
 it’s being transferred. This means data is not exposed to outside entities on the Internet when it is sent
-to another party.
+to another party. This library provides support for both protocols.
 
 Ballerina FTP library contains two core apis:
-* Client - The `ftp:Client` is used to connect to an FTP server and perform various operations on the files.
+* Client - The `ftp:Client` is used to connect to FTP server and perform various operations on the files.
 * Listener - The `ftp:Listener` is used to listen to a remote FTP location and notify if files are added or removed 
   from the FTP location.
 
@@ -127,7 +127,7 @@ public type FileInfo record {|
 |};
 ```
 ## 3. Client
-The `ftp:Client` connects to an FTP server and performs various operations on the files. Currently, it supports the
+The `ftp:Client` connects to FTP server and performs various operations on the files. Currently, it supports the
 generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and
 `list`.
 ### 3.1. Configurations
@@ -198,7 +198,7 @@ ftp:ClientConfiguration ftpConfig = {
 ### 3.3. Functions
 * FTP Client API can be used to put files on the FTP server. For this, the `put()` method can be used.
 ```ballerina
-# Adds a file to an FTP server.
+# Adds a file to FTP server.
 # ```ballerina
 # ftp:Error? response = client->put(path, channel);
 # ```
@@ -212,9 +212,9 @@ ftp:ClientConfiguration ftpConfig = {
 #            the communication with the FTP server
 remote isolated function put(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content, Compression compressionType=NONE) returns Error?;
 ```
-* `append()` can be used to append the content to an existing file in an FTP server.
+* `append()` can be used to append the content to an existing file in FTP server.
 ```ballerina
-# Appends the content to an existing file in an FTP server.
+# Appends the content to an existing file in FTP server.
 # ```ballerina
 # ftp:Error? response = client->append(path, content);
 # ```
@@ -225,7 +225,7 @@ remote isolated function put(string path, stream<byte[] & readonly, io:Error?>|s
 #            the communication with the FTP server
 remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content) returns Error?;
 ```
-* To retrieve file content from an FTP server, `get()` can be used.
+* To retrieve file content from FTP server, `get()` can be used.
 ```ballerina
 # Retrieves the file content from a remote resource.
 # ```ballerina
@@ -236,9 +236,9 @@ remote isolated function append(string path, stream<byte[] & readonly, io:Error?
 # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
 remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error;
 ```
-* `mkdir()` can be used to create a new directory in an FTP server.
+* `mkdir()` can be used to create a new directory in FTP server.
 ```ballerina
-# Creates a new directory in an FTP server.
+# Creates a new directory in FTP server.
 # ```ballerina
 # ftp:Error? response = client->mkdir(path);
 # ```
@@ -248,9 +248,9 @@ remote isolated function get(string path) returns stream<byte[] & readonly, io:E
 #            the communication with the FTP server
 remote isolated function mkdir(string path) returns Error?;
 ```
-* `rmdir()` can be used to remove an empty directory in an FTP server.
+* `rmdir()` can be used to remove an empty directory in the server.
 ```ballerina
-# Deletes an empty directory in an FTP server.
+# Deletes an empty directory in FTP server.
 # ```ballerina
 # ftp:Error? response = client->rmdir(path);
 # ```
@@ -262,7 +262,7 @@ remote isolated function rmdir(string path) returns Error?;
 ```
 * To delete a file, `delete()` can be used.
 ```ballerina
-# Deletes a file from an FTP server.
+# Deletes a file from FTP server.
 # ```ballerina
 # ftp:Error? response = client->delete(path);
 # ```
