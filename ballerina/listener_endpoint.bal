@@ -36,7 +36,7 @@ public class Listener {
 
     # Starts the `ftp:Listener`.
     # ```ballerina
-    # error? response = listener->start();
+    # error? response = listener.'start();
     # ```
     #
     # + return - `()` or else an `error` upon failure to start the listener
@@ -46,7 +46,7 @@ public class Listener {
 
     # Binds a service to the `ftp:Listener`.
     # ```ballerina
-    # error? response = listener->attach(service1);
+    # error? response = listener.attach(service1);
     # ```
     #
     # + ftpService - Service to be detached from the listener
@@ -61,7 +61,7 @@ public class Listener {
 
     # Stops consuming messages and detaches the service from the `ftp:Listener`.
     # ```ballerina
-    # error? response = listener->detach(service1);
+    # error? response = listener.detach(service1);
     # ```
     #
     # + ftpService - Service to be detached from the listener
@@ -73,7 +73,7 @@ public class Listener {
 
     # Stops the `ftp:Listener` forcefully.
     # ```ballerina
-    # error? response = listener->immediateStop();
+    # error? response = listener.immediateStop();
     # ```
     #
     # + return - `()` or else an `error` upon failure to stop the listener
@@ -83,7 +83,7 @@ public class Listener {
 
     # Stops the `ftp:Listener` gracefully.
     # ```ballerina
-    # error? response = listener->gracefulStop();
+    # error? response = listener.gracefulStop();
     # ```
     #
     # + return - `()` or else an `error` upon failure to stop the listener
@@ -104,7 +104,7 @@ public class Listener {
 
     # Poll new files from a FTP server.
     # ```ballerina
-    # error? response = listener->poll();
+    # error? response = listener.poll();
     # ```
     #
     # + return - An `error` if failed to establish communication with the FTP
@@ -116,7 +116,7 @@ public class Listener {
     # Register a FTP service in an FTP listener
     # server.
     # ```ballerina
-    # error? response = listener->register(ftpService, name);
+    # error? response = listener.register(ftpService, name);
     # ```
     #
     # + ftpService - The FTP service

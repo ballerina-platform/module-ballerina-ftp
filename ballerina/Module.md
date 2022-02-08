@@ -198,7 +198,7 @@ listener ftp:Listener remoteServer = check new({
     protocol: ftp:SFTP,
     host: "<The SFTP host>",
     port: <The SFTP port>,
-    path: "<The remote SFTP direcotry location>",
+    path: "<The remote SFTP directory location>",
     pollingInterval: <Polling interval>,
     fileNamePattern: "<File name pattern>",
     auth: {
