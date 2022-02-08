@@ -18,7 +18,9 @@ Conforming implementation of the specification is released and included in the d
 
 # Contents
 1. [Overview](#1-overview)
-2. [Configurations](#2-security-configurations)
+2. [Configurations](#2-configurations)
+    *  2.1. [Security Configurations](#21-security-configurations)
+    *  2.2. [FileInfo](#22-fileinfo)
 3. [Client](#3-client)
     *  3.1. [Configurations](#31-configurations)
     *  3.2. [Initialization](#32-initialization)
@@ -47,7 +49,8 @@ Ballerina FTP library contains two core apis:
 * Listener - The `ftp:Listener` is used to listen to a remote FTP location and notify if files are added or removed 
   from the FTP location.
 
-## 2. Security Configurations
+## 2. Configurations
+### 2.1. Security Configurations
 * PrivateKey record represents the configuration related to a private key.
 ```ballerina
 public type PrivateKey record {|
@@ -75,14 +78,60 @@ public type AuthConfiguration record {|
     PrivateKey privateKey?;
 |};
 ```
+### 2.2. FileInfo
+* `FileInfo` record contains the metadata of the files.
+```ballerina
+public type FileInfo record {|
+    # Relative file path for a newly-added file
+    string path;
+    # Size of the file
+    int size;
+    # Last-modified timestamp of the file in UNIX Epoch time
+    int lastModifiedTimestamp;
+    # File name
+    string name;
+    # `true` if the file is a folder
+    boolean isFolder;
+    # `true` if the file is a file
+    boolean isFile;
+    # Normalized absolute path of this file within its file system
+    string pathDecoded;
+    # Extension of the file name
+    string extension;
+    # Receiver as a URI String for public display
+    string publicURIString;
+    # Type of the file
+    string fileType;
+    # `true` if the `fileObject` is attached
+    boolean isAttached;
+    # `true` if someone reads/writes from/to this file
+    boolean isContentOpen;
+    # `true` if this file is executable
+    boolean isExecutable;
+    # `true` if this file is hidden
+    boolean isHidden;
+    # `true` if this file can be read
+    boolean isReadable;
+    # `true` if this file can be written
+    boolean isWritable;
+    # Depth of the file name within its file system
+    int depth;
+    # URI scheme of the file
+    string scheme;
+    # Absolute URI of the file
+    string uri;
+    # Root URI of the file system in which the file exists
+    string rootURI;
+    # A "friendly path" is a path, which can be accessed without a password
+    string friendlyURI;
+|};
+```
 ## 3. Client
 The `ftp:Client` connects to an FTP server and performs various operations on the files. Currently, it supports the
 generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and
-`list`. An FTP client is defined using the `protocol` and `host` parameters and optionally, the `port` and `auth`.
-Authentication configuration can be configured using the `auth` parameter for Basic Auth and
-private key.
+`list`.
 ### 3.1. Configurations
-* When initializing the `ftp:Client`, following configurations can be provided.
+* When initializing the `ftp:Client`, `ftp:ClientConfiguration` configuration can be provided.
 ```ballerina
 public type ClientConfiguration record {|
     # Supported FTP protocols
@@ -121,7 +170,8 @@ public enum Compression {
 ```
 ### 3.2. Initialization
 #### 3.2.1. Insecure Client
-A simple insecure client can be initialized by providing `ftp:FTP` as the protocol and the host and port to the `ftp:ClientConfiguration`.
+A simple insecure client can be initialized by providing `ftp:FTP` as the protocol and the host and optionally, the port 
+to the `ftp:ClientConfiguration`.
 ```ballerina
 # Gets invoked during object initialization.
 #
@@ -133,7 +183,6 @@ public isolated function init(ClientConfiguration clientConfig) returns Error?;
 A secure client can be initialized by providing `ftp:SFTP` as the protocol and by providing `ftp:Credentials`
 and `ftp:PrivateKey` to `ftp:AuthConfiguration`.
 ```ballerina
-// Provide secureSocket configuration to ProducerConfiguration
 ftp:ClientConfiguration ftpConfig = {
     protocol: ftp:SFTP,
     host: "<The FTP host>",
@@ -167,7 +216,7 @@ remote isolated function put(string path, stream<byte[] & readonly, io:Error?>|s
 ```ballerina
 # Appends the content to an existing file in an FTP server.
 # ```ballerina
-# ftp:Error? response = client->append(path, channel);
+# ftp:Error? response = client->append(path, content);
 # ```
 #
 # + path - The resource path
@@ -180,8 +229,7 @@ remote isolated function append(string path, stream<byte[] & readonly, io:Error?
 ```ballerina
 # Retrieves the file content from a remote resource.
 # ```ballerina
-# stream<byte[] & readonly, io:Error?>|ftp:Error channel
-#   = client->get(path);
+# stream<byte[] & readonly, io:Error?>|ftp:Error channel = client->get(path);
 # ```
 #
 # + path - The resource path
@@ -275,7 +323,7 @@ remote isolated function isDirectory(string path) returns boolean|Error;
 ```
 ## 4. Listener
 The `ftp:Listener` is used to listen to a remote FTP location and trigger a `WatchEvent` type of event when new
-files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added
+files are added to or deleted from the directory. The `onFileChange` function is invoked when a new file is added
 and/or deleted.
 ### 4.1. Configurations
 * When initializing the `ftp:Listener`, following configurations can be provided.
@@ -306,59 +354,10 @@ public type WatchEvent readonly & record {|
     string[] deletedFiles;
 |};
 ```
-* `FileInfo` record contains the metadata for the newly-added files.
-```ballerina
-public type FileInfo record {|
-    # Relative file path for a newly-added file
-    string path;
-    # Size of the file
-    int size;
-    # Last-modified timestamp of the file in UNIX Epoch time
-    int lastModifiedTimestamp;
-    # File name
-    string name;
-    # `true` if the file is a folder
-    boolean isFolder;
-    # `true` if the file is a file
-    boolean isFile;
-    # Normalized absolute path of this file within its file system
-    string pathDecoded;
-    # Extension of the file name
-    string extension;
-    # Receiver as a URI String for public display
-    string publicURIString;
-    # Type of the file
-    string fileType;
-    # `true` if the `fileObject` is attached
-    boolean isAttached;
-    # `true` if someone reads/writes from/to this file
-    boolean isContentOpen;
-    # `true` if this file is executable
-    boolean isExecutable;
-    # `true` if this file is hidden
-    boolean isHidden;
-    # `true` if this file can be read
-    boolean isReadable;
-    # `true` if this file can be written
-    boolean isWritable;
-    # Depth of the file name within its file system
-    int depth;
-    # URI scheme of the file
-    string scheme;
-    # Absolute URI of the file
-    string uri;
-    # Root URI of the file system in which the file exists
-    string rootURI;
-    # A "friendly path" is a path, which can be accessed without a password
-    string friendlyURI;
-|};
-```
 ### 4.2. Initialization
 #### 4.2.1. Insecure Listener
-An insecure FTP listener can be initialized using the mandatory `protocol`, `host`, and  `path` parameters and 
-the polling interval can be configured using the `pollingInterval` parameter. The default polling interval is 
-60 seconds. The `fileNamePattern` parameter can be used to define the type of files the FTP listener will listen to.
-For instance, if the listener gets invoked for text files, the value `(.*).txt` can be given for the config.
+An insecure FTP listener can be initialized by providing the mandatory `protocol`, `host`, and  `path` parameters to the 
+`ftp:ListenerConfiguration`.
 ```ballerina
 # Gets invoked during object initialization.
 #
@@ -367,7 +366,7 @@ For instance, if the listener gets invoked for text files, the value `(.*).txt` 
 public isolated function init(ListenerConfiguration listenerConfig) returns Error?;
 ```
 #### 4.2.2. Secure Listener
-A secure client can be initialized by providing either `ftp:SFTP` as the protocol and by providing `ftp:Credentials`
+A secure client can be initialized by providing `ftp:SFTP` as the protocol and by providing `ftp:Credentials`
 and `ftp:PrivateKey` to `ftp:AuthConfiguration`.
 ```ballerina
 ftp:ListenerConfiguration ftpConfig = {
@@ -461,7 +460,7 @@ public isolated function gracefulStop() returns error?;
 # + return - `()` or else an `error` upon failure to stop the listener
 public isolated function immediateStop() returns error?;
 ```
-* poll()` - can be used to poll new files from the FTP server.
+* `poll()` - can be used to poll new files from the FTP server.
 ```ballerina
 # Poll new files from a FTP server.
 # ```ballerina
@@ -486,7 +485,7 @@ public isolated function poll() returns error?
 public isolated function register(Service ftpService, string? name) returns error?
 ```
 ## 5. Samples
-### 5.1. Sending Files.
+### 5.1. Sending Files
 ```ballerina
 import ballerina/ftp;
 import ballerina/io;
@@ -518,7 +517,7 @@ public function main() returns error? {
     check fileStream.close();
 }
 ```
-### 5.2. Listening to file changes.
+### 5.2. Listening to file changes
 ```ballerina
 import ballerina/ftp;
 import ballerina/io;
