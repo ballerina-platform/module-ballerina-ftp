@@ -25,28 +25,14 @@ Conforming implementation of the specification is released and included in the d
         *    3.2.1. [Insecure Client](#321-insecure-client)
         *    3.2.2. [Secure Client](#322-secure-client)
     *  3.3. [Functions](#33-functions)
-4. [Listener](#4-consumer)
+4. [Listener](#4-listener)
     *  4.1. [Configurations](#41-configurations)
-    *  4.2. [Consumer Client](#42-consumer-client)
-        *  4.2.1. [Initialization](#421-initialization)
-            *  4.2.1.1. [Insecure Client](#4211-insecure-client)
-            *  4.2.1.2. [Secure Client](#4212-secure-client)
-        *  4.2.2. [Consume Messages](#422-consume-messages)
-        *  4.2.3. [Handle Offsets](#423-handle-offsets)
-        *  4.2.4. [Handle Partitions](#424-handle-partitions)
-        *  4.2.5. [Seeking](#425-seeking)
-        *  4.2.6. [Handle subscriptions](#426-handle-subscriptions)
-    *  4.3. [Listener](#43-listener)
-        *  4.3.1. [Initialization](#431-initialization)
-            *  4.3.1.1. [Insecure Listener](#4311-insecure-listener)
-            *  4.3.1.2. [Secure Listener](#4312-secure-listener)
-        *  4.3.2. [Usage](#432-usage)
-        *  4.3.3. [Caller](#433-caller)
+    *  4.2. [Initialization](#42-initialization)
+        *  4.2.1. [Insecure Listener](#421-insecure-listener)
+        *  4.2.2. [Secure Listener](#422-secure-listener)
 5. [Samples](#5-samples)
-    *  5.1. [Produce Messages](#51-produce-messages)
-    *  5.2. [Consume Messages](#52-consume-messages)
-        *    5.2.1. [Using Consumer Client](#521-using-consumer-client)
-        *    5.2.2. [Using Listener](#522-using-listener)
+    *  5.1. [Sending Files](#51-sending-files)
+    *  5.2. [Listening to File Changes](#52-listening-to-file-changes)
 
 ## 1. Overview
 FTP is the traditional file transfer protocol. It’s a basic way of using the Internet to share files.
@@ -499,7 +485,7 @@ public isolated function poll() returns error?
 public isolated function register(Service ftpService, string? name) returns error?
 ```
 ## 5. Samples
-### 5.1. Send files to an FTP server.
+### 5.1. Sending Files.
 ```ballerina
 import ballerina/ftp;
 import ballerina/io;
@@ -531,7 +517,7 @@ public function main() returns error? {
     check fileStream.close();
 }
 ```
-### 5.2. Listen to file changes on an FTP server.
+### 5.2. Listening to file changes.
 ```ballerina
 import ballerina/ftp;
 import ballerina/io;
