@@ -87,7 +87,7 @@ public isolated client class Client {
         return put(self, getInputContent(path, content, compress));
     }
 
-    # Creates a new direcotry in an FTP server.
+    # Creates a new directory in an FTP server.
     # ```ballerina
     # ftp:Error? response = client->mkdir(path);
     # ```
@@ -142,20 +142,20 @@ public isolated client class Client {
     # ftp:FileInfo[]|ftp:Error response = client->list(path);
     # ```
     #
-    # + path - The direcotry path
+    # + path - The directory path
     # + return - An array of file names or an `ftp:Error` if failed to
     #            establish the communication with the FTP server
     remote isolated function list(string path) returns FileInfo[]|Error {
         return list(self, path);
     }
 
-    # Checks if a given resource is a direcotry.
+    # Checks if a given resource is a directory.
     # ```ballerina
     # boolean|ftp:Error response = client->isDirectory(path);
     # ```
     #
     # + path - The resource path
-    # + return - `true` if given resource is a direcotry or an `ftp:Error` if
+    # + return - `true` if given resource is a directory or an `ftp:Error` if
     #            an error occurred while checking the path
     remote isolated function isDirectory(string path) returns boolean|Error {
         return isDirectory(self, path);
