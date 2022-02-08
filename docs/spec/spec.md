@@ -30,6 +30,7 @@ Conforming implementation of the specification is released and included in the d
     *  4.2. [Initialization](#42-initialization)
         *  4.2.1. [Insecure Listener](#421-insecure-listener)
         *  4.2.2. [Secure Listener](#422-secure-listener)
+    *   4.3. [Usage](#43-usage)
 5. [Samples](#5-samples)
     *  5.1. [Sending Files](#51-sending-files)
     *  5.2. [Listening to File Changes](#52-listening-to-file-changes)
@@ -523,7 +524,7 @@ import ballerina/ftp;
 import ballerina/io;
 
 listener ftp:Listener remoteServer = check new({
-    protocol: ftp:FTP,
+    protocol: ftp:SFTP,
     host: "ftp.example.com",
     auth: {
         credentials: {
