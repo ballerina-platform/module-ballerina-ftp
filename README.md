@@ -7,17 +7,222 @@ Ballerina FTP Library
   [![Github issues](https://img.shields.io/github/issues/ballerina-platform/ballerina-standard-library/module/ftp.svg?label=Open%20Issues)](https://github.com/ballerina-platform/ballerina-standard-library/labels/module%2Fftp)
   [![codecov](https://codecov.io/gh/ballerina-platform/module-ballerina-ftp/branch/master/graph/badge.svg)](https://codecov.io/gh/ballerina-platform/module-ballerina-ftp)
 
-The ftp package is one of the standard library packages of the<a target="_blank" href="https://ballerina.io/"> Ballerina</a> language.
+This library provides an FTP/SFTP client, and an FTP/SFTP server listener implementation to facilitate an FTP/SFTP connection connected to a remote location.
 
-It provides the implementation for operations related to file manipulation over the network using the FTP protocol.
+### FTP Client
 
-For more information, go to the [`ftp` package](https://docs.central.ballerina.io/ballerina/ftp/latest).
+The `ftp:Client` connects to an FTP server and performs various operations on the files. Currently, it supports the
+generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and
+`list`.
+
+An FTP client is defined using the `protocol` and `host` parameters and optionally, the `port` and
+`auth`. Authentication configuration can be configured using the `auth` parameter for Basic Auth and
+private key.
+
+An authentication-related configuration can be given to the FTP client with the `auth` configuration.
+
+##### Creating a Client
+
+The following code creates an FTP client and performs the I/O operations, which connect to the FTP server with Basic Auth.
+```ballerina
+// Define the FTP client configuration.
+ftp:ClientConfiguration ftpConfig = {
+    protocol: ftp:FTP,
+    host: "<The FTP host>",
+    port: <The FTP port>,
+    auth: {
+        credentials: {
+            username: "<The FTP username>",
+            password: "<The FTP passowrd>"
+        }
+    }
+};
+
+// Create the FTP client.
+ftp:Client|ftp:Error ftpClient = new(ftpConfig);
+```
+
+##### Creating a Directory
+
+The following code creates a directory in the remote FTP server.
+
+```ballerina
+ftp:Error? mkdirResponse = ftpClient->mkdir("<The directory path>");
+```
+
+##### Uploading File to a Remote Server
+
+The following code uploads a file to a remote FTP server.
+
+```ballerina
+stream<io:Block, io:Error?> fileByteStream
+    = check io:fileReadBlocksAsStream(putFilePath, <Block size>);
+ftp:Error? putResponse = ftpClient->put("<The resource path>", fileByteStream);
+```
+
+##### Compressing and Uploading a File to a Remote Server
+
+The following code compresses and uploads a file to a remote FTP server.
+
+```ballerina
+// Set the optional boolean flag as 'true' to compress before uploading
+stream<io:Block, io:Error?> fileByteStream
+    = check io:fileReadBlocksAsStream(putFilePath, <Block size>);
+ftp:Error? compressedPutResponse = ftpClient->put("<Resource path>",
+    fileByteStream, compressionType=ZIP);
+```
+
+##### Getting the Size of a Remote File
+
+The following code gets the size of a file in a remote FTP server.
+
+```ballerina
+int|ftp:Error sizeResponse = ftpClient->size("<The resource path>");
+```
+
+##### Reading the Content of a Remote File
+
+The following code reads the content of a file in a remote FTP server.
+
+```ballerina
+stream<byte[], io:Error?>|Error str = clientEP -> get("<The file path>");
+if (str is stream<byte[], io:Error?>) {
+    record {|byte[] value;|}|io:Error? arr1 = str.next();
+    if (arr1 is record {|byte[] value;|}) {
+        string fileContent = check strings:fromBytes(arr1.value);
+        // `fileContent` is the `string` value of first byte array
+        record {|byte[] value;|}|io:Error? arr2 = str.next();
+        // Similarly following content chunks can be iteratively read with `next` method.
+        // Final chunk will contain the terminal value which is `()`.
+    }
+    io:Error? closeResult = str.close();
+}
+```
+
+##### Renaming or Moving a Remote file to Another Remote Location in the Same FTP Server
+
+The following code renames or moves a file to another location in the same remote FTP server.
+
+```ballerina
+ftp:Error? renameResponse = ftpClient->rename("<The source file path>",
+    "<The destination file path>");
+```
+
+##### Deleting a Remote File
+
+The following code deletes a remote file in a remote FTP server.
+
+```ballerina
+ftp:Error? deleteResponse = ftpClient->delete("<The resource path>");
+```
+
+##### Removing a Directory From a Remote Server
+
+The following code removes a directory in a remote FTP server.
+
+```ballerina
+ftp:Error? rmdirResponse = ftpClient->rmdir("<The directory path>");
+```
+
+### FTP Listener
+
+The `ftp:Listener` is used to listen to a remote FTP location and trigger a `WatchEvent` type of event when new
+files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added
+and/or deleted.
+
+An FTP listener is defined using the mandatory `protocol`, `host`, and  `path` parameters. The authentication
+configuration can be done using the `auth` parameter and the polling interval can be configured using the `pollingInterval` parameter.
+The default polling interval is 60 seconds.
+
+The `fileNamePattern` parameter can be used to define the type of files the FTP listener will listen to.
+For instance, if the listener gets invoked for text files, the value `(.*).txt` can be given for the config.
+
+An authentication-related configuration can be given to the FTP listener with the `auth` configuration.
+
+##### Creating a Listener
+
+The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and
+notify on file addition and deletion periodically.
+
+```ballerina
+listener ftp:Listener remoteServer = check new({
+    protocol: ftp:FTP,
+    host: "<The FTP host>",
+    auth: {
+        credentials: {
+            username: "<The FTP username>",
+            password: "<The FTP passowrd>"
+        }
+    },
+    port: <The FTP port>,
+    path: "<The remote FTP direcotry location>",
+    pollingInterval: <Polling interval>,
+    fileNamePattern: "<File name pattern>"
+});
+
+service on remoteServer {
+    remote function onFileChange(ftp:WatchEvent fileEvent) {
+
+        foreach ftp:FileInfo addedFile in fileEvent.addedFiles {
+            log:print("Added file path: " + addedFile.path);
+        }
+        foreach string deletedFile in fileEvent.deletedFiles {
+            log:print("Deleted file path: " + deletedFile);
+        }
+    }
+}
+```
+
+### Secure access with SFTP
+
+SFTP is a secure protocol alternative to the FTP, which runs on top of the SSH protocol.
+There are several ways to authenticate an SFTP server. One is using the username and the password.
+Another way is using the client's private key. The Ballerina SFTP client and the listener support only those authentication standards.
+An authentication-related configuration can be given to the SFTP client/listener with the `auth` configuration.
+Password-based authentication is defined with the `credentials` configuration while the private key based authentication is defined with the `privateKey` configuration.
+
+#### SFTP Client Configuration
+
+```ballerina
+ftp:ClientConfiguration sftpConfig = {
+    protocol: ftp:SFTP,
+    host: "<The SFTP host>",
+    port: <The SFTP port>,
+    auth: {
+        credentials: {username: "<The SFTP username>", password: "<The SFTP password>"},
+        privateKey: {
+            path: "<The private key file path>",
+            password: "<The private key file password>"
+        }
+    }
+};
+```
+
+#### SFTP Listener Configuration
+
+```ballerina
+listener ftp:Listener remoteServer = check new({
+    protocol: ftp:SFTP,
+    host: "<The SFTP host>",
+    port: <The SFTP port>,
+    path: "<The remote SFTP direcotry location>",
+    pollingInterval: <Polling interval>,
+    fileNamePattern: "<File name pattern>",
+    auth: {
+        credentials: {username: "<The SFTP username>", password: "<The SFTP password>"},
+        privateKey: {
+            path: "<The private key file path>",
+            password: "<The private key file password>"
+        }
+    }
+});
+```
 
 ## Issues and Projects 
 
 Issues and Projects tabs are disabled for this repository as this is part of the Ballerina Standard Library. To report bugs, request new features, start new discussions, view project boards, etc. please visit Ballerina Standard Library [parent repository](https://github.com/ballerina-platform/ballerina-standard-library). 
 
-This repository only contains the source code for the package.
+This repository only contains the source code for the library.
 
 ## Building from the Source
 
@@ -35,7 +240,7 @@ This repository only contains the source code for the package.
 
 Execute the commands below to build from source.
 
-1. To build the package:
+1. To build the library:
    ```    
    ./gradlew clean build
    ```
@@ -50,12 +255,12 @@ Execute the commands below to build from source.
    ./gradlew clean test -Pgroups=<test_group_names>
    ```
 
-4. To build the without the tests:
+4. To build the library without the tests:
    ```
    ./gradlew clean build -x test
    ```
 
-5. To debug package implementation:
+5. To debug library implementation:
    ```
    ./gradlew clean build -Pdebug=<port>
    ```
@@ -87,5 +292,7 @@ All contributors are encouraged to read the [Ballerina Code of Conduct](https://
 
 ## Useful Links
 
+* For more information go to the [`ftp` library](https://lib.ballerina.io/ballerina/ftp/latest).
+* For example demonstrations of the usage, go to [Ballerina By Examples](https://ballerina.io/learn/by-example/).
 * Chat live with us via our [Slack channel](https://ballerina.io/community/slack/).
 * Post all technical questions on Stack Overflow with the [#ballerina](https://stackoverflow.com/questions/tagged/ballerina) tag.
