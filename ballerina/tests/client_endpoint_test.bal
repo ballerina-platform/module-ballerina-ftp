@@ -127,7 +127,8 @@ public function testReadBlockNonFittingContent() returns error? {
 }
 
 @test:Config{
-    dependsOn: [testReadBlockNonFittingContent]
+    dependsOn: [testReadBlockNonFittingContent],
+    enable: false
 }
 public function testAppendContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(appendFilePath, 7);
@@ -153,7 +154,7 @@ public function testAppendContent() returns error? {
 }
 
 @test:Config{
-    dependsOn: [testAppendContent]
+    dependsOn: []
 }
 public function testPutFileContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
