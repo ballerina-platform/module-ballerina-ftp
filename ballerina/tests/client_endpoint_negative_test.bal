@@ -191,17 +191,13 @@ public function testRemoveDirectoryWithWrongUrl() {
 }
 
 @test:Config{}
-public function testFTPConnectionToSFTPServer() returns error? {
+public function testSFTPConnectionToFTPServer() returns error? {
     ClientConfiguration serverConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21212,
         auth: {
             credentials: {username: "wso2", password: "wso2123"}
-            //privateKey: {
-            //    path: "tests/resources/sftp.private.key",
-            //    password: "changeit"
-            //}
         }
     };
     Client|Error clientEp = new(serverConfig);

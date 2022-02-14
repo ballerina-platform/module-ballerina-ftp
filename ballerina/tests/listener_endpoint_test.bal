@@ -294,7 +294,7 @@ public function testConnectToFTPServerWithSFTPConfig() returns error? {
     Listener|Error sftpServer = new({
         protocol: SFTP,
         host: "localhost",
-        port: 21218,
+        port: 21212,
         auth: {
             credentials: {username: "wso2", password: "wso2123"}
         },
