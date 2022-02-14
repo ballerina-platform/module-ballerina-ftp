@@ -69,7 +69,7 @@ public function testReadNonExistingFile() returns error? {
 }
 
 @test:Config{
-    dependsOn: []
+    dependsOn: [testAppendContent]
 }
 public function testAppendContentToNonExistingFile() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(appendFilePath, 7);
