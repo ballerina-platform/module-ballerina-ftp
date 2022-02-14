@@ -106,7 +106,7 @@ public function testSecureConnectWithEmptySecurityKeyConfig() returns error? {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithEmptyCredentialsConfig() returns error? {
-    ClientConfiguration sftpClientEp = {
+    ClientConfiguration sftpClientConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
@@ -118,7 +118,7 @@ public function testSecureConnectWithEmptyCredentialsConfig() returns error? {
         }
     };
 
-    Client|Error sftpClientEp = new(sftpClientEp);
+    Client|Error sftpClientEp = new(sftpClientConfig);
     if sftpClientEp is Error {
         test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with no credentials. " + sftpClientEp.message());
