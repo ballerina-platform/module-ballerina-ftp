@@ -272,7 +272,7 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
 public function testConnectToInvalidUrl() returns error? {
     Listener|Error invalidUrlServer = new({
         protocol: FTP,
-        host: "localhost",
+        host: "192.165.1.5",
         port: 21218,
         auth: {
             credentials: {username: "wso2", password: "wso2123"}
@@ -294,7 +294,7 @@ public function testConnectToFTPServerWithSFTPConfig() returns error? {
     Listener|Error sftpServer = new({
         protocol: SFTP,
         host: "localhost",
-        port: 21212,
+        port: 21218,
         auth: {
             credentials: {username: "wso2", password: "wso2123"}
         },
@@ -309,6 +309,3 @@ public function testConnectToFTPServerWithSFTPConfig() returns error? {
         test:assertFail("Non-error result when empty username is used for creating a Listener.");
     }
 }
-
-// listener invalid url
-// client with testFTPConnectionToSFTPServer with private key
