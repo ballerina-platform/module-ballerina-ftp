@@ -272,7 +272,7 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
 public function testConnectToInvalidUrl() returns error? {
     Listener|Error invalidUrlServer = new({
         protocol: FTP,
-        host: "192.165.1.5",
+        host: "localhost",
         port: 21218,
         auth: {
             credentials: {username: "wso2", password: "wso2123"}
