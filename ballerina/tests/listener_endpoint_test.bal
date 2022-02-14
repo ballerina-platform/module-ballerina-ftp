@@ -268,7 +268,9 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config {
+    enable: false
+}
 public function testConnectToInvalidUrl() returns error? {
     Listener|Error invalidUrlServer = new({
         protocol: FTP,
