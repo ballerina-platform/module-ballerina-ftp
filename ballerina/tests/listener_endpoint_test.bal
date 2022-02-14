@@ -240,7 +240,7 @@ public function testServerRegisterFailureInvalidUsername() returns error? {
     if invalidUsernameServer is Error {
         test:assertEquals(invalidUsernameServer.message(), "Failed to initialize File server connector.");
     } else {
-        test:assertFail("Non-error result when empty username is used for creating a Listener.");
+        test:assertFail("Non-error result when invalid username is used for creating a Listener.");
     }
 }
 
@@ -264,7 +264,7 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
     if invalidPasswordServer is Error {
         test:assertEquals(invalidPasswordServer.message(), "Failed to initialize File server connector.");
     } else {
-        test:assertFail("Non-error result when empty username is used for creating a Listener.");
+        test:assertFail("Non-error result when invalid password is used for creating a Listener.");
     }
 }
 
@@ -285,7 +285,7 @@ public function testConnectToInvalidUrl() returns error? {
     if invalidUrlServer is Error {
         test:assertEquals(invalidUrlServer.message(), "Failed to initialize File server connector.");
     } else {
-        test:assertFail("Non-error result when empty username is used for creating a Listener.");
+        test:assertFail("Non-error result when trying to connect to an invalid url.");
     }
 }
 
@@ -306,6 +306,6 @@ public function testConnectToFTPServerWithSFTPConfig() returns error? {
     if sftpServer is Error {
         test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
     } else {
-        test:assertFail("Non-error result when empty username is used for creating a Listener.");
+        test:assertFail("Non-error result when SFTP protocol is used to connect tot FTP serverr.");
     }
 }

@@ -39,8 +39,7 @@ public function testSecureGetFileContent() returns error? {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithWrongProtocol() returns error? {
-
-    ClientConfiguration incorrectSftpConfig = {
+    ClientConfiguration sftpConfig = {
         protocol: FTP,
         host: "127.0.0.1",
         port: 21213,
@@ -53,12 +52,12 @@ public function testSecureConnectWithWrongProtocol() returns error? {
         }
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if incorrectSftpClientEp is Error {
-        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
+    Client|Error sftpClientEp = new(sftpConfig);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the FTP client initialization with a SFTP server. " + sftpClientEp.message());
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing SFTP client with wrong password.");
+        test:assertFail(msg = "Found a non-error response while initializing FTP client with a SFTP server.");
     }
 }
 
@@ -66,19 +65,18 @@ public function testSecureConnectWithWrongProtocol() returns error? {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithEmptySecurityConfigs() returns error? {
-
-    ClientConfiguration incorrectSftpConfig = {
+    ClientConfiguration emptySftpConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if incorrectSftpClientEp is Error {
-        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
+    Client|Error emptySftpClientEp = new(emptySftpConfig);
+    if emptySftpClientEp is Error {
+        test:assertTrue(emptySftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with no security configs. " + emptySftpClientEp.message());
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing SFTP client with wrong password.");
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with no security configs.");
     }
 }
 
@@ -86,8 +84,7 @@ public function testSecureConnectWithEmptySecurityConfigs() returns error? {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithEmptySecurityKeyConfig() returns error? {
-
-    ClientConfiguration incorrectSftpConfig = {
+    ClientConfiguration sftpConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
@@ -96,12 +93,12 @@ public function testSecureConnectWithEmptySecurityKeyConfig() returns error? {
         }
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if incorrectSftpClientEp is Error {
-        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
+    Client|Error sftpClientEp = new(sftpConfig);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with no private key. " + sftpClientEp.message());
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing SFTP client with wrong password.");
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with no private key.");
     }
 }
 
@@ -109,8 +106,7 @@ public function testSecureConnectWithEmptySecurityKeyConfig() returns error? {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithEmptyCredentialsConfig() returns error? {
-
-    ClientConfiguration incorrectSftpConfig = {
+    ClientConfiguration sftpClientEp = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
@@ -122,12 +118,12 @@ public function testSecureConnectWithEmptyCredentialsConfig() returns error? {
         }
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if incorrectSftpClientEp is Error {
-        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
+    Client|Error sftpClientEp = new(sftpClientEp);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with no credentials. " + sftpClientEp.message());
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing SFTP client with wrong password.");
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with no credentials.");
     }
 }
 
@@ -135,8 +131,7 @@ public function testSecureConnectWithEmptyCredentialsConfig() returns error? {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithWrongPassword() returns error? {
-
-    ClientConfiguration incorrectSftpConfig = {
+    ClientConfiguration sftpConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
@@ -149,10 +144,10 @@ public function testSecureConnectWithWrongPassword() returns error? {
         }
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if incorrectSftpClientEp is Error {
-        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
+    Client|Error sftpClientEp = new(sftpConfig);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with wrong password. " + sftpClientEp.message());
     } else {
         test:assertFail(msg = "Found a non-error response while initializing SFTP client with wrong password.");
     }
@@ -162,8 +157,7 @@ public function testSecureConnectWithWrongPassword() returns error? {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithWrongUsername() returns error? {
-
-    ClientConfiguration incorrectSftpConfig = {
+    ClientConfiguration sftpConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
@@ -176,10 +170,10 @@ public function testSecureConnectWithWrongUsername() returns error? {
         }
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if incorrectSftpClientEp is Error {
-        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
+    Client|Error sftpClientEp = new(sftpConfig);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with wrong username. " + sftpClientEp.message());
     } else {
         test:assertFail(msg = "Found a non-error response while initializing SFTP client with wrong username.");
     }
@@ -189,8 +183,7 @@ public function testSecureConnectWithWrongUsername() returns error? {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithEmptyUsername() returns error? {
-
-    ClientConfiguration incorrectSftpConfig = {
+    ClientConfiguration sftpConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
@@ -203,10 +196,10 @@ public function testSecureConnectWithEmptyUsername() returns error? {
         }
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if incorrectSftpClientEp is Error {
-        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
+    Client|Error sftpClientEp = new(sftpConfig);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with empty username. " + sftpClientEp.message());
     } else {
         test:assertFail(msg = "Found a non-error response while initializing SFTP client with empty username.");
     }
@@ -216,8 +209,7 @@ public function testSecureConnectWithEmptyUsername() returns error? {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithEmptyPassword() returns error? {
-
-    ClientConfiguration incorrectSftpConfig = {
+    ClientConfiguration sftpConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
@@ -230,10 +222,10 @@ public function testSecureConnectWithEmptyPassword() returns error? {
         }
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if incorrectSftpClientEp is Error {
-        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
+    Client|Error sftpClientEp = new(sftpConfig);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with empty password. " + sftpClientEp.message());
     } else {
         test:assertFail(msg = "Found a non-error response while initializing SFTP client with empty password.");
     }
@@ -243,8 +235,7 @@ public function testSecureConnectWithEmptyPassword() returns error? {
     dependsOn: [testSecureConnectWithWrongPassword]
 }
 public function testSecureConnectWithWrongKey() returns error? {
-
-    ClientConfiguration incorrectSftpConfig = {
+    ClientConfiguration sftpConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
@@ -257,10 +248,10 @@ public function testSecureConnectWithWrongKey() returns error? {
         }
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if incorrectSftpClientEp is Error {
-        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with an invalid key. " + incorrectSftpClientEp.message());
+    Client|Error sftpClientEp = new(sftpConfig);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with an invalid key. " + sftpClientEp.message());
     } else {
         test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid key.");
     }
@@ -270,7 +261,7 @@ public function testSecureConnectWithWrongKey() returns error? {
     dependsOn: [testSecureConnectWithWrongPassword]
 }
 public function testSecureConnectWithInvalidKeyPath() returns error? {
-    ClientConfiguration incorrectSftpConfig = {
+    ClientConfiguration sftpConfig = {
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21213,
@@ -282,12 +273,12 @@ public function testSecureConnectWithInvalidKeyPath() returns error? {
             }
         }
     };
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
-    if incorrectSftpClientEp is Error {
-        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with an invalid key. " + incorrectSftpClientEp.message());
+    Client|Error sftpClientEp = new(sftpConfig);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with an invalid key path. " + sftpClientEp.message());
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid key.");
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid key path.");
     }
 }
 

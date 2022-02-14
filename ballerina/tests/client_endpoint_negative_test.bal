@@ -203,8 +203,8 @@ public function testSFTPConnectionToFTPServer() returns error? {
     Client|Error clientEp = new(serverConfig);
     if clientEp is Error {
         test:assertTrue(clientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error when tried to connect to a non existing server. " + clientEp.message());
+            msg = "Unexpected error when tried to connect to a existing FTP server via SFTP. " + clientEp.message());
     } else {
-        test:assertFail(msg = "Found a non-error response when tried to connect to a non existing server.");
+        test:assertFail(msg = "Found a non-error response when tried to connect to a existing FTP server via SFTP.");
     }
 }
