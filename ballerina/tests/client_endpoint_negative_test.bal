@@ -189,3 +189,24 @@ public function testRemoveDirectoryWithWrongUrl() {
         test:assertFail(msg = "Found a non-error response while accessing a non-existing directory path.");
     }
 }
+
+@test:Config{
+    enable: false
+}
+public function testSFTPConnectionToFTPServer() returns error? {
+    ClientConfiguration serverConfig = {
+        protocol: SFTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"}
+        }
+    };
+    Client|Error clientEp = new(serverConfig);
+    if clientEp is Error {
+        test:assertTrue(clientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error when tried to connect to a existing FTP server via SFTP. " + clientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response when tried to connect to a existing FTP server via SFTP.");
+    }
+}
