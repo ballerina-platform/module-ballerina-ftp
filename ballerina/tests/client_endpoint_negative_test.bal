@@ -173,7 +173,7 @@ public function testDeleteFileAtNonExistingLocation() returns error? {
         test:assertTrue(receivedError.message().startsWith("Failed to delete file: "),
             msg = "Unexpected error during the `delete` operation of an non-existing file. " + receivedError.message());
     } else {
-        // test:assertFail(msg = "Found a non-error response while accessing a non-existing file path.");
+         test:assertFail(msg = "Found a non-error response while accessing a non-existing file path.");
     }
 }
 
