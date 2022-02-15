@@ -269,33 +269,12 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
     }
 }
 
-//@test:Config {}
-//public function testConnectToInvalidUrl() returns error? {
-//    Listener|Error invalidUrlServer = new({
-//        protocol: FTP,
-//        host: "localhost",
-//        port: 21218,
-//        auth: {
-//            credentials: {username: "wso2", password: "wso2123"}
-//        },
-//        path: "/home/in",
-//        pollingInterval: 2,
-//        fileNamePattern: "(.*).txt"
-//    });
-//
-//    if invalidUrlServer is Error {
-//        test:assertEquals(invalidUrlServer.message(), "Failed to initialize File server connector.");
-//    } else {
-//        test:assertFail("Non-error result when trying to connect to an invalid url.");
-//    }
-//}
-//
 @test:Config {}
-public function testConnectToFTPServerWithSFTPConfig() returns error? {
-    Listener|Error sftpServer = new({
-        protocol: SFTP,
+public function testConnectToInvalidUrl() returns error? {
+    Listener|Error invalidUrlServer = new({
+        protocol: FTP,
         host: "localhost",
-        port: 21212,
+        port: 21218,
         auth: {
             credentials: {username: "wso2", password: "wso2123"}
         },
@@ -304,9 +283,30 @@ public function testConnectToFTPServerWithSFTPConfig() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+    if invalidUrlServer is Error {
+        test:assertEquals(invalidUrlServer.message(), "Failed to initialize File server connector.");
     } else {
-        test:assertFail("Non-error result when SFTP protocol is used to connect to FTP server.");
+        test:assertFail("Non-error result when trying to connect to an invalid url.");
     }
 }
+
+//@test:Config {}
+//public function testConnectToFTPServerWithSFTPConfig() returns error? {
+//    Listener|Error sftpServer = new({
+//        protocol: SFTP,
+//        host: "localhost",
+//        port: 21212,
+//        auth: {
+//            credentials: {username: "wso2", password: "wso2123"}
+//        },
+//        path: "/home/in",
+//        pollingInterval: 2,
+//        fileNamePattern: "(.*).txt"
+//    });
+//
+//    if sftpServer is Error {
+//        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+//    } else {
+//        test:assertFail("Non-error result when SFTP protocol is used to connect to FTP server.");
+//    }
+//}
