@@ -80,27 +80,27 @@ public function testSecureConnectWithEmptySecurityConfigs() returns error? {
     }
 }
 
-@test:Config{
-    dependsOn: [testSecureGetFileContent]
-}
-public function testSecureConnectWithEmptySecurityKeyConfig() returns error? {
-    ClientConfiguration sftpConfig = {
-        protocol: SFTP,
-        host: "127.0.0.1",
-        port: 21213,
-        auth: {
-            credentials: {username: "wso2", password: "wso2123"}
-        }
-    };
-
-    Client|Error sftpClientEp = new(sftpConfig);
-    if sftpClientEp is Error {
-        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the SFTP client initialization with no private key. " + sftpClientEp.message());
-    } else {
-        test:assertFail(msg = "Found a non-error response while initializing SFTP client with no private key.");
-    }
-}
+//@test:Config{
+//    dependsOn: [testSecureGetFileContent]
+//}
+//public function testSecureConnectWithEmptySecurityKeyConfig() returns error? {
+//    ClientConfiguration sftpConfig = {
+//        protocol: SFTP,
+//        host: "127.0.0.1",
+//        port: 21213,
+//        auth: {
+//            credentials: {username: "wso2", password: "wso2123"}
+//        }
+//    };
+//
+//    Client|Error sftpClientEp = new(sftpConfig);
+//    if sftpClientEp is Error {
+//        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+//            msg = "Unexpected error during the SFTP client initialization with no private key. " + sftpClientEp.message());
+//    } else {
+//        test:assertFail(msg = "Found a non-error response while initializing SFTP client with no private key.");
+//    }
+//}
 
 @test:Config{
     dependsOn: [testSecureGetFileContent]
