@@ -290,23 +290,20 @@ public function testConnectToInvalidUrl() returns error? {
     }
 }
 
-//@test:Config {}
-//public function testConnectToFTPServerWithSFTPConfig() returns error? {
-//    Listener|Error sftpServer = new({
-//        protocol: SFTP,
-//        host: "localhost",
-//        port: 21212,
-//        auth: {
-//            credentials: {username: "wso2", password: "wso2123"}
-//        },
-//        path: "/home/in",
-//        pollingInterval: 2,
-//        fileNamePattern: "(.*).txt"
-//    });
-//
-//    if sftpServer is Error {
-//        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
-//    } else {
-//        test:assertFail("Non-error result when SFTP protocol is used to connect to FTP server.");
-//    }
-//}
+@test:Config {}
+public function testConnectToFTPServerWithSFTPConfig() returns error? {
+    Listener|Error sftpServer = new({
+        protocol: SFTP,
+        host: "localhost",
+        port: 21212,
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if sftpServer is Error {
+        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+    } else {
+        test:assertFail("Non-error result when SFTP protocol is used to connect to FTP server.");
+    }
+}
