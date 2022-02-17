@@ -29,22 +29,21 @@ public isolated client class Client {
     public isolated function init(ClientConfiguration clientConfig) returns Error? {
         self.config = clientConfig.cloneReadOnly();
         Error? response = initEndpoint(self, self.config);
-        if (response is Error) {
+        if response is Error {
             return response;
         }
     }
 
     # Retrieves the file content from a remote resource.
     # ```ballerina
-    # stream<byte[] & readonly, io:Error?>|ftp:Error channel
-    #   = client->get(path);
+    # stream<byte[] & readonly, io:Error?>|ftp:Error channel = client->get(path);
     # ```
     #
     # + path - The resource path
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
     remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error {
         ByteStream|Error byteStream = new(self, path);
-        if (byteStream is ByteStream) {
+        if byteStream is ByteStream {
             return new stream<byte[] & readonly, io:Error?>(byteStream);
         } else {
             return byteStream;
@@ -203,12 +202,12 @@ isolated function getInputContent(string path, stream<byte[] & readonly, io:Erro
         compressInput: compressInput
     };
 
-    if (content is stream<byte[] & readonly, io:Error?>) {
+    if content is stream<byte[] & readonly, io:Error?> {
         inputContent.isFile = true;
         inputContent.fileContent = content;
-    } else if (content is string) {
+    } else if content is string {
         inputContent.textContent = content;
-    } else if (content is json) {
+    } else if content is json {
         inputContent.textContent = content.toJsonString();
     } else {
         inputContent.textContent = content.toString();
