@@ -55,7 +55,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
     private Map<String, String> connectorConfig;
     private RemoteFileSystemListener remoteFileSystemListener;
     private FileSystemOptions opts;
-    private FileObject path = null;
+    private FileObject path;
     private FileSystemManager fsManager;
 
     public VfsClientConnectorImpl(Map<String, String> config)

@@ -44,9 +44,6 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_SFTP;
  */
 public class FileTransportUtils {
 
-    private static final Logger log = LoggerFactory.getLogger(
-            io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils.class);
-
     private static final Pattern URL_PATTERN = Pattern.compile("[a-z]+://.*");
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(":(?:[^/]+)@");
 
