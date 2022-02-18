@@ -190,7 +190,8 @@ public function testRemoveDirectoryWithWrongUrl() {
     }
 }
 
-@test:Config{
+// Disabling due to https://github.com/ballerina-platform/ballerina-standard-library/issues/2703
+@test:Config {
     enable: false
 }
 public function testSFTPConnectionToFTPServer() returns error? {
