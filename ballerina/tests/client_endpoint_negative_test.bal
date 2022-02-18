@@ -173,7 +173,7 @@ public function testDeleteFileAtNonExistingLocation() returns error? {
         test:assertTrue(receivedError.message().startsWith("Failed to delete file: "),
             msg = "Unexpected error during the `delete` operation of an non-existing file. " + receivedError.message());
     } else {
-        // test:assertFail(msg = "Found a non-error response while accessing a non-existing file path.");
+         test:assertFail(msg = "Found a non-error response while accessing a non-existing file path.");
     }
 }
 
@@ -187,5 +187,31 @@ public function testRemoveDirectoryWithWrongUrl() {
             msg = "Unexpected error during the `rmdir` operation of a non-existing directory. " + receivedError.message());
     } else {
         test:assertFail(msg = "Found a non-error response while accessing a non-existing directory path.");
+    }
+}
+
+// Disabling due to https://github.com/ballerina-platform/ballerina-standard-library/issues/2703
+@test:Config {
+    enable: false
+}
+public function testSFTPConnectionToFTPServer() returns error? {
+    ClientConfiguration serverConfig = {
+        protocol: SFTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+    Client|Error clientEp = new(serverConfig);
+    if clientEp is Error {
+        test:assertTrue(clientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error when tried to connect to a existing FTP server via SFTP. " + clientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response when tried to connect to a existing FTP server via SFTP.");
     }
 }
