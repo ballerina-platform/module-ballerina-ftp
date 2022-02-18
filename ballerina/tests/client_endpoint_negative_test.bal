@@ -17,17 +17,17 @@
 import ballerina/io;
 import ballerina/test;
 
-@test:Config{
+@test:Config {
     dependsOn: [testReadBlockNonFittingContent]
 }
 public function testConnectionWithNonExistingServer() returns error? {
     ClientConfiguration nonExistingServerConfig = {
-            protocol: FTP,
-            host: "127.0.0.1",
-            port: 21218,
-            auth: {credentials: {username: "wso2", password: "wso2123"}}
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21218,
+        auth: {credentials: {username: "wso2", password: "wso2123"}}
     };
-    Client|Error nonExistingServerClientEp = new(nonExistingServerConfig);
+    Client|Error nonExistingServerClientEp = new (nonExistingServerConfig);
     if nonExistingServerClientEp is Error {
         test:assertTrue(nonExistingServerClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error when tried to connect to a non existing server. " + nonExistingServerClientEp.message());
@@ -36,17 +36,17 @@ public function testConnectionWithNonExistingServer() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testReadBlockNonFittingContent]
 }
 public function testConnectionWithInvalidConfiguration() returns error? {
     ClientConfiguration invalidConfig = {
-            protocol: FTP,
-            host: "!@#$%^&*()",
-            port: 21212,
-            auth: {credentials: {username: "wso2", password: "wso2123"}}
+        protocol: FTP,
+        host: "!@#$%^&*()",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}}
     };
-    Client|Error invalidServerClientEp = new(invalidConfig);
+    Client|Error invalidServerClientEp = new (invalidConfig);
     if invalidServerClientEp is Error {
         test:assertTrue(invalidServerClientEp.message().startsWith("Error occurred while constructing a URI from host: "),
             msg = "Unexpected error when tried to connect with invalid parameters. " + invalidServerClientEp.message());
@@ -55,7 +55,7 @@ public function testConnectionWithInvalidConfiguration() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testReadBlockNonFittingContent]
 }
 public function testReadNonExistingFile() returns error? {
@@ -68,12 +68,12 @@ public function testReadNonExistingFile() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testAppendContent]
 }
 public function testAppendContentToNonExistingFile() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(appendFilePath, 7);
-    Error? receivedError =  clientEp->append("/../invalidFile", bStream);
+    Error? receivedError = clientEp->append("/../invalidFile", bStream);
     if receivedError is Error {
         test:assertEquals(receivedError.message(), "Invalid relative file name.",
             msg = "Unexpected error during the `append` operation of an invalid file.");
@@ -82,7 +82,7 @@ public function testAppendContentToNonExistingFile() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testPutFileContent]
 }
 public function testPutFileContentAtInvalidFileLocation() returns error? {
@@ -96,7 +96,7 @@ public function testPutFileContentAtInvalidFileLocation() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testIsDirectory]
 }
 public function testIsDirectoryWithNonExistingDirectory() {
@@ -109,7 +109,7 @@ public function testIsDirectoryWithNonExistingDirectory() {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testCreateDirectory]
 }
 public function testCreateDirectoryAtInvalidLocation() {
@@ -122,7 +122,7 @@ public function testCreateDirectoryAtInvalidLocation() {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testRenameDirectory]
 }
 public function testRenameNonExistingDirectory() {
@@ -138,7 +138,7 @@ public function testRenameNonExistingDirectory() {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testGetFileSize]
 }
 public function testGetFileSizeFromNonExistingFile() {
@@ -151,7 +151,7 @@ public function testGetFileSizeFromNonExistingFile() {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testListFiles]
 }
 public function testListFilesFromNonExistingDirectory() {
@@ -164,7 +164,7 @@ public function testListFilesFromNonExistingDirectory() {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testDeleteFile]
 }
 public function testDeleteFileAtNonExistingLocation() returns error? {
@@ -173,11 +173,11 @@ public function testDeleteFileAtNonExistingLocation() returns error? {
         test:assertTrue(receivedError.message().startsWith("Failed to delete file: "),
             msg = "Unexpected error during the `delete` operation of an non-existing file. " + receivedError.message());
     } else {
-         test:assertFail(msg = "Found a non-error response while accessing a non-existing file path.");
+        test:assertFail(msg = "Found a non-error response while accessing a non-existing file path.");
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testRemoveDirectory]
 }
 public function testRemoveDirectoryWithWrongUrl() {
@@ -207,7 +207,7 @@ public function testSFTPConnectionToFTPServer() returns error? {
             }
         }
     };
-    Client|Error clientEp = new(serverConfig);
+    Client|Error clientEp = new (serverConfig);
     if clientEp is Error {
         test:assertTrue(clientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error when tried to connect to a existing FTP server via SFTP. " + clientEp.message());

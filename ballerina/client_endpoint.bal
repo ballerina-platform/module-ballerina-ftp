@@ -42,7 +42,7 @@ public isolated client class Client {
     # + path - The resource path
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
     remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error {
-        ByteStream|Error byteStream = new(self, path);
+        ByteStream|Error byteStream = new (self, path);
         if byteStream is ByteStream {
             return new stream<byte[] & readonly, io:Error?>(byteStream);
         } else {
@@ -78,7 +78,7 @@ public isolated client class Client {
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
-            |string|xml|json content, Compression compressionType=NONE) returns Error? {
+            |string|xml|json content, Compression compressionType = NONE) returns Error? {
         boolean compress = false;
         if compressionType != NONE {
             compress = true;
@@ -166,7 +166,7 @@ public isolated client class Client {
     # ```
     #
     # + path - The resource path
-    # + return -  `()` or else an `ftp:Error` if failed to establish
+    # + return - `()` or else an `ftp:Error` if failed to establish
     #             the communication with the FTP server
     remote isolated function delete(string path) returns Error? {
         return delete(self, path);
@@ -196,7 +196,7 @@ public type ClientConfiguration record {|
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,
-        boolean compressInput=false) returns InputContent {
+        boolean compressInput = false) returns InputContent {
     InputContent inputContent = {
         filePath: path,
         compressInput: compressInput

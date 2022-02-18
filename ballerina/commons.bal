@@ -61,7 +61,7 @@ public type AuthConfiguration record {|
 # + fileContent - The content read from the input file, if the input is a file
 # + textContent - The input content, for other input types
 # + compressInput - If true, input will be compressed before uploading
-public type InputContent record{|
+public type InputContent record {|
     string filePath;
     boolean isFile = false;
     stream<byte[] & readonly, io:Error?> fileContent?;

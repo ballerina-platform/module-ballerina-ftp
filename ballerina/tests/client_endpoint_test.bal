@@ -34,17 +34,17 @@ ClientConfiguration anonConfig = {
     port: 21210
 };
 
-Client anonClientEp = checkpanic new(anonConfig);
+Client anonClientEp = checkpanic new (anonConfig);
 
 // Create the config to access mock FTP server
 ClientConfiguration config = {
-        protocol: FTP,
-        host: "127.0.0.1",
-        port: 21212,
-        auth: {credentials: {username: "wso2", password: "wso2123"}}
+    protocol: FTP,
+    host: "127.0.0.1",
+    port: 21212,
+    auth: {credentials: {username: "wso2", password: "wso2123"}}
 };
 
-Client clientEp = checkpanic new(config);
+Client clientEp = checkpanic new (config);
 
 // Create the config to access mock SFTP server
 ClientConfiguration sftpConfig = {
@@ -60,7 +60,7 @@ ClientConfiguration sftpConfig = {
     }
 };
 
-Client sftpClientEp = checkpanic new(sftpConfig);
+Client sftpClientEp = checkpanic new (sftpConfig);
 
 // Start mock FTP servers
 boolean startedServers = initServers();
@@ -72,39 +72,39 @@ function initServers() returns boolean {
     return !(response0 is Error || response1 is Error || response2 is Error);
 }
 
-@test:Config{}
+@test:Config {}
 public function testReadFromAnonServer() returns error? {
     test:assertTrue(startedServers, msg = "Test servers are not properly started.");
     stream<byte[] & readonly, io:Error?>|Error str = anonClientEp->get(filePath);
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "File content"), msg = "Found unexpected content from `get` operation");
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
             test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testReadFromAnonServer, testAddedFileCount, testSecureAddedFileCount]
 }
 public function testReadBlockFittingContent() returns error? {
     test:assertTrue(startedServers, msg = "Test servers are not properly started.");
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath);
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "File content"), msg = "Found unexpected content from `get` operation");
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
             test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testReadBlockFittingContent]
 }
 public function testReadBlockNonFittingContent() returns error? {
@@ -115,18 +115,18 @@ public function testReadBlockNonFittingContent() returns error? {
         nonFittingContent += "123456789";
         i += 1;
     }
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, nonFittingContent), msg = "Found unexpected content from `get` operation");
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
             test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testReadBlockNonFittingContent]
 }
 public function testAppendContent() returns error? {
@@ -140,7 +140,7 @@ public function testAppendContent() returns error? {
     }
 
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath);
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "File contentAppend content"),
             msg = "Found unexpected content from `get` operation after `append` operation");
         io:Error? closeResult = str.close();
@@ -148,11 +148,11 @@ public function testAppendContent() returns error? {
             test:assertFail(msg = "Error while closing stream in `append` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testAppendContent]
 }
 public function testPutFileContent() returns error? {
@@ -165,7 +165,7 @@ public function testPutFileContent() returns error? {
     log:printInfo("Executed `put` operation");
 
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(newFilePath);
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "Put content"),
             msg = "Found unexpected content from `get` operation after `put` operation");
         io:Error? closeResult = str.close();
@@ -173,17 +173,17 @@ public function testPutFileContent() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testPutFileContent]
 }
 public function testPutCompressedFileContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
-    Error? response = clientEp->put("/home/in/test3.txt", bStream, compressionType=ZIP);
+    Error? response = clientEp->put("/home/in/test3.txt", bStream, compressionType = ZIP);
     if response is Error {
         test:assertFail(msg = "Found unexpected response type from compressed `put` operation" + response.message());
     }
@@ -195,7 +195,7 @@ public function testPutCompressedFileContent() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testPutCompressedFileContent]
 }
 public function testPutLargeFileContent() returns error? {
@@ -208,8 +208,11 @@ public function testPutLargeFileContent() returns error? {
     }
     string sendString1 = check string:fromBytes(firstByteArray);
 
-    (byte[])[] & readonly bList = [firstByteArray.cloneReadOnly(), "123456".toBytes().cloneReadOnly(),
-        "end.".toBytes().cloneReadOnly()];
+    (byte[])[] & readonly bList = [
+        firstByteArray.cloneReadOnly(),
+        "123456".toBytes().cloneReadOnly(),
+        "end.".toBytes().cloneReadOnly()
+    ];
     stream<byte[] & readonly, io:Error?> bStream = bList.toStream();
     Error? response = clientEp->put(newFilePath, bStream);
     if response is Error {
@@ -218,7 +221,7 @@ public function testPutLargeFileContent() returns error? {
     log:printInfo("Executed `put` operation for large files");
 
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(newFilePath);
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         string expectedString = sendString1 + "123456" + "end.";
         test:assertTrue(check matchStreamContent(str, expectedString),
             msg = "Found unexpected content from `get` operation after `put` operation with large chunks");
@@ -227,7 +230,7 @@ public function testPutLargeFileContent() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
@@ -235,11 +238,11 @@ isolated function matchStreamContent(stream<byte[] & readonly, io:Error?> binary
     string fullContent = "";
     string tempContent = "";
     int maxLoopCount = 100000;
-    while (maxLoopCount > 0) {
+    while maxLoopCount > 0 {
         record {|byte[] value;|}|io:Error? binaryArray = binaryStream.next();
-        if (binaryArray is io:Error) {
+        if binaryArray is io:Error {
             break;
-        } else if (binaryArray is ()) {
+        } else if binaryArray is () {
             break;
         } else {
             tempContent = check strings:fromBytes(binaryArray.value);
@@ -250,7 +253,7 @@ isolated function matchStreamContent(stream<byte[] & readonly, io:Error?> binary
     return matchedString == fullContent;
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testPutLargeFileContent]
 }
 public function testPutTextContent() returns error? {
@@ -263,7 +266,7 @@ public function testPutTextContent() returns error? {
     }
 
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath);
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "Sample text content"),
             msg = "Found unexpected content from `get` operation after `put` operation on text");
         io:Error? closeResult = str.close();
@@ -271,15 +274,15 @@ public function testPutTextContent() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testPutTextContent]
 }
 public function testPutJsonContent() returns error? {
-    json jsonToPut = { name: "Anne", age: 20 };
+    json jsonToPut = {name: "Anne", age: 20};
     Error? response = clientEp->put(filePath, jsonToPut);
     if response is Error {
         test:assertFail(msg = "Found unexpected response type from `put` operation on JSON content" + response.message());
@@ -288,7 +291,7 @@ public function testPutJsonContent() returns error? {
     }
 
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath);
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "{\"name\":\"Anne\", \"age\":20}"),
             msg = "Found unexpected content from `get` operation after `put` operation on JSON");
         io:Error? closeResult = str.close();
@@ -296,11 +299,11 @@ public function testPutJsonContent() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testPutJsonContent]
 }
 public function testPutXMLContent() returns error? {
@@ -313,7 +316,7 @@ public function testPutXMLContent() returns error? {
     }
 
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath);
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "<note><heading>Memo</heading><body>Memo content</body></note>"),
             msg = "Found unexpected content from `get` operation after `put` operation on XML");
         io:Error? closeResult = str.close();
@@ -321,11 +324,11 @@ public function testPutXMLContent() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testPutXMLContent]
 }
 public function testIsDirectory() {
@@ -350,7 +353,7 @@ public function testIsDirectory() {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testIsDirectory]
 }
 public function testCreateDirectory() {
@@ -371,7 +374,7 @@ public function testCreateDirectory() {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testCreateDirectory]
 }
 public function testRenameDirectory() {
@@ -390,7 +393,7 @@ public function testRenameDirectory() {
         test:assertEquals(response2.message(), "/home/in/out does not exists to check if it is a directory.",
             msg = "Incorrect error message for non-existing file/directory at `isDirectory` operation");
     } else {
-        test:assertFail(msg = "Error not created while invoking `isDirectory` operation after `rename` operation" );
+        test:assertFail(msg = "Error not created while invoking `isDirectory` operation after `rename` operation");
     }
 
     boolean|Error response3 = clientEp->isDirectory(newName);
@@ -404,7 +407,7 @@ public function testRenameDirectory() {
 
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testRenameDirectory]
 }
 public function testGetFileSize() {
@@ -418,13 +421,22 @@ public function testGetFileSize() {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testGetFileSize]
 }
 public function testListFiles() {
-    string[] resourceNames
-        = ["child_directory", "test1.txt", "complexDirectory", "test", "folder1", "test3.zip", "childDirectory",
-            "test2.txt", "test3.txt", "test4.txt"];
+    string[] resourceNames = [
+        "child_directory",
+        "test1.txt",
+        "complexDirectory",
+        "test",
+        "folder1",
+        "test3.zip",
+        "childDirectory",
+        "test2.txt",
+        "test3.txt",
+        "test4.txt"
+    ];
     int[] fileSizes = [0, 61, 0, 0, 0, 145, 0, 16400, 12, 9000];
     FileInfo[]|Error response = clientEp->list("/home/in");
     if response is FileInfo[] {
@@ -446,7 +458,7 @@ public function testListFiles() {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testListFiles]
 }
 public function testDeleteFile() returns error? {
@@ -458,7 +470,7 @@ public function testDeleteFile() returns error? {
     }
 
     stream<byte[] & readonly, io:Error?>|Error str = clientEp->get(filePath);
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertFalse(check matchStreamContent(str, "<note><heading>Memo</heading><body>Memo content</body></note>"),
             msg = "File was not deleted with `delete` operation");
         io:Error? closeResult = str.close();
@@ -472,28 +484,28 @@ public function testDeleteFile() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testDeleteFile]
 }
 public function testRemoveDirectory() returns error? {
     return testGenericRmdir("/home/in/test");
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testRemoveDirectory]
 }
 public function testRemoveDirectoryWithSubdirectory() returns error? {
     return testGenericRmdir("/home/in/folder1");
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testRemoveDirectoryWithSubdirectory]
 }
 public function testRemoveDirectoryWithFiles() returns error? {
     return testGenericRmdir("/home/in/child_directory");
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testRemoveDirectoryWithFiles]
 }
 public function testRemoveComplexDirectory() returns error? {
@@ -504,7 +516,7 @@ function testGenericRmdir(string path) returns error? {
     boolean|Error response0 = clientEp->isDirectory(path);
     log:printInfo("Executed `isDirectory` operation before deleting a directory " + path);
     int retryCount = 0;
-    while ((response0 is Error || !response0) && retryCount < 10) {
+    while (response0 is Error || !response0) && retryCount < 10 {
         log:printInfo("Executed `isDirectory` operation before deleting a directory " + path);
         runtime:sleep(1);
         response0 = clientEp->isDirectory(path);
@@ -526,7 +538,7 @@ function testGenericRmdir(string path) returns error? {
     log:printInfo("Executed `isDirectory` operation after deleting a directory " + path);
 
     int i = 0;
-    while (response2 is boolean && i < 10) {
+    while response2 is boolean && i < 10 {
         runtime:sleep(1);
         response2 = clientEp->isDirectory(path);
         log:printInfo("Executed `isDirectory` operation after deleting a directory " + path);
@@ -540,39 +552,39 @@ function testGenericRmdir(string path) returns error? {
     }
 }
 
-@test:AfterSuite{}
+@test:AfterSuite {}
 public function stopServer() returns error? {
     _ = stopAnonymousFtpServer();
     _ = stopFtpServer();
     check stopSftpServer();
 }
 
-function initAnonymousFtpServer(map<anydata> config) returns Error? = @java:Method{
+function initAnonymousFtpServer(map<anydata> config) returns Error? = @java:Method {
     name: "initAnonymousFtpServer",
     'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;
 
-function initFtpServer(map<anydata> config) returns Error? = @java:Method{
+function initFtpServer(map<anydata> config) returns Error? = @java:Method {
     name: "initFtpServer",
     'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;
 
-function initSftpServer(map<anydata> config) returns Error? = @java:Method{
+function initSftpServer(map<anydata> config) returns Error? = @java:Method {
     name: "initSftpServer",
     'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;
 
-function stopFtpServer() returns () = @java:Method{
+function stopFtpServer() returns () = @java:Method {
     name: "stopFtpServer",
     'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;
 
-function stopAnonymousFtpServer() returns () = @java:Method{
+function stopAnonymousFtpServer() returns () = @java:Method {
     name: "stopAnonymousFtpServer",
     'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;
 
-function stopSftpServer() returns error? = @java:Method{
+function stopSftpServer() returns error? = @java:Method {
     name: "stopSftpServer",
     'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
 } external;

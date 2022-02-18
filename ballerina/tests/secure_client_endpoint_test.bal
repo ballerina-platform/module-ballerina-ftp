@@ -18,12 +18,12 @@ import ballerina/io;
 import ballerina/test;
 import ballerina/log;
 
-@test:Config{
+@test:Config {
     dependsOn: [testRemoveDirectory]
 }
 public function testSecureGetFileContent() returns error? {
     stream<byte[] & readonly, io:Error?>|Error str = sftpClientEp->get("/file2.txt");
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "Put content"),
             msg = "Found unexpected content from secure `get` operation");
         io:Error? closeResult = str.close();
@@ -31,11 +31,11 @@ public function testSecureGetFileContent() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithWrongProtocol() returns error? {
@@ -52,7 +52,7 @@ public function testSecureConnectWithWrongProtocol() returns error? {
         }
     };
 
-    Client|Error sftpClientEp = new(sftpConfig);
+    Client|Error sftpClientEp = new (sftpConfig);
     if sftpClientEp is Error {
         test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the FTP client initialization with a SFTP server. " + sftpClientEp.message());
@@ -61,7 +61,7 @@ public function testSecureConnectWithWrongProtocol() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithEmptySecurityConfigs() returns error? {
@@ -71,7 +71,7 @@ public function testSecureConnectWithEmptySecurityConfigs() returns error? {
         port: 21213
     };
 
-    Client|Error emptySftpClientEp = new(emptySftpConfig);
+    Client|Error emptySftpClientEp = new (emptySftpConfig);
     if emptySftpClientEp is Error {
         test:assertTrue(emptySftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with no security configs. " + emptySftpClientEp.message());
@@ -80,7 +80,7 @@ public function testSecureConnectWithEmptySecurityConfigs() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithEmptyCredentialsConfig() returns error? {
@@ -96,7 +96,7 @@ public function testSecureConnectWithEmptyCredentialsConfig() returns error? {
         }
     };
 
-    Client|Error sftpClientEp = new(sftpClientConfig);
+    Client|Error sftpClientEp = new (sftpClientConfig);
     if sftpClientEp is Error {
         test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with no credentials. " + sftpClientEp.message());
@@ -105,7 +105,7 @@ public function testSecureConnectWithEmptyCredentialsConfig() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithWrongPassword() returns error? {
@@ -122,7 +122,7 @@ public function testSecureConnectWithWrongPassword() returns error? {
         }
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
+    Client|Error incorrectSftpClientEp = new (incorrectSftpConfig);
     if incorrectSftpClientEp is Error {
         test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
@@ -131,7 +131,7 @@ public function testSecureConnectWithWrongPassword() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithWrongUsername() returns error? {
@@ -148,7 +148,7 @@ public function testSecureConnectWithWrongUsername() returns error? {
         }
     };
 
-    Client|Error sftpClientEp = new(sftpConfig);
+    Client|Error sftpClientEp = new (sftpConfig);
     if sftpClientEp is Error {
         test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with wrong username. " + sftpClientEp.message());
@@ -157,7 +157,7 @@ public function testSecureConnectWithWrongUsername() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithEmptyUsername() returns error? {
@@ -174,7 +174,7 @@ public function testSecureConnectWithEmptyUsername() returns error? {
         }
     };
 
-    Client|Error sftpClientEp = new(sftpConfig);
+    Client|Error sftpClientEp = new (sftpConfig);
     if sftpClientEp is Error {
         test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with empty username. " + sftpClientEp.message());
@@ -183,7 +183,7 @@ public function testSecureConnectWithEmptyUsername() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecureConnectWithEmptyPassword() returns error? {
@@ -200,7 +200,7 @@ public function testSecureConnectWithEmptyPassword() returns error? {
         }
     };
 
-    Client|Error sftpClientEp = new(sftpConfig);
+    Client|Error sftpClientEp = new (sftpConfig);
     if sftpClientEp is Error {
         test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with empty password. " + sftpClientEp.message());
@@ -209,7 +209,7 @@ public function testSecureConnectWithEmptyPassword() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecureConnectWithWrongPassword]
 }
 public function testSecureConnectWithWrongKey() returns error? {
@@ -226,7 +226,7 @@ public function testSecureConnectWithWrongKey() returns error? {
         }
     };
 
-    Client|Error incorrectSftpClientEp = new(incorrectSftpConfig);
+    Client|Error incorrectSftpClientEp = new (incorrectSftpConfig);
     if incorrectSftpClientEp is Error {
         test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with an invalid key. " + incorrectSftpClientEp.message());
@@ -235,7 +235,7 @@ public function testSecureConnectWithWrongKey() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecureConnectWithWrongPassword]
 }
 public function testSecureConnectWithInvalidKeyPath() returns error? {
@@ -251,7 +251,7 @@ public function testSecureConnectWithInvalidKeyPath() returns error? {
             }
         }
     };
-    Client|Error sftpClientEp = new(sftpConfig);
+    Client|Error sftpClientEp = new (sftpConfig);
     if sftpClientEp is Error {
         test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
             msg = "Unexpected error during the SFTP client initialization with an invalid key path. " + sftpClientEp.message());
@@ -260,7 +260,7 @@ public function testSecureConnectWithInvalidKeyPath() returns error? {
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecureGetFileContent]
 }
 public function testSecurePutFileContent() returns error? {
@@ -273,7 +273,7 @@ public function testSecurePutFileContent() returns error? {
     log:printInfo("Executed secure `put` operation");
 
     stream<byte[] & readonly, io:Error?>|Error str = sftpClientEp->get("/tempFile1.txt");
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "Put content"),
             msg = "Found unexpected content from secure `get` operation after `put` operation");
         io:Error? closeResult = str.close();
@@ -281,11 +281,11 @@ public function testSecurePutFileContent() returns error? {
             test:assertFail(msg = "Error while closing stream in secure `get` operation." + closeResult.message());
         }
     } else {
-       test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testSecurePutFileContent]
 }
 public function testSecureDeleteFileContent() returns error? {
@@ -296,7 +296,7 @@ public function testSecureDeleteFileContent() returns error? {
     log:printInfo("Executed secure `delete` operation");
 
     stream<byte[] & readonly, io:Error?>|Error str = sftpClientEp->get("/tempFile1.txt");
-    if (str is stream<byte[] & readonly, io:Error?>) {
+    if str is stream<byte[] & readonly, io:Error?> {
         test:assertFalse(check matchStreamContent(str, "Put content"),
             msg = "File was not deleted with secure `delete` operation");
         io:Error? closeResult = str.close();
