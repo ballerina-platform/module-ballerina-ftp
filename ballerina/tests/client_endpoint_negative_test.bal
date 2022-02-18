@@ -190,9 +190,7 @@ public function testRemoveDirectoryWithWrongUrl() {
     }
 }
 
-@test:Config{
-    enable: false
-}
+@test:Config{}
 public function testSFTPConnectionToFTPServer() returns error? {
     ClientConfiguration serverConfig = {
         protocol: SFTP,
