@@ -1,0 +1,6 @@
+[plugin]
+id = "ftp-compiler-plugin"
+class = "io.ballerina.stdlib.ftp.plugin.FTPCompilerPlugin"
+
+[[dependency]]
+path = "../compiler-plugin/build/libs/ftp-compiler-plugin-@project.version@.jar"
