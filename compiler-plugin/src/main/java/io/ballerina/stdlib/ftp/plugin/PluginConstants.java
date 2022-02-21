@@ -22,9 +22,18 @@ package io.ballerina.stdlib.ftp.plugin;
  * FTP compiler plugin constants.
  */
 public class PluginConstants {
+
+    // compiler plugin constants
+    public static final String PACKAGE_PREFIX = "ftp";
+    public static final String ON_FILE_CHANGE_FUNC = "onFileChange";
+    public static final String PACKAGE_ORG = "ballerina";
+
     enum CompilationErrors {
-        NO_ON_CONSUMER_RECORD("Service must have remote method onConsumerRecord.",
-                "KAFKA_101");
+        INVALID_MULTIPLE_LISTENERS("Multiple listener attachments. Only one ftp:Listener is allowed.",
+                "FTP_101"),
+        INVALID_ANNOTATION_NUMBER("No annotations are allowed for ftp services.", "FTP_102"),
+        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_103"),
+        INVALID_FUNCTION("Invalid remote method.", "FTP_104");
         private final String error;
         private final String errorCode;
 
