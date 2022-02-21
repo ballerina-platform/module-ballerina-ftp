@@ -82,7 +82,6 @@ public class FTPServiceValidator {
         }
 
         validateAnnotation(context);
-        FunctionDefinitionNode onFileChange = null;
 
         for (Node node : memberNodes) {
             if (node.kind() == SyntaxKind.OBJECT_METHOD_DEFINITION) {
@@ -90,11 +89,11 @@ public class FTPServiceValidator {
                 MethodSymbol methodSymbol = PluginUtils.getMethodSymbol(context, functionDefinitionNode);
                 Optional<String> functionName = methodSymbol.getName();
                 if (functionName.isPresent()) {
-                    if (functionName.get().equals(ON_FILE_CHANGE_FUNC)) {
-                        onFileChange = functionDefinitionNode;
-                    } else if (isRemoteFunction(context, functionDefinitionNode)) {
+                    if (isRemoteFunction(context, functionDefinitionNode)) {
                         context.reportDiagnostic(getDiagnostic(INVALID_FUNCTION,
                                 DiagnosticSeverity.ERROR, functionDefinitionNode.location()));
+                    } else if (functionName.get().equals(ON_FILE_CHANGE_FUNC)) {
+                        new FTPFunctionValidator(context, functionDefinitionNode).validate();
                     }
                 }
             } else if (node.kind() == SyntaxKind.RESOURCE_ACCESSOR_DEFINITION) {
@@ -102,7 +101,6 @@ public class FTPServiceValidator {
                         DiagnosticSeverity.ERROR, node.location()));
             }
         }
-        new FTPFunctionValidator(context, onFileChange).validate();
     }
 
     private void validateAnnotation(SyntaxNodeAnalysisContext context) {

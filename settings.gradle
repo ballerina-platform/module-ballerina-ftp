@@ -33,5 +33,3 @@ gradleEnterprise {
         termsOfServiceAgree = 'yes'
     }
 }
-include 'compiler-plugin-tests'
-

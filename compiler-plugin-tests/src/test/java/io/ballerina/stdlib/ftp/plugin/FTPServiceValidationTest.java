@@ -22,7 +22,6 @@ import io.ballerina.projects.DiagnosticResult;
 import io.ballerina.projects.Package;
 import io.ballerina.projects.PackageCompilation;
 import io.ballerina.projects.directory.BuildProject;
-import io.ballerina.tools.diagnostics.Diagnostic;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -45,21 +44,21 @@ public class FTPServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
-//    @Test
-//    public void testValidService2() {
-//        Package currentPackage = loadPackage("valid_service_2");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 0);
-//    }
-//
-//    @Test
-//    public void testValidService3() {
-//        Package currentPackage = loadPackage("valid_service_3");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 0);
-//    }
+    @Test
+    public void testValidService2() {
+        Package currentPackage = loadPackage("valid_service_2");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
+    @Test
+    public void testValidService3() {
+        Package currentPackage = loadPackage("valid_service_3");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
 //
 //    @Test
 //    public void testValidService4() {
@@ -236,9 +235,9 @@ public class FTPServiceValidationTest {
         return project.currentPackage();
     }
 
-    private void assertDiagnostic(Diagnostic diagnostic, PluginConstants.CompilationErrors error) {
-        Assert.assertEquals(diagnostic.diagnosticInfo().code(), error.getErrorCode());
-        Assert.assertEquals(diagnostic.diagnosticInfo().messageFormat(),
-                error.getError());
-    }
+//    private void assertDiagnostic(Diagnostic diagnostic, PluginConstants.CompilationErrors error) {
+//        Assert.assertEquals(diagnostic.diagnosticInfo().code(), error.getErrorCode());
+//        Assert.assertEquals(diagnostic.diagnosticInfo().messageFormat(),
+//                error.getError());
+//    }
 }

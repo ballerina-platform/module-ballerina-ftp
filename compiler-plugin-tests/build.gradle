@@ -81,7 +81,9 @@ compileJava {
 
 test {
     systemProperty "ballerina.offline.flag", "true"
-    useTestNG()
+    useTestNG() {
+        suites 'src/test/resources/testng.xml'
+    }
 }
 
 test.dependsOn ":ftp-ballerina:build"

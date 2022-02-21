@@ -66,12 +66,6 @@ public class PluginUtils {
         return methodSymbol.qualifiers().contains(Qualifier.REMOTE);
     }
 
-    public static boolean isResourceFunction(SyntaxNodeAnalysisContext context,
-                                           FunctionDefinitionNode functionDefinitionNode) {
-        MethodSymbol methodSymbol = getMethodSymbol(context, functionDefinitionNode);
-        return methodSymbol.qualifiers().contains(Qualifier.RESOURCE);
-    }
-
     public static boolean isFunction(SyntaxNodeAnalysisContext context,
                                              FunctionDefinitionNode functionDefinitionNode) {
         MethodSymbol methodSymbol = getMethodSymbol(context, functionDefinitionNode);
