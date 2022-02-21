@@ -10,3 +10,4 @@ ignore:
   - "test-utils/"
   - "examples"
   - "load-tests"
+  - "compiler-plugin-tests"
