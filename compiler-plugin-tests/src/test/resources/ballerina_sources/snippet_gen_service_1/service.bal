@@ -16,28 +16,21 @@
 
 import ballerina/ftp;
 
-ftp:AuthConfiguration authConfig = {
-    credentials: {username: "wso2", password: "wso2123"},
-    privateKey: {
-        path: "resources/sftp.private.key",
-        password: "changeit"
-    }
-};
-
-listener ftp:Listener secureRemoteServer = check new({
+listener ftp:Listener secureRemoteServer = check new ({
     protocol: ftp:SFTP,
     host: "localhost",
-    auth: authConfig,
     port: 21213,
+    auth: {
+        credentials: {username: "wso2", password: "wso2123"},
+        privateKey: {
+            path: "resources/sftp.private.key",
+            password: "changeit"
+        }
+    },
     pollingInterval: 2,
-    path: "/upload/",
+    path: "/download/",
     fileNamePattern: "(.*).csv"
 });
 
 service "Test" on secureRemoteServer {
-    private final string var1 = "FTP Service";
-    private final int var2 = 54;
-
-    remote function onFileChange(ftp:WatchEvent & readonly event) {
-    }
 }

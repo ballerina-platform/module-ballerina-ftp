@@ -22,6 +22,7 @@ import io.ballerina.projects.DiagnosticResult;
 import io.ballerina.projects.Package;
 import io.ballerina.projects.PackageCompilation;
 import io.ballerina.projects.directory.BuildProject;
+import io.ballerina.tools.diagnostics.Diagnostic;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -30,9 +31,10 @@ import java.nio.file.Path;
 import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.BALLERINA_SOURCES;
 import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.RESOURCE_DIRECTORY;
 import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.getEnvironmentBuilder;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors;
 
 /**
- * Tests for Kafka package compiler plugin.
+ * Tests for FTP package compiler plugin.
  */
 public class FTPServiceValidationTest {
 
@@ -59,175 +61,160 @@ public class FTPServiceValidationTest {
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
-//
-//    @Test
-//    public void testValidService4() {
-//        Package currentPackage = loadPackage("valid_service_4");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 0);
-//    }
-//
-//    @Test
-//    public void testValidService5() {
-//        Package currentPackage = loadPackage("valid_service_5");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 0);
-//    }
-//
-//    @Test
-//    public void testValidService6() {
-//        Package currentPackage = loadPackage("valid_service_6");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 0);
-//    }
-//
-//    @Test
-//    public void testInvalidService1() {
-//        Package currentPackage = loadPackage("invalid_service_1");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 1);
-//        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-//        assertDiagnostic(diagnostic, CompilationErrors.NO_ON_CONSUMER_RECORD);
-//    }
-//
-//    @Test
-//    public void testInvalidService2() {
-//        Package currentPackage = loadPackage("invalid_service_2");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 1);
-//        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-//        assertDiagnostic(diagnostic, CompilationErrors.INVALID_REMOTE_FUNCTION);
-//    }
-//
-//    @Test
-//    public void testInvalidService3() {
-//        Package currentPackage = loadPackage("invalid_service_3");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 1);
-//        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-//        assertDiagnostic(diagnostic, CompilationErrors.FUNCTION_SHOULD_BE_REMOTE);
-//    }
-//
-//    @Test
-//    public void testInvalidService4() {
-//        Package currentPackage = loadPackage("invalid_service_4");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 2);
-//        Object[] diagnostics = diagnosticResult.errors().toArray();
-//        for (Object obj : diagnostics) {
-//            Diagnostic diagnostic = (Diagnostic) obj;
-//            assertDiagnostic(diagnostic, CompilationErrors.ONLY_PARAMS_ALLOWED);
-//        }
-//    }
-//
-//    @Test
-//    public void testInvalidService5() {
-//        Package currentPackage = loadPackage("invalid_service_5");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 2);
-//        Object[] diagnostics = diagnosticResult.errors().toArray();
-//        for (Object obj : diagnostics) {
-//            Diagnostic diagnostic = (Diagnostic) obj;
-//            assertDiagnostic(diagnostic, CompilationErrors.INVALID_FUNCTION_PARAM_CALLER_OR_RECORDS);
-//        }
-//    }
-//
-//    @Test
-//    public void testInvalidService6() {
-//        Package currentPackage = loadPackage("invalid_service_6");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 1);
-//        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-//        assertDiagnostic(diagnostic, CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL);
-//    }
-//
-//    @Test
-//    public void testInvalidService7() {
-//        Package currentPackage = loadPackage("invalid_service_7");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 1);
-//        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-//        assertDiagnostic(diagnostic, CompilationErrors.MUST_HAVE_CALLER_AND_RECORDS);
-//    }
-//
-//    @Test
-//    public void testInvalidService8() {
-//        Package currentPackage = loadPackage("invalid_service_8");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 3);
-//        Object[] diagnostics = diagnosticResult.errors().toArray();
-//        for (Object obj : diagnostics) {
-//            Diagnostic diagnostic = (Diagnostic) obj;
-//            assertDiagnostic(diagnostic, CompilationErrors.INVALID_FUNCTION_PARAM_CALLER_OR_RECORDS);
-//        }
-//    }
-//
-//    @Test
-//    public void testInvalidService9() {
-//        Package currentPackage = loadPackage("invalid_service_9");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 1);
-//        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-//        assertDiagnostic(diagnostic, CompilationErrors.INVALID_MULTIPLE_LISTENERS);
-//    }
-//
-//    @Test
-//    public void testInvalidService10() {
-//        Package currentPackage = loadPackage("invalid_service_10");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 1);
-//        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-//        assertDiagnostic(diagnostic, CompilationErrors.INVALID_FUNCTION);
-//    }
-//
-//    @Test
-//    public void testInvalidService11() {
-//        Package currentPackage = loadPackage("invalid_service_11");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 1);
-//        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-//        assertDiagnostic(diagnostic, CompilationErrors.MUST_HAVE_CALLER_AND_RECORDS);
-//    }
-//
-//    @Test
-//    public void testInvalidService12() {
-//        Package currentPackage = loadPackage("invalid_service_12");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 2);
-//        Object[] diagnostics = diagnosticResult.errors().toArray();
-//        for (Object obj : diagnostics) {
-//            Diagnostic diagnostic = (Diagnostic) obj;
-//            assertDiagnostic(diagnostic, CompilationErrors.INVALID_FUNCTION_PARAM_CALLER_OR_RECORDS);
-//        }
-//    }
-//
-//    @Test
-//    public void testInvalidService13() {
-//        Package currentPackage = loadPackage("invalid_service_13");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-//        Assert.assertEquals(diagnosticResult.errors().size(), 5);
-//        Object[] diagnostics = diagnosticResult.errors().toArray();
-//        for (Object obj : diagnostics) {
-//            Diagnostic diagnostic = (Diagnostic) obj;
-//            assertDiagnostic(diagnostic, CompilationErrors.INVALID_FUNCTION_PARAM_RECORDS);
-//        }
-//    }
+
+    @Test
+    public void testValidService4() {
+        Package currentPackage = loadPackage("valid_service_4");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
+    @Test
+    public void testValidService5() {
+        Package currentPackage = loadPackage("valid_service_5");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
+    @Test
+    public void testInvalidService1() {
+        Package currentPackage = loadPackage("invalid_service_1");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, CompilationErrors.NO_ON_FILE_CHANGE);
+    }
+
+    @Test
+    public void testInvalidService2() {
+        Package currentPackage = loadPackage("invalid_service_2");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, CompilationErrors.INVALID_REMOTE_FUNCTION);
+    }
+
+    @Test
+    public void testInvalidService3() {
+        Package currentPackage = loadPackage("invalid_service_3");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, CompilationErrors.METHOD_MUST_BE_REMOTE);
+    }
+
+    @Test
+    public void testInvalidService4() {
+        Package currentPackage = loadPackage("invalid_service_4");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+
+        Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
+        assertDiagnostic(diagnostic1, CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED);
+        Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
+        assertDiagnostic(diagnostic2, CompilationErrors.NO_ON_FILE_CHANGE);
+    }
+
+    @Test
+    public void testInvalidService5() {
+        Package currentPackage = loadPackage("invalid_service_5");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED);
+    }
+
+    @Test
+    public void testInvalidService6() {
+        Package currentPackage = loadPackage("invalid_service_6");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 3);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+
+        Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
+        assertDiagnostic(diagnostic1, CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED);
+        Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
+        assertDiagnostic(diagnostic2, CompilationErrors.INVALID_REMOTE_FUNCTION);
+        Diagnostic diagnostic3 = (Diagnostic) diagnostics[2];
+        assertDiagnostic(diagnostic3, CompilationErrors.NO_ON_FILE_CHANGE);
+    }
+
+    @Test
+    public void testInvalidService7() {
+        Package currentPackage = loadPackage("invalid_service_7");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 3);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+
+        Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
+        assertDiagnostic(diagnostic1, CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED);
+        Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
+        assertDiagnostic(diagnostic2, CompilationErrors.INVALID_REMOTE_FUNCTION);
+        Diagnostic diagnostic3 = (Diagnostic) diagnostics[2];
+        assertDiagnostic(diagnostic3, CompilationErrors.METHOD_MUST_BE_REMOTE);
+    }
+
+    @Test
+    public void testInvalidService8() {
+        Package currentPackage = loadPackage("invalid_service_8");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 3);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        for (Object obj : diagnostics) {
+            Diagnostic diagnostic = (Diagnostic) obj;
+            assertDiagnostic(diagnostic, CompilationErrors.MUST_HAVE_WATCHEVENT);
+        }
+    }
+
+    @Test
+    public void testInvalidService9() {
+        Package currentPackage = loadPackage("invalid_service_9");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        for (Object obj : diagnostics) {
+            Diagnostic diagnostic = (Diagnostic) obj;
+            assertDiagnostic(diagnostic, CompilationErrors.ONLY_PARAMS_ALLOWED);
+        }
+    }
+
+    @Test
+    public void testInvalidService10() {
+        Package currentPackage = loadPackage("invalid_service_10");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        for (Object obj : diagnostics) {
+            Diagnostic diagnostic = (Diagnostic) obj;
+            assertDiagnostic(diagnostic, CompilationErrors.INVALID_PARAMETER);
+        }
+    }
+
+    @Test
+    public void testInvalidService11() {
+        Package currentPackage = loadPackage("invalid_service_11");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 3);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        for (Object obj : diagnostics) {
+            Diagnostic diagnostic = (Diagnostic) obj;
+            assertDiagnostic(diagnostic, CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL);
+        }
+    }
 
     private Package loadPackage(String path) {
         Path projectDirPath = RESOURCE_DIRECTORY.resolve(BALLERINA_SOURCES).resolve(path);
@@ -235,9 +222,8 @@ public class FTPServiceValidationTest {
         return project.currentPackage();
     }
 
-//    private void assertDiagnostic(Diagnostic diagnostic, PluginConstants.CompilationErrors error) {
-//        Assert.assertEquals(diagnostic.diagnosticInfo().code(), error.getErrorCode());
-//        Assert.assertEquals(diagnostic.diagnosticInfo().messageFormat(),
-//                error.getError());
-//    }
+    private void assertDiagnostic(Diagnostic diagnostic, PluginConstants.CompilationErrors error) {
+        Assert.assertEquals(diagnostic.diagnosticInfo().code(), error.getErrorCode());
+        Assert.assertEquals(diagnostic.diagnosticInfo().messageFormat(), error.getError());
+    }
 }

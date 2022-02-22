@@ -24,7 +24,7 @@ ftp:AuthConfiguration authConfig = {
     }
 };
 
-listener ftp:Listener secureRemoteServer = check new({
+listener ftp:Listener secureRemoteServer1 = check new({
     protocol: ftp:SFTP,
     host: "localhost",
     auth: authConfig,
@@ -34,7 +34,41 @@ listener ftp:Listener secureRemoteServer = check new({
     fileNamePattern: "(.*).csv"
 });
 
-service "Test" on secureRemoteServer {
-    function onFileChange(ftp:WatchEvent event) {
+listener ftp:Listener secureRemoteServer2 = check new ({
+    protocol: ftp:SFTP,
+    host: "localhost",
+    port: 21213,
+    auth: {
+        credentials: {username: "wso2", password: "wso2123"},
+        privateKey: {
+            path: "resources/sftp.private.key",
+            password: "changeit"
+        }
+    },
+    pollingInterval: 2,
+    path: "/download/",
+    fileNamePattern: "(.*).csv"
+});
+
+service "Test1" on new ftp:Listener({
+    protocol: ftp:SFTP,
+    host: "localhost",
+    auth: authConfig,
+    port: 21213,
+    pollingInterval: 2,
+    path: "/upload/",
+    fileNamePattern: "(.*).csv"
+}), secureRemoteServer1 {
+    remote function onFileChange(ftp:WatchEvent event) {
+    }
+}
+
+service "Test2" on secureRemoteServer1, secureRemoteServer2 {
+    remote function onFileChange(ftp:WatchEvent event) {
+    }
+}
+
+service "Test3" on secureRemoteServer1 {
+    remote function onFileChange(ftp:WatchEvent event) {
     }
 }

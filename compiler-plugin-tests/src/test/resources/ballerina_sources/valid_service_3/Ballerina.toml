@@ -1,4 +1,4 @@
 [package]
-org = "kafka_test"
+org = "ftp_test"
 name = "valid_service_3"
 version = "0.1.0"

@@ -22,6 +22,7 @@
     <test name="UnitTests">
         <classes>
             <class name="io.ballerina.stdlib.ftp.plugin.FTPServiceValidationTest"/>
+            <class name="io.ballerina.stdlib.ftp.plugin.CodeSnippetGenerationCodeActionTest"/>
         </classes>
     </test>
 </suite>
