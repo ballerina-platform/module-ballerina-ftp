@@ -21,8 +21,10 @@ package io.ballerina.stdlib.ftp.plugin;
 import io.ballerina.compiler.api.SemanticModel;
 import io.ballerina.compiler.api.symbols.MethodSymbol;
 import io.ballerina.compiler.api.symbols.ModuleSymbol;
+import io.ballerina.compiler.api.symbols.ParameterSymbol;
 import io.ballerina.compiler.api.symbols.Symbol;
 import io.ballerina.compiler.api.symbols.TypeDescKind;
+import io.ballerina.compiler.api.symbols.TypeReferenceTypeSymbol;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.api.symbols.UnionTypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
@@ -39,10 +41,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_PARAMETER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.METHOD_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MUST_HAVE_WATCHEVENT;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_ON_FILE_CHANGE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ONLY_PARAMS_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getMethodSymbol;
+import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isRemoteFunction;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.validateModuleId;
 
 /**
@@ -65,6 +70,10 @@ public class FTPFunctionValidator {
             context.reportDiagnostic(PluginUtils.getDiagnostic(NO_ON_FILE_CHANGE,
                     DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
         } else {
+            if (!isRemoteFunction(context, onFileChange)) {
+                context.reportDiagnostic(PluginUtils.getDiagnostic(METHOD_MUST_BE_REMOTE,
+                        DiagnosticSeverity.ERROR, onFileChange.location()));
+            }
             SeparatedNodeList<ParameterNode> parameters = onFileChange.functionSignature().parameters();
             validateFunctionParameters(parameters, onFileChange);
             validateReturnTypeErrorOrNil(onFileChange);
@@ -77,7 +86,9 @@ public class FTPFunctionValidator {
             ParameterNode paramNode = parameters.get(0);
             SyntaxKind paramSyntaxKind = ((RequiredParameterNode) paramNode).typeName().kind();
             if (paramSyntaxKind.equals(SyntaxKind.QUALIFIED_NAME_REFERENCE)) {
-                validateWatchEventParam(paramNode, MUST_HAVE_WATCHEVENT);
+                validateWatchEventParam(paramNode);
+            } else if (paramSyntaxKind.equals(SyntaxKind.INTERSECTION_TYPE_DESC)) {
+                validateIntersectionParam(paramNode);
             } else {
                 context.reportDiagnostic(PluginUtils.getDiagnostic(
                         MUST_HAVE_WATCHEVENT,
@@ -92,7 +103,33 @@ public class FTPFunctionValidator {
         }
     }
 
-    private void validateWatchEventParam(ParameterNode parameterNode, PluginConstants.CompilationErrors errorToThrow) {
+    private void validateIntersectionParam(ParameterNode parameterNode) {
+        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
+        SemanticModel semanticModel = context.semanticModel();
+        Optional<Symbol> symbol = semanticModel.symbol(requiredParameterNode);
+        if (symbol.isPresent()) {
+            ParameterSymbol parameterSymbol = (ParameterSymbol) symbol.get();
+            if (parameterSymbol.typeDescriptor() instanceof TypeReferenceTypeSymbol) {
+                TypeReferenceTypeSymbol typeReferenceTypeSymbol =
+                        (TypeReferenceTypeSymbol) parameterSymbol.typeDescriptor();
+                String paramName = typeReferenceTypeSymbol.getName().isPresent() ?
+                        typeReferenceTypeSymbol.getName().get() : "";
+                if (!validateModuleId(typeReferenceTypeSymbol.getModule().get()) ||
+                        !paramName.equals(PluginConstants.WATCHEVENT)) {
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
+                            DiagnosticSeverity.ERROR, requiredParameterNode.location()));
+                }
+            } else {
+                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
+                        DiagnosticSeverity.ERROR, requiredParameterNode.location()));
+            }
+        } else {
+            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
+                    DiagnosticSeverity.ERROR, requiredParameterNode.location()));
+        }
+    }
+
+    private void validateWatchEventParam(ParameterNode parameterNode) {
         RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
         Node parameterTypeNode = requiredParameterNode.typeName();
         SemanticModel semanticModel = context.semanticModel();
@@ -105,17 +142,17 @@ public class FTPFunctionValidator {
                 if (!validateModuleId(moduleSymbol.get()) ||
                         !paramName.equals(PluginConstants.WATCHEVENT)) {
                     context.reportDiagnostic(PluginUtils.getDiagnostic(
-                            errorToThrow,
+                            MUST_HAVE_WATCHEVENT,
                             DiagnosticSeverity.ERROR, requiredParameterNode.location()));
                 }
             } else {
                 context.reportDiagnostic(PluginUtils.getDiagnostic(
-                        errorToThrow,
+                        MUST_HAVE_WATCHEVENT,
                         DiagnosticSeverity.ERROR, requiredParameterNode.location()));
             }
         } else {
             context.reportDiagnostic(PluginUtils.getDiagnostic(
-                    errorToThrow,
+                    MUST_HAVE_WATCHEVENT,
                     DiagnosticSeverity.ERROR, requiredParameterNode.location()));
         }
     }
@@ -135,19 +172,20 @@ public class FTPFunctionValidator {
                                         !validateModuleId(returnType.getModule().get())) {
                                     context.reportDiagnostic(PluginUtils.getDiagnostic(
                                             PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                            DiagnosticSeverity.ERROR, functionDefinitionNode.location()));
+                                            DiagnosticSeverity.ERROR,
+                                            functionDefinitionNode.functionSignature().location()));
                                 }
                             } else if (returnType.typeKind() != TypeDescKind.ERROR) {
                                 context.reportDiagnostic(PluginUtils.getDiagnostic(
-                                        PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                        DiagnosticSeverity.ERROR, functionDefinitionNode.location()));
+                                    PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL,
+                                    DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
                             }
                         }
                     }
                 } else if (returnTypeDesc.get().typeKind() != TypeDescKind.NIL) {
                     context.reportDiagnostic(PluginUtils.getDiagnostic(
                             PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                            DiagnosticSeverity.ERROR, functionDefinitionNode.location()));
+                            DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
                 }
             }
         }

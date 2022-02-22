@@ -29,7 +29,6 @@ public class FTPCompilerPlugin extends CompilerPlugin {
     @Override
     public void init(CompilerPluginContext compilerPluginContext) {
         compilerPluginContext.addCodeAnalyzer(new FTPCodeAnalyzer());
-//        compilerPluginContext.addCodeAction(new KafkaCodeTemplateWithCallerParameter());
-//        compilerPluginContext.addCodeAction(new KafkaCodeTemplateWithoutCallerParameter());
+        compilerPluginContext.addCodeAction(new FTPCodeTemplate());
     }
 }

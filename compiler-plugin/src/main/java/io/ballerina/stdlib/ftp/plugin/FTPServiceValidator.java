@@ -37,10 +37,10 @@ import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 import java.util.List;
 import java.util.Optional;
 
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_FUNCTION;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_REMOTE_FUNCTION;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CHANGE_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getDiagnostic;
-import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isFunction;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isRemoteFunction;
 
 /**
@@ -52,27 +52,11 @@ public class FTPServiceValidator {
         ServiceDeclarationNode serviceDeclarationNode = (ServiceDeclarationNode) context.node();
         NodeList<Node> memberNodes = serviceDeclarationNode.members();
 
-//        boolean hasRemoteFunction = serviceDeclarationNode.members().stream().anyMatch(child ->
-//                child.kind() == SyntaxKind.OBJECT_METHOD_DEFINITION &&
-//                        isRemoteFunction(context, (FunctionDefinitionNode) child));
-//
-//        boolean hasResourceFunction = serviceDeclarationNode.members().stream().anyMatch(child ->
-//                child.kind() == SyntaxKind.OBJECT_METHOD_DEFINITION &&
-//                        isResourceFunction(context, (FunctionDefinitionNode) child));
-
-        boolean hasFunction = serviceDeclarationNode.members().stream().anyMatch(child ->
+        boolean hasRemoteFunction = serviceDeclarationNode.members().stream().anyMatch(child ->
                 child.kind() == SyntaxKind.OBJECT_METHOD_DEFINITION &&
-                        isFunction(context, (FunctionDefinitionNode) child));
+                        isRemoteFunction(context, (FunctionDefinitionNode) child));
 
-//        if (hasRemoteFunction) {
-//
-//        }
-//
-//        if (hasResourceFunction) {
-//
-//        }
-
-        if (serviceDeclarationNode.members().isEmpty() || !hasFunction) {
+        if (serviceDeclarationNode.members().isEmpty() || !hasRemoteFunction) {
             DiagnosticInfo diagnosticInfo = new DiagnosticInfo(
                     PluginConstants.CompilationErrors.TEMPLATE_CODE_GENERATION_HINT.getErrorCode(),
                     PluginConstants.CompilationErrors.TEMPLATE_CODE_GENERATION_HINT.getError(),
@@ -82,6 +66,7 @@ public class FTPServiceValidator {
         }
 
         validateAnnotation(context);
+        FunctionDefinitionNode onFileChange = null;
 
         for (Node node : memberNodes) {
             if (node.kind() == SyntaxKind.OBJECT_METHOD_DEFINITION) {
@@ -89,18 +74,19 @@ public class FTPServiceValidator {
                 MethodSymbol methodSymbol = PluginUtils.getMethodSymbol(context, functionDefinitionNode);
                 Optional<String> functionName = methodSymbol.getName();
                 if (functionName.isPresent()) {
-                    if (isRemoteFunction(context, functionDefinitionNode)) {
-                        context.reportDiagnostic(getDiagnostic(INVALID_FUNCTION,
+                    if (functionName.get().equals(ON_FILE_CHANGE_FUNC)) {
+                        onFileChange = functionDefinitionNode;
+                    } else if (isRemoteFunction(context, functionDefinitionNode)) {
+                        context.reportDiagnostic(getDiagnostic(INVALID_REMOTE_FUNCTION,
                                 DiagnosticSeverity.ERROR, functionDefinitionNode.location()));
-                    } else if (functionName.get().equals(ON_FILE_CHANGE_FUNC)) {
-                        new FTPFunctionValidator(context, functionDefinitionNode).validate();
                     }
                 }
             } else if (node.kind() == SyntaxKind.RESOURCE_ACCESSOR_DEFINITION) {
-                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_FUNCTION,
+                context.reportDiagnostic(PluginUtils.getDiagnostic(RESOURCE_FUNCTION_NOT_ALLOWED,
                         DiagnosticSeverity.ERROR, node.location()));
             }
         }
+        new FTPFunctionValidator(context, onFileChange).validate();
     }
 
     private void validateAnnotation(SyntaxNodeAnalysisContext context) {
