@@ -55,7 +55,7 @@ service "Covid19UpdateDownloader" on secureRemoteServer {
         log:printInfo("Initialized the process job.");
     }
 
-    function onFileChange(ftp:WatchEvent event) {
+    remote function onFileChange(ftp:WatchEvent event) {
         foreach ftp:FileInfo addedFile in event.addedFiles {
             string fileName = addedFile.name.clone();
             log:printInfo("Added file: " + fileName);
