@@ -21,16 +21,12 @@ package io.ballerina.stdlib.ftp.plugin;
 import io.ballerina.projects.DiagnosticResult;
 import io.ballerina.projects.Package;
 import io.ballerina.projects.PackageCompilation;
-import io.ballerina.projects.directory.BuildProject;
 import io.ballerina.tools.diagnostics.Diagnostic;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.nio.file.Path;
-
-import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.BALLERINA_SOURCES;
-import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.RESOURCE_DIRECTORY;
-import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.getEnvironmentBuilder;
+import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.assertDiagnostic;
+import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.loadPackage;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors;
 
 /**
@@ -214,16 +210,5 @@ public class FTPServiceValidationTest {
             Diagnostic diagnostic = (Diagnostic) obj;
             assertDiagnostic(diagnostic, CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL);
         }
-    }
-
-    private Package loadPackage(String path) {
-        Path projectDirPath = RESOURCE_DIRECTORY.resolve(BALLERINA_SOURCES).resolve(path);
-        BuildProject project = BuildProject.load(getEnvironmentBuilder(), projectDirPath);
-        return project.currentPackage();
-    }
-
-    private void assertDiagnostic(Diagnostic diagnostic, PluginConstants.CompilationErrors error) {
-        Assert.assertEquals(diagnostic.diagnosticInfo().code(), error.getErrorCode());
-        Assert.assertEquals(diagnostic.diagnosticInfo().messageFormat(), error.getError());
     }
 }

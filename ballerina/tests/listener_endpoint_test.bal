@@ -159,7 +159,7 @@ public function testFtpServerDeregistration() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    Service detachService = service object { function onFileChange(WatchEvent event) {} };
+    Service detachService = service object { remote function onFileChange(WatchEvent event) {} };
     error? result1 = detachFtpServer.attach(detachService, "remote-server");
     if result1 is error {
         test:assertFail("Failed to attach to the FTP server: " + result1.message());

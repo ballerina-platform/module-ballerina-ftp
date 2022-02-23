@@ -18,11 +18,15 @@
 
 package io.ballerina.stdlib.ftp.plugin;
 
+import io.ballerina.projects.Package;
 import io.ballerina.projects.ProjectEnvironmentBuilder;
+import io.ballerina.projects.directory.BuildProject;
 import io.ballerina.projects.environment.Environment;
 import io.ballerina.projects.environment.EnvironmentBuilder;
+import io.ballerina.tools.diagnostics.Diagnostic;
 import io.ballerina.tools.text.LinePosition;
 import io.ballerina.tools.text.LineRange;
+import org.testng.Assert;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,5 +59,16 @@ public class CompilerPluginTestUtils {
                 pos.line() == eLine && pos.offset() <= eCol ||
                 pos.line() == sLine && pos.offset() >= sCol
         ));
+    }
+
+    public static Package loadPackage(String path) {
+        Path projectDirPath = RESOURCE_DIRECTORY.resolve(BALLERINA_SOURCES).resolve(path);
+        BuildProject project = BuildProject.load(getEnvironmentBuilder(), projectDirPath);
+        return project.currentPackage();
+    }
+
+    public static void assertDiagnostic(Diagnostic diagnostic, PluginConstants.CompilationErrors error) {
+        Assert.assertEquals(diagnostic.diagnosticInfo().code(), error.getErrorCode());
+        Assert.assertEquals(diagnostic.diagnosticInfo().messageFormat(), error.getError());
     }
 }
