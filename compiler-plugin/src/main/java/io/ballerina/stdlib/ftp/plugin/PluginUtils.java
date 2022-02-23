@@ -40,8 +40,6 @@ import io.ballerina.tools.text.TextRange;
 
 import java.util.Optional;
 
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CHANGE_FUNC;
-
 /**
  * Util class for the compiler plugin.
  */
@@ -70,16 +68,6 @@ public class PluginUtils {
                                            FunctionDefinitionNode functionDefinitionNode) {
         MethodSymbol methodSymbol = getMethodSymbol(context, functionDefinitionNode);
         return methodSymbol.qualifiers().contains(Qualifier.REMOTE);
-    }
-
-    public static boolean isFunction(SyntaxNodeAnalysisContext context,
-                                             FunctionDefinitionNode functionDefinitionNode) {
-        MethodSymbol methodSymbol = getMethodSymbol(context, functionDefinitionNode);
-        Optional<String> functionName = methodSymbol.getName();
-        return !methodSymbol.qualifiers().contains(Qualifier.RESOURCE) &&
-                !methodSymbol.qualifiers().contains(Qualifier.REMOTE) &&
-                functionName.isPresent() &&
-                functionName.get().equals(ON_FILE_CHANGE_FUNC);
     }
 
     public static MethodSymbol getMethodSymbol(SyntaxNodeAnalysisContext context,
