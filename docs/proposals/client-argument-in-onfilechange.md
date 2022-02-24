@@ -24,6 +24,30 @@ However, if the `ftp:Client` is passed as an argument to the `onFileChange` meth
 task needed. This would reduce lines of code, duplication as well as will ease the life of a developer.
 
 ## Description
+Since the `ftp:ClientConfiguration` contains a subset of `ftp:ListenerConfiguration`, we can easily create an `ftp:Client`
+when the `ftp:Listener` is created and pass the `ftp:Client` as an argument if the user has added `ftp:Client` in the
+function signature.
 
+That way, both the following `onFileChange` implementations will be valid.
+```ballerina
+ftp:Service ftpService = service object {
+    remote function onFileChange(ftp:WatchEvent event, ftp:Client 'client) {
+        // process event
+    }
+};
+```
+```ballerina
+ftp:Service ftpService = service object {
+    remote function onFileChange(ftp:WatchEvent event) {
+        // process event
+    }
+};
+```
+
+Along with this, compiler plugin changes related to validating the `onFileChange` method signature and code snippet 
+generation will be updated.
 ## Testing
-
+Testing will contain 3 main steps.
+- Testing the runtime behaviour of the `onFileChange` method with/without `ftp:Client`
+- Testing compiler plugin validation with/without `ftp:Client`
+- Testing code snippet generation with/without `ftp:Client`
