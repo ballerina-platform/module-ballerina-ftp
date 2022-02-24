@@ -366,7 +366,7 @@ An insecure FTP listener can be initialized by providing the mandatory `protocol
 public isolated function init(ListenerConfiguration listenerConfig) returns Error?;
 ```
 #### 4.2.2. Secure Listener
-A secure client can be initialized by providing `ftp:SFTP` as the protocol and by providing `ftp:Credentials`
+A secure listener can be initialized by providing `ftp:SFTP` as the protocol and by providing `ftp:Credentials`
 and `ftp:PrivateKey` to `ftp:AuthConfiguration`.
 ```ballerina
 ftp:ListenerConfiguration ftpConfig = {
@@ -390,7 +390,7 @@ After initializing the listener, a service must be attached to the listener. The
 1. Attach the service to the listener directly.
 ```ballerina
 service ftp:Service on ftpListener {
-    function onFileChange(ftp:WatchEvent event) {
+    remote function onFileChange(ftp:WatchEvent event, ftp:Client 'client) {
         // process event
     }
 }
@@ -399,12 +399,13 @@ service ftp:Service on ftpListener {
 ```ballerina
 // Create a service object
 ftp:Service ftpListener = service object {
-    function onFileChange(ftp:WatchEvent event) {
+    remote function onFileChange(ftp:WatchEvent event, ftp:Client 'client) {
         // process event
     }
 };
 ```
-The function `onFileChange()` is invoked when the listener notices a file change in the FTP server.
+The remote function `onFileChange()` is invoked when the listener notices a file change in the FTP server. This function supports
+having both `ftp:WatchEvent` and `ftp:Client` parameters or having only `ftp:WatchEvent` parameter.
 
 The Listener has following functions to manage a service.
 * `attach()` - can be used to bind a service to the `ftp:Listener`.
@@ -543,9 +544,10 @@ listener ftp:Listener remoteServer = check new({
 
 service on remoteServer {
 
-    remote function onFileChange(ftp:WatchEvent event) {
+    remote function onFileChange(ftp:Client 'client, ftp:WatchEvent event) {
         foreach ftp:FileInfo addedFile in event.addedFiles {
             io:println("Added file path: " + addedFile.path);
+            check 'client->delete(addedFile.path);
         }
 
         foreach string deletedFile in event.deletedFiles {
