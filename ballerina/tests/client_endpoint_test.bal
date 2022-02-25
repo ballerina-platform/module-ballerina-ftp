@@ -393,7 +393,7 @@ public function testRenameDirectory() {
         test:assertEquals(response2.message(), "/home/in/out does not exists to check if it is a directory.",
             msg = "Incorrect error message for non-existing file/directory at `isDirectory` operation");
     } else {
-        test:assertFail(msg = "Error not created while invoking `isDirectory` operation after `rename` operation");
+        test:assertFail("Error not created while invoking `isDirectory` operation after `rename` operation");
     }
 
     boolean|Error response3 = clientEp->isDirectory(newName);
