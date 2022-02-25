@@ -31,7 +31,7 @@ public function testSecureGetFileContent() returns error? {
             test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
         }
     } else {
-        test:assertFail(msg = "Found unexpected response type" + str.message());
+        test:assertFail("Found unexpected response type" + str.message());
     }
 }
 
