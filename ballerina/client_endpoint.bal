@@ -29,22 +29,21 @@ public isolated client class Client {
     public isolated function init(ClientConfiguration clientConfig) returns Error? {
         self.config = clientConfig.cloneReadOnly();
         Error? response = initEndpoint(self, self.config);
-        if (response is Error) {
+        if response is Error {
             return response;
         }
     }
 
     # Retrieves the file content from a remote resource.
     # ```ballerina
-    # stream<byte[] & readonly, io:Error?>|ftp:Error channel
-    #   = client->get(path);
+    # stream<byte[] & readonly, io:Error?>|ftp:Error channel = client->get(path);
     # ```
     #
     # + path - The resource path
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
     remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error {
-        ByteStream|Error byteStream = new(self, path);
-        if (byteStream is ByteStream) {
+        ByteStream|Error byteStream = new (self, path);
+        if byteStream is ByteStream {
             return new stream<byte[] & readonly, io:Error?>(byteStream);
         } else {
             return byteStream;
@@ -79,7 +78,7 @@ public isolated client class Client {
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
-            |string|xml|json content, Compression compressionType=NONE) returns Error? {
+            |string|xml|json content, Compression compressionType = NONE) returns Error? {
         boolean compress = false;
         if compressionType != NONE {
             compress = true;
@@ -167,7 +166,7 @@ public isolated client class Client {
     # ```
     #
     # + path - The resource path
-    # + return -  `()` or else an `ftp:Error` if failed to establish
+    # + return - `()` or else an `ftp:Error` if failed to establish
     #             the communication with the FTP server
     remote isolated function delete(string path) returns Error? {
         return delete(self, path);
@@ -197,18 +196,18 @@ public type ClientConfiguration record {|
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,
-        boolean compressInput=false) returns InputContent {
+        boolean compressInput = false) returns InputContent {
     InputContent inputContent = {
         filePath: path,
         compressInput: compressInput
     };
 
-    if (content is stream<byte[] & readonly, io:Error?>) {
+    if content is stream<byte[] & readonly, io:Error?> {
         inputContent.isFile = true;
         inputContent.fileContent = content;
-    } else if (content is string) {
+    } else if content is string {
         inputContent.textContent = content;
-    } else if (content is json) {
+    } else if content is json {
         inputContent.textContent = content.toJsonString();
     } else {
         inputContent.textContent = content.toString();

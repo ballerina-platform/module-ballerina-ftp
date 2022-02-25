@@ -151,7 +151,7 @@ public class FtpListener implements RemoteFileSystemListener {
         watchEventMap.put("deletedFiles", deletedFiles);
         return ValueCreator.createReadonlyRecordValue(
                 new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
-                        FtpUtil.getFtpPackage().getVersion()), FtpConstants.FTP_SERVER_EVENT, watchEventMap);
+                        FtpUtil.getFtpPackage().getMajorVersion()), FtpConstants.FTP_SERVER_EVENT, watchEventMap);
     }
 
     @Override
