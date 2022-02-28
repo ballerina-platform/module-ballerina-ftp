@@ -17,6 +17,7 @@
 import ballerina/lang.runtime as runtime;
 import ballerina/log;
 import ballerina/test;
+import ballerina/io;
 
 int addedFileCount = 0;
 FileInfo? anonServerAddedFileInfo = ();
@@ -288,4 +289,31 @@ public function testConnectToInvalidUrl() returns error? {
     } else {
         test:assertFail("Non-error result when trying to connect to an invalid url.");
     }
+}
+
+@test:Config {}
+public function testMutableWatchEvent() returns error? {
+    Service ftpService = service object {
+        remote function onFileChange(WatchEvent event) {
+        }
+    };
+    Listener ftpListener = check new ({
+        protocol: FTP,
+        host: "localhost",
+        port: 21212,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"}
+        },
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+    check ftpListener.attach(ftpService);
+    check ftpListener.'start();
+    runtime:registerListener(ftpListener);
+
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    Error? response = clientEp->put("/home/in/mutable/test1.txt", bStream, compressionType = ZIP);
+    runtime:sleep(2);
+    runtime:deregisterListener(ftpListener);
 }

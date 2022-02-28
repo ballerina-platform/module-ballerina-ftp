@@ -55,6 +55,8 @@ public class FtpConstants {
     public static final BString FIELD_VALUE = StringUtils.fromString("value");
 
     public static final String FTP_SERVER_EVENT = "WatchEvent";
+    public static final String FTP_WATCHEVENT_ADDED_FILES = "addedFiles";
+    public static final String FTP_WATCHEVENT_DELETED_FILES = "deletedFiles";
     public static final String FTP_FILE_INFO = "FileInfo";
     public static final String FTP_SERVER_CONNECTOR = "serverConnector";
     public static final String FTP_ANONYMOUS_USERNAME = "anonymous";

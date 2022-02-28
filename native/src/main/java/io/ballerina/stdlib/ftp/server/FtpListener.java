@@ -24,6 +24,7 @@ import io.ballerina.runtime.api.async.Callback;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
+import io.ballerina.runtime.api.types.Parameter;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BError;
@@ -42,12 +43,16 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static io.ballerina.stdlib.ftp.server.FtpListenerHelper.findRootCause;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVER_EVENT;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_ADDED_FILES;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
@@ -68,23 +73,24 @@ public class FtpListener implements RemoteFileSystemListener {
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
-            BMap<BString, Object> parameters = getSignatureParameters(event);
+            Map<String, Object> watchEventParamValues = processWatchEventParamValues(event);
             if (runtime != null) {
                 for (BObject service : registeredServices.values()) {
                     MethodType[] methodTypes = service.getType().getMethods();
                     for (MethodType remoteFunc : methodTypes) {
                         if (remoteFunc.getName().equals(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
+                            BMap<BString, Object> watchEvent = getWatchEvent(remoteFunc, watchEventParamValues);
                             runtime.invokeMethodAsyncConcurrently(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
-                                    null, new Callback() {
-                                        @Override
-                                        public void notifySuccess(Object o) {
-                                        }
+                                null, new Callback() {
+                                    @Override
+                                    public void notifySuccess(Object o) {
+                                    }
 
-                                        @Override
-                                        public void notifyFailure(BError error) {
-                                            log.error("Error while invoking FTP onMessage method.");
-                                        }
-                                    }, null, null, parameters, true);
+                                    @Override
+                                    public void notifyFailure(BError error) {
+                                        log.error("Error while invoking FTP onMessage method.");
+                                    }
+                                }, null, null, watchEvent, true);
                         }
                     }
                 }
@@ -95,12 +101,66 @@ public class FtpListener implements RemoteFileSystemListener {
         return true;
     }
 
-    private BMap<BString, Object> getSignatureParameters(RemoteFileSystemEvent fileSystemEvent) {
+    private BMap<BString, Object> getWatchEvent(MethodType methodType, Map<String, Object> parameters) {
+        List<Map<String, Object>> addedFileParamList = (List<Map<String, Object>>)
+                parameters.get(FTP_WATCHEVENT_ADDED_FILES);
+        BString[] deletedFileBStringArray = (BString[]) parameters.get(FTP_WATCHEVENT_DELETED_FILES);
+
+        Object[] addedFileInfoArray = new Object[addedFileParamList.size()];
+        if (readonlyWatchEventExists(methodType)) {
+            for (int i = 0; i < addedFileParamList.size(); i++) {
+                final BMap<BString, Object> fileInfo = ValueCreator.createReadonlyRecordValue(
+                        new Module(FtpConstants.FTP_ORG_NAME,
+                                FtpConstants.FTP_MODULE_NAME, FtpUtil.getFtpPackage().getMajorVersion()),
+                                        FtpConstants.FTP_FILE_INFO, addedFileParamList.get(i));
+                addedFileInfoArray[i] = fileInfo;
+            }
+            BArray addedFileInfoBArray = ValueCreator.createArrayValue(addedFileInfoArray,
+                    TypeCreator.createArrayType(FtpUtil.getFileInfoType(), true));
+
+            BArray deletedFileBArray = ValueCreator.createReadonlyArrayValue(deletedFileBStringArray);
+
+            Map<String, Object> watchEventMap = new HashMap<>();
+            watchEventMap.put(FTP_WATCHEVENT_ADDED_FILES, addedFileInfoBArray);
+            watchEventMap.put(FTP_WATCHEVENT_DELETED_FILES, deletedFileBArray);
+            return ValueCreator.createReadonlyRecordValue(
+                new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
+                    FtpUtil.getFtpPackage().getMajorVersion()), FTP_SERVER_EVENT, watchEventMap);
+        } else {
+            for (int i = 0; i < addedFileParamList.size(); i++) {
+                final BMap<BString, Object> fileInfo = ValueCreator.createRecordValue(
+                        new Module(FtpConstants.FTP_ORG_NAME,
+                                FtpConstants.FTP_MODULE_NAME, FtpUtil.getFtpPackage().getMajorVersion()),
+                                        FtpConstants.FTP_FILE_INFO, addedFileParamList.get(i));
+                addedFileInfoArray[i] = fileInfo;
+            }
+            BArray addedFileInfoBArray = ValueCreator.createArrayValue(addedFileInfoArray,
+                TypeCreator.createArrayType(FtpUtil.getFileInfoType(), false));
+
+            BArray deletedFileBArray = ValueCreator.createArrayValue(deletedFileBStringArray);
+
+            Map<String, Object> watchEventMap = new HashMap<>();
+            watchEventMap.put(FTP_WATCHEVENT_ADDED_FILES, addedFileInfoBArray);
+            watchEventMap.put(FTP_WATCHEVENT_DELETED_FILES, deletedFileBArray);
+            return ValueCreator.createRecordValue(new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
+                    FtpUtil.getFtpPackage().getMajorVersion()), FTP_SERVER_EVENT, watchEventMap);
+        }
+    }
+
+    private boolean readonlyWatchEventExists(MethodType methodType) {
+        for (Parameter parameter: methodType.getParameters()) {
+            if (parameter.type.getName().equals(FTP_SERVER_EVENT) && parameter.type.isReadOnly()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Map<String, Object> processWatchEventParamValues(RemoteFileSystemEvent fileSystemEvent) {
         List<FileInfo> addedFileList = fileSystemEvent.getAddedFiles();
         List<String> deletedFileList = fileSystemEvent.getDeletedFiles();
 
-        // For newly added files
-        Object[] fileInfoRecord = new Object[addedFileList.size()];
+        List<Map<String, Object>> addedFilesParamsList = new ArrayList<>();
         for (int i = 0; i < addedFileList.size(); i++) {
             FileInfo info = addedFileList.get(i);
             Map<String, Object> fileInfoParams = new HashMap<>();
@@ -130,28 +190,18 @@ public class FtpListener implements RemoteFileSystemListener {
             fileInfoParams.put("rootURI", info.getFileName().getRootURI());
             fileInfoParams.put("friendlyURI", info.getFileName().getFriendlyURI());
 
-            final BMap<BString, Object> fileInfo = ValueCreator.createReadonlyRecordValue(
-                    new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
-                            FtpUtil.getFtpPackage().getVersion()), FtpConstants.FTP_FILE_INFO, fileInfoParams);
-            fileInfoRecord[i] = fileInfo;
+            addedFilesParamsList.add(fileInfoParams);
         }
-        BArray addedFiles = ValueCreator.createArrayValue(fileInfoRecord,
-                TypeCreator.createArrayType(FtpUtil.getFileInfoType(), true));
 
-        // For deleted files
-        BString[] deletedFileBstringArray = new BString[deletedFileList.size()];
+        BString[] deletedFilesBstringArray = new BString[deletedFileList.size()];
         for (int i = 0; i < deletedFileList.size(); i++) {
-            deletedFileBstringArray[i] = StringUtils.fromString(deletedFileList.get(i));
+            deletedFilesBstringArray[i] = StringUtils.fromString(deletedFileList.get(i));
         }
-        BArray deletedFiles = ValueCreator.createReadonlyArrayValue(deletedFileBstringArray);
 
-        // WatchEvent
-        Map<String, Object> watchEventMap = new HashMap<>();
-        watchEventMap.put("addedFiles", addedFiles);
-        watchEventMap.put("deletedFiles", deletedFiles);
-        return ValueCreator.createReadonlyRecordValue(
-                new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
-                        FtpUtil.getFtpPackage().getMajorVersion()), FtpConstants.FTP_SERVER_EVENT, watchEventMap);
+        Map<String, Object> processedParamMap = new HashMap<>();
+        processedParamMap.put(FTP_WATCHEVENT_ADDED_FILES, addedFilesParamsList);
+        processedParamMap.put(FTP_WATCHEVENT_DELETED_FILES, deletedFilesBstringArray);
+        return processedParamMap;
     }
 
     @Override
