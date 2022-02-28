@@ -26,8 +26,6 @@ import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
 import org.apache.commons.vfs2.provider.sftp.IdentityInfo;
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.time.Duration;
@@ -43,9 +41,6 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_SFTP;
  * Utility class for File Transport.
  */
 public class FileTransportUtils {
-
-    private static final Logger log = LoggerFactory.getLogger(
-            io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils.class);
 
     private static final Pattern URL_PATTERN = Pattern.compile("[a-z]+://.*");
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(":(?:[^/]+)@");

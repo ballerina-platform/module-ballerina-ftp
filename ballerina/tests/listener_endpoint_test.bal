@@ -23,7 +23,7 @@ FileInfo? anonServerAddedFileInfo = ();
 int deletedFileCount = 0;
 boolean watchEventReceived = false;
 
-listener Listener remoteServer = check new({
+listener Listener remoteServer = check new ({
     protocol: FTP,
     host: "127.0.0.1",
     auth: {
@@ -53,7 +53,7 @@ service on remoteServer {
     }
 }
 
-listener Listener anonymousRemoteServer = check new({
+listener Listener anonymousRemoteServer = check new ({
     protocol: FTP,
     host: "127.0.0.1",
     auth: {
@@ -78,7 +78,7 @@ service on anonymousRemoteServer {
     }
 }
 
-@test:Config{
+@test:Config {
 }
 public function testAnonServerAddedFile() {
     int timeoutInSeconds = 300;
@@ -121,7 +121,7 @@ public function testAnonServerAddedFile() {
     }
 }
 
-@test:Config{
+@test:Config {
 }
 public function testAddedFileCount() {
     int timeoutInSeconds = 300;
@@ -143,8 +143,7 @@ public function testAddedFileCount() {
 
 @test:Config {}
 public function testFtpServerDeregistration() returns error? {
-
-    Listener detachFtpServer = check new({
+    Listener detachFtpServer = check new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -173,8 +172,7 @@ public function testFtpServerDeregistration() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureEmptyPassword() returns error? {
-
-    Listener|Error emptyPasswordServer = new({
+    Listener|Error emptyPasswordServer = new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -198,8 +196,7 @@ public function testServerRegisterFailureEmptyPassword() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureEmptyUsername() returns error? {
-
-    Listener|Error emptyUsernameServer = new({
+    Listener|Error emptyUsernameServer = new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -223,7 +220,7 @@ public function testServerRegisterFailureEmptyUsername() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureInvalidUsername() returns error? {
-    Listener|Error invalidUsernameServer = new({
+    Listener|Error invalidUsernameServer = new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -247,7 +244,7 @@ public function testServerRegisterFailureInvalidUsername() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureInvalidPassword() returns error? {
-    Listener|Error invalidPasswordServer = new({
+    Listener|Error invalidPasswordServer = new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -271,7 +268,7 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
 
 @test:Config {}
 public function testConnectToInvalidUrl() returns error? {
-    Listener|Error invalidUrlServer = new({
+    Listener|Error invalidUrlServer = new ({
         protocol: FTP,
         host: "localhost",
         port: 21218,
