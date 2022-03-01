@@ -20,9 +20,11 @@ package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.Runtime;
+import io.ballerina.runtime.api.TypeTags;
 import io.ballerina.runtime.api.async.Callback;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.IntersectionType;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.types.Parameter;
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -149,7 +151,8 @@ public class FtpListener implements RemoteFileSystemListener {
 
     private boolean readonlyWatchEventExists(MethodType methodType) {
         for (Parameter parameter: methodType.getParameters()) {
-            if (parameter.type.getName().equals(FTP_SERVER_EVENT) && parameter.type.isReadOnly()) {
+            if (parameter.type.isReadOnly() && ((IntersectionType) parameter.type)
+                    .getEffectiveType().getTag() == TypeTags.RECORD_TYPE_TAG) {
                 return true;
             }
         }
