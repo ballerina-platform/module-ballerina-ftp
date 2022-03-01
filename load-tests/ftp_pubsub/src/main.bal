@@ -96,7 +96,7 @@ ftp:Service ftpSubscriber = service object {
         self.sftpClient = checkpanic new(sftpClientConfig);
     }
 
-    remote function onFileChange(ftp:WatchEvent event) {
+    remote function onFileChange(ftp:WatchEvent & readonly event) {
         foreach ftp:FileInfo addedFile in event.addedFiles {
             int startIndex = (addedFile.path.lastIndexOf("/") ?: 0) + 1;
             int lastIndex = addedFile.path.length();
