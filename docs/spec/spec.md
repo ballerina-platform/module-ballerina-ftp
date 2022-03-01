@@ -347,7 +347,7 @@ public type ListenerConfiguration record {|
 ```
 * `WatchEvent` record represents the latest status change of the server from the last status change.
 ```ballerina
-public type WatchEvent readonly & record {|
+public type WatchEvent record {|
     # Array of `ftp:FileInfo` that represents newly added files
     FileInfo[] addedFiles;
     # Array of strings that contains deleted file names
@@ -390,7 +390,7 @@ After initializing the listener, a service must be attached to the listener. The
 1. Attach the service to the listener directly.
 ```ballerina
 service ftp:Service on ftpListener {
-    function onFileChange(ftp:WatchEvent event) {
+    remote function onFileChange(ftp:WatchEvent & readonly event) {
         // process event
     }
 }
@@ -399,7 +399,7 @@ service ftp:Service on ftpListener {
 ```ballerina
 // Create a service object
 ftp:Service ftpListener = service object {
-    function onFileChange(ftp:WatchEvent event) {
+    remote function onFileChange(ftp:WatchEvent & readonly event) {
         // process event
     }
 };
@@ -543,7 +543,7 @@ listener ftp:Listener remoteServer = check new({
 
 service on remoteServer {
 
-    remote function onFileChange(ftp:WatchEvent event) {
+    remote function onFileChange(ftp:WatchEvent & readonly event) {
         foreach ftp:FileInfo addedFile in event.addedFiles {
             io:println("Added file path: " + addedFile.path);
         }

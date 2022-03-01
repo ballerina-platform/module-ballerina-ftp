@@ -40,7 +40,7 @@ listener Listener remoteServer = check new ({
 });
 
 service on remoteServer {
-    remote function onFileChange(WatchEvent event) {
+    remote function onFileChange(WatchEvent & readonly event) {
         addedFileCount = event.addedFiles.length();
         deletedFileCount = event.deletedFiles.length();
         watchEventReceived = true;
@@ -70,7 +70,7 @@ listener Listener anonymousRemoteServer = check new ({
 });
 
 service on anonymousRemoteServer {
-    remote function onFileChange(WatchEvent event) {
+    remote function onFileChange(WatchEvent & readonly event) {
         if event.addedFiles.length() == 1 && anonServerAddedFileInfo == () {
             anonServerAddedFileInfo = event.addedFiles[0];
         } else {
@@ -160,7 +160,7 @@ public function testFtpServerDeregistration() returns error? {
     });
 
     Service detachService = service object {
-        function onFileChange(WatchEvent event) {
+        remote function onFileChange(WatchEvent & readonly event) {
         }
     };
     error? result1 = detachFtpServer.attach(detachService, "remote-server");
@@ -293,8 +293,13 @@ public function testConnectToInvalidUrl() returns error? {
 
 @test:Config {}
 public function testMutableWatchEvent() returns error? {
+    FileInfo[] fileInfos = [];
     Service ftpService = service object {
         remote function onFileChange(WatchEvent event) {
+            event.addedFiles.forEach(function (FileInfo fInfo) {
+                fInfo.name = "overriden_name";
+            });
+            fileInfos = event.addedFiles;
         }
     };
     Listener ftpListener = check new ({
@@ -313,7 +318,14 @@ public function testMutableWatchEvent() returns error? {
     runtime:registerListener(ftpListener);
 
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    Error? response = clientEp->put("/home/in/mutable/test1.txt", bStream, compressionType = ZIP);
+    check clientEp->put("/home/in/mutable/test1.txt", bStream, compressionType = ZIP);
     runtime:sleep(2);
+
     runtime:deregisterListener(ftpListener);
+    check ftpListener.gracefulStop();
+
+    test:assertTrue(fileInfos.length() != 0);
+    fileInfos.forEach(function (FileInfo fInfo) {
+        test:assertEquals(fInfo.name, "overriden_name");
+    });
 }
