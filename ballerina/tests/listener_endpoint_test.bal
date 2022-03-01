@@ -291,7 +291,9 @@ public function testConnectToInvalidUrl() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config {
+    dependsOn: [testDeleteFile]
+}
 public function testMutableWatchEvent() returns error? {
     FileInfo[] fileInfos = [];
     Service ftpService = service object {
