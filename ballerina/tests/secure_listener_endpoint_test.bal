@@ -41,7 +41,7 @@ listener Listener secureRemoteServer = check new ({
 });
 
 service "ftpServerConnector" on secureRemoteServer {
-    remote function onFileChange(WatchEvent event) {
+    remote function onFileChange(WatchEvent & readonly event) {
         secureAddedFileCount = event.addedFiles.length();
         secureDeletedFileCount = event.deletedFiles.length();
         secureWatchEventReceived = true;
