@@ -59,16 +59,22 @@ service "Test1" on new ftp:Listener({
     path: "/upload/",
     fileNamePattern: "(.*).csv"
 }), secureRemoteServer1 {
-    remote function onFileChange(ftp:WatchEvent event) {
+    remote function onFileChange(ftp:WatchEvent & readonly event) {
     }
 }
 
 service "Test2" on secureRemoteServer1, secureRemoteServer2 {
-    remote function onFileChange(ftp:WatchEvent event) {
+    remote function onFileChange(ftp:WatchEvent & readonly event) {
     }
 }
 
 service "Test3" on secureRemoteServer1 {
-    remote function onFileChange(ftp:WatchEvent event) {
+    int x;
+
+    function init() {
+        self.x = 1;
+    }
+
+    remote function onFileChange(readonly & ftp:WatchEvent event) {
     }
 }

@@ -26,13 +26,5 @@ listener ftp:Listener remoteServer = check new({
 });
 
 service "Test" on remoteServer {
-    remote function onFileChange(string value) {}
-}
-
-service "Test" on remoteServer {
-    remote function onFileChange(ftp:FileInfo info) {}
-}
-
-service "Test" on remoteServer {
     remote function onFileChange() {}
 }

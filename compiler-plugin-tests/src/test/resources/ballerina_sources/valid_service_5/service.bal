@@ -26,7 +26,7 @@ listener ftp:Listener remoteServer = check new({
 });
 
 service "Test1" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent event) returns error? {}
+    remote function onFileChange(ftp:WatchEvent & readonly event) returns error? {}
 
     function someFunction() {}
 }
@@ -38,7 +38,7 @@ service "Test2" on remoteServer {
 }
 
 service "Test3" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent event) returns error|() {}
+    remote function onFileChange(ftp:WatchEvent & readonly event) returns error|() {}
 
     function someFunction() {}
 }

@@ -45,9 +45,12 @@ public class PluginConstants {
         METHOD_MUST_BE_REMOTE("onFileChange method must be remote.", "FTP_103"),
         RESOURCE_FUNCTION_NOT_ALLOWED("Resource functions are not allowed for ftp services.", "FTP_103"),
         NO_ON_FILE_CHANGE("onFileChange method not found.", "FTP_105"),
-        MUST_HAVE_WATCHEVENT("Must have the required parameter ftp:WatchEvent.", "FTP_106"),
-        ONLY_PARAMS_ALLOWED("Invalid method parameter count. Only ftp:WatchEvent is allowed.", "FTP_107"),
-        INVALID_PARAMETER("Invalid method parameter. Only ftp:WatchEvent is allowed.", "FTP_108"),
+        MUST_HAVE_WATCHEVENT("Must have the required parameter ftp:WatchEvent & readonly or ftp:WatchEvent.",
+                "FTP_106"),
+        ONLY_PARAMS_ALLOWED("Invalid method parameter count. Only ftp:WatchEvent & readonly " +
+                "or ftp:WatchEvent is allowed.", "FTP_107"),
+        INVALID_PARAMETER("Invalid method parameter. Only ftp:WatchEvent & readonly or " +
+                "ftp:WatchEvent is allowed.", "FTP_108"),
         INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_109"),
         TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_110");
         private final String error;

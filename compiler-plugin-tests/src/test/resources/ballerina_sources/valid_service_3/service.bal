@@ -38,6 +38,6 @@ service "Test" on secureRemoteServer {
     private final string var1 = "FTP Service";
     private final int var2 = 54;
 
-    remote function onFileChange(ftp:WatchEvent & readonly event) {
+    remote function onFileChange(ftp:WatchEvent event) {
     }
 }

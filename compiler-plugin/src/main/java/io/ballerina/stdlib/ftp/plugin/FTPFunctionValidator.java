@@ -19,12 +19,12 @@
 package io.ballerina.stdlib.ftp.plugin;
 
 import io.ballerina.compiler.api.SemanticModel;
+import io.ballerina.compiler.api.symbols.IntersectionTypeSymbol;
 import io.ballerina.compiler.api.symbols.MethodSymbol;
 import io.ballerina.compiler.api.symbols.ModuleSymbol;
 import io.ballerina.compiler.api.symbols.ParameterSymbol;
 import io.ballerina.compiler.api.symbols.Symbol;
 import io.ballerina.compiler.api.symbols.TypeDescKind;
-import io.ballerina.compiler.api.symbols.TypeReferenceTypeSymbol;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.api.symbols.UnionTypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
@@ -91,7 +91,7 @@ public class FTPFunctionValidator {
                 validateIntersectionParam(paramNode);
             } else {
                 context.reportDiagnostic(PluginUtils.getDiagnostic(
-                        MUST_HAVE_WATCHEVENT,
+                        INVALID_PARAMETER,
                         DiagnosticSeverity.ERROR, paramNode.location()));
             }
         } else if (parameters.size() > 1) {
@@ -109,13 +109,14 @@ public class FTPFunctionValidator {
         Optional<Symbol> symbol = semanticModel.symbol(requiredParameterNode);
         if (symbol.isPresent()) {
             ParameterSymbol parameterSymbol = (ParameterSymbol) symbol.get();
-            if (parameterSymbol.typeDescriptor() instanceof TypeReferenceTypeSymbol) {
-                TypeReferenceTypeSymbol typeReferenceTypeSymbol =
-                        (TypeReferenceTypeSymbol) parameterSymbol.typeDescriptor();
-                String paramName = typeReferenceTypeSymbol.getName().isPresent() ?
-                        typeReferenceTypeSymbol.getName().get() : "";
-                if (!validateModuleId(typeReferenceTypeSymbol.getModule().get()) ||
-                        !paramName.equals(PluginConstants.WATCHEVENT)) {
+            if (parameterSymbol.typeDescriptor() instanceof IntersectionTypeSymbol) {
+                IntersectionTypeSymbol intersectionTypeSymbol =
+                        (IntersectionTypeSymbol) parameterSymbol.typeDescriptor();
+                boolean watchEventExists = intersectionTypeSymbol.memberTypeDescriptors().stream()
+                        .anyMatch(typeSymbol -> typeSymbol.nameEquals(PluginConstants.WATCHEVENT) &&
+                                typeSymbol.getModule().isPresent() &&
+                                validateModuleId(typeSymbol.getModule().get()));
+                if (!watchEventExists) {
                     context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
                             DiagnosticSeverity.ERROR, requiredParameterNode.location()));
                 }
@@ -142,17 +143,17 @@ public class FTPFunctionValidator {
                 if (!validateModuleId(moduleSymbol.get()) ||
                         !paramName.equals(PluginConstants.WATCHEVENT)) {
                     context.reportDiagnostic(PluginUtils.getDiagnostic(
-                            MUST_HAVE_WATCHEVENT,
+                            INVALID_PARAMETER,
                             DiagnosticSeverity.ERROR, requiredParameterNode.location()));
                 }
             } else {
                 context.reportDiagnostic(PluginUtils.getDiagnostic(
-                        MUST_HAVE_WATCHEVENT,
+                        INVALID_PARAMETER,
                         DiagnosticSeverity.ERROR, requiredParameterNode.location()));
             }
         } else {
             context.reportDiagnostic(PluginUtils.getDiagnostic(
-                    MUST_HAVE_WATCHEVENT,
+                    INVALID_PARAMETER,
                     DiagnosticSeverity.ERROR, requiredParameterNode.location()));
         }
     }

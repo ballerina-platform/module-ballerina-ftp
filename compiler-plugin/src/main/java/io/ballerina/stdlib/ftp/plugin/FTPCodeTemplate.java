@@ -49,8 +49,8 @@ import static io.ballerina.stdlib.ftp.plugin.PluginUtils.findNode;
  */
 public class FTPCodeTemplate implements CodeAction {
 
-    private static final String REMOTE_FUNCTION_TEXT = LS + "\tremote function onFileChange(ftp:WatchEvent event) " +
-            "returns ftp:Error? {" + LS + LS + "\t}" + LS;
+    private static final String REMOTE_FUNCTION_TEXT = LS + "\tremote function onFileChange(ftp:WatchEvent & " +
+            "readonly event) returns ftp:Error? {" + LS + LS + "\t}" + LS;
 
     @Override
     public List<String> supportedDiagnosticCodes() {

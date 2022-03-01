@@ -25,10 +25,22 @@ listener ftp:Listener remoteServer = check new({
     fileNamePattern: "(.*).csv"
 });
 
-service "Test" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent event, string value) {}
+service "Test1" on remoteServer {
+    remote function onFileChange(ftp:WatchEvent & readonly event, string value) {}
 }
 
-service "Test" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent event, ftp:FileInfo info) {}
+service "Test2" on remoteServer {
+    remote function onFileChange(ftp:WatchEvent event, string & readonly value) {}
+}
+
+service "Test3" on remoteServer {
+    remote function onFileChange(ftp:WatchEvent & readonly event, ftp:FileInfo info) {}
+}
+
+service "Test4" on remoteServer {
+    remote function onFileChange(ftp:WatchEvent event, ftp:FileInfo & readonly info) {}
+}
+
+service "Test5" on remoteServer {
+    remote function onFileChange(ftp:WatchEvent & readonly event, ftp:FileInfo & readonly info) {}
 }

@@ -165,12 +165,9 @@ public class FTPServiceValidationTest {
         Package currentPackage = loadPackage("invalid_service_8");
         PackageCompilation compilation = currentPackage.getCompilation();
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-        Assert.assertEquals(diagnosticResult.errors().size(), 3);
-        Object[] diagnostics = diagnosticResult.errors().toArray();
-        for (Object obj : diagnostics) {
-            Diagnostic diagnostic = (Diagnostic) obj;
-            assertDiagnostic(diagnostic, CompilationErrors.MUST_HAVE_WATCHEVENT);
-        }
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, CompilationErrors.MUST_HAVE_WATCHEVENT);
     }
 
     @Test
@@ -178,7 +175,7 @@ public class FTPServiceValidationTest {
         Package currentPackage = loadPackage("invalid_service_9");
         PackageCompilation compilation = currentPackage.getCompilation();
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Assert.assertEquals(diagnosticResult.errors().size(), 5);
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
@@ -191,7 +188,7 @@ public class FTPServiceValidationTest {
         Package currentPackage = loadPackage("invalid_service_10");
         PackageCompilation compilation = currentPackage.getCompilation();
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Assert.assertEquals(diagnosticResult.errors().size(), 4);
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
@@ -204,7 +201,7 @@ public class FTPServiceValidationTest {
         Package currentPackage = loadPackage("invalid_service_11");
         PackageCompilation compilation = currentPackage.getCompilation();
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-        Assert.assertEquals(diagnosticResult.errors().size(), 3);
+        Assert.assertEquals(diagnosticResult.errors().size(), 6);
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;

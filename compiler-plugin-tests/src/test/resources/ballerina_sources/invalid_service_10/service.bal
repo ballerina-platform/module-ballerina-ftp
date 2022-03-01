@@ -32,3 +32,11 @@ service "Test1" on remoteServer {
 service "Test2" on remoteServer {
     remote function onFileChange(readonly & ftp:FileInfo info) {}
 }
+
+service "Test3" on remoteServer {
+    remote function onFileChange(string value) {}
+}
+
+service "Test4" on remoteServer {
+    remote function onFileChange(ftp:FileInfo info) {}
+}

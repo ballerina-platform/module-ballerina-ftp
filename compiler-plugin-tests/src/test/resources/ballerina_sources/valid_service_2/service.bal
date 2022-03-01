@@ -35,6 +35,6 @@ listener foo:Listener secureRemoteServer = check new({
 });
 
 service "Test" on secureRemoteServer {
-    remote function onFileChange(foo:WatchEvent event) {
+    remote function onFileChange(foo:WatchEvent & readonly event) {
     }
 }

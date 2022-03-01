@@ -26,13 +26,25 @@ listener ftp:Listener remoteServer = check new({
 });
 
 service "Test1" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent value) returns string? {}
+    remote function onFileChange(ftp:WatchEvent & readonly value) returns string? {}
 }
 
 service "Test2" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent value) returns int? {}
+    remote function onFileChange(ftp:WatchEvent & readonly value) returns int? {}
 }
 
 service "Test3" on remoteServer {
+    remote function onFileChange(ftp:WatchEvent & readonly value) returns ftp:Error|int? {}
+}
+
+service "Test4" on remoteServer {
+    remote function onFileChange(ftp:WatchEvent value) returns string? {}
+}
+
+service "Test5" on remoteServer {
+    remote function onFileChange(ftp:WatchEvent value) returns int? {}
+}
+
+service "Test6" on remoteServer {
     remote function onFileChange(ftp:WatchEvent value) returns ftp:Error|int? {}
 }

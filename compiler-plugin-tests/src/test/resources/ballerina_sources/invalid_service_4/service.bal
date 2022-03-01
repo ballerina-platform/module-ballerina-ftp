@@ -26,6 +26,6 @@ listener ftp:Listener remoteServer = check new({
 });
 
 service "Test" on remoteServer {
-    resource function get onFileChange(ftp:WatchEvent event) {
+    resource function get onFileChange(ftp:WatchEvent & readonly event) {
     }
 }
