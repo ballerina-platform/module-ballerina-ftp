@@ -28,7 +28,7 @@ type StreamEntry record {|
 # the I/O byte channels.
 class ByteStream {
 
-    private Client entity;
+    private Client|Caller entity;
     private boolean isClosed = false;
     private string resourcePath;
     private boolean initialStreamEntryConsumed = false;
@@ -39,7 +39,7 @@ class ByteStream {
     # + entity - The `ftp:Client` which contains the byte stream
     # + resourcePath - The local path of the file/directory
     # + arraySize - The size of a byte array as an integer
-    public isolated function init(Client entity, string resourcePath) returns Error? {
+    public isolated function init(Client|Caller entity, string resourcePath) returns Error? {
         self.entity = entity;
         self.resourcePath = resourcePath;
         record {|byte[] & readonly value;|}|Error? tempInitialStreamEntity
@@ -80,19 +80,19 @@ class ByteStream {
     }
 }
 
-isolated function externGetStreamEntryRecord(Client entity)
+isolated function externGetStreamEntryRecord(Client|Caller entity)
         returns record {|byte[] & readonly value;|}|io:Error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.client.FtpClient",
     name: "get"
 } external;
 
-isolated function externInitialGetStreamEntryRecord(Client entity, string path)
+isolated function externInitialGetStreamEntryRecord(Client|Caller entity, string path)
         returns record {|byte[] & readonly value;|}|Error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.client.FtpClient",
     name: "getFirst"
 } external;
 
-isolated function externCloseInputStream(Client entity) returns io:Error? = @java:Method {
+isolated function externCloseInputStream(Client|Caller entity) returns io:Error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.client.FtpClient",
     name: "closeInputByteStream"
 } external;

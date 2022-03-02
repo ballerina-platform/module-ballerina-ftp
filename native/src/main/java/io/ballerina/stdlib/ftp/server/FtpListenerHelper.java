@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Runtime;
+import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
@@ -31,11 +32,13 @@ import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryIm
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
+import io.ballerina.stdlib.ftp.util.ModuleUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
 /**
@@ -61,6 +64,10 @@ public class FtpListenerHelper {
                     .createServerConnector(paramMap, listener);
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             // This is a temporary solution
+
+            BObject caller = ValueCreator
+                    .createObjectValue(ModuleUtils.getModule(), FTP_CALLER, serviceEndpointConfig);
+            ftpListener.addNativeData(FTP_CALLER, caller);
             return null;
         } catch (RemoteFileSystemConnectorException | BallerinaFtpException e) {
             Throwable rootCause = findRootCause(e);

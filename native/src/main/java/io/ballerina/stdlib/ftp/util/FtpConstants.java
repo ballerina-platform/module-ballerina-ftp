@@ -53,6 +53,7 @@ public class FtpConstants {
     public static final String BYTE_STREAM_CLOSE_FUNC = "close";
     public static final String STREAM_ENTRY_RECORD = "StreamEntry";
     public static final BString FIELD_VALUE = StringUtils.fromString("value");
+    public static final String FTP_CALLER = "Caller";
 
     public static final String FTP_SERVER_EVENT = "WatchEvent";
     public static final String FTP_WATCHEVENT_ADDED_FILES = "addedFiles";

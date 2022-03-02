@@ -16,52 +16,52 @@
 
 import ballerina/jballerina.java;
 
-isolated function initEndpoint(Client clientEndpoint, map<anydata> config) returns Error? = @java:Method {
+isolated function initEndpoint(Client|Caller clientEndpoint, map<anydata> config) returns Error? = @java:Method {
     name: "initClientEndpoint",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function delete(Client clientEndpoint, string path) returns Error? = @java:Method {
+isolated function delete(Client|Caller clientEndpoint, string path) returns Error? = @java:Method {
     name: "delete",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function append(Client clientEndpoint, InputContent inputContent) returns Error? = @java:Method {
+isolated function append(Client|Caller clientEndpoint, InputContent inputContent) returns Error? = @java:Method {
     name: "append",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function put(Client clientEndpoint, InputContent inputContent) returns Error? = @java:Method {
+isolated function put(Client|Caller clientEndpoint, InputContent inputContent) returns Error? = @java:Method {
     name: "put",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function mkdir(Client clientEndpoint, string path) returns Error? = @java:Method {
+isolated function mkdir(Client|Caller clientEndpoint, string path) returns Error? = @java:Method {
     name: "mkdir",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function rmdir(Client clientEndpoint, string path) returns Error? = @java:Method {
+isolated function rmdir(Client|Caller clientEndpoint, string path) returns Error? = @java:Method {
     name: "rmdir",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function rename(Client clientEndpoint, string origin, string destination) returns Error? = @java:Method {
+isolated function rename(Client|Caller clientEndpoint, string origin, string destination) returns Error? = @java:Method {
     name: "rename",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function size(Client clientEndpoint, string path) returns int|Error = @java:Method {
+isolated function size(Client|Caller clientEndpoint, string path) returns int|Error = @java:Method {
     name: "size",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function list(Client clientEndpoint, string path) returns FileInfo[]|Error = @java:Method {
+isolated function list(Client|Caller clientEndpoint, string path) returns FileInfo[]|Error = @java:Method {
     name: "list",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
-isolated function isDirectory(Client clientEndpoint, string path) returns boolean|Error = @java:Method {
+isolated function isDirectory(Client|Caller clientEndpoint, string path) returns boolean|Error = @java:Method {
     name: "isDirectory",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
