@@ -26,7 +26,7 @@ public function testSFTPConnectionToFTPServer() returns error? {
     //    runtime:sleep(2);
     //}
     ClientConfiguration serverConfig = {
-        protocol: SFTP,
+        protocol: FTP,
         host: "127.0.0.1",
         port: 21212,
         auth: {
