@@ -192,7 +192,8 @@ public function testRemoveDirectoryWithWrongUrl() {
 
 // Disabling due to https://github.com/ballerina-platform/ballerina-standard-library/issues/2703
 @test:Config {
-    enable: true
+    enable: true,
+    dependsOn: [testRemoveDirectoryWithWrongUrl]
 }
 public function testSFTPConnectionToFTPServer() returns error? {
     ClientConfiguration serverConfig = {
