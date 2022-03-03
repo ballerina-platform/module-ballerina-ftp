@@ -9,7 +9,7 @@ dependencies-toml-version = "2"
 [[package]]
 org = "ballerina"
 name = "ftp"
-version = "2.2.1"
+version = "2.2.2"
 dependencies = [
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
