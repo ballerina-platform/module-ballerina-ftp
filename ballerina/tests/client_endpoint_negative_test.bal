@@ -15,22 +15,22 @@
 // under the License.
 
 import ballerina/test;
-import ballerina/lang.runtime;
+//import ballerina/lang.runtime;
 
 // Disabling due to https://github.com/ballerina-platform/ballerina-standard-library/issues/2703
 @test:Config {
     enable: true
 }
 public function testSFTPConnectionToFTPServer() returns error? {
-    while !startedServers {
-        runtime:sleep(2);
-    }
+    //while !startedServers {
+    //    runtime:sleep(2);
+    //}
     ClientConfiguration serverConfig = {
-        protocol: FTP,
+        protocol: SFTP,
         host: "127.0.0.1",
         port: 21212,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"}
+            credentials: {username: "in", password: "wso2123"}
         }
     };
     Client|Error clientEp = new (serverConfig);

@@ -1,0 +1,26 @@
+version: '2'
+
+services:
+  sftp:
+    build:
+      dockerfile: ./sftp/Dockerfile
+      context: '.'
+    hostname: sftp
+    container_name: sftp-test-container
+    ports:
+      - '21213:22'
+    command: in:wso2123:::upload
+  ftp:
+    build:
+      dockerfile: ./ftp/Dockerfile
+      context: '.'
+    hostname: ftp
+    container_name: ftp-test-container
+    ports:
+      - '21212:21'
+      - '30000-30009:30000-30009'
+    environment:
+      - FTP_USER_NAME=in
+      - FTP_USER_PASS=wso2123
+      - FTP_USER_HOME=/home/in
+      - PUBLICHOST=localhost
