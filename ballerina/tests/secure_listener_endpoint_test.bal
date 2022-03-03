@@ -27,7 +27,7 @@ listener Listener secureRemoteServer = check new ({
     host: "127.0.0.1",
     auth: {
         credentials: {
-            username: "wso2",
+            username: "in",
             password: "wso2123"
         },
         privateKey: {
@@ -37,6 +37,7 @@ listener Listener secureRemoteServer = check new ({
     },
     port: 21213,
     pollingInterval: 2,
+    path: "/",
     fileNamePattern: "(.*).txt"
 });
 
@@ -82,7 +83,7 @@ public function testConnectWithInvalidKey() returns error? {
         host: "localhost",
         port: 21213,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"},
+            credentials: {username: "in", password: "wso2123"},
             privateKey: {
                 path: "tests/resources/sftp.wrong.private.key",
                 password: "changeit"
@@ -107,7 +108,7 @@ public function testConnectWithInvalidKeyPath() returns error? {
         host: "localhost",
         port: 21213,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"},
+            credentials: {username: "in", password: "wso2123"},
             privateKey: {
                 path: "tests/invalid_resources/sftp.private.key",
                 password: "changeit"
@@ -132,7 +133,7 @@ public function testConnectToSFTPServerWithFTPProtocol() returns error? {
         host: "localhost",
         port: 21213,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"}
+            credentials: {username: "in", password: "wso2123"}
         },
         path: "/home/in",
         pollingInterval: 2,
@@ -153,7 +154,7 @@ public function testConnectWithEmptyKey() returns error? {
         host: "localhost",
         port: 21213,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"}
+            credentials: {username: "in", password: "wso2123"}
         },
         path: "/home/in",
         pollingInterval: 2,
@@ -174,7 +175,7 @@ public function testConnectWithEmptyCredentials() returns error? {
         host: "localhost",
         port: 21213,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"},
+            credentials: {username: "in", password: "wso2123"},
             privateKey: {
                 path: "tests/invalid_resources/sftp.private.key",
                 password: "changeit"

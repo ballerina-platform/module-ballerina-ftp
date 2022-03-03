@@ -25,7 +25,7 @@ public function testConnectionWithNonExistingServer() returns error? {
         protocol: FTP,
         host: "127.0.0.1",
         port: 21218,
-        auth: {credentials: {username: "wso2", password: "wso2123"}}
+        auth: {credentials: {username: "in", password: "wso2123"}}
     };
     Client|Error nonExistingServerClientEp = new (nonExistingServerConfig);
     if nonExistingServerClientEp is Error {
@@ -44,7 +44,7 @@ public function testConnectionWithInvalidConfiguration() returns error? {
         protocol: FTP,
         host: "!@#$%^&*()",
         port: 21212,
-        auth: {credentials: {username: "wso2", password: "wso2123"}}
+        auth: {credentials: {username: "in", password: "wso2123"}}
     };
     Client|Error invalidServerClientEp = new (invalidConfig);
     if invalidServerClientEp is Error {
@@ -192,7 +192,7 @@ public function testRemoveDirectoryWithWrongUrl() {
 
 // Disabling due to https://github.com/ballerina-platform/ballerina-standard-library/issues/2703
 @test:Config {
-    enable: true,
+    enable: false,
     dependsOn: [testRemoveDirectoryWithWrongUrl]
 }
 public function testSFTPConnectionToFTPServer() returns error? {
@@ -201,7 +201,7 @@ public function testSFTPConnectionToFTPServer() returns error? {
         host: "127.0.0.1",
         port: 21212,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"}
+            credentials: {username: "in", password: "wso2123"}
         }
     };
     Client|Error clientEp = new (serverConfig);

@@ -29,12 +29,12 @@ listener Listener remoteServer = check new ({
     host: "127.0.0.1",
     auth: {
         credentials: {
-            username: "wso2",
+            username: "in",
             password: "wso2123"
         }
     },
     port: 21212,
-    path: "/home/in",
+    path: "/",
     pollingInterval: 2,
     fileNamePattern: "(.*).txt"
 });
@@ -54,32 +54,33 @@ service on remoteServer {
     }
 }
 
-listener Listener anonymousRemoteServer = check new ({
-    protocol: FTP,
-    host: "127.0.0.1",
-    auth: {
-        credentials: {
-            username: "anonymous",
-            password: "anything"
-        }
-    },
-    port: 21210,
-    path: "/home/in",
-    pollingInterval: 2,
-    fileNamePattern: "(.*).txt"
-});
-
-service on anonymousRemoteServer {
-    remote function onFileChange(WatchEvent & readonly event) {
-        if event.addedFiles.length() == 1 && anonServerAddedFileInfo == () {
-            anonServerAddedFileInfo = event.addedFiles[0];
-        } else {
-            anonServerAddedFileInfo = ();
-        }
-    }
-}
+//listener Listener anonymousRemoteServer = check new ({
+//    protocol: FTP,
+//    host: "127.0.0.1",
+//    auth: {
+//        credentials: {
+//            username: "anonymous",
+//            password: "anything"
+//        }
+//    },
+//    port: 21210,
+//    path: "/home/in",
+//    pollingInterval: 2,
+//    fileNamePattern: "(.*).txt"
+//});
+//
+//service on anonymousRemoteServer {
+//    remote function onFileChange(WatchEvent & readonly event) {
+//        if event.addedFiles.length() == 1 && anonServerAddedFileInfo == () {
+//            anonServerAddedFileInfo = event.addedFiles[0];
+//        } else {
+//            anonServerAddedFileInfo = ();
+//        }
+//    }
+//}
 
 @test:Config {
+    enable: false
 }
 public function testAnonServerAddedFile() {
     int timeoutInSeconds = 300;
@@ -149,12 +150,12 @@ public function testFtpServerDeregistration() returns error? {
         host: "127.0.0.1",
         auth: {
             credentials: {
-                username: "wso2",
+                username: "in",
                 password: "wso2123"
             }
         },
         port: 21212,
-        path: "/home/in",
+        path: "/",
         pollingInterval: 2,
         fileNamePattern: "(.*).txt"
     });
@@ -181,7 +182,7 @@ public function testServerRegisterFailureEmptyPassword() returns error? {
         host: "127.0.0.1",
         auth: {
             credentials: {
-                username: "wso2",
+                username: "in",
                 password: ""
             }
         },
@@ -206,7 +207,7 @@ public function testServerRegisterFailureEmptyUsername() returns error? {
         auth: {
             credentials: {
                 username: "",
-                password: "wso2"
+                password: "in"
             }
         },
         port: 21212,
@@ -230,7 +231,7 @@ public function testServerRegisterFailureInvalidUsername() returns error? {
         auth: {
             credentials: {
                 username: "ballerina",
-                password: "wso2"
+                password: "in"
             }
         },
         port: 21212,
@@ -253,7 +254,7 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
         host: "127.0.0.1",
         auth: {
             credentials: {
-                username: "wso2",
+                username: "in",
                 password: "ballerina"
             }
         },
@@ -277,7 +278,7 @@ public function testConnectToInvalidUrl() returns error? {
         host: "localhost",
         port: 21218,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"}
+            credentials: {username: "in", password: "wso2123"}
         },
         path: "/home/in",
         pollingInterval: 2,
@@ -309,7 +310,7 @@ public function testMutableWatchEvent() returns error? {
         host: "localhost",
         port: 21212,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"}
+            credentials: {username: "in", password: "wso2123"}
         },
         path: "/home/in",
         pollingInterval: 2,

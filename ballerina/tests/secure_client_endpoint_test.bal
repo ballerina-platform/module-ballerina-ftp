@@ -44,7 +44,7 @@ public function testSecureConnectWithWrongProtocol() returns error? {
         host: "127.0.0.1",
         port: 21213,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"},
+            credentials: {username: "in", password: "wso2123"},
             privateKey: {
                 path: "tests/resources/sftp.private.key",
                 password: "changeit"
@@ -114,7 +114,7 @@ public function testSecureConnectWithWrongPassword() returns error? {
         host: "127.0.0.1",
         port: 21213,
         auth: {
-            credentials: {username: "wso2", password: "wrongPassword"},
+            credentials: {username: "in", password: "wrongPassword"},
             privateKey: {
                 path: "tests/resources/sftp.private.key",
                 password: "changeit"
@@ -192,7 +192,7 @@ public function testSecureConnectWithEmptyPassword() returns error? {
         host: "127.0.0.1",
         port: 21213,
         auth: {
-            credentials: {username: "wso2", password: ""},
+            credentials: {username: "in", password: ""},
             privateKey: {
                 path: "tests/resources/sftp.private.key",
                 password: "changeit"
@@ -218,7 +218,7 @@ public function testSecureConnectWithWrongKey() returns error? {
         host: "127.0.0.1",
         port: 21213,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"},
+            credentials: {username: "in", password: "wso2123"},
             privateKey: {
                 path: "tests/resources/sftp.wrong.private.key",
                 password: "changeit"
@@ -244,7 +244,7 @@ public function testSecureConnectWithInvalidKeyPath() returns error? {
         host: "127.0.0.1",
         port: 21213,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"},
+            credentials: {username: "in", password: "wso2123"},
             privateKey: {
                 path: "tests/invalid_resources/sftp.wrong.private.key",
                 password: "changeit"
