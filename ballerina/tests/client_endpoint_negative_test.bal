@@ -192,7 +192,7 @@ public function testRemoveDirectoryWithWrongUrl() {
 
 // Disabling due to https://github.com/ballerina-platform/ballerina-standard-library/issues/2703
 @test:Config {
-    enable: false
+    enable: true
 }
 public function testSFTPConnectionToFTPServer() returns error? {
     ClientConfiguration serverConfig = {
@@ -200,11 +200,7 @@ public function testSFTPConnectionToFTPServer() returns error? {
         host: "127.0.0.1",
         port: 21212,
         auth: {
-            credentials: {username: "wso2", password: "wso2123"},
-            privateKey: {
-                path: "tests/resources/sftp.private.key",
-                password: "changeit"
-            }
+            credentials: {username: "wso2", password: "wso2123"}
         }
     };
     Client|Error clientEp = new (serverConfig);
