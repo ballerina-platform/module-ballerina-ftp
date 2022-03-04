@@ -17,11 +17,15 @@ include ':checkstyle'
 include ':ftp-native'
 include ':ftp-test-utils'
 include ':ftp-ballerina'
+include ':ftp-compiler-plugin'
+include 'ftp-compiler-plugin-tests'
 
 project(':checkstyle').projectDir = file("build-config${File.separator}checkstyle")
 project(':ftp-native').projectDir = file('native')
 project(':ftp-test-utils').projectDir = file('test-utils')
 project(':ftp-ballerina').projectDir = file('ballerina')
+project(':ftp-compiler-plugin').projectDir = file('compiler-plugin')
+project(':ftp-compiler-plugin-tests').projectDir = file('compiler-plugin-tests')
 
 gradleEnterprise {
     buildScan {
