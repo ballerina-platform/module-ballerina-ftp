@@ -32,7 +32,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors;
 /**
  * Tests for FTP package compiler plugin.
  */
-public class FTPServiceValidationTest {
+public class FtpServiceValidationTest {
 
     @Test
     public void testValidService1() {

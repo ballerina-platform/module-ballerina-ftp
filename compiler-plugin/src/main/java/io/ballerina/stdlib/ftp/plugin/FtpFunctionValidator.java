@@ -53,13 +53,13 @@ import static io.ballerina.stdlib.ftp.plugin.PluginUtils.validateModuleId;
 /**
  * FTP function validator.
  */
-public class FTPFunctionValidator {
+public class FtpFunctionValidator {
 
     private final SyntaxNodeAnalysisContext context;
     private final ServiceDeclarationNode serviceDeclarationNode;
     FunctionDefinitionNode onFileChange;
 
-    public FTPFunctionValidator(SyntaxNodeAnalysisContext context, FunctionDefinitionNode onFileChange) {
+    public FtpFunctionValidator(SyntaxNodeAnalysisContext context, FunctionDefinitionNode onFileChange) {
         this.context = context;
         this.serviceDeclarationNode = (ServiceDeclarationNode) context.node();
         this.onFileChange = onFileChange;

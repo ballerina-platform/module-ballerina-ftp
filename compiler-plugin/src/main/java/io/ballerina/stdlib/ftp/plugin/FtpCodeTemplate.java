@@ -47,7 +47,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginUtils.findNode;
 /**
  * Code action to add resource code snippet.
  */
-public class FTPCodeTemplate implements CodeAction {
+public class FtpCodeTemplate implements CodeAction {
 
     private static final String REMOTE_FUNCTION_TEXT = LS + "\tremote function onFileChange(ftp:WatchEvent & " +
             "readonly event) returns ftp:Error? {" + LS + LS + "\t}" + LS;

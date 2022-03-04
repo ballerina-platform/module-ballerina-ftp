@@ -24,11 +24,11 @@ import io.ballerina.projects.plugins.CompilerPluginContext;
 /**
  * Compiler plugin for FTP package.
  */
-public class FTPCompilerPlugin extends CompilerPlugin {
+public class FtpCompilerPlugin extends CompilerPlugin {
 
     @Override
     public void init(CompilerPluginContext compilerPluginContext) {
-        compilerPluginContext.addCodeAnalyzer(new FTPCodeAnalyzer());
-        compilerPluginContext.addCodeAction(new FTPCodeTemplate());
+        compilerPluginContext.addCodeAnalyzer(new FtpCodeAnalyzer());
+        compilerPluginContext.addCodeAction(new FtpCodeTemplate());
     }
 }

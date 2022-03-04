@@ -39,12 +39,12 @@ import static io.ballerina.stdlib.ftp.plugin.PluginUtils.validateModuleId;
 /**
  * FTP service compilation analysis task.
  */
-public class FTPServiceAnalysisTask implements AnalysisTask<SyntaxNodeAnalysisContext> {
+public class FtpServiceAnalysisTask implements AnalysisTask<SyntaxNodeAnalysisContext> {
 
-    private final FTPServiceValidator serviceValidator;
+    private final FtpServiceValidator serviceValidator;
 
-    public FTPServiceAnalysisTask() {
-        this.serviceValidator = new FTPServiceValidator();
+    public FtpServiceAnalysisTask() {
+        this.serviceValidator = new FtpServiceValidator();
     }
 
     @Override
@@ -55,13 +55,13 @@ public class FTPServiceAnalysisTask implements AnalysisTask<SyntaxNodeAnalysisCo
                 return;
             }
         }
-        if (!isFTPService(context)) {
+        if (!isFtpService(context)) {
             return;
         }
         this.serviceValidator.validate(context);
     }
 
-    private boolean isFTPService(SyntaxNodeAnalysisContext context) {
+    private boolean isFtpService(SyntaxNodeAnalysisContext context) {
         SemanticModel semanticModel = context.semanticModel();
         ServiceDeclarationNode serviceDeclarationNode = (ServiceDeclarationNode) context.node();
         Optional<Symbol> symbol = semanticModel.symbol(serviceDeclarationNode);
@@ -69,7 +69,7 @@ public class FTPServiceAnalysisTask implements AnalysisTask<SyntaxNodeAnalysisCo
             ServiceDeclarationSymbol serviceDeclarationSymbol = (ServiceDeclarationSymbol) symbol.get();
             List<TypeSymbol> listeners = serviceDeclarationSymbol.listenerTypes();
             for (TypeSymbol listener: listeners) {
-                if (!isFTPListener(listener)) {
+                if (!isFtpListener(listener)) {
                     return false;
                 }
             }
@@ -78,23 +78,23 @@ public class FTPServiceAnalysisTask implements AnalysisTask<SyntaxNodeAnalysisCo
         return false;
     }
 
-    private boolean isFTPListener(TypeSymbol listener) {
-        boolean isFTPListener = false;
+    private boolean isFtpListener(TypeSymbol listener) {
+        boolean isFtpListener = false;
         if (listener.typeKind() == TypeDescKind.UNION) {
             UnionTypeSymbol unionTypeSymbol = (UnionTypeSymbol) listener;
             List<TypeSymbol> members = unionTypeSymbol.memberTypeDescriptors();
             for (TypeSymbol memberSymbol : members) {
                 Optional<ModuleSymbol> module = memberSymbol.getModule();
                 if (module.isPresent()) {
-                    isFTPListener = validateModuleId(module.get());
+                    isFtpListener = validateModuleId(module.get());
                 }
             }
         } else {
             Optional<ModuleSymbol> module = listener.getModule();
             if (module.isPresent()) {
-                isFTPListener = validateModuleId(module.get());
+                isFtpListener = validateModuleId(module.get());
             }
         }
-        return isFTPListener;
+        return isFtpListener;
     }
 }

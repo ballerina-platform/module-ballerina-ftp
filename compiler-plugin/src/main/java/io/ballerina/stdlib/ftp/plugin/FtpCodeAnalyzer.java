@@ -25,10 +25,10 @@ import io.ballerina.projects.plugins.CodeAnalyzer;
 /**
  * Code analyzer for FTP package.
  */
-public class FTPCodeAnalyzer extends CodeAnalyzer {
+public class FtpCodeAnalyzer extends CodeAnalyzer {
 
     @Override
     public void init(CodeAnalysisContext codeAnalysisContext) {
-        codeAnalysisContext.addSyntaxNodeAnalysisTask(new FTPServiceAnalysisTask(), SyntaxKind.SERVICE_DECLARATION);
+        codeAnalysisContext.addSyntaxNodeAnalysisTask(new FtpServiceAnalysisTask(), SyntaxKind.SERVICE_DECLARATION);
     }
 }

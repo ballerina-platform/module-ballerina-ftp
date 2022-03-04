@@ -46,7 +46,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isRemoteFunction;
 /**
  * FTP service compilation validator.
  */
-public class FTPServiceValidator {
+public class FtpServiceValidator {
 
     public void validate(SyntaxNodeAnalysisContext context) {
         ServiceDeclarationNode serviceDeclarationNode = (ServiceDeclarationNode) context.node();
@@ -86,7 +86,7 @@ public class FTPServiceValidator {
                         DiagnosticSeverity.ERROR, node.location()));
             }
         }
-        new FTPFunctionValidator(context, onFileChange).validate();
+        new FtpFunctionValidator(context, onFileChange).validate();
     }
 
     private void validateAnnotation(SyntaxNodeAnalysisContext context) {
