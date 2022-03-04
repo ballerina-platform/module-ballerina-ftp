@@ -19,17 +19,17 @@
 package io.ballerina.stdlib.ftp.plugin;
 
 /**
- * FTP compiler plugin constants.
+ * Ftp compiler plugin constants.
  */
 public class PluginConstants {
 
-    // compiler plugin constants
     public static final String PACKAGE_PREFIX = "ftp";
     public static final String ON_FILE_CHANGE_FUNC = "onFileChange";
     public static final String PACKAGE_ORG = "ballerina";
 
     // parameters
     public static final String WATCHEVENT = "WatchEvent";
+    public static final String CALLER = "Caller";
 
     // return types error or nil
     public static final String ERROR = "error";

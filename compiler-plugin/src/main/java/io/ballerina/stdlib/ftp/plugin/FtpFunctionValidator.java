@@ -94,7 +94,47 @@ public class FtpFunctionValidator {
                         INVALID_PARAMETER,
                         DiagnosticSeverity.ERROR, paramNode.location()));
             }
-        } else if (parameters.size() > 1) {
+        } else if (parameters.size() == 2) {
+            ParameterNode firstParamNode = parameters.get(0);
+            ParameterNode secondParamNode = parameters.get(1);
+            SyntaxKind firstParamSyntaxKind = ((RequiredParameterNode) firstParamNode).typeName().kind();
+            SyntaxKind secondParamSyntaxKind = ((RequiredParameterNode) secondParamNode).typeName().kind();
+            if (secondParamSyntaxKind.equals(SyntaxKind.QUALIFIED_NAME_REFERENCE)) {
+                boolean callerResult = validateCallerParam(secondParamNode);
+                if (firstParamSyntaxKind.equals(SyntaxKind.OBJECT_TYPE_DESC)) {
+                    validateWatchEventParam(firstParamNode);
+                } else if (firstParamSyntaxKind.equals(SyntaxKind.INTERSECTION_TYPE_DESC)) {
+                    validateIntersectionParam(firstParamNode);
+                } else {
+                    // If the second parameter is not a caller type and first param is not ConsumerRecords,
+                    // the first parameter may be a caller type
+                    // (eg: (kafka:Caller caller, kafka:Consumer records))
+                    if (!callerResult) {
+                        validateCallerParam(firstParamNode);
+                    } else {
+                        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
+                                DiagnosticSeverity.ERROR, firstParamNode.location()));
+                    }
+                }
+            } else if (firstParamSyntaxKind.equals(SyntaxKind.QUALIFIED_NAME_REFERENCE)) {
+                boolean callerResult = validateCallerParam(firstParamNode);
+                if (secondParamSyntaxKind.equals(SyntaxKind.OBJECT_TYPE_DESC)) {
+                    validateWatchEventParam(secondParamNode);
+                } else if (secondParamSyntaxKind.equals(SyntaxKind.INTERSECTION_TYPE_DESC)) {
+                    validateIntersectionParam(secondParamNode);
+                } else {
+                    if (!callerResult) {
+                        validateCallerParam(secondParamNode);
+                    } else {
+                        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
+                                DiagnosticSeverity.ERROR, secondParamNode.location()));
+                    }
+                }
+            } else {
+                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
+                        DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
+            }
+        } else if (parameters.size() > 2) {
             context.reportDiagnostic(PluginUtils.getDiagnostic(ONLY_PARAMS_ALLOWED,
                     DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
         } else {
@@ -158,6 +198,30 @@ public class FtpFunctionValidator {
         }
     }
 
+    private boolean validateCallerParam(ParameterNode parameterNode) {
+        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
+        Node parameterTypeNode = requiredParameterNode.typeName();
+        SemanticModel semanticModel = context.semanticModel();
+        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
+        if (paramSymbol.isPresent()) {
+            Optional<ModuleSymbol> moduleSymbol = paramSymbol.get().getModule();
+            if (moduleSymbol.isPresent()) {
+                String paramName = paramSymbol.get().getName().isPresent() ?
+                        paramSymbol.get().getName().get() : "";
+                if (!validateModuleId(moduleSymbol.get()) ||
+                        !paramName.equals(PluginConstants.CALLER)) {
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
+                            DiagnosticSeverity.ERROR, requiredParameterNode.location()));
+                    return false;
+                }
+                return true;
+            }
+        }
+        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
+                DiagnosticSeverity.ERROR, requiredParameterNode.location()));
+        return false;
+    }
+
     private void validateReturnTypeErrorOrNil(FunctionDefinitionNode functionDefinitionNode) {
         MethodSymbol methodSymbol = getMethodSymbol(context, functionDefinitionNode);
         if (methodSymbol != null) {
@@ -172,9 +236,9 @@ public class FtpFunctionValidator {
                                 if (!returnType.signature().equals(PluginConstants.ERROR) &&
                                         !validateModuleId(returnType.getModule().get())) {
                                     context.reportDiagnostic(PluginUtils.getDiagnostic(
-                                            PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                            DiagnosticSeverity.ERROR,
-                                            functionDefinitionNode.functionSignature().location()));
+                                        PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL,
+                                        DiagnosticSeverity.ERROR,
+                                        functionDefinitionNode.functionSignature().location()));
                                 }
                             } else if (returnType.typeKind() != TypeDescKind.ERROR) {
                                 context.reportDiagnostic(PluginUtils.getDiagnostic(
@@ -185,8 +249,8 @@ public class FtpFunctionValidator {
                     }
                 } else if (returnTypeDesc.get().typeKind() != TypeDescKind.NIL) {
                     context.reportDiagnostic(PluginUtils.getDiagnostic(
-                            PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                            DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
+                        PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL,
+                        DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
                 }
             }
         }
