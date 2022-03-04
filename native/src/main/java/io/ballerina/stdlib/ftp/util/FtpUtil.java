@@ -21,6 +21,7 @@ package io.ballerina.stdlib.ftp.util;
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BError;
@@ -45,6 +46,7 @@ import java.util.zip.ZipOutputStream;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ANONYMOUS_PASSWORD;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ANONYMOUS_USERNAME;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.ModuleUtils.getModule;
 
 /**
@@ -208,6 +210,16 @@ public class FtpUtil {
 
     public static String getCompressedFileName(String fileName) {
         return fileName.substring(0, fileName.lastIndexOf('.')).concat(".zip");
+    }
+
+    public static MethodType getOnFileChangeMethod(BObject service) {
+        MethodType[] methodTypes = service.getType().getMethods();
+        for (MethodType method: methodTypes) {
+            if (method.getName().equals(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
+                return method;
+            }
+        }
+        return null;
     }
 
     /**

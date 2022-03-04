@@ -54,6 +54,7 @@ public class FtpConstants {
     public static final String STREAM_ENTRY_RECORD = "StreamEntry";
     public static final BString FIELD_VALUE = StringUtils.fromString("value");
     public static final String FTP_CALLER = "Caller";
+    public static final String FTP_CLIENT = "Client";
 
     public static final String FTP_SERVER_EVENT = "WatchEvent";
     public static final String FTP_WATCHEVENT_ADDED_FILES = "addedFiles";
@@ -62,6 +63,7 @@ public class FtpConstants {
     public static final String FTP_SERVER_CONNECTOR = "serverConnector";
     public static final String FTP_ANONYMOUS_USERNAME = "anonymous";
     public static final String FTP_ANONYMOUS_PASSWORD = "";
+    public static final String FTP_SERVICE_ENDPOINT_CONFIG = "serviceEndpointConfig";
 
     public static final String ENDPOINT_CONFIG_PROTOCOL = "protocol";
     public static final String ENDPOINT_CONFIG_HOST = "host";
