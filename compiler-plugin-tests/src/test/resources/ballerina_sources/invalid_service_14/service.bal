@@ -26,16 +26,17 @@ listener ftp:Listener remoteServer = check new({
 });
 
 service "Test1" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent & readonly event, string value) {}
+    remote function onFileChange(ftp:WatchEvent & readonly event1, ftp:WatchEvent & readonly event2) {}
 }
+
 service "Test2" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent & readonly event, ftp:FileInfo info) {}
+    remote function onFileChange(ftp:WatchEvent event1, ftp:WatchEvent event2) {}
 }
 
 service "Test3" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent & readonly event, ftp:FileInfo & readonly info) {}
+    remote function onFileChange(ftp:WatchEvent & readonly event1, ftp:WatchEvent event2) {}
 }
 
-service "Test4" on remoteServer {
-    remote function onFileChange(ftp:FileInfo & readonly info, ftp:WatchEvent & readonly event) {}
+service "Test3" on remoteServer {
+    remote function onFileChange(ftp:WatchEvent event1, ftp:WatchEvent event2) {}
 }

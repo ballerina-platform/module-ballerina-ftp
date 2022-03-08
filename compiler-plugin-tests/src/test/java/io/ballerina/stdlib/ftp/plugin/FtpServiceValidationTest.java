@@ -175,11 +175,11 @@ public class FtpServiceValidationTest {
         Package currentPackage = loadPackage("invalid_service_9");
         PackageCompilation compilation = currentPackage.getCompilation();
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
-        Assert.assertEquals(diagnosticResult.errors().size(), 5);
+        Assert.assertEquals(diagnosticResult.errors().size(), 4);
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
-            assertDiagnostic(diagnostic, CompilationErrors.ONLY_PARAMS_ALLOWED);
+            assertDiagnostic(diagnostic, CompilationErrors.INVALID_CALLER_PARAMETER);
         }
     }
 
@@ -192,7 +192,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
-            assertDiagnostic(diagnostic, CompilationErrors.INVALID_PARAMETER);
+            assertDiagnostic(diagnostic, CompilationErrors.INVALID_WATCHEVENT_PARAMETER);
         }
     }
 
@@ -207,5 +207,54 @@ public class FtpServiceValidationTest {
             Diagnostic diagnostic = (Diagnostic) obj;
             assertDiagnostic(diagnostic, CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL);
         }
+    }
+
+    @Test
+    public void testInvalidService12() {
+        Package currentPackage = loadPackage("invalid_service_12");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 3);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        for (Object obj : diagnostics) {
+            Diagnostic diagnostic = (Diagnostic) obj;
+            assertDiagnostic(diagnostic, CompilationErrors.INVALID_PARAMETERS);
+        }
+    }
+
+    @Test
+    public void testInvalidService13() {
+        Package currentPackage = loadPackage("invalid_service_13");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        for (Object obj : diagnostics) {
+            Diagnostic diagnostic = (Diagnostic) obj;
+            assertDiagnostic(diagnostic, CompilationErrors.ONLY_PARAMS_ALLOWED);
+        }
+    }
+
+    @Test
+    public void testInvalidService14() {
+        Package currentPackage = loadPackage("invalid_service_14");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 4);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        for (Object obj : diagnostics) {
+            Diagnostic diagnostic = (Diagnostic) obj;
+            assertDiagnostic(diagnostic, CompilationErrors.INVALID_CALLER_PARAMETER);
+        }
+    }
+
+    @Test
+    public void testInvalidService15() {
+        Package currentPackage = loadPackage("invalid_service_15");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, CompilationErrors.INVALID_WATCHEVENT_PARAMETER);
     }
 }

@@ -41,7 +41,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_PARAMETER;
+import static io.ballerina.compiler.syntax.tree.SyntaxKind.INTERSECTION_TYPE_DESC;
+import static io.ballerina.compiler.syntax.tree.SyntaxKind.QUALIFIED_NAME_REFERENCE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_CALLER_PARAMETER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_PARAMETERS;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_WATCHEVENT_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.METHOD_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MUST_HAVE_WATCHEVENT;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_ON_FILE_CHANGE;
@@ -85,13 +89,18 @@ public class FtpFunctionValidator {
         if (parameters.size() == 1) {
             ParameterNode paramNode = parameters.get(0);
             SyntaxKind paramSyntaxKind = ((RequiredParameterNode) paramNode).typeName().kind();
-            if (paramSyntaxKind.equals(SyntaxKind.QUALIFIED_NAME_REFERENCE)) {
+            if (paramSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
                 validateWatchEventParam(paramNode);
-            } else if (paramSyntaxKind.equals(SyntaxKind.INTERSECTION_TYPE_DESC)) {
-                validateIntersectionParam(paramNode);
+            } else if (paramSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
+                boolean watchEventParam = validateIntersectionParam(paramNode);
+                if (!watchEventParam) {
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(
+                            INVALID_WATCHEVENT_PARAMETER,
+                            DiagnosticSeverity.ERROR, paramNode.location()));
+                }
             } else {
                 context.reportDiagnostic(PluginUtils.getDiagnostic(
-                        INVALID_PARAMETER,
+                        INVALID_WATCHEVENT_PARAMETER,
                         DiagnosticSeverity.ERROR, paramNode.location()));
             }
         } else if (parameters.size() == 2) {
@@ -99,39 +108,83 @@ public class FtpFunctionValidator {
             ParameterNode secondParamNode = parameters.get(1);
             SyntaxKind firstParamSyntaxKind = ((RequiredParameterNode) firstParamNode).typeName().kind();
             SyntaxKind secondParamSyntaxKind = ((RequiredParameterNode) secondParamNode).typeName().kind();
-            if (secondParamSyntaxKind.equals(SyntaxKind.QUALIFIED_NAME_REFERENCE)) {
-                boolean callerResult = validateCallerParam(secondParamNode);
-                if (firstParamSyntaxKind.equals(SyntaxKind.OBJECT_TYPE_DESC)) {
-                    validateWatchEventParam(firstParamNode);
-                } else if (firstParamSyntaxKind.equals(SyntaxKind.INTERSECTION_TYPE_DESC)) {
-                    validateIntersectionParam(firstParamNode);
-                } else {
-                    // If the second parameter is not a caller type and first param is not ConsumerRecords,
-                    // the first parameter may be a caller type
-                    // (eg: (kafka:Caller caller, kafka:Consumer records))
-                    if (!callerResult) {
-                        validateCallerParam(firstParamNode);
-                    } else {
-                        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
-                                DiagnosticSeverity.ERROR, firstParamNode.location()));
-                    }
-                }
-            } else if (firstParamSyntaxKind.equals(SyntaxKind.QUALIFIED_NAME_REFERENCE)) {
-                boolean callerResult = validateCallerParam(firstParamNode);
-                if (secondParamSyntaxKind.equals(SyntaxKind.OBJECT_TYPE_DESC)) {
+
+            if (firstParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE) &&
+                    secondParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+                boolean firstParamCaller = validateCallerParam(firstParamNode);
+                if (firstParamCaller) {
                     validateWatchEventParam(secondParamNode);
-                } else if (secondParamSyntaxKind.equals(SyntaxKind.INTERSECTION_TYPE_DESC)) {
-                    validateIntersectionParam(secondParamNode);
                 } else {
-                    if (!callerResult) {
-                        validateCallerParam(secondParamNode);
-                    } else {
-                        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
+                    validateWatchEventParam(firstParamNode);
+                    boolean secondParamCaller = validateCallerParam(secondParamNode);
+                    if (!secondParamCaller) {
+                        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
                                 DiagnosticSeverity.ERROR, secondParamNode.location()));
                     }
                 }
+            } else if (firstParamSyntaxKind.equals(INTERSECTION_TYPE_DESC) &&
+                    secondParamSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
+                boolean firstParamWatchEvent = validateIntersectionParam(firstParamNode);
+                if (!firstParamWatchEvent) {
+                    boolean secondParamWatchEvent = validateIntersectionParam(secondParamNode);
+                    if (!secondParamWatchEvent) {
+                        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_WATCHEVENT_PARAMETER,
+                                DiagnosticSeverity.ERROR, secondParamNode.location()));
+                    }
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
+                            DiagnosticSeverity.ERROR, firstParamNode.location()));
+                } else {
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
+                            DiagnosticSeverity.ERROR, secondParamNode.location()));
+                }
+            } else if (firstParamSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
+                boolean firstParamWatchEvent = validateIntersectionParam(firstParamNode);
+                boolean secondParamCaller = validateCallerParam(secondParamNode);
+                if (!firstParamWatchEvent && !secondParamCaller) {
+                    if (secondParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+                        validateWatchEventParam(secondParamNode);
+                    }
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
+                            DiagnosticSeverity.ERROR, firstParamNode.location()));
+                } else if (!firstParamWatchEvent) {
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_WATCHEVENT_PARAMETER,
+                            DiagnosticSeverity.ERROR, firstParamNode.location()));
+                } else if (!secondParamCaller) {
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
+                            DiagnosticSeverity.ERROR, secondParamNode.location()));
+                }
+            } else if (secondParamSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
+                boolean firstParamCaller = validateCallerParam(firstParamNode);
+                boolean secondParamWatchEvent = validateIntersectionParam(secondParamNode);
+                if (!firstParamCaller && !secondParamWatchEvent) {
+                    if (firstParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+                        validateWatchEventParam(firstParamNode);
+                    }
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
+                            DiagnosticSeverity.ERROR, secondParamNode.location()));
+                } else if (!secondParamWatchEvent) {
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_WATCHEVENT_PARAMETER,
+                            DiagnosticSeverity.ERROR, firstParamNode.location()));
+                } else if (!firstParamCaller) {
+                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
+                            DiagnosticSeverity.ERROR, secondParamNode.location()));
+                }
+            } else if (firstParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+                boolean firstParamCaller = validateCallerParam(firstParamNode);
+                if (!firstParamCaller) {
+                    validateWatchEventParam(firstParamNode);
+                }
+                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
+                        DiagnosticSeverity.ERROR, secondParamNode.location()));
+            } else if (secondParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+                boolean secondParamCaller = validateCallerParam(secondParamNode);
+                if (!secondParamCaller) {
+                    validateWatchEventParam(secondParamNode);
+                }
+                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
+                        DiagnosticSeverity.ERROR, firstParamNode.location()));
             } else {
-                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
+                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
                         DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
             }
         } else if (parameters.size() > 2) {
@@ -143,7 +196,7 @@ public class FtpFunctionValidator {
         }
     }
 
-    private void validateIntersectionParam(ParameterNode parameterNode) {
+    private boolean validateIntersectionParam(ParameterNode parameterNode) {
         RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
         SemanticModel semanticModel = context.semanticModel();
         Optional<Symbol> symbol = semanticModel.symbol(requiredParameterNode);
@@ -156,18 +209,12 @@ public class FtpFunctionValidator {
                         .anyMatch(typeSymbol -> typeSymbol.nameEquals(PluginConstants.WATCHEVENT) &&
                                 typeSymbol.getModule().isPresent() &&
                                 validateModuleId(typeSymbol.getModule().get()));
-                if (!watchEventExists) {
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
-                            DiagnosticSeverity.ERROR, requiredParameterNode.location()));
+                if (watchEventExists) {
+                    return true;
                 }
-            } else {
-                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
-                        DiagnosticSeverity.ERROR, requiredParameterNode.location()));
             }
-        } else {
-            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
-                    DiagnosticSeverity.ERROR, requiredParameterNode.location()));
         }
+        return false;
     }
 
     private void validateWatchEventParam(ParameterNode parameterNode) {
@@ -183,17 +230,17 @@ public class FtpFunctionValidator {
                 if (!validateModuleId(moduleSymbol.get()) ||
                         !paramName.equals(PluginConstants.WATCHEVENT)) {
                     context.reportDiagnostic(PluginUtils.getDiagnostic(
-                            INVALID_PARAMETER,
+                            INVALID_WATCHEVENT_PARAMETER,
                             DiagnosticSeverity.ERROR, requiredParameterNode.location()));
                 }
             } else {
                 context.reportDiagnostic(PluginUtils.getDiagnostic(
-                        INVALID_PARAMETER,
+                        INVALID_WATCHEVENT_PARAMETER,
                         DiagnosticSeverity.ERROR, requiredParameterNode.location()));
             }
         } else {
             context.reportDiagnostic(PluginUtils.getDiagnostic(
-                    INVALID_PARAMETER,
+                    INVALID_WATCHEVENT_PARAMETER,
                     DiagnosticSeverity.ERROR, requiredParameterNode.location()));
         }
     }
@@ -210,15 +257,11 @@ public class FtpFunctionValidator {
                         paramSymbol.get().getName().get() : "";
                 if (!validateModuleId(moduleSymbol.get()) ||
                         !paramName.equals(PluginConstants.CALLER)) {
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
-                            DiagnosticSeverity.ERROR, requiredParameterNode.location()));
                     return false;
                 }
                 return true;
             }
         }
-        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETER,
-                DiagnosticSeverity.ERROR, requiredParameterNode.location()));
         return false;
     }
 

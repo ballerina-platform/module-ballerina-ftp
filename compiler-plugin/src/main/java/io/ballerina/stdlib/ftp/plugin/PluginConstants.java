@@ -49,10 +49,13 @@ public class PluginConstants {
                 "FTP_106"),
         ONLY_PARAMS_ALLOWED("Invalid method parameter count. Only ftp:WatchEvent & readonly " +
                 "or ftp:WatchEvent is allowed.", "FTP_107"),
-        INVALID_PARAMETER("Invalid method parameter. Only ftp:WatchEvent & readonly or " +
+        INVALID_WATCHEVENT_PARAMETER("Invalid method parameter. Only ftp:WatchEvent & readonly or " +
                 "ftp:WatchEvent is allowed.", "FTP_108"),
-        INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_109"),
-        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_110");
+        INVALID_CALLER_PARAMETER("Invalid method parameter. Only ftp:Caller is allowed", "FTP_109"),
+        INVALID_PARAMETERS("Invalid method parameters. Only ftp:WatchEvent & readonly or ftp:WatchEvent and " +
+                "ftp:Caller is allowed.", "FTP_110"),
+        INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_111"),
+        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_112");
         private final String error;
         private final String errorCode;
 
