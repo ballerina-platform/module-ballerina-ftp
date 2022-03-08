@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CODE_TEMPLATE_NAME;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CODE_TEMPLATE_NAME_WITH_CALLER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.LS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.NODE_LOCATION;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.findNode;
@@ -47,10 +47,10 @@ import static io.ballerina.stdlib.ftp.plugin.PluginUtils.findNode;
 /**
  * Code action to add resource code snippet.
  */
-public class FtpCodeTemplate implements CodeAction {
+public class FtpCodeTemplateWithCaller implements CodeAction {
 
     private static final String REMOTE_FUNCTION_TEXT = LS + "\tremote function onFileChange(ftp:WatchEvent & " +
-            "readonly event) returns ftp:Error? {" + LS + LS + "\t}" + LS;
+            "readonly event, ftp:Caller caller) returns ftp:Error? {" + LS + LS + "\t}" + LS;
 
     @Override
     public List<String> supportedDiagnosticCodes() {
@@ -64,7 +64,7 @@ public class FtpCodeTemplate implements CodeAction {
             return Optional.empty();
         }
         CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION, diagnostic.location().lineRange());
-        return Optional.of(CodeActionInfo.from("Insert service template", List.of(locationArg)));
+        return Optional.of(CodeActionInfo.from("Insert service template with caller", List.of(locationArg)));
     }
 
     @Override
@@ -108,6 +108,6 @@ public class FtpCodeTemplate implements CodeAction {
 
     @Override
     public String name() {
-        return CODE_TEMPLATE_NAME;
+        return CODE_TEMPLATE_NAME_WITH_CALLER;
     }
 }

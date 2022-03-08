@@ -29,6 +29,7 @@ public class FtpCompilerPlugin extends CompilerPlugin {
     @Override
     public void init(CompilerPluginContext compilerPluginContext) {
         compilerPluginContext.addCodeAnalyzer(new FtpCodeAnalyzer());
-        compilerPluginContext.addCodeAction(new FtpCodeTemplate());
+        compilerPluginContext.addCodeAction(new FtpCodeTemplateWithoutCaller());
+        compilerPluginContext.addCodeAction(new FtpCodeTemplateWithCaller());
     }
 }

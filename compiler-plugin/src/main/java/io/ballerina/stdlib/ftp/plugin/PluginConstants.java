@@ -37,7 +37,8 @@ public class PluginConstants {
     // Code template related constants
     public static final String NODE_LOCATION = "node.location";
     public static final String LS = System.lineSeparator();
-    public static final String CODE_TEMPLATE_NAME = "ADD_REMOTE_FUNCTION_CODE_SNIPPET";
+    public static final String CODE_TEMPLATE_NAME_WITH_CALLER = "ADD_REMOTE_FUNCTION_CODE_SNIPPET_WITH_CALLER";
+    public static final String CODE_TEMPLATE_NAME_WITHOUT_CALLER = "ADD_REMOTE_FUNCTION_CODE_SNIPPET_WITHOUT_CALLER";
 
     enum CompilationErrors {
         INVALID_ANNOTATION_NUMBER("No annotations are allowed for ftp services.", "FTP_101"),
