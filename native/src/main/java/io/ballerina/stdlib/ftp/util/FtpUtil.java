@@ -42,6 +42,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -215,12 +216,9 @@ public class FtpUtil {
 
     public static Optional<MethodType> getOnFileChangeMethod(BObject service) {
         MethodType[] methodTypes = service.getType().getMethods();
-        for (MethodType method: methodTypes) {
-            if (method.getName().equals(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
-                return Optional.ofNullable(method);
-            }
-        }
-        return Optional.empty();
+        return Stream.of(methodTypes)
+                .filter(methodType -> ON_FILE_CHANGE_REMOTE_FUNCTION.equals(methodType.getName()))
+                .findFirst();
     }
 
     /**
