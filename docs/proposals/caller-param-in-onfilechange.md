@@ -3,7 +3,7 @@
 _Owners_: @shafreenAnfar @dilanSachi @Bhashinee     
 _Reviewers_: @shafreenAnfar @Bhashinee  
 _Created_: 2022/02/23  
-_Issues_: [#2525](https://github.com/ballerina-platform/ballerina-standard-library/issues/2525)
+_Issues_: [#2525](https://github.com/ballerina-platform/ballerina-standard-library/issues/2525) [#2729](https://github.com/ballerina-platform/ballerina-standard-library/issues/2729)
 
 ## Summary
 The `onFileChange` method in `ftp:Service` gets invoked for any file changes in the FTP server. The argument `ftp:WatchEvent` is passed to the method, and it contains the details of newly added files and deleted files. When the user wants to do any task, an `ftp:Client` has to be created manually. In this proposal, we are going to pass `ftp:Caller` which contains the APIs of the `ftp:Client` as an argument to the `onFileChange` method to improve the usability.
