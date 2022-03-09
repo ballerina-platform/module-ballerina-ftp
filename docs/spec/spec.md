@@ -3,7 +3,7 @@
 _Owners_: @shafreenAnfar @dilanSachi @Bhashinee    
 _Reviewers_: @shafreenAnfar @Bhashinee  
 _Created_: 2020/10/28   
-_Updated_: 2022/03/01  
+_Updated_: 2022/03/09  
 _Edition_: Swan Lake    
 _Issue_: [#2202](https://github.com/ballerina-platform/ballerina-standard-library/issues/2202)
 
@@ -33,9 +33,12 @@ The conforming implementation of the specification is released and included in t
         *  4.2.1. [Insecure Listener](#421-insecure-listener)
         *  4.2.2. [Secure Listener](#422-secure-listener)
     *   4.3. [Usage](#43-usage)
-5. [Samples](#5-samples)
-    *  5.1. [Sending Files](#51-sending-files)
-    *  5.2. [Listening to File Changes](#52-listening-to-file-changes)
+5. [Caller](#5-caller)
+    *  5.1. [Initialization](#51-initialization)
+    *  5.2. [Functions](#52-functions)
+6. [Samples](#6-samples)
+    *  6.1. [Sending Files](#61-sending-files)
+    *  6.2. [Listening to File Changes](#62-listening-to-file-changes)
 
 ## 1. Overview
 FTP is a file transfer protocol. It’s a basic way of using the Internet to share files.
@@ -366,7 +369,7 @@ An insecure FTP listener can be initialized by providing the mandatory `protocol
 public isolated function init(ListenerConfiguration listenerConfig) returns Error?;
 ```
 #### 4.2.2. Secure Listener
-A secure client can be initialized by providing `ftp:SFTP` as the protocol and by providing `ftp:Credentials`
+A secure listener can be initialized by providing `ftp:SFTP` as the protocol and by providing `ftp:Credentials`
 and `ftp:PrivateKey` to `ftp:AuthConfiguration`.
 ```ballerina
 ftp:ListenerConfiguration ftpConfig = {
@@ -390,7 +393,7 @@ After initializing the listener, a service must be attached to the listener. The
 1. Attach the service to the listener directly.
 ```ballerina
 service ftp:Service on ftpListener {
-    remote function onFileChange(ftp:WatchEvent & readonly event) {
+    remote function onFileChange(ftp:WatchEvent & readonly event, ftp:Caller caller) {
         // process event
     }
 }
@@ -399,12 +402,13 @@ service ftp:Service on ftpListener {
 ```ballerina
 // Create a service object
 ftp:Service ftpListener = service object {
-    remote function onFileChange(ftp:WatchEvent & readonly event) {
+    remote function onFileChange(ftp:WatchEvent & readonly event, ftp:Caller caller) {
         // process event
     }
 };
 ```
-The function `onFileChange()` is invoked when the listener notices a file change in the FTP server.
+The remote function `onFileChange()` is invoked when the listener notices a file change in the FTP server. This function supports
+having both `ftp:WatchEvent` and `ftp:Caller` parameters or having only `ftp:WatchEvent` parameter.
 
 The Listener has following functions to manage a service.
 * `attach()` - can be used to bind a service to the `ftp:Listener`.
@@ -484,8 +488,148 @@ public isolated function poll() returns error?
 #            server
 public isolated function register(Service ftpService, string? name) returns error?
 ```
-## 5. Samples
-### 5.1. Sending Files
+## 5. Caller
+`ftp:Caller` is like a wrapper on the `ftp:Client`. It has an `ftp:Client` defined inside and contains all the APIs of `ftp:Client` like `get()`, `put()`, `append()` etc. However, `ftp:Caller` can only be created internally to be passed to the `onFileChange` method.
+`ftp:Caller` is created in the runtime when the `ftp:Listener` gets attached to a `ftp:Service` by checking whether the user has added `ftp:Caller` as a parameter in the `onFileChange` method.
+### 5.1. Initialization
+`ftp:Caller` can be both secure and insecure and this depends on the type of `ftp:Listener`. If the `ftp:Listener` is a secure type, `ftp:Caller` will also be secure since the wrapping `ftp:Client` is created using a subset of the `ftp:ListenerConfiguration`.
+```ballerina
+# Gets invoked during object initialization.
+#
+# + 'client - The `ftp:Client` which is used to interact with the Ftp server
+# + return - `ftp:Error` in case of errors or `()` otherwise
+isolated function init(Client 'client) {
+    self.'client = 'client;
+}
+```
+### 5.2. Functions
+* `put()` method can be used to put files on the server.
+```ballerina
+# Adds a file to FTP server.
+# ```ballerina
+# ftp:Error? response = caller->put(path, channel);
+# ```
+#
+# + path - The resource path
+# + content - Content to be written to the file in server
+# + compressionType - Type of the compression to be used, if
+#                     the file should be compressed before
+#                     uploading
+# + return - `()` or else an `ftp:Error` if failed to establish
+#            the communication with the FTP server
+remote isolated function put(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content, Compression compressionType=NONE) returns Error?;
+```
+* `append()` can be used to append the content to an existing file in FTP server.
+```ballerina
+# Appends the content to an existing file in FTP server.
+# ```ballerina
+# ftp:Error? response = client->caller(path, content);
+# ```
+#
+# + path - The resource path
+# + content - Content to be written to the file in server
+# + return - `()` or else an `ftp:Error` if failed to establish
+#            the communication with the FTP server
+remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content) returns Error?;
+```
+* To retrieve file content from FTP server, `get()` can be used.
+```ballerina
+# Retrieves the file content from a remote resource.
+# ```ballerina
+# stream<byte[] & readonly, io:Error?>|ftp:Error channel = caller->get(path);
+# ```
+#
+# + path - The resource path
+# + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
+remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error;
+```
+* `mkdir()` can be used to create a new directory in FTP server.
+```ballerina
+# Creates a new directory in FTP server.
+# ```ballerina
+# ftp:Error? response = caller->mkdir(path);
+# ```
+#
+# + path - The directory path
+# + return - `()` or else an `ftp:Error` if failed to establish
+#            the communication with the FTP server
+remote isolated function mkdir(string path) returns Error?;
+```
+* `rmdir()` can be used to remove an empty directory in the server.
+```ballerina
+# Deletes an empty directory in FTP server.
+# ```ballerina
+# ftp:Error? response = caller->rmdir(path);
+# ```
+#
+# + path - The directory path
+# + return - `()` or else an `ftp:Error` if failed to establish
+#            the communication with the FTP server
+remote isolated function rmdir(string path) returns Error?;
+```
+* To delete a file, `delete()` can be used.
+```ballerina
+# Deletes a file from FTP server.
+# ```ballerina
+# ftp:Error? response = caller->delete(path);
+# ```
+#
+# + path - The resource path
+# + return -  `()` or else an `ftp:Error` if failed to establish
+#             the communication with the FTP server
+remote isolated function delete(string path) returns Error?;
+```
+* To rename a file or move it to another directory, `rename()` can be used.
+```ballerina
+# Renames a file or moves it to a new location within the same FTP server.
+# ```ballerina
+# ftp:Error? response = caller->rename(origin, destination);
+# ```
+#
+# + origin - The source file location
+# + destination - The destination file location
+# + return - `()` or else an `ftp:Error` if failed to establish
+#            the communication with the FTP server
+remote isolated function rename(string origin, string destination) returns Error?;
+```
+* `size()` function can be used to get the size of a file.
+```ballerina
+# Gets the size of a file resource.
+# ```ballerina
+# int|ftp:Error response = caller->size(path);
+# ```
+#
+# + path - The resource path
+# + return - The file size in bytes or an `ftp:Error` if
+#            failed to establish the communication with the FTP server
+remote isolated function size(string path) returns int|Error;
+```
+* To get the file list in a directory, `list()` can be used.
+```ballerina
+# Gets the file name list in a given folder.
+# ```ballerina
+# ftp:FileInfo[]|ftp:Error response = caller->list(path);
+# ```
+#
+# + path - The direcotry path
+# + return - An array of file names or an `ftp:Error` if failed to
+#            establish the communication with the FTP server
+remote isolated function list(string path) returns FileInfo[]|Error;
+```
+* To check if a resource is a directory, `isDirectory()` can be used.
+```ballerina
+# Checks if a given resource is a directory.
+# ```ballerina
+# boolean|ftp:Error response = caller->isDirectory(path);
+# ```
+#
+# + path - The resource path
+# + return - `true` if given resource is a directory or an `ftp:Error` if
+#            an error occurred while checking the path
+remote isolated function isDirectory(string path) returns boolean|Error;
+```
+## 6. Samples
+### 6.1. Sending Files
 ```ballerina
 import ballerina/ftp;
 import ballerina/io;
@@ -517,7 +661,7 @@ public function main() returns error? {
     check fileStream.close();
 }
 ```
-### 5.2. Listening to file changes
+### 6.2. Listening to file changes
 ```ballerina
 import ballerina/ftp;
 import ballerina/io;
@@ -543,9 +687,10 @@ listener ftp:Listener remoteServer = check new({
 
 service on remoteServer {
 
-    remote function onFileChange(ftp:WatchEvent & readonly event) {
+    remote function onFileChange(ftp:Caller caller, ftp:WatchEvent & readonly event) {
         foreach ftp:FileInfo addedFile in event.addedFiles {
             io:println("Added file path: " + addedFile.path);
+            check caller->delete(addedFile.path);
         }
 
         foreach string deletedFile in event.deletedFiles {
