@@ -503,6 +503,7 @@ isolated function init(Client 'client) {
 }
 ```
 ### 5.2. Functions
+* `put()` method can be used to put files on the server.
 ```ballerina
 # Adds a file to FTP server.
 # ```ballerina
