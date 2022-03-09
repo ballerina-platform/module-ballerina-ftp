@@ -14,8 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// FTP client.
-
 import ballerina/io;
 
 # Represents an FTP client that intracts with an FTP server

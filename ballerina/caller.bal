@@ -16,8 +16,6 @@
 
 import ballerina/io;
 
-// FTP caller.
-
 # Represents an FTP caller that is passed to the onFileChange function
 public isolated client class Caller {
     private final Client 'client;
