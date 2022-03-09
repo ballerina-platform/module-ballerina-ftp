@@ -18,13 +18,11 @@
 #
 # + path - Relative file path for a newly-added file
 # + size - Size of the file
-# + lastModifiedTimestamp - Last-modified timestamp of the file in
-#                           UNIX Epoch time
+# + lastModifiedTimestamp - Last-modified timestamp of the file in UNIX Epoch time
 # + name - File name
 # + isFolder - `true` if the file is a folder
 # + isFile - `true` if the file is a file
-# + pathDecoded - Normalized absolute path of this file
-#                 within its file system
+# + pathDecoded - Normalized absolute path of this file within its file system
 # + extension - Extension of the file name
 # + publicURIString - Receiver as a URI String for public display
 # + fileType - Type of the file
@@ -68,7 +66,7 @@ public type FileInfo record {|
 #
 # + addedFiles - Array of `ftp:FileInfo` that represents newly added files
 # + deletedFiles - Array of strings that contains deleted file names
-public type WatchEvent readonly & record {|
+public type WatchEvent record {|
     FileInfo[] addedFiles;
     string[] deletedFiles;
 |};

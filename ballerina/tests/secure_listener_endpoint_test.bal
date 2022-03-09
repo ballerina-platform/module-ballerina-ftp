@@ -22,7 +22,7 @@ int secureAddedFileCount = 0;
 int secureDeletedFileCount = 0;
 boolean secureWatchEventReceived = false;
 
-listener Listener secureRemoteServer = check new({
+listener Listener secureRemoteServer = check new ({
     protocol: SFTP,
     host: "127.0.0.1",
     auth: {
@@ -41,7 +41,7 @@ listener Listener secureRemoteServer = check new({
 });
 
 service "ftpServerConnector" on secureRemoteServer {
-    function onFileChange(WatchEvent event) {
+    remote function onFileChange(WatchEvent & readonly event) {
         secureAddedFileCount = event.addedFiles.length();
         secureDeletedFileCount = event.deletedFiles.length();
         secureWatchEventReceived = true;
@@ -55,13 +55,13 @@ service "ftpServerConnector" on secureRemoteServer {
     }
 }
 
-@test:Config{
+@test:Config {
 }
 public function testSecureAddedFileCount() {
     int timeoutInSeconds = 300;
     // Test fails in 5 minutes if failed to receive watchEvent
     while timeoutInSeconds > 0 {
-        if (secureWatchEventReceived) {
+        if secureWatchEventReceived {
             log:printInfo("Securely added file count: " + secureAddedFileCount.toString());
             test:assertEquals(secureAddedFileCount, 2);
             break;
@@ -77,7 +77,7 @@ public function testSecureAddedFileCount() {
 
 @test:Config {}
 public function testConnectWithInvalidKey() returns error? {
-    Listener|Error sftpServer = new({
+    Listener|Error sftpServer = new ({
         protocol: SFTP,
         host: "localhost",
         port: 21213,
@@ -102,7 +102,7 @@ public function testConnectWithInvalidKey() returns error? {
 
 @test:Config {}
 public function testConnectWithInvalidKeyPath() returns error? {
-    Listener|Error sftpServer = new({
+    Listener|Error sftpServer = new ({
         protocol: SFTP,
         host: "localhost",
         port: 21213,
@@ -127,7 +127,7 @@ public function testConnectWithInvalidKeyPath() returns error? {
 
 @test:Config {}
 public function testConnectToSFTPServerWithFTPProtocol() returns error? {
-    Listener|Error sftpServer = new({
+    Listener|Error sftpServer = new ({
         protocol: FTP,
         host: "localhost",
         port: 21213,
@@ -148,7 +148,7 @@ public function testConnectToSFTPServerWithFTPProtocol() returns error? {
 
 @test:Config {}
 public function testConnectWithEmptyKey() returns error? {
-    Listener|Error sftpServer = new({
+    Listener|Error sftpServer = new ({
         protocol: SFTP,
         host: "localhost",
         port: 21213,
@@ -169,7 +169,7 @@ public function testConnectWithEmptyKey() returns error? {
 
 @test:Config {}
 public function testConnectWithEmptyCredentials() returns error? {
-    Listener|Error sftpServer = new({
+    Listener|Error sftpServer = new ({
         protocol: SFTP,
         host: "localhost",
         port: 21213,
@@ -194,7 +194,7 @@ public function testConnectWithEmptyCredentials() returns error? {
 
 @test:Config {}
 public function testConnectWithEmptyCredentialsAndKey() returns error? {
-    Listener|Error sftpServer = new({
+    Listener|Error sftpServer = new ({
         protocol: SFTP,
         host: "localhost",
         port: 21213,

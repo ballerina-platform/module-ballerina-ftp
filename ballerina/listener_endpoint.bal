@@ -52,9 +52,8 @@ public class Listener {
     # + ftpService - Service to be detached from the listener
     # + name - Name of the service to be detached from the listener
     # + return - `()` or else an `error` upon failure to register the listener
-    public isolated function attach(Service ftpService, string[]|string? name = ())
-            returns error? {
-        if (name is string?) {
+    public isolated function attach(Service ftpService, string[]|string? name = ()) returns error? {
+        if name is string? {
             return self.register(ftpService, name);
         }
     }
@@ -97,7 +96,7 @@ public class Listener {
 
     isolated function stop() returns error? {
         var id = self.jobId;
-        if (id is task:JobId) {
+        if id is task:JobId {
             check task:unscheduleJob(id);
         }
     }
@@ -135,7 +134,7 @@ class Job {
 
     public isolated function execute() {
         var result = self.ftpListener.poll();
-        if (result is error) {
+        if result is error {
             log:printError("Error while executing poll function", 'error = result);
         }
     }

@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+ - [[#1514] Added compiler plugin validation support for ftp service](https://github.com/ballerina-platform/ballerina-standard-library/issues/1514)
+ - [[#2704] Added code snippet generation for ftp service](https://github.com/ballerina-platform/ballerina-standard-library/issues/2704)
+
+## [2.2.0] - 2022-01-28
+
+### Changed
+ - [[#2741] Remove `readonly` type of `ftp:WatchEvent` and support both `ftp:WatchEvent & readonly` and `ftp:WatchEvent` in `onFileChange` method](https://github.com/ballerina-platform/ballerina-standard-library/issues/2741)
+
+## [2.2.0] - 2022-01-28
+
 ### Changed
  - [[#2549] Make `path` field to root and `fileNamePattern` field optional in `ftp:ListenerConfiguration`](https://github.com/ballerina-platform/ballerina-standard-library/issues/2549)
 

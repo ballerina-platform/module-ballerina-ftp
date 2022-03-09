@@ -17,13 +17,14 @@
 import ballerina/lang.runtime as runtime;
 import ballerina/log;
 import ballerina/test;
+import ballerina/io;
 
 int addedFileCount = 0;
 FileInfo? anonServerAddedFileInfo = ();
 int deletedFileCount = 0;
 boolean watchEventReceived = false;
 
-listener Listener remoteServer = check new({
+listener Listener remoteServer = check new ({
     protocol: FTP,
     host: "127.0.0.1",
     auth: {
@@ -39,7 +40,7 @@ listener Listener remoteServer = check new({
 });
 
 service on remoteServer {
-    remote function onFileChange(WatchEvent event) {
+    remote function onFileChange(WatchEvent & readonly event) {
         addedFileCount = event.addedFiles.length();
         deletedFileCount = event.deletedFiles.length();
         watchEventReceived = true;
@@ -53,7 +54,7 @@ service on remoteServer {
     }
 }
 
-listener Listener anonymousRemoteServer = check new({
+listener Listener anonymousRemoteServer = check new ({
     protocol: FTP,
     host: "127.0.0.1",
     auth: {
@@ -69,7 +70,7 @@ listener Listener anonymousRemoteServer = check new({
 });
 
 service on anonymousRemoteServer {
-    remote function onFileChange(WatchEvent event) {
+    remote function onFileChange(WatchEvent & readonly event) {
         if event.addedFiles.length() == 1 && anonServerAddedFileInfo == () {
             anonServerAddedFileInfo = event.addedFiles[0];
         } else {
@@ -78,7 +79,7 @@ service on anonymousRemoteServer {
     }
 }
 
-@test:Config{
+@test:Config {
 }
 public function testAnonServerAddedFile() {
     int timeoutInSeconds = 300;
@@ -121,7 +122,7 @@ public function testAnonServerAddedFile() {
     }
 }
 
-@test:Config{
+@test:Config {
 }
 public function testAddedFileCount() {
     int timeoutInSeconds = 300;
@@ -143,8 +144,7 @@ public function testAddedFileCount() {
 
 @test:Config {}
 public function testFtpServerDeregistration() returns error? {
-
-    Listener detachFtpServer = check new({
+    Listener detachFtpServer = check new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -159,7 +159,10 @@ public function testFtpServerDeregistration() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    Service detachService = service object { function onFileChange(WatchEvent event) {} };
+    Service detachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
     error? result1 = detachFtpServer.attach(detachService, "remote-server");
     if result1 is error {
         test:assertFail("Failed to attach to the FTP server: " + result1.message());
@@ -173,8 +176,7 @@ public function testFtpServerDeregistration() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureEmptyPassword() returns error? {
-
-    Listener|Error emptyPasswordServer = new({
+    Listener|Error emptyPasswordServer = new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -198,8 +200,7 @@ public function testServerRegisterFailureEmptyPassword() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureEmptyUsername() returns error? {
-
-    Listener|Error emptyUsernameServer = new({
+    Listener|Error emptyUsernameServer = new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -223,7 +224,7 @@ public function testServerRegisterFailureEmptyUsername() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureInvalidUsername() returns error? {
-    Listener|Error invalidUsernameServer = new({
+    Listener|Error invalidUsernameServer = new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -247,7 +248,7 @@ public function testServerRegisterFailureInvalidUsername() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureInvalidPassword() returns error? {
-    Listener|Error invalidPasswordServer = new({
+    Listener|Error invalidPasswordServer = new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -271,7 +272,7 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
 
 @test:Config {}
 public function testConnectToInvalidUrl() returns error? {
-    Listener|Error invalidUrlServer = new({
+    Listener|Error invalidUrlServer = new ({
         protocol: FTP,
         host: "localhost",
         port: 21218,
@@ -288,4 +289,45 @@ public function testConnectToInvalidUrl() returns error? {
     } else {
         test:assertFail("Non-error result when trying to connect to an invalid url.");
     }
+}
+
+@test:Config {
+    dependsOn: [testDeleteFile]
+}
+public function testMutableWatchEvent() returns error? {
+    FileInfo[] fileInfos = [];
+    Service ftpService = service object {
+        remote function onFileChange(WatchEvent event) {
+            event.addedFiles.forEach(function (FileInfo fInfo) {
+                fInfo.name = "overriden_name";
+            });
+            fileInfos = event.addedFiles;
+        }
+    };
+    Listener ftpListener = check new ({
+        protocol: FTP,
+        host: "localhost",
+        port: 21212,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"}
+        },
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+    check ftpListener.attach(ftpService);
+    check ftpListener.'start();
+    runtime:registerListener(ftpListener);
+
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check clientEp->put("/home/in/mutable/test1.txt", bStream, compressionType = ZIP);
+    runtime:sleep(2);
+
+    runtime:deregisterListener(ftpListener);
+    check ftpListener.gracefulStop();
+
+    test:assertTrue(fileInfos.length() != 0);
+    fileInfos.forEach(function (FileInfo fInfo) {
+        test:assertEquals(fInfo.name, "overriden_name");
+    });
 }

@@ -44,19 +44,19 @@ class ByteStream {
         self.resourcePath = resourcePath;
         record {|byte[] & readonly value;|}|Error? tempInitialStreamEntity
             = externInitialGetStreamEntryRecord(self.entity, self.resourcePath);
-        if (tempInitialStreamEntity is Error) {
+        if tempInitialStreamEntity is Error {
             return tempInitialStreamEntity;
         } else {
             self.initialStreamEntry = tempInitialStreamEntity;
         }
     }
 
-    # The next function reads and return the next `byte[]` of the related stream.
+    # Reads and return the next `byte[]` of the related stream.
     #
     # + return - A `record` of `byte[]`s when the stream is avaliable,
     #            `()` if the stream has reached the end or else an `io:Error`
     public isolated function next() returns record {|byte[] & readonly value;|}|io:Error? {
-        if (self.initialStreamEntryConsumed) {
+        if self.initialStreamEntryConsumed {
             return externGetStreamEntryRecord(self.entity);
         } else {
             self.initialStreamEntryConsumed = true;
@@ -64,14 +64,14 @@ class ByteStream {
         }
     }
 
-    # Close the stream. The primary usage of this function is to close the stream without reaching the end.
+    # Closes the stream. The primary usage of this function is to close the stream without reaching the end.
     # If the stream reaches the end, the `byteStream.next` will automatically close the stream.
     #
-    # + return - Returns `()` when the closing was successful or a `io:Error`
+    # + return - Returns `()` when the closing was successful or an `io:Error`
     public isolated function close() returns io:Error? {
-        if (!self.isClosed) {
+        if !self.isClosed {
             var closeResult = externCloseInputStream(self.entity);
-            if (closeResult is ()) {
+            if closeResult is () {
                 self.isClosed = true;
             }
             return closeResult;

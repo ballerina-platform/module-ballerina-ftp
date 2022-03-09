@@ -350,7 +350,7 @@ public type ListenerConfiguration record {|
 ```
 * `WatchEvent` record represents the latest status change of the server from the last status change.
 ```ballerina
-public type WatchEvent readonly & record {|
+public type WatchEvent record {|
     # Array of `ftp:FileInfo` that represents newly added files
     FileInfo[] addedFiles;
     # Array of strings that contains deleted file names

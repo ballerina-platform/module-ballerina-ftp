@@ -7,7 +7,7 @@ keywords = ["FTP", "SFTP", "remote file", "file transfer", "client", "service"]
 repository = "https://github.com/ballerina-platform/module-ballerina-ftp"
 icon = "icon.png"
 license = ["Apache-2.0"]
-distribution = "2201.0.0"
+distribution = "2201.0.1"
 
 [[platform.java11.dependency]]
 path = "./lib/commons-vfs2-2.8.0.jar"
@@ -50,8 +50,8 @@ path = "./lib/jcl-over-slf4j-1.7.21.jar"
 scope = "testOnly"
 
 [[platform.java11.dependency]]
-path = "../native/build/libs/ftp-native-2.2.1-SNAPSHOT.jar"
+path = "../native/build/libs/ftp-native-2.2.1.jar"
 
 [[platform.java11.dependency]]
-path = "../test-utils/build/libs/ftp-test-utils-2.2.1-SNAPSHOT.jar"
+path = "../test-utils/build/libs/ftp-test-utils-2.2.1.jar"
 scope = "testOnly"
