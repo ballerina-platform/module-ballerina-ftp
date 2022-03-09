@@ -38,6 +38,7 @@ import io.ballerina.stdlib.ftp.util.ModuleUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CLIENT;
@@ -84,8 +85,8 @@ public class FtpListenerHelper {
         FtpListener listener = ftpConnector.getFtpListener();
         listener.addService(service);
 
-        MethodType methodType = getOnFileChangeMethod(service);
-        if (methodType != null && methodType.getParameters().length == 2) {
+        Optional<MethodType> methodType = getOnFileChangeMethod(service);
+        if (methodType.isPresent() && methodType.get().getParameters().length == 2) {
             if (listener.getCaller() == null) {
                 BMap serviceEndpointConfig  = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);;
                 BObject caller = createCaller(serviceEndpointConfig);

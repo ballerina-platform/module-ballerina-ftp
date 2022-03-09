@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static io.ballerina.runtime.api.TypeTags.OBJECT_TYPE_TAG;
@@ -90,11 +91,11 @@ public class FtpListener implements RemoteFileSystemListener {
                     }
                 };
                 for (BObject service : registeredServices.values()) {
-                    MethodType methodType = getOnFileChangeMethod(service);
-                    if (methodType != null) {
-                        Parameter[] params = methodType.getParameters();
+                    Optional<MethodType> methodType = getOnFileChangeMethod(service);
+                    if (methodType.isPresent()) {
+                        Parameter[] params = methodType.get().getParameters();
                         if (params.length == 1) {
-                            BMap<BString, Object> watchEvent = getWatchEvent(methodType.getParameters()[0],
+                            BMap<BString, Object> watchEvent = getWatchEvent(methodType.get().getParameters()[0],
                                     watchEventParamValues);
                             runtime.invokeMethodAsyncConcurrently(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
                                     null, callback, null, null, watchEvent, true);

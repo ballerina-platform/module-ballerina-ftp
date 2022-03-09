@@ -41,6 +41,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -212,14 +213,14 @@ public class FtpUtil {
         return fileName.substring(0, fileName.lastIndexOf('.')).concat(".zip");
     }
 
-    public static MethodType getOnFileChangeMethod(BObject service) {
+    public static Optional<MethodType> getOnFileChangeMethod(BObject service) {
         MethodType[] methodTypes = service.getType().getMethods();
         for (MethodType method: methodTypes) {
             if (method.getName().equals(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
-                return method;
+                return Optional.ofNullable(method);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
