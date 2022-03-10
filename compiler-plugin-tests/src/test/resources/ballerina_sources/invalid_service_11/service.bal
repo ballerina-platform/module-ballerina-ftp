@@ -30,7 +30,7 @@ service "Test1" on remoteServer {
 }
 
 service "Test2" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent & readonly value) returns int? {}
+    remote function onFileChange(ftp:WatchEvent & readonly value, ftp:Caller caller) returns int? {}
 }
 
 service "Test3" on remoteServer {
@@ -42,7 +42,7 @@ service "Test4" on remoteServer {
 }
 
 service "Test5" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent value) returns int? {}
+    remote function onFileChange(ftp:WatchEvent value, ftp:Caller caller) returns int? {}
 }
 
 service "Test6" on remoteServer {

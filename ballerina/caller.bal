@@ -1,4 +1,4 @@
-// Copyright (c) 2018 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+// Copyright (c) 2022 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
 //
 // WSO2 Inc. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -16,42 +16,31 @@
 
 import ballerina/io;
 
-# Represents an FTP client that intracts with an FTP server
-public isolated client class Client {
-    private final readonly & ClientConfiguration config;
+# Represents an FTP caller that is passed to the onFileChange function
+public isolated client class Caller {
+    private final Client 'client;
 
     # Gets invoked during object initialization.
     #
-    # + clientConfig - Configurations for FTP client
-    # + return - `ftp:Error` in case of errors or `()` otherwise
-    public isolated function init(ClientConfiguration clientConfig) returns Error? {
-        self.config = clientConfig.cloneReadOnly();
-        Error? response = initEndpoint(self, self.config);
-        if response is Error {
-            return response;
-        }
+    # + 'client - The `ftp:Client` which is used to interact with the Ftp server
+    isolated function init(Client 'client) {
+        self.'client = 'client;
     }
 
     # Retrieves the file content from a remote resource.
     # ```ballerina
-    # stream<byte[] & readonly, io:Error?>|ftp:Error channel = client->get(path);
+    # stream<byte[] & readonly, io:Error?>|ftp:Error channel = caller->get(path);
     # ```
     #
     # + path - The resource path
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
     remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error {
-        ByteStream|Error byteStream = new (self, path);
-        if byteStream is ByteStream {
-            return new stream<byte[] & readonly, io:Error?>(byteStream);
-        } else {
-            return byteStream;
-        }
-
+        return self.'client->get(path);
     }
 
     # Appends the content to an existing file in an FTP server.
     # ```ballerina
-    # ftp:Error? response = client->append(path, channel);
+    # ftp:Error? response = caller->append(path, channel);
     # ```
     #
     # + path - The resource path
@@ -60,12 +49,12 @@ public isolated client class Client {
     #            the communication with the FTP server
     remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content)
             returns Error? {
-        return append(self, getInputContent(path, content));
+        return self.'client->append(path, content);
     }
 
     # Adds a file to an FTP server.
     # ```ballerina
-    # ftp:Error? response = client->put(path, channel);
+    # ftp:Error? response = caller->put(path, channel);
     # ```
     #
     # + path - The resource path
@@ -77,41 +66,37 @@ public isolated client class Client {
     #            the communication with the FTP server
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
             |string|xml|json content, Compression compressionType = NONE) returns Error? {
-        boolean compress = false;
-        if compressionType != NONE {
-            compress = true;
-        }
-        return put(self, getInputContent(path, content, compress));
+        return self.'client->put(path, content, compressionType);
     }
 
     # Creates a new directory in an FTP server.
     # ```ballerina
-    # ftp:Error? response = client->mkdir(path);
+    # ftp:Error? response = caller->mkdir(path);
     # ```
     #
     # + path - The directory path
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
     remote isolated function mkdir(string path) returns Error? {
-        return mkdir(self, path);
+        return self.'client->mkdir(path);
     }
 
     # Deletes an empty directory in an FTP server.
     # ```ballerina
-    # ftp:Error? response = client->rmdir(path);
+    # ftp:Error? response = caller->rmdir(path);
     # ```
     #
     # + path - The directory path
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
     remote isolated function rmdir(string path) returns Error? {
-        return rmdir(self, path);
+        return self.'client->rmdir(path);
     }
 
     # Renames a file or moves it to a new location within
     # the same FTP server.
     # ```ballerina
-    # ftp:Error? response = client->rename(origin, destination);
+    # ftp:Error? response = caller->rename(origin, destination);
     # ```
     #
     # + origin - The source file location
@@ -119,96 +104,54 @@ public isolated client class Client {
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
     remote isolated function rename(string origin, string destination) returns Error? {
-        return rename(self, origin, destination);
+        return self.'client->rename(origin, destination);
     }
 
     # Gets the size of a file resource.
     # ```ballerina
-    # int|ftp:Error response = client->size(path);
+    # int|ftp:Error response = caller->size(path);
     # ```
     #
     # + path - The resource path
     # + return - The file size in bytes or an `ftp:Error` if
     #            failed to establish the communication with the FTP server
     remote isolated function size(string path) returns int|Error {
-        return size(self, path);
+        return self.'client->size(path);
     }
 
     # Gets the file name list in a given folder.
     # ```ballerina
-    # ftp:FileInfo[]|ftp:Error response = client->list(path);
+    # ftp:FileInfo[]|ftp:Error response = caller->list(path);
     # ```
     #
     # + path - The directory path
     # + return - An array of file names or an `ftp:Error` if failed to
     #            establish the communication with the FTP server
     remote isolated function list(string path) returns FileInfo[]|Error {
-        return list(self, path);
+        return self.'client->list(path);
     }
 
     # Checks if a given resource is a directory.
     # ```ballerina
-    # boolean|ftp:Error response = client->isDirectory(path);
+    # boolean|ftp:Error response = caller->isDirectory(path);
     # ```
     #
     # + path - The resource path
     # + return - `true` if given resource is a directory or an `ftp:Error` if
     #            an error occurred while checking the path
     remote isolated function isDirectory(string path) returns boolean|Error {
-        return isDirectory(self, path);
+        return self.'client->isDirectory(path);
     }
 
     # Deletes a file from an FTP server.
     # ```ballerina
-    # ftp:Error? response = client->delete(path);
+    # ftp:Error? response = caller->delete(path);
     # ```
     #
     # + path - The resource path
     # + return - `()` or else an `ftp:Error` if failed to establish
     #             the communication with the FTP server
     remote isolated function delete(string path) returns Error? {
-        return delete(self, path);
+        return self.'client->delete(path);
     }
-}
-
-# Compression type.
-#
-# + ZIP - Zip compression
-# + NONE - No compression used
-public enum Compression {
-    ZIP,
-    NONE
-}
-
-# Configuration for FTP client.
-#
-# + protocol - Supported FTP protocols
-# + host - Target service URL
-# + port - Port number of the remote service
-# + auth - Authentication options
-public type ClientConfiguration record {|
-    Protocol protocol = FTP;
-    string host = "127.0.0.1";
-    int port = 21;
-    AuthConfiguration auth?;
-|};
-
-isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,
-        boolean compressInput = false) returns InputContent {
-    InputContent inputContent = {
-        filePath: path,
-        compressInput: compressInput
-    };
-
-    if content is stream<byte[] & readonly, io:Error?> {
-        inputContent.isFile = true;
-        inputContent.fileContent = content;
-    } else if content is string {
-        inputContent.textContent = content;
-    } else if content is json {
-        inputContent.textContent = content.toJsonString();
-    } else {
-        inputContent.textContent = content.toString();
-    }
-    return inputContent;
 }

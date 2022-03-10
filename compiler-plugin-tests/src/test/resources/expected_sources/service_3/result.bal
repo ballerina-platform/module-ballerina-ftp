@@ -16,27 +16,24 @@
 
 import ballerina/ftp;
 
-listener ftp:Listener remoteServer = check new({
-    protocol: ftp:FTP,
+listener ftp:Listener secureRemoteServer = check new ({
+    protocol: ftp:SFTP,
     host: "localhost",
     port: 21213,
+    auth: {
+        credentials: {username: "wso2", password: "wso2123"},
+        privateKey: {
+            path: "resources/sftp.private.key",
+            password: "changeit"
+        }
+    },
     pollingInterval: 2,
-    path: "/upload/",
+    path: "/download/",
     fileNamePattern: "(.*).csv"
 });
 
-service "Test1" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent & readonly event, string value) {}
-}
+service "Test" on secureRemoteServer {
+	remote function onFileChange(ftp:Caller caller, ftp:WatchEvent & readonly event) returns ftp:Error? {
 
-service "Test2" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent & readonly event, ftp:FileInfo info) {}
-}
-
-service "Test3" on remoteServer {
-    remote function onFileChange(ftp:WatchEvent & readonly event, ftp:FileInfo & readonly info) {}
-}
-
-service "Test4" on remoteServer {
-    remote function onFileChange(ftp:FileInfo & readonly info, ftp:WatchEvent & readonly event) {}
+	}
 }

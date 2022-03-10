@@ -19,17 +19,17 @@
 package io.ballerina.stdlib.ftp.plugin;
 
 /**
- * FTP compiler plugin constants.
+ * Ftp compiler plugin constants.
  */
 public class PluginConstants {
 
-    // compiler plugin constants
     public static final String PACKAGE_PREFIX = "ftp";
     public static final String ON_FILE_CHANGE_FUNC = "onFileChange";
     public static final String PACKAGE_ORG = "ballerina";
 
     // parameters
     public static final String WATCHEVENT = "WatchEvent";
+    public static final String CALLER = "Caller";
 
     // return types error or nil
     public static final String ERROR = "error";
@@ -37,7 +37,8 @@ public class PluginConstants {
     // Code template related constants
     public static final String NODE_LOCATION = "node.location";
     public static final String LS = System.lineSeparator();
-    public static final String CODE_TEMPLATE_NAME = "ADD_REMOTE_FUNCTION_CODE_SNIPPET";
+    public static final String CODE_TEMPLATE_NAME_WITH_CALLER = "ADD_REMOTE_FUNCTION_CODE_SNIPPET_WITH_CALLER";
+    public static final String CODE_TEMPLATE_NAME_WITHOUT_CALLER = "ADD_REMOTE_FUNCTION_CODE_SNIPPET_WITHOUT_CALLER";
 
     enum CompilationErrors {
         INVALID_ANNOTATION_NUMBER("No annotations are allowed for ftp services.", "FTP_101"),
@@ -49,10 +50,13 @@ public class PluginConstants {
                 "FTP_106"),
         ONLY_PARAMS_ALLOWED("Invalid method parameter count. Only ftp:WatchEvent & readonly " +
                 "or ftp:WatchEvent is allowed.", "FTP_107"),
-        INVALID_PARAMETER("Invalid method parameter. Only ftp:WatchEvent & readonly or " +
+        INVALID_WATCHEVENT_PARAMETER("Invalid method parameter. Only ftp:WatchEvent & readonly or " +
                 "ftp:WatchEvent is allowed.", "FTP_108"),
-        INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_109"),
-        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_110");
+        INVALID_CALLER_PARAMETER("Invalid method parameter. Only ftp:Caller is allowed", "FTP_109"),
+        INVALID_PARAMETERS("Invalid method parameters. Only ftp:WatchEvent & readonly or ftp:WatchEvent and " +
+                "ftp:Caller is allowed.", "FTP_110"),
+        INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_111"),
+        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_112");
         private final String error;
         private final String errorCode;
 

@@ -34,10 +34,42 @@ listener ftp:Listener secureRemoteServer = check new({
     fileNamePattern: "(.*).csv"
 });
 
-service "Test" on secureRemoteServer {
+service "Test1" on secureRemoteServer {
     private final string var1 = "FTP Service";
     private final int var2 = 54;
 
     remote function onFileChange(ftp:WatchEvent event) {
+    }
+}
+
+service "Test2" on secureRemoteServer {
+    private final string var1 = "FTP Service";
+    private final int var2 = 54;
+
+    remote function onFileChange(ftp:WatchEvent event, ftp:Caller caller) {
+    }
+}
+
+service "Test3" on secureRemoteServer {
+    private final string var1 = "FTP Service";
+    private final int var2 = 54;
+
+    remote function onFileChange(ftp:WatchEvent & readonly event, ftp:Caller caller) {
+    }
+}
+
+service "Test4" on secureRemoteServer {
+    private final string var1 = "FTP Service";
+    private final int var2 = 54;
+
+    remote function onFileChange(ftp:Caller caller, ftp:WatchEvent & readonly event) {
+    }
+}
+
+service "Test5" on secureRemoteServer {
+    private final string var1 = "FTP Service";
+    private final int var2 = 54;
+
+    remote function onFileChange(ftp:Caller caller, ftp:WatchEvent event) {
     }
 }

@@ -40,7 +40,7 @@ listener Listener remoteServer = check new ({
 });
 
 service on remoteServer {
-    remote function onFileChange(WatchEvent & readonly event) {
+    remote function onFileChange(Caller caller, WatchEvent & readonly event) {
         addedFileCount = event.addedFiles.length();
         deletedFileCount = event.deletedFiles.length();
         watchEventReceived = true;

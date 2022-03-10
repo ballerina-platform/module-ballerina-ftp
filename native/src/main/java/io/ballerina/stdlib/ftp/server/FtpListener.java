@@ -20,7 +20,6 @@ package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.Runtime;
-import io.ballerina.runtime.api.TypeTags;
 import io.ballerina.runtime.api.async.Callback;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
@@ -49,14 +48,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
+import static io.ballerina.runtime.api.TypeTags.OBJECT_TYPE_TAG;
+import static io.ballerina.runtime.api.TypeTags.RECORD_TYPE_TAG;
 import static io.ballerina.stdlib.ftp.server.FtpListenerHelper.findRootCause;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVER_EVENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_ADDED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
 
 /**
  * FTP File System connector listener for Ballerina.
@@ -66,6 +69,7 @@ public class FtpListener implements RemoteFileSystemListener {
     private static final Logger log = LoggerFactory.getLogger(FtpListener.class);
     private final Runtime runtime;
     private Map<String, BObject> registeredServices = new HashMap<>();
+    private BObject caller;
 
     FtpListener(Runtime runtime) {
         this.runtime = runtime;
@@ -77,23 +81,45 @@ public class FtpListener implements RemoteFileSystemListener {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
             Map<String, Object> watchEventParamValues = processWatchEventParamValues(event);
             if (runtime != null) {
+                Callback callback = new Callback() {
+                    @Override
+                    public void notifySuccess(Object o) {
+                    }
+                    @Override
+                    public void notifyFailure(BError error) {
+                        error.printStackTrace();
+                    }
+                };
                 for (BObject service : registeredServices.values()) {
-                    MethodType[] methodTypes = service.getType().getMethods();
-                    for (MethodType remoteFunc : methodTypes) {
-                        if (remoteFunc.getName().equals(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
-                            BMap<BString, Object> watchEvent = getWatchEvent(remoteFunc, watchEventParamValues);
+                    Optional<MethodType> methodType = getOnFileChangeMethod(service);
+                    if (methodType.isPresent()) {
+                        Parameter[] params = methodType.get().getParameters();
+                        if (params.length == 1) {
+                            BMap<BString, Object> watchEvent = getWatchEvent(methodType.get().getParameters()[0],
+                                    watchEventParamValues);
                             runtime.invokeMethodAsyncConcurrently(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
-                                null, new Callback() {
-                                    @Override
-                                    public void notifySuccess(Object o) {
-                                    }
-
-                                    @Override
-                                    public void notifyFailure(BError error) {
-                                        log.error("Error while invoking FTP onMessage method.");
-                                    }
-                                }, null, null, watchEvent, true);
+                                    null, callback, null, null, watchEvent, true);
+                        } else if (params.length == 2) {
+                            if ((params[0].type.isReadOnly() || params[0].type.getTag() == RECORD_TYPE_TAG) &&
+                                    params[1].type.getTag() == OBJECT_TYPE_TAG) {
+                                BMap<BString, Object> watchEvent = getWatchEvent(params[0], watchEventParamValues);
+                                runtime.invokeMethodAsyncConcurrently(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
+                                        null, callback, null, null, watchEvent, true,
+                                        caller, true);
+                            } else if ((params[1].type.isReadOnly() || params[1].type.getTag() == RECORD_TYPE_TAG) &&
+                                    params[0].type.getTag() == OBJECT_TYPE_TAG) {
+                                BMap<BString, Object> watchEvent = getWatchEvent(params[1], watchEventParamValues);
+                                runtime.invokeMethodAsyncConcurrently(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
+                                        null, callback, null, null, caller, true,
+                                        watchEvent, true);
+                            } else {
+                                log.error("Invalid parameter types in onFileChange method");
+                            }
+                        } else {
+                            log.error("Invalid parameter count in onFileChange method");
                         }
+                    } else {
+                        log.error("No onFileChange method found");
                     }
                 }
             } else {
@@ -103,13 +129,13 @@ public class FtpListener implements RemoteFileSystemListener {
         return true;
     }
 
-    private BMap<BString, Object> getWatchEvent(MethodType methodType, Map<String, Object> parameters) {
+    private BMap<BString, Object> getWatchEvent(Parameter parameter, Map<String, Object> parameters) {
         List<Map<String, Object>> addedFileParamList = (List<Map<String, Object>>)
                 parameters.get(FTP_WATCHEVENT_ADDED_FILES);
         BString[] deletedFileBStringArray = (BString[]) parameters.get(FTP_WATCHEVENT_DELETED_FILES);
 
         Object[] addedFileInfoArray = new Object[addedFileParamList.size()];
-        if (readonlyWatchEventExists(methodType)) {
+        if (readonlyWatchEventExists(parameter)) {
             for (int i = 0; i < addedFileParamList.size(); i++) {
                 final BMap<BString, Object> fileInfo = ValueCreator.createReadonlyRecordValue(
                         new Module(FtpConstants.FTP_ORG_NAME,
@@ -149,12 +175,10 @@ public class FtpListener implements RemoteFileSystemListener {
         }
     }
 
-    private boolean readonlyWatchEventExists(MethodType methodType) {
-        for (Parameter parameter: methodType.getParameters()) {
-            if (parameter.type.isReadOnly() && ((IntersectionType) parameter.type)
-                    .getEffectiveType().getTag() == TypeTags.RECORD_TYPE_TAG) {
-                return true;
-            }
+    private boolean readonlyWatchEventExists(Parameter parameter) {
+        if (parameter.type.isReadOnly() && ((IntersectionType) parameter.type)
+                .getEffectiveType().getTag() == RECORD_TYPE_TAG) {
+            return true;
         }
         return false;
     }
@@ -243,5 +267,13 @@ public class FtpListener implements RemoteFileSystemListener {
         if (service != null && service.getType() != null && service.getType().getName() != null) {
             registeredServices.put(service.getType().getName(), service);
         }
+    }
+
+    public void setCaller(BObject caller) {
+        this.caller = caller;
+    }
+
+    public BObject getCaller() {
+        return caller;
     }
 }
