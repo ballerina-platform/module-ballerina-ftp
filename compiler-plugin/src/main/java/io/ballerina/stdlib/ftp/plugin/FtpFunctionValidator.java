@@ -79,120 +79,150 @@ public class FtpFunctionValidator {
                         DiagnosticSeverity.ERROR, onFileChange.location()));
             }
             SeparatedNodeList<ParameterNode> parameters = onFileChange.functionSignature().parameters();
-            validateFunctionParameters(parameters, onFileChange);
+            validateFunctionArguments(parameters, onFileChange);
             validateReturnTypeErrorOrNil(onFileChange);
         }
     }
 
-    private void validateFunctionParameters(SeparatedNodeList<ParameterNode> parameters,
-                                            FunctionDefinitionNode functionDefinitionNode) {
+    private void validateFunctionArguments(SeparatedNodeList<ParameterNode> parameters,
+                                           FunctionDefinitionNode functionDefinitionNode) {
         if (parameters.size() == 1) {
-            ParameterNode paramNode = parameters.get(0);
-            SyntaxKind paramSyntaxKind = ((RequiredParameterNode) paramNode).typeName().kind();
-            if (paramSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
-                validateWatchEventParam(paramNode);
-            } else if (paramSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
-                boolean watchEventParam = validateIntersectionParam(paramNode);
-                if (!watchEventParam) {
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(
-                            INVALID_WATCHEVENT_PARAMETER,
-                            DiagnosticSeverity.ERROR, paramNode.location()));
-                }
-            } else {
+            validateSingleArgumentScenario(parameters);
+        } else if (parameters.size() == 2) {
+            validateTwoArgumentScenario(parameters, functionDefinitionNode);
+        } else if (parameters.size() > 2) {
+            validateInvalidArgumentCountScenario(functionDefinitionNode, ONLY_PARAMS_ALLOWED);
+        } else {
+            validateInvalidArgumentCountScenario(functionDefinitionNode, MUST_HAVE_WATCHEVENT);
+        }
+    }
+
+    private void validateInvalidArgumentCountScenario(FunctionDefinitionNode functionDefinitionNode,
+                                                      PluginConstants.CompilationErrors compilationErrors) {
+        context.reportDiagnostic(PluginUtils.getDiagnostic(compilationErrors,
+                DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
+    }
+
+    private void validateTwoArgumentScenario(SeparatedNodeList<ParameterNode> parameters,
+                                             FunctionDefinitionNode functionDefinitionNode) {
+        ParameterNode firstParamNode = parameters.get(0);
+        ParameterNode secondParamNode = parameters.get(1);
+        SyntaxKind firstParamSyntaxKind = ((RequiredParameterNode) firstParamNode).typeName().kind();
+        SyntaxKind secondParamSyntaxKind = ((RequiredParameterNode) secondParamNode).typeName().kind();
+
+        if (firstParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE) &&
+                secondParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+            validateCallerAndWachEvent(firstParamNode, secondParamNode);
+        } else if (firstParamSyntaxKind.equals(INTERSECTION_TYPE_DESC) &&
+                secondParamSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
+            validateInvalidReaonlyArguments(firstParamNode, secondParamNode);
+        } else if (firstParamSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
+            validateReadonlyWatchEventAndCaller(firstParamNode, secondParamNode, secondParamSyntaxKind);
+        } else if (secondParamSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
+            validateCallerAndReadonlyWatchEvent(firstParamNode, secondParamNode, firstParamSyntaxKind);
+        } else if (firstParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+            validateInvalidArguments(firstParamNode, secondParamNode);
+        } else if (secondParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+            validateInvalidArguments(secondParamNode, firstParamNode);
+        } else {
+            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
+                    DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
+        }
+    }
+
+    private void validateSingleArgumentScenario(SeparatedNodeList<ParameterNode> parameters) {
+        ParameterNode paramNode = parameters.get(0);
+        SyntaxKind paramSyntaxKind = ((RequiredParameterNode) paramNode).typeName().kind();
+        if (paramSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+            validateWatchEventParam(paramNode);
+        } else if (paramSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
+            boolean watchEventParam = validateIntersectionParam(paramNode);
+            if (!watchEventParam) {
                 context.reportDiagnostic(PluginUtils.getDiagnostic(
                         INVALID_WATCHEVENT_PARAMETER,
                         DiagnosticSeverity.ERROR, paramNode.location()));
             }
-        } else if (parameters.size() == 2) {
-            ParameterNode firstParamNode = parameters.get(0);
-            ParameterNode secondParamNode = parameters.get(1);
-            SyntaxKind firstParamSyntaxKind = ((RequiredParameterNode) firstParamNode).typeName().kind();
-            SyntaxKind secondParamSyntaxKind = ((RequiredParameterNode) secondParamNode).typeName().kind();
-
-            if (firstParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE) &&
-                    secondParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
-                boolean firstParamCaller = validateCallerParam(firstParamNode);
-                if (firstParamCaller) {
-                    validateWatchEventParam(secondParamNode);
-                } else {
-                    validateWatchEventParam(firstParamNode);
-                    boolean secondParamCaller = validateCallerParam(secondParamNode);
-                    if (!secondParamCaller) {
-                        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
-                                DiagnosticSeverity.ERROR, secondParamNode.location()));
-                    }
-                }
-            } else if (firstParamSyntaxKind.equals(INTERSECTION_TYPE_DESC) &&
-                    secondParamSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
-                boolean firstParamWatchEvent = validateIntersectionParam(firstParamNode);
-                if (!firstParamWatchEvent) {
-                    boolean secondParamWatchEvent = validateIntersectionParam(secondParamNode);
-                    if (!secondParamWatchEvent) {
-                        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_WATCHEVENT_PARAMETER,
-                                DiagnosticSeverity.ERROR, secondParamNode.location()));
-                    }
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
-                            DiagnosticSeverity.ERROR, firstParamNode.location()));
-                } else {
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
-                            DiagnosticSeverity.ERROR, secondParamNode.location()));
-                }
-            } else if (firstParamSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
-                boolean firstParamWatchEvent = validateIntersectionParam(firstParamNode);
-                boolean secondParamCaller = validateCallerParam(secondParamNode);
-                if (!firstParamWatchEvent && !secondParamCaller) {
-                    if (secondParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
-                        validateWatchEventParam(secondParamNode);
-                    }
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
-                            DiagnosticSeverity.ERROR, firstParamNode.location()));
-                } else if (!firstParamWatchEvent) {
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_WATCHEVENT_PARAMETER,
-                            DiagnosticSeverity.ERROR, firstParamNode.location()));
-                } else if (!secondParamCaller) {
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
-                            DiagnosticSeverity.ERROR, secondParamNode.location()));
-                }
-            } else if (secondParamSyntaxKind.equals(INTERSECTION_TYPE_DESC)) {
-                boolean firstParamCaller = validateCallerParam(firstParamNode);
-                boolean secondParamWatchEvent = validateIntersectionParam(secondParamNode);
-                if (!firstParamCaller && !secondParamWatchEvent) {
-                    if (firstParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
-                        validateWatchEventParam(firstParamNode);
-                    }
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
-                            DiagnosticSeverity.ERROR, secondParamNode.location()));
-                } else if (!secondParamWatchEvent) {
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_WATCHEVENT_PARAMETER,
-                            DiagnosticSeverity.ERROR, firstParamNode.location()));
-                } else if (!firstParamCaller) {
-                    context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
-                            DiagnosticSeverity.ERROR, secondParamNode.location()));
-                }
-            } else if (firstParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
-                boolean firstParamCaller = validateCallerParam(firstParamNode);
-                if (!firstParamCaller) {
-                    validateWatchEventParam(firstParamNode);
-                }
-                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
-                        DiagnosticSeverity.ERROR, secondParamNode.location()));
-            } else if (secondParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
-                boolean secondParamCaller = validateCallerParam(secondParamNode);
-                if (!secondParamCaller) {
-                    validateWatchEventParam(secondParamNode);
-                }
-                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
-                        DiagnosticSeverity.ERROR, firstParamNode.location()));
-            } else {
-                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
-                        DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
-            }
-        } else if (parameters.size() > 2) {
-            context.reportDiagnostic(PluginUtils.getDiagnostic(ONLY_PARAMS_ALLOWED,
-                    DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
         } else {
-            context.reportDiagnostic(PluginUtils.getDiagnostic(MUST_HAVE_WATCHEVENT,
-                    DiagnosticSeverity.ERROR, functionDefinitionNode.functionSignature().location()));
+            context.reportDiagnostic(PluginUtils.getDiagnostic(
+                    INVALID_WATCHEVENT_PARAMETER,
+                    DiagnosticSeverity.ERROR, paramNode.location()));
+        }
+    }
+
+    private void validateInvalidArguments(ParameterNode firstParamNode, ParameterNode secondParamNode) {
+        boolean firstParamCaller = validateCallerParam(firstParamNode);
+        if (!firstParamCaller) {
+            validateWatchEventParam(firstParamNode);
+        }
+        context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
+                DiagnosticSeverity.ERROR, secondParamNode.location()));
+    }
+
+    private void validateCallerAndReadonlyWatchEvent(ParameterNode firstParamNode, ParameterNode secondParamNode,
+                                                     SyntaxKind firstParamSyntaxKind) {
+        boolean firstParamCaller = validateCallerParam(firstParamNode);
+        boolean secondParamWatchEvent = validateIntersectionParam(secondParamNode);
+        if (!firstParamCaller && !secondParamWatchEvent) {
+            if (firstParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+                validateWatchEventParam(firstParamNode);
+            }
+            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
+                    DiagnosticSeverity.ERROR, secondParamNode.location()));
+        } else if (!secondParamWatchEvent) {
+            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_WATCHEVENT_PARAMETER,
+                    DiagnosticSeverity.ERROR, firstParamNode.location()));
+        } else if (!firstParamCaller) {
+            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
+                    DiagnosticSeverity.ERROR, secondParamNode.location()));
+        }
+    }
+
+    private void validateReadonlyWatchEventAndCaller(ParameterNode firstParamNode, ParameterNode secondParamNode,
+                                                     SyntaxKind secondParamSyntaxKind) {
+        boolean firstParamWatchEvent = validateIntersectionParam(firstParamNode);
+        boolean secondParamCaller = validateCallerParam(secondParamNode);
+        if (!firstParamWatchEvent && !secondParamCaller) {
+            if (secondParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
+                validateWatchEventParam(secondParamNode);
+            }
+            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_PARAMETERS,
+                    DiagnosticSeverity.ERROR, firstParamNode.location()));
+        } else if (!firstParamWatchEvent) {
+            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_WATCHEVENT_PARAMETER,
+                    DiagnosticSeverity.ERROR, firstParamNode.location()));
+        } else if (!secondParamCaller) {
+            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
+                    DiagnosticSeverity.ERROR, secondParamNode.location()));
+        }
+    }
+
+    private void validateInvalidReaonlyArguments(ParameterNode firstParamNode, ParameterNode secondParamNode) {
+        boolean firstParamWatchEvent = validateIntersectionParam(firstParamNode);
+        if (!firstParamWatchEvent) {
+            boolean secondParamWatchEvent = validateIntersectionParam(secondParamNode);
+            if (!secondParamWatchEvent) {
+                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_WATCHEVENT_PARAMETER,
+                        DiagnosticSeverity.ERROR, secondParamNode.location()));
+            }
+            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
+                    DiagnosticSeverity.ERROR, firstParamNode.location()));
+        } else {
+            context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
+                    DiagnosticSeverity.ERROR, secondParamNode.location()));
+        }
+    }
+
+    private void validateCallerAndWachEvent(ParameterNode firstParamNode, ParameterNode secondParamNode) {
+        boolean firstParamCaller = validateCallerParam(firstParamNode);
+        if (firstParamCaller) {
+            validateWatchEventParam(secondParamNode);
+        } else {
+            validateWatchEventParam(firstParamNode);
+            boolean secondParamCaller = validateCallerParam(secondParamNode);
+            if (!secondParamCaller) {
+                context.reportDiagnostic(PluginUtils.getDiagnostic(INVALID_CALLER_PARAMETER,
+                        DiagnosticSeverity.ERROR, secondParamNode.location()));
+            }
         }
     }
 
