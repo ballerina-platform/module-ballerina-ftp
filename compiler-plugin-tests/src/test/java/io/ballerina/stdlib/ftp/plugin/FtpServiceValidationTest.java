@@ -34,7 +34,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors;
  */
 public class FtpServiceValidationTest {
 
-    @Test
+    @Test(description = "Validation with multiple listeners on same service")
     public void testValidService1() {
         Package currentPackage = loadPackage("valid_service_1");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -42,7 +42,7 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
-    @Test
+    @Test(description = "Validation with renamed ftp import")
     public void testValidService2() {
         Package currentPackage = loadPackage("valid_service_2");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -50,7 +50,7 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
-    @Test
+    @Test(description = "Validation with service level variables defined")
     public void testValidService3() {
         Package currentPackage = loadPackage("valid_service_3");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -58,7 +58,7 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
-    @Test
+    @Test(description = "Validation with other functions defined in the service")
     public void testValidService4() {
         Package currentPackage = loadPackage("valid_service_4");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -66,7 +66,7 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
-    @Test
+    @Test(description = "Validation with multiple error return types")
     public void testValidService5() {
         Package currentPackage = loadPackage("valid_service_5");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -74,7 +74,7 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
-    @Test
+    @Test(description = "Validation when no onFileChange function is defined")
     public void testInvalidService1() {
         Package currentPackage = loadPackage("invalid_service_1");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -84,7 +84,7 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic, CompilationErrors.NO_ON_FILE_CHANGE);
     }
 
-    @Test
+    @Test(description = "Validation when 2 remote functions are defined")
     public void testInvalidService2() {
         Package currentPackage = loadPackage("invalid_service_2");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -94,7 +94,7 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic, CompilationErrors.INVALID_REMOTE_FUNCTION);
     }
 
-    @Test
+    @Test(description = "Validation when onFileChange function is not remote")
     public void testInvalidService3() {
         Package currentPackage = loadPackage("invalid_service_3");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -104,7 +104,7 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic, CompilationErrors.METHOD_MUST_BE_REMOTE);
     }
 
-    @Test
+    @Test(description = "Validation when a resource function is added without a remote onFileChange function")
     public void testInvalidService4() {
         Package currentPackage = loadPackage("invalid_service_4");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -118,7 +118,7 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic2, CompilationErrors.NO_ON_FILE_CHANGE);
     }
 
-    @Test
+    @Test(description = "Validation when a resource function is added")
     public void testInvalidService5() {
         Package currentPackage = loadPackage("invalid_service_5");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -128,7 +128,8 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic, CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED);
     }
 
-    @Test
+    @Test(description = "Validation when invalid method qualifiers are added " +
+            "(resource/remote) without a onFileChange function")
     public void testInvalidService6() {
         Package currentPackage = loadPackage("invalid_service_6");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -144,7 +145,7 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic3, CompilationErrors.NO_ON_FILE_CHANGE);
     }
 
-    @Test
+    @Test(description = "Validation when invalid method qualifiers are added (resource/remote) with onFileChange function")
     public void testInvalidService7() {
         Package currentPackage = loadPackage("invalid_service_7");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -160,7 +161,7 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic3, CompilationErrors.METHOD_MUST_BE_REMOTE);
     }
 
-    @Test
+    @Test(description = "Validation when no arguments are added to method definition")
     public void testInvalidService8() {
         Package currentPackage = loadPackage("invalid_service_8");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -170,7 +171,7 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic, CompilationErrors.MUST_HAVE_WATCHEVENT);
     }
 
-    @Test
+    @Test(description = "Validation when a readonly WatchEvent argument and an invalid argument is added")
     public void testInvalidService9() {
         Package currentPackage = loadPackage("invalid_service_9");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -183,7 +184,7 @@ public class FtpServiceValidationTest {
         }
     }
 
-    @Test
+    @Test(description = "Validation when 1 invalid argument is added to method definition")
     public void testInvalidService10() {
         Package currentPackage = loadPackage("invalid_service_10");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -196,7 +197,7 @@ public class FtpServiceValidationTest {
         }
     }
 
-    @Test
+    @Test(description = "Validation when invalid return types are added in method definition")
     public void testInvalidService11() {
         Package currentPackage = loadPackage("invalid_service_11");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -209,7 +210,7 @@ public class FtpServiceValidationTest {
         }
     }
 
-    @Test
+    @Test(description = "Validation when a WatchEvent argument and invalid argument is added to method definition")
     public void testInvalidService12() {
         Package currentPackage = loadPackage("invalid_service_12");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -222,7 +223,7 @@ public class FtpServiceValidationTest {
         }
     }
 
-    @Test
+    @Test(description = "Validation when 3 arguments are added to method definition")
     public void testInvalidService13() {
         Package currentPackage = loadPackage("invalid_service_13");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -235,7 +236,7 @@ public class FtpServiceValidationTest {
         }
     }
 
-    @Test
+    @Test(description = "Validation when 2 WatchEvent arguments are added to method definition")
     public void testInvalidService14() {
         Package currentPackage = loadPackage("invalid_service_14");
         PackageCompilation compilation = currentPackage.getCompilation();
@@ -248,7 +249,7 @@ public class FtpServiceValidationTest {
         }
     }
 
-    @Test
+    @Test(description = "Validation when 2 Caller arguments are added to method definition")
     public void testInvalidService15() {
         Package currentPackage = loadPackage("invalid_service_15");
         PackageCompilation compilation = currentPackage.getCompilation();
