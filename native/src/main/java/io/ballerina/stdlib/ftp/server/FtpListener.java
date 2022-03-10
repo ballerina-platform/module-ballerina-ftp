@@ -87,7 +87,7 @@ public class FtpListener implements RemoteFileSystemListener {
                     }
                     @Override
                     public void notifyFailure(BError error) {
-                        log.error("Error while invoking FTP onMessage method.");
+                        error.printStackTrace();
                     }
                 };
                 for (BObject service : registeredServices.values()) {
