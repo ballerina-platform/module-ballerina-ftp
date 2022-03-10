@@ -23,7 +23,6 @@ public isolated client class Caller {
     # Gets invoked during object initialization.
     #
     # + 'client - The `ftp:Client` which is used to interact with the Ftp server
-    # + return - `ftp:Error` in case of errors or `()` otherwise
     isolated function init(Client 'client) {
         self.'client = 'client;
     }
