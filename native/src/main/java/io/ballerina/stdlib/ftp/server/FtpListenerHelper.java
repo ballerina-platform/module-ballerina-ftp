@@ -86,18 +86,20 @@ public class FtpListenerHelper {
         listener.addService(service);
 
         Optional<MethodType> methodType = getOnFileChangeMethod(service);
-        if (methodType.isPresent() && methodType.get().getParameters().length == 2) {
-            if (listener.getCaller() == null) {
-                BMap serviceEndpointConfig  = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);;
-                BObject caller = createCaller(serviceEndpointConfig);
-                if (caller instanceof BError) {
-                    BError endpointError = (BError) caller;
-                    return FtpUtil.createError(endpointError.getMessage(), endpointError.getDetails().toString(),
-                            Error.errorType());
-                } else {
-                    listener.setCaller(caller);
-                }
-            }
+        if (methodType.isEmpty() || methodType.get().getParameters().length != 2) {
+            return null;
+        }
+        if (listener.getCaller() != null) {
+            return null;
+        }
+        BMap serviceEndpointConfig  = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);;
+        BObject caller = createCaller(serviceEndpointConfig);
+        if (caller instanceof BError) {
+            BError endpointError = (BError) caller;
+            return FtpUtil.createError(endpointError.getMessage(), endpointError.getDetails().toString(),
+                    Error.errorType());
+        } else {
+            listener.setCaller(caller);
         }
         return null;
     }
