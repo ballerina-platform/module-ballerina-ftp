@@ -45,7 +45,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.NODE_LOCATION;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.findNode;
 
 /**
- * Code action to add resource code snippet.
+ * Code action to add remote function code snippet without the Caller.
  */
 public class FtpCodeTemplateWithoutCaller implements CodeAction {
 

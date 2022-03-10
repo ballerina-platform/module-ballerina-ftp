@@ -45,12 +45,12 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.NODE_LOCATION;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.findNode;
 
 /**
- * Code action to add resource code snippet.
+ * Code action to add remote function code snippet with the Caller.
  */
 public class FtpCodeTemplateWithCaller implements CodeAction {
 
-    private static final String REMOTE_FUNCTION_TEXT = LS + "\tremote function onFileChange(ftp:WatchEvent & " +
-            "readonly event, ftp:Caller caller) returns ftp:Error? {" + LS + LS + "\t}" + LS;
+    private static final String REMOTE_FUNCTION_TEXT = LS + "\tremote function onFileChange(ftp:Caller caller, " +
+            "ftp:WatchEvent & readonly event) returns ftp:Error? {" + LS + LS + "\t}" + LS;
 
     @Override
     public List<String> supportedDiagnosticCodes() {
