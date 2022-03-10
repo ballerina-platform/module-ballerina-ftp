@@ -145,7 +145,7 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic3, CompilationErrors.NO_ON_FILE_CHANGE);
     }
 
-    @Test(description = "Validation when invalid method qualifiers are added (resource/remote) with onFileChange function")
+    @Test(description = "Validation when invalid method qualifiers are added (resource/remote) with onFileChange")
     public void testInvalidService7() {
         Package currentPackage = loadPackage("invalid_service_7");
         PackageCompilation compilation = currentPackage.getCompilation();
