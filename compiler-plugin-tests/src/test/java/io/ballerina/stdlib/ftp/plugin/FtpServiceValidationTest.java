@@ -219,7 +219,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
-            assertDiagnostic(diagnostic, CompilationErrors.INVALID_PARAMETERS);
+            assertDiagnostic(diagnostic, CompilationErrors.INVALID_CALLER_PARAMETER);
         }
     }
 
@@ -257,5 +257,33 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, CompilationErrors.INVALID_WATCHEVENT_PARAMETER);
+    }
+
+    @Test(description = "Validation when invalid qualified ref is added as first param and watchevent " +
+            "is added as second param")
+    public void testInvalidService16() {
+        Package currentPackage = loadPackage("invalid_service_16");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        for (Object obj : diagnostics) {
+            Diagnostic diagnostic = (Diagnostic) obj;
+            assertDiagnostic(diagnostic, CompilationErrors.INVALID_CALLER_PARAMETER);
+        }
+    }
+
+    @Test(description = "Validation when 2 invalid qualified refs are added")
+    public void testInvalidService17() {
+        Package currentPackage = loadPackage("invalid_service_17");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+
+        Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
+        assertDiagnostic(diagnostic1, CompilationErrors.INVALID_CALLER_PARAMETER);
+        Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
+        assertDiagnostic(diagnostic2, CompilationErrors.INVALID_WATCHEVENT_PARAMETER);
     }
 }
