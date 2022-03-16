@@ -92,7 +92,7 @@ if (str is stream<byte[], io:Error?>) {
 }
 ```
 
-##### Rename or move a remote file to another remote location in the same FTP server
+##### Rename/move a remote file
 
 The following code renames or moves a file to another location in the same remote FTP server.
 
