@@ -21,7 +21,7 @@ private key.
 
 An authentication-related configuration can be given to the FTP client with the `auth` configuration.
 
-##### Creating a client
+##### Create a client
 
 The following code creates an FTP client and performs the I/O operations, which connect to the FTP server with Basic Auth.
 ```ballerina
@@ -42,7 +42,7 @@ ftp:ClientConfiguration ftpConfig = {
 ftp:Client|ftp:Error ftpClient = new(ftpConfig);
 ```
 
-##### Creating a directory
+##### Create a directory
 
 The following code creates a directory in the remote FTP server.
 
@@ -50,7 +50,7 @@ The following code creates a directory in the remote FTP server.
 ftp:Error? mkdirResponse = ftpClient->mkdir("<The directory path>");
 ```
 
-##### Uploading a file to a remote server
+##### Upload a file to a remote server
 
 The following code uploads a file to a remote FTP server.
 
@@ -60,7 +60,7 @@ stream<io:Block, io:Error?> fileByteStream
 ftp:Error? putResponse = ftpClient->put("<The resource path>", fileByteStream);
 ```
 
-##### Compressing and uploading a file to a remote server
+##### Compress and upload a file to a remote server
 
 The following code compresses and uploads a file to a remote FTP server.
 
@@ -72,7 +72,7 @@ ftp:Error? compressedPutResponse = ftpClient->put("<Resource path>",
     fileByteStream, compressionType=ZIP);
 ```
 
-##### Getting the size of a remote file
+##### Get the size of a remote file
 
 The following code gets the size of a file in a remote FTP server.
 
@@ -80,7 +80,7 @@ The following code gets the size of a file in a remote FTP server.
 int|ftp:Error sizeResponse = ftpClient->size("<The resource path>");
 ```
 
-##### Reading the content of a remote file
+##### Read the content of a remote file
 
 The following code reads the content of a file in a remote FTP server.
 
@@ -99,7 +99,7 @@ if (str is stream<byte[], io:Error?>) {
 }
 ```
 
-##### Renaming or moving a remote file to another remote location in the same FTP server
+##### Rename or move a remote file to another remote location in the same FTP server
 
 The following code renames or moves a file to another location in the same remote FTP server.
 
@@ -108,7 +108,7 @@ ftp:Error? renameResponse = ftpClient->rename("<The source file path>",
     "<The destination file path>");
 ```
 
-##### Deleting a remote file
+##### Delete a remote file
 
 The following code deletes a remote file in a remote FTP server.
 
@@ -116,7 +116,7 @@ The following code deletes a remote file in a remote FTP server.
 ftp:Error? deleteResponse = ftpClient->delete("<The resource path>");
 ```
 
-##### Removing a directory from a remote server
+##### Remove a directory from a remote server
 
 The following code removes a directory in a remote FTP server.
 
@@ -139,7 +139,7 @@ For instance, if the listener gets invoked for text files, the value `(.*).txt` 
 
 An authentication-related configuration can be given to the FTP listener with the `auth` configuration.
 
-##### Creating a listener
+##### Create a listener
 
 The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and
 notify on file addition and deletion periodically.
@@ -224,9 +224,9 @@ Issues and Projects tabs are disabled for this repository as this is part of the
 
 This repository only contains the source code for the library.
 
-## Building from the source
+## Build from the source
 
-### Setting up the prerequisites
+### Set up the prerequisites
 
 1. Download and install Java SE Development Kit (JDK) version 11 (from one of the following locations).
 
@@ -236,7 +236,7 @@ This repository only contains the source code for the library.
 
         > **Note:** Set the JAVA_HOME environment variable to the path name of the directory into which you installed JDK.
      
-### Building the source
+### Build the source
 
 Execute the commands below to build from source.
 
@@ -280,7 +280,7 @@ Execute the commands below to build from source.
    ./gradlew clean build -PpublishToCentral=true
    ```
 
-## Contributing to Ballerina
+## Contribute to Ballerina
 
 As an open source project, Ballerina welcomes contributions from the community. 
 
