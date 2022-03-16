@@ -2,7 +2,7 @@
 
 This module provides an FTP/SFTP client and an FTP/SFTP server listener implementation to facilitate an FTP/SFTP connection connected to a remote location.
 
-### FTP Client
+### FTP client
 
 The `ftp:Client` connects to an FTP server and performs various operations on the files. Currently, it supports the
 generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and
@@ -14,7 +14,7 @@ private key.
 
 An authentication-related configuration can be given to the FTP client with the `auth` configuration.
 
-##### Creating a Client
+##### Create a client
 
 The following code creates an FTP client and performs the I/O operations, which connect to the FTP server with Basic Auth.
 ```ballerina
@@ -35,7 +35,7 @@ ftp:ClientConfiguration ftpConfig = {
 ftp:Client|ftp:Error ftpClient = new(ftpConfig);
 ```
 
-##### Creating a Directory
+##### Create a directory
 
 The following code creates a directory in the remote FTP server.
 
@@ -43,7 +43,7 @@ The following code creates a directory in the remote FTP server.
 ftp:Error? mkdirResponse = ftpClient->mkdir("<The directory path>");
 ```
 
-##### Uploading File to a Remote Server
+##### Upload a file to a remote server
 
 The following code uploads a file to a remote FTP server.
 
@@ -53,7 +53,7 @@ stream<io:Block, io:Error?> fileByteStream
 ftp:Error? putResponse = ftpClient->put("<The resource path>", fileByteStream);
 ```
 
-##### Compressing and Uploading a File to a Remote Server
+##### Compress and upload a file to a remote server
 
 The following code compresses and uploads a file to a remote FTP server.
 
@@ -65,7 +65,7 @@ ftp:Error? compressedPutResponse = ftpClient->put("<Resource path>",
     fileByteStream, compressionType=ZIP);
 ```
 
-##### Getting the Size of a Remote File
+##### Get the size of a remote file
 
 The following code gets the size of a file in a remote FTP server.
 
@@ -73,7 +73,7 @@ The following code gets the size of a file in a remote FTP server.
 int|ftp:Error sizeResponse = ftpClient->size("<The resource path>");
 ```
 
-##### Reading the Content of a Remote File
+##### Read the content of a remote file
 
 The following code reads the content of a file in a remote FTP server.
 
@@ -92,7 +92,7 @@ if (str is stream<byte[], io:Error?>) {
 }
 ```
 
-##### Renaming or Moving a Remote file to Another Remote Location in the Same FTP Server
+##### Rename/move a remote file
 
 The following code renames or moves a file to another location in the same remote FTP server.
 
@@ -101,7 +101,7 @@ ftp:Error? renameResponse = ftpClient->rename("<The source file path>",
     "<The destination file path>");
 ```
 
-##### Deleting a Remote File
+##### Delete a remote file
 
 The following code deletes a remote file in a remote FTP server.
 
@@ -109,7 +109,7 @@ The following code deletes a remote file in a remote FTP server.
 ftp:Error? deleteResponse = ftpClient->delete("<The resource path>");
 ```
 
-##### Removing a Directory From a Remote Server
+##### Remove a directory from a remote server
 
 The following code removes a directory in a remote FTP server.
 
@@ -117,7 +117,7 @@ The following code removes a directory in a remote FTP server.
 ftp:Error? rmdirResponse = ftpClient->rmdir("<The directory path>");
 ```
 
-### FTP Listener
+### FTP listener
 
 The `ftp:Listener` is used to listen to a remote FTP location and trigger a `WatchEvent` type of event when new
 files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added
@@ -132,7 +132,7 @@ For instance, if the listener gets invoked for text files, the value `(.*).txt` 
 
 An authentication-related configuration can be given to the FTP listener with the `auth` configuration.
 
-##### Creating a Listener
+##### Create a listener
 
 The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and
 notify on file addition and deletion periodically.
@@ -174,7 +174,7 @@ Another way is using the client's private key. The Ballerina SFTP client and the
 An authentication-related configuration can be given to the SFTP client/listener with the `auth` configuration.
 Password-based authentication is defined with the `credentials` configuration while the private key based authentication is defined with the `privateKey` configuration.
 
-#### SFTP Client Configuration
+#### SFTP client configuration
 
 ```ballerina
 ftp:ClientConfiguration sftpConfig = {
@@ -191,7 +191,7 @@ ftp:ClientConfiguration sftpConfig = {
 };
 ```
 
-#### SFTP Listener Configuration
+#### SFTP listener configuration
 
 ```ballerina
 listener ftp:Listener remoteServer = check new({
