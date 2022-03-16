@@ -148,18 +148,18 @@ public class FtpFunctionValidator {
 
     private void validateCallerAndReadonlyWatchEvent(ParameterNode intersectionParamNode, ParameterNode secondParamNode,
                                                      SyntaxKind secondParamSyntaxKind) {
-        boolean secondParamCaller = validateCallerParam(secondParamNode);
         boolean intersectionParamWatchEvent = validateIntersectionParam(intersectionParamNode);
+        boolean secondParamCaller = validateCallerParam(secondParamNode);
         if (!secondParamCaller && !intersectionParamWatchEvent) {
             if (secondParamSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
                 boolean secondParamWatchEvent = validateWatchEventParam(secondParamNode);
-                if (!secondParamWatchEvent) {
-                    reportErrorDiagnostic(INVALID_CALLER_PARAMETER, secondParamNode.location());
-                    reportErrorDiagnostic(INVALID_WATCHEVENT_PARAMETER, intersectionParamNode.location());
+                if (secondParamWatchEvent) {
+                    reportErrorDiagnostic(INVALID_CALLER_PARAMETER, intersectionParamNode.location());
                     return;
                 }
-                reportErrorDiagnostic(INVALID_CALLER_PARAMETER, intersectionParamNode.location());
             }
+            reportErrorDiagnostic(INVALID_CALLER_PARAMETER, secondParamNode.location());
+            reportErrorDiagnostic(INVALID_WATCHEVENT_PARAMETER, intersectionParamNode.location());
         } else if (!intersectionParamWatchEvent) {
             reportErrorDiagnostic(INVALID_WATCHEVENT_PARAMETER, intersectionParamNode.location());
         } else if (!secondParamCaller) {
