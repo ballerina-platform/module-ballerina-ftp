@@ -23,6 +23,8 @@ int addedFileCount = 0;
 FileInfo? anonServerAddedFileInfo = ();
 int deletedFileCount = 0;
 boolean watchEventReceived = false;
+string[] deletedFiles = [];
+FileInfo[] fileInfos = [];
 
 listener Listener remoteServer = check new ({
     protocol: FTP,
@@ -295,7 +297,6 @@ public function testConnectToInvalidUrl() returns error? {
     dependsOn: [testDeleteFile]
 }
 public function testMutableWatchEvent() returns error? {
-    FileInfo[] fileInfos = [];
     Service ftpService = service object {
         remote function onFileChange(WatchEvent event) {
             event.addedFiles.forEach(function (FileInfo fInfo) {
@@ -330,4 +331,52 @@ public function testMutableWatchEvent() returns error? {
     fileInfos.forEach(function (FileInfo fInfo) {
         test:assertEquals(fInfo.name, "overriden_name");
     });
+}
+
+@test:Config {
+    dependsOn: []
+}
+public function testValidateDeletedFilesFromListener() returns error? {
+    Service ftpService = service object {
+        remote function onFileChange(WatchEvent event) {
+            event.deletedFiles.forEach(function (string deletedFile) {
+                deletedFiles.push(deletedFile);
+            });
+        }
+    };
+    Listener ftpListener = check new ({
+        protocol: FTP,
+        host: "localhost",
+        port: 21212,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"}
+        },
+        path: "/home/in",
+        pollingInterval: 1,
+        fileNamePattern: "(.*).txt"
+    });
+    check ftpListener.attach(ftpService);
+    check ftpListener.'start();
+    runtime:registerListener(ftpListener);
+
+    stream<io:Block, io:Error?> bStream1 = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check clientEp->put("/home/in/deleteFile1.txt", bStream1);
+    stream<io:Block, io:Error?> bStream2 = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check clientEp->put("/home/in/deleteFile2.txt", bStream2);
+    stream<io:Block, io:Error?> bStream3 = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check clientEp->put("/home/in/deleteFile3.txt", bStream3);
+
+    runtime:sleep(2);
+    check clientEp->delete("/home/in/deleteFile1.txt");
+    check clientEp->delete("/home/in/deleteFile2.txt");
+    check clientEp->delete("/home/in/deleteFile3.txt");
+    runtime:sleep(5);
+
+    runtime:deregisterListener(ftpListener);
+    check ftpListener.gracefulStop();
+
+    test:assertTrue(deletedFiles.length() == 3);
+    foreach int i in 1...3 {
+        test:assertTrue(deletedFiles[i - 1].endsWith(string`/home/in/deleteFile${i}.txt`));
+    }
 }
