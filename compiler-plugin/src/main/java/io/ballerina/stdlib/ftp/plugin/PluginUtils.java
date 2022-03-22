@@ -45,12 +45,10 @@ import java.util.Optional;
  */
 public class PluginUtils {
 
-    public static Diagnostic getDiagnostic(CompilationErrors error, DiagnosticSeverity severity,
-                                           Location location) {
+    public static Diagnostic getDiagnostic(CompilationErrors error, DiagnosticSeverity severity, Location location) {
         String errorMessage = error.getError();
         String diagnosticCode = error.getErrorCode();
-        DiagnosticInfo diagnosticInfo = new DiagnosticInfo(diagnosticCode, errorMessage,
-                severity);
+        DiagnosticInfo diagnosticInfo = new DiagnosticInfo(diagnosticCode, errorMessage, severity);
         return DiagnosticFactory.createDiagnostic(diagnosticInfo, location);
     }
 
@@ -58,8 +56,7 @@ public class PluginUtils {
         if (moduleSymbol != null) {
             String moduleName = moduleSymbol.id().moduleName();
             String orgName = moduleSymbol.id().orgName();
-            return moduleName.equals(PluginConstants.PACKAGE_PREFIX) &&
-                    orgName.equals(PluginConstants.PACKAGE_ORG);
+            return moduleName.equals(PluginConstants.PACKAGE_PREFIX) && orgName.equals(PluginConstants.PACKAGE_ORG);
         }
         return false;
     }

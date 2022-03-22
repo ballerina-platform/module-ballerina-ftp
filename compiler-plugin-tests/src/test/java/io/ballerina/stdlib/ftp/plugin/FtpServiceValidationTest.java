@@ -27,7 +27,15 @@ import org.testng.annotations.Test;
 
 import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.assertDiagnostic;
 import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.loadPackage;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_CALLER_PARAMETER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_REMOTE_FUNCTION;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_WATCHEVENT_PARAMETER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.METHOD_MUST_BE_REMOTE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MUST_HAVE_WATCHEVENT;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_ON_FILE_CHANGE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ONLY_PARAMS_ALLOWED;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
 
 /**
  * Tests for FTP package compiler plugin.
@@ -81,7 +89,7 @@ public class FtpServiceValidationTest {
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-        assertDiagnostic(diagnostic, CompilationErrors.NO_ON_FILE_CHANGE);
+        assertDiagnostic(diagnostic, NO_ON_FILE_CHANGE);
     }
 
     @Test(description = "Validation when 2 remote functions are defined")
@@ -91,7 +99,7 @@ public class FtpServiceValidationTest {
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-        assertDiagnostic(diagnostic, CompilationErrors.INVALID_REMOTE_FUNCTION);
+        assertDiagnostic(diagnostic, INVALID_REMOTE_FUNCTION);
     }
 
     @Test(description = "Validation when onFileChange function is not remote")
@@ -101,7 +109,7 @@ public class FtpServiceValidationTest {
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-        assertDiagnostic(diagnostic, CompilationErrors.METHOD_MUST_BE_REMOTE);
+        assertDiagnostic(diagnostic, METHOD_MUST_BE_REMOTE);
     }
 
     @Test(description = "Validation when a resource function is added without a remote onFileChange function")
@@ -113,9 +121,9 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
 
         Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
-        assertDiagnostic(diagnostic1, CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED);
+        assertDiagnostic(diagnostic1, RESOURCE_FUNCTION_NOT_ALLOWED);
         Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
-        assertDiagnostic(diagnostic2, CompilationErrors.NO_ON_FILE_CHANGE);
+        assertDiagnostic(diagnostic2, NO_ON_FILE_CHANGE);
     }
 
     @Test(description = "Validation when a resource function is added")
@@ -125,7 +133,7 @@ public class FtpServiceValidationTest {
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-        assertDiagnostic(diagnostic, CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED);
+        assertDiagnostic(diagnostic, RESOURCE_FUNCTION_NOT_ALLOWED);
     }
 
     @Test(description = "Validation when invalid method qualifiers are added " +
@@ -138,11 +146,11 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
 
         Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
-        assertDiagnostic(diagnostic1, CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED);
+        assertDiagnostic(diagnostic1, RESOURCE_FUNCTION_NOT_ALLOWED);
         Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
-        assertDiagnostic(diagnostic2, CompilationErrors.INVALID_REMOTE_FUNCTION);
+        assertDiagnostic(diagnostic2, INVALID_REMOTE_FUNCTION);
         Diagnostic diagnostic3 = (Diagnostic) diagnostics[2];
-        assertDiagnostic(diagnostic3, CompilationErrors.NO_ON_FILE_CHANGE);
+        assertDiagnostic(diagnostic3, NO_ON_FILE_CHANGE);
     }
 
     @Test(description = "Validation when invalid method qualifiers are added (resource/remote) with onFileChange")
@@ -154,11 +162,11 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
 
         Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
-        assertDiagnostic(diagnostic1, CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED);
+        assertDiagnostic(diagnostic1, RESOURCE_FUNCTION_NOT_ALLOWED);
         Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
-        assertDiagnostic(diagnostic2, CompilationErrors.INVALID_REMOTE_FUNCTION);
+        assertDiagnostic(diagnostic2, INVALID_REMOTE_FUNCTION);
         Diagnostic diagnostic3 = (Diagnostic) diagnostics[2];
-        assertDiagnostic(diagnostic3, CompilationErrors.METHOD_MUST_BE_REMOTE);
+        assertDiagnostic(diagnostic3, METHOD_MUST_BE_REMOTE);
     }
 
     @Test(description = "Validation when no arguments are added to method definition")
@@ -168,7 +176,7 @@ public class FtpServiceValidationTest {
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-        assertDiagnostic(diagnostic, CompilationErrors.MUST_HAVE_WATCHEVENT);
+        assertDiagnostic(diagnostic, MUST_HAVE_WATCHEVENT);
     }
 
     @Test(description = "Validation when a readonly WatchEvent argument and an invalid argument is added")
@@ -180,7 +188,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
-            assertDiagnostic(diagnostic, CompilationErrors.INVALID_CALLER_PARAMETER);
+            assertDiagnostic(diagnostic, INVALID_CALLER_PARAMETER);
         }
     }
 
@@ -193,7 +201,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
-            assertDiagnostic(diagnostic, CompilationErrors.INVALID_WATCHEVENT_PARAMETER);
+            assertDiagnostic(diagnostic, INVALID_WATCHEVENT_PARAMETER);
         }
     }
 
@@ -206,7 +214,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
-            assertDiagnostic(diagnostic, CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL);
+            assertDiagnostic(diagnostic, INVALID_RETURN_TYPE_ERROR_OR_NIL);
         }
     }
 
@@ -219,7 +227,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
-            assertDiagnostic(diagnostic, CompilationErrors.INVALID_PARAMETERS);
+            assertDiagnostic(diagnostic, INVALID_CALLER_PARAMETER);
         }
     }
 
@@ -232,7 +240,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
-            assertDiagnostic(diagnostic, CompilationErrors.ONLY_PARAMS_ALLOWED);
+            assertDiagnostic(diagnostic, ONLY_PARAMS_ALLOWED);
         }
     }
 
@@ -245,7 +253,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
         for (Object obj : diagnostics) {
             Diagnostic diagnostic = (Diagnostic) obj;
-            assertDiagnostic(diagnostic, CompilationErrors.INVALID_CALLER_PARAMETER);
+            assertDiagnostic(diagnostic, INVALID_CALLER_PARAMETER);
         }
     }
 
@@ -256,6 +264,52 @@ public class FtpServiceValidationTest {
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-        assertDiagnostic(diagnostic, CompilationErrors.INVALID_WATCHEVENT_PARAMETER);
+        assertDiagnostic(diagnostic, INVALID_WATCHEVENT_PARAMETER);
+    }
+
+    @Test(description = "Validation when invalid qualified ref is added as first param and watchevent " +
+            "is added as second param")
+    public void testInvalidService16() {
+        Package currentPackage = loadPackage("invalid_service_16");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        for (Object obj : diagnostics) {
+            Diagnostic diagnostic = (Diagnostic) obj;
+            assertDiagnostic(diagnostic, INVALID_CALLER_PARAMETER);
+        }
+    }
+
+    @Test(description = "Validation when 2 invalid qualified refs are added")
+    public void testInvalidService17() {
+        Package currentPackage = loadPackage("invalid_service_17");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+
+        Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
+        assertDiagnostic(diagnostic1, INVALID_CALLER_PARAMETER);
+        Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
+        assertDiagnostic(diagnostic2, INVALID_WATCHEVENT_PARAMETER);
+    }
+
+    @Test(description = "Validation when 1 invalid intersection param and 1 invalid param added")
+    public void testInvalidService18() {
+        Package currentPackage = loadPackage("invalid_service_18");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 4);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+
+        Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
+        assertDiagnostic(diagnostic1, INVALID_CALLER_PARAMETER);
+        Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
+        assertDiagnostic(diagnostic2, INVALID_WATCHEVENT_PARAMETER);
+        Diagnostic diagnostic3 = (Diagnostic) diagnostics[2];
+        assertDiagnostic(diagnostic3, INVALID_CALLER_PARAMETER);
+        Diagnostic diagnostic4 = (Diagnostic) diagnostics[3];
+        assertDiagnostic(diagnostic4, INVALID_WATCHEVENT_PARAMETER);
     }
 }
