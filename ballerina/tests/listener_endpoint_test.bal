@@ -23,7 +23,7 @@ int addedFileCount = 0;
 FileInfo? anonServerAddedFileInfo = ();
 int deletedFileCount = 0;
 boolean watchEventReceived = false;
-string[] deletedFiles = [];
+string deletedFilesNames = "";
 FileInfo[] fileInfos = [];
 
 listener Listener remoteServer = check new ({
@@ -340,7 +340,7 @@ public function testValidateDeletedFilesFromListener() returns error? {
     Service ftpService = service object {
         remote function onFileChange(WatchEvent event) {
             event.deletedFiles.forEach(function (string deletedFile) {
-                deletedFiles.push(deletedFile);
+                deletedFilesNames += deletedFile;
             });
         }
     };
@@ -374,9 +374,7 @@ public function testValidateDeletedFilesFromListener() returns error? {
 
     runtime:deregisterListener(ftpListener);
     check ftpListener.gracefulStop();
-
-    test:assertTrue(deletedFiles.length() == 3);
     foreach int i in 1...3 {
-        test:assertTrue(deletedFiles[i - 1].endsWith(string`/home/in/deleteFile${i}.txt`));
+        test:assertTrue(deletedFilesNames.includes(string`/home/in/deleteFile${i}.txt`));
     }
 }
