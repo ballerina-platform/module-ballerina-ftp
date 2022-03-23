@@ -400,20 +400,20 @@ public function testIsolatedService() returns error? {
         },
         path: "/home/in",
         pollingInterval: 1,
-        fileNamePattern: "(.*).txt"
+        fileNamePattern: "(.*).isolated"
     });
     check ftpListener.attach(ftpService);
     check ftpListener.'start();
     runtime:registerListener(ftpListener);
 
     stream<io:Block, io:Error?> bStream1 = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check clientEp->put("/home/in/isolatedTestFile.txt", bStream1);
+    check clientEp->put("/home/in/isolatedTestFile.isolated", bStream1);
     runtime:sleep(5);
 
     runtime:deregisterListener(ftpListener);
     check ftpListener.gracefulStop();
-    check clientEp->delete("/home/in/isolatedTestFile.txt");
+    check clientEp->delete("/home/in/isolatedTestFile.isolated");
     lock {
-        test:assertEquals(addedFilename, "isolatedTestFile.txt");
+        test:assertEquals(addedFilename, "isolatedTestFile.isolated");
     }
 }
