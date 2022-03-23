@@ -18,6 +18,7 @@
 
 package io.ballerina.stdlib.ftp.util;
 
+import io.ballerina.runtime.api.async.StrandMetadata;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BString;
 
@@ -85,4 +86,7 @@ public class FtpConstants {
 
     public static final String ON_FILE_CHANGE_REMOTE_FUNCTION = "onFileChange";
 
+    public static final StrandMetadata ON_FILECHANGE_METADATA = new StrandMetadata(ModuleUtils.getModule().getOrg(),
+            ModuleUtils.getModule().getName(), ModuleUtils.getModule().getMajorVersion(),
+            ON_FILE_CHANGE_REMOTE_FUNCTION);
 }
