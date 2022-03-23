@@ -25,6 +25,7 @@ int deletedFileCount = 0;
 boolean watchEventReceived = false;
 string deletedFilesNames = "";
 FileInfo[] fileInfos = [];
+isolated string addedFilename = "";
 
 listener Listener remoteServer = check new ({
     protocol: FTP,
@@ -376,5 +377,43 @@ public function testValidateDeletedFilesFromListener() returns error? {
     check ftpListener.gracefulStop();
     foreach int i in 1...3 {
         test:assertTrue(deletedFilesNames.includes(string`/home/in/deleteFile${i}.txt`));
+    }
+}
+
+@test:Config {}
+public function testIsolatedService() returns error? {
+    Service ftpService = service object {
+        remote function onFileChange(WatchEvent event) {
+            event.addedFiles.forEach(function (FileInfo fileInfo) {
+                lock {
+                    addedFilename = fileInfo.name;
+                }
+            });
+        }
+    };
+    Listener ftpListener = check new ({
+        protocol: FTP,
+        host: "localhost",
+        port: 21212,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"}
+        },
+        path: "/home/in",
+        pollingInterval: 1,
+        fileNamePattern: "(.*).txt"
+    });
+    check ftpListener.attach(ftpService);
+    check ftpListener.'start();
+    runtime:registerListener(ftpListener);
+
+    stream<io:Block, io:Error?> bStream1 = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check clientEp->put("/home/in/isolatedTestFile.txt", bStream1);
+    runtime:sleep(5);
+
+    runtime:deregisterListener(ftpListener);
+    check ftpListener.gracefulStop();
+    check clientEp->delete("/home/in/isolatedTestFile.txt");
+    lock {
+        test:assertEquals(addedFilename, "isolatedTestFile.txt");
     }
 }
