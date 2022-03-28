@@ -126,6 +126,7 @@ public class FtpListener implements RemoteFileSystemListener {
             @Override
             public void notifySuccess(Object o) {
             }
+            
             @Override
             public void notifyFailure(BError error) {
                 error.printStackTrace();
