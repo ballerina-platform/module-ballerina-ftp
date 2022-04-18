@@ -128,8 +128,11 @@ public class FtpListenerHelper {
                 final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
                 params.put(FtpConstants.IDENTITY, privateKeyPath);
-                final String privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
+                String privateKeyPassword = null;
+                if (privateKey.containsKey(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY))) {
+                    privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
+                            FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
+                }
                 if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
                     params.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword);
                 }

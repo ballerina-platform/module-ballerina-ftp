@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.ballerina.stdlib.ftp.util.FtpConstants.IDENTITY_PASS_PHRASE;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_FTP;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_SFTP;
 
@@ -86,8 +87,13 @@ public class FileTransportUtils {
         }
         if (options.get(FtpConstants.IDENTITY) != null) {
             try {
-                IdentityInfo identityInfo = new IdentityInfo(new File(options.get(FtpConstants.IDENTITY)),
-                        options.get(FtpConstants.IDENTITY_PASS_PHRASE).getBytes());
+                IdentityInfo identityInfo;
+                if (options.containsKey(IDENTITY_PASS_PHRASE)) {
+                    identityInfo = new IdentityInfo(new File(options.get(FtpConstants.IDENTITY)),
+                            options.get(IDENTITY_PASS_PHRASE).getBytes());
+                } else {
+                    identityInfo = new IdentityInfo(new File(options.get(FtpConstants.IDENTITY)));
+                }
                 configBuilder.setIdentityInfo(opts, identityInfo);
             } catch (FileSystemException e) {
                 throw new RemoteFileSystemConnectorException(e.getMessage(), e);
