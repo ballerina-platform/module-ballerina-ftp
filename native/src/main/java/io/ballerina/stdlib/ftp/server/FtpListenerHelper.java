@@ -128,7 +128,7 @@ public class FtpListenerHelper {
                 final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
                 if (privateKeyPath.isEmpty()) {
-                    throw FtpUtil.createError("Private key path cannot be empty.", null, Error.errorType());
+                    throw FtpUtil.createError("Private key path cannot be empty", null, Error.errorType());
                 }
                 params.put(FtpConstants.IDENTITY, privateKeyPath);
                 String privateKeyPassword = null;
