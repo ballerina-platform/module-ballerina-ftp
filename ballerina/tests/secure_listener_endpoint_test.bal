@@ -209,3 +209,53 @@ public function testConnectWithEmptyCredentialsAndKey() returns error? {
         test:assertFail("Non-error result when no auth config is provided when creating a Listener.");
     }
 }
+
+@test:Config {}
+public function testConnectWithNoPasswordForKey() returns error? {
+    Listener|Error result = new ({
+        protocol: SFTP,
+        host: "localhost",
+        port: 21213,
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: "wso2123"
+            },
+            privateKey: {
+                path: "tests/resources/sftp.passwordless.private.key"
+            }
+        },
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if result is Error {
+        test:assertFail("Could not initialize sftp listener: " + result.message());
+    }
+}
+
+@test:Config {}
+public function testConnectWithEmptyKeyPath() returns error? {
+    Listener|Error result = new ({
+        protocol: SFTP,
+        host: "localhost",
+        port: 21213,
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: "wso2123"
+            },
+            privateKey: {
+                path: ""
+            }
+        },
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if result is Error {
+        test:assertEquals(result.message(), "Private key path cannot be empty");
+    } else {
+        test:assertFail("Non-error result when empty key string is provided when creating a Listener.");
+    }
+}
