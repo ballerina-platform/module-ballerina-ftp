@@ -254,7 +254,7 @@ public function testConnectWithEmptyKeyPath() returns error? {
     });
 
     if result is Error {
-        test:assertEquals(result.message(), "Private key path cannot be empty.");
+        test:assertEquals(result.message(), "Private key path cannot be empty");
     } else {
         test:assertFail("Non-error result when empty key string is provided when creating a Listener.");
     }
