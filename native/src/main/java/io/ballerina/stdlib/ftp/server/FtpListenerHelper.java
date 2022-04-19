@@ -72,7 +72,7 @@ public class FtpListenerHelper {
 
             ftpListener.addNativeData(FTP_SERVICE_ENDPOINT_CONFIG, serviceEndpointConfig);
             return null;
-        } catch (RemoteFileSystemConnectorException | BallerinaFtpException e) {
+        } catch (RemoteFileSystemConnectorException | BallerinaFtpException | BError e) {
             Throwable rootCause = findRootCause(e);
             String detail = (rootCause != null) ? rootCause.getMessage() : null;
             return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
@@ -127,6 +127,9 @@ public class FtpListenerHelper {
             if (privateKey != null) {
                 final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
+                if (privateKeyPath.isEmpty()) {
+                    throw FtpUtil.createError("Private key path cannot be empty.", null, Error.errorType());
+                }
                 params.put(FtpConstants.IDENTITY, privateKeyPath);
                 String privateKeyPassword = null;
                 if (privateKey.containsKey(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY))) {
