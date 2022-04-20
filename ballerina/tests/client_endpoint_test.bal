@@ -571,7 +571,7 @@ function testGenericRmdir(string path) returns error? {
 }
 
 @test:AfterSuite {}
-public function stopServer() returns error? {
+public function cleanTestEnvironment() returns error? {
     check (<Listener>callerListener).gracefulStop();
     check (<Listener>remoteServerListener).gracefulStop();
     check (<Listener>anonymousRemoteServerListener).gracefulStop();
