@@ -22,7 +22,7 @@ int secureAddedFileCount = 0;
 int secureDeletedFileCount = 0;
 boolean secureWatchEventReceived = false;
 
-listener Listener secureRemoteServer = check new ({
+ListenerConfiguration secureRemoteServerConfig = {
     protocol: SFTP,
     host: "127.0.0.1",
     auth: {
@@ -38,9 +38,9 @@ listener Listener secureRemoteServer = check new ({
     port: 21213,
     pollingInterval: 2,
     fileNamePattern: "(.*).txt"
-});
+};
 
-service "ftpServerConnector" on secureRemoteServer {
+Service secureRemoteServerService = service object {
     remote function onFileChange(WatchEvent & readonly event) {
         secureAddedFileCount = event.addedFiles.length();
         secureDeletedFileCount = event.deletedFiles.length();
@@ -53,10 +53,9 @@ service "ftpServerConnector" on secureRemoteServer {
             log:printInfo("Deleted file path: " + deletedFile);
         }
     }
-}
+};
 
-@test:Config {
-}
+@test:Config {}
 public function testSecureAddedFileCount() {
     int timeoutInSeconds = 300;
     // Test fails in 5 minutes if failed to receive watchEvent

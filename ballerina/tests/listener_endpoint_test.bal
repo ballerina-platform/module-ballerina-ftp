@@ -27,7 +27,7 @@ string deletedFilesNames = "";
 FileInfo[] fileInfos = [];
 isolated string addedFilename = "";
 
-listener Listener remoteServer = check new ({
+ListenerConfiguration remoteServerConfiguration = {
     protocol: FTP,
     host: "127.0.0.1",
     auth: {
@@ -40,9 +40,9 @@ listener Listener remoteServer = check new ({
     path: "/home/in",
     pollingInterval: 2,
     fileNamePattern: "(.*).txt"
-});
+};
 
-service on remoteServer {
+Service remoteServerService = service object {
     remote function onFileChange(Caller caller, WatchEvent & readonly event) {
         addedFileCount = event.addedFiles.length();
         deletedFileCount = event.deletedFiles.length();
@@ -55,9 +55,9 @@ service on remoteServer {
             log:printInfo("Deleted file path: " + deletedFile);
         }
     }
-}
+};
 
-listener Listener anonymousRemoteServer = check new ({
+ListenerConfiguration anonymousRemoteServerConfig = {
     protocol: FTP,
     host: "127.0.0.1",
     auth: {
@@ -70,9 +70,9 @@ listener Listener anonymousRemoteServer = check new ({
     path: "/home/in",
     pollingInterval: 2,
     fileNamePattern: "(.*).txt"
-});
+};
 
-service on anonymousRemoteServer {
+Service anonymousRemoteServerService = service object {
     remote function onFileChange(WatchEvent & readonly event) {
         if event.addedFiles.length() == 1 && anonServerAddedFileInfo == () {
             anonServerAddedFileInfo = event.addedFiles[0];
@@ -80,10 +80,9 @@ service on anonymousRemoteServer {
             anonServerAddedFileInfo = ();
         }
     }
-}
+};
 
-@test:Config {
-}
+@test:Config {}
 public function testAnonServerAddedFile() {
     int timeoutInSeconds = 300;
     while timeoutInSeconds > 0 {
@@ -322,7 +321,7 @@ public function testMutableWatchEvent() returns error? {
     runtime:registerListener(ftpListener);
 
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check clientEp->put("/home/in/mutable/test1.txt", bStream, compressionType = ZIP);
+    check (<Client>clientEp)->put("/home/in/mutable/test1.txt", bStream, compressionType = ZIP);
     runtime:sleep(2);
 
     runtime:deregisterListener(ftpListener);
@@ -361,16 +360,16 @@ public function testValidateDeletedFilesFromListener() returns error? {
     runtime:registerListener(ftpListener);
 
     stream<io:Block, io:Error?> bStream1 = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check clientEp->put("/home/in/deleteFile1.txt", bStream1);
+    check (<Client>clientEp)->put("/home/in/deleteFile1.txt", bStream1);
     stream<io:Block, io:Error?> bStream2 = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check clientEp->put("/home/in/deleteFile2.txt", bStream2);
+    check (<Client>clientEp)->put("/home/in/deleteFile2.txt", bStream2);
     stream<io:Block, io:Error?> bStream3 = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check clientEp->put("/home/in/deleteFile3.txt", bStream3);
+    check (<Client>clientEp)->put("/home/in/deleteFile3.txt", bStream3);
 
     runtime:sleep(2);
-    check clientEp->delete("/home/in/deleteFile1.txt");
-    check clientEp->delete("/home/in/deleteFile2.txt");
-    check clientEp->delete("/home/in/deleteFile3.txt");
+    check (<Client>clientEp)->delete("/home/in/deleteFile1.txt");
+    check (<Client>clientEp)->delete("/home/in/deleteFile2.txt");
+    check (<Client>clientEp)->delete("/home/in/deleteFile3.txt");
     runtime:sleep(5);
 
     runtime:deregisterListener(ftpListener);
@@ -407,12 +406,12 @@ public function testIsolatedService() returns error? {
     runtime:registerListener(ftpListener);
 
     stream<io:Block, io:Error?> bStream1 = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check clientEp->put("/home/in/isolatedTestFile.isolated", bStream1);
+    check (<Client>clientEp)->put("/home/in/isolatedTestFile.isolated", bStream1);
     runtime:sleep(5);
 
     runtime:deregisterListener(ftpListener);
     check ftpListener.gracefulStop();
-    check clientEp->delete("/home/in/isolatedTestFile.isolated");
+    check (<Client>clientEp)->delete("/home/in/isolatedTestFile.isolated");
     lock {
         test:assertEquals(addedFilename, "isolatedTestFile.isolated");
     }
