@@ -22,7 +22,7 @@ import ballerina/log;
     dependsOn: [testRemoveDirectory]
 }
 public function testSecureGetFileContent() returns error? {
-    stream<byte[] & readonly, io:Error?>|Error str = sftpClientEp->get("/file2.txt");
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>sftpClientEp)->get("/file2.txt");
     if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "Put content"),
             msg = "Found unexpected content from secure `get` operation");
@@ -266,13 +266,13 @@ public function testSecureConnectWithInvalidKeyPath() returns error? {
 public function testSecurePutFileContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
-    Error? response = sftpClientEp->put("/tempFile1.txt", bStream);
+    Error? response = (<Client>sftpClientEp)->put("/tempFile1.txt", bStream);
     if response is Error {
         test:assertFail(msg = "Error in secure `put` operation" + response.message());
     }
     log:printInfo("Executed secure `put` operation");
 
-    stream<byte[] & readonly, io:Error?>|Error str = sftpClientEp->get("/tempFile1.txt");
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>sftpClientEp)->get("/tempFile1.txt");
     if str is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(str, "Put content"),
             msg = "Found unexpected content from secure `get` operation after `put` operation");
@@ -289,13 +289,13 @@ public function testSecurePutFileContent() returns error? {
     dependsOn: [testSecurePutFileContent]
 }
 public function testSecureDeleteFileContent() returns error? {
-    Error? response = sftpClientEp->delete("/tempFile1.txt");
+    Error? response = (<Client>sftpClientEp)->delete("/tempFile1.txt");
     if response is Error {
         test:assertFail(msg = "Error in secure `delete` operation" + response.message());
     }
     log:printInfo("Executed secure `delete` operation");
 
-    stream<byte[] & readonly, io:Error?>|Error str = sftpClientEp->get("/tempFile1.txt");
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>sftpClientEp)->get("/tempFile1.txt");
     if str is stream<byte[] & readonly, io:Error?> {
         test:assertFalse(check matchStreamContent(str, "Put content"),
             msg = "File was not deleted with secure `delete` operation");

@@ -59,7 +59,7 @@ public function testConnectionWithInvalidConfiguration() returns error? {
     dependsOn: [testReadBlockNonFittingContent]
 }
 public function testReadNonExistingFile() returns error? {
-    stream<byte[] & readonly, io:Error?>|Error str = clientEp->get("/home/in/nonexisting.txt");
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>clientEp)->get("/home/in/nonexisting.txt");
     if str is Error {
         test:assertEquals(str.message(), "Failed to read file: ftp://wso2:wso2123@127.0.0.1:21212/home/in/nonexisting.txt not found",
             msg = "Unexpected error during the `get` operation of an non-existing file.");
@@ -73,7 +73,7 @@ public function testReadNonExistingFile() returns error? {
 }
 public function testAppendContentToNonExistingFile() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(appendFilePath, 7);
-    Error? receivedError = clientEp->append("/../invalidFile", bStream);
+    Error? receivedError = (<Client>clientEp)->append("/../invalidFile", bStream);
     if receivedError is Error {
         test:assertEquals(receivedError.message(), "Invalid relative file name.",
             msg = "Unexpected error during the `append` operation of an invalid file.");
@@ -87,7 +87,7 @@ public function testAppendContentToNonExistingFile() returns error? {
 }
 public function testPutFileContentAtInvalidFileLocation() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    Error? receivedError = clientEp->put("/../InvalidFile", bStream);
+    Error? receivedError = (<Client>clientEp)->put("/../InvalidFile", bStream);
     if receivedError is Error {
         test:assertEquals(receivedError.message(), "Invalid relative file name.",
             msg = "Unexpected error during the `put` operation of an invalid file.");
@@ -100,7 +100,7 @@ public function testPutFileContentAtInvalidFileLocation() returns error? {
     dependsOn: [testIsDirectory]
 }
 public function testIsDirectoryWithNonExistingDirectory() {
-    boolean|Error receivedError = clientEp->isDirectory("/home/in/nonexisting");
+    boolean|Error receivedError = (<Client>clientEp)->isDirectory("/home/in/nonexisting");
     if receivedError is Error {
         test:assertEquals(receivedError.message(), "/home/in/nonexisting does not exists to check if it is a directory.",
             msg = "Unexpected error during the `isDirectory` operation of an non-existing directory. " + receivedError.message());
@@ -113,7 +113,7 @@ public function testIsDirectoryWithNonExistingDirectory() {
     dependsOn: [testCreateDirectory]
 }
 public function testCreateDirectoryAtInvalidLocation() {
-    Error? receivedError = clientEp->mkdir("/../InvalidDirectory");
+    Error? receivedError = (<Client>clientEp)->mkdir("/../InvalidDirectory");
     if receivedError is Error {
         test:assertEquals(receivedError.message(), "Invalid relative file name.",
             msg = "Unexpected error during the `mkdir` operation of an non-existing directory. " + receivedError.message());
@@ -128,7 +128,7 @@ public function testCreateDirectoryAtInvalidLocation() {
 public function testRenameNonExistingDirectory() {
     string existingName = "/nonExistingDirectory";
     string newName = "/home/in/differentDirectory";
-    Error? receivedError = clientEp->rename(existingName, newName);
+    Error? receivedError = (<Client>clientEp)->rename(existingName, newName);
 
     if receivedError is Error {
         test:assertTrue(receivedError.message().startsWith("Failed to rename file: "),
@@ -142,7 +142,7 @@ public function testRenameNonExistingDirectory() {
     dependsOn: [testGetFileSize]
 }
 public function testGetFileSizeFromNonExistingFile() {
-    int|Error receivedError = clientEp->size("/nonExistingFile");
+    int|Error receivedError = (<Client>clientEp)->size("/nonExistingFile");
     if receivedError is Error {
         test:assertTrue(receivedError.message().startsWith("Could not determine the size of "),
             msg = "Unexpected error during the `size` operation of an non-existing file. " + receivedError.message());
@@ -155,7 +155,7 @@ public function testGetFileSizeFromNonExistingFile() {
     dependsOn: [testListFiles]
 }
 public function testListFilesFromNonExistingDirectory() {
-    FileInfo[]|Error receivedError = clientEp->list("/nonExistingDirectory");
+    FileInfo[]|Error receivedError = (<Client>clientEp)->list("/nonExistingDirectory");
     if receivedError is Error {
         test:assertTrue(receivedError.message().startsWith("Could not list the contents of "),
             msg = "Unexpected error during the `list` operation of an non-existing directory. " + receivedError.message());
@@ -168,7 +168,7 @@ public function testListFilesFromNonExistingDirectory() {
     dependsOn: [testDeleteFile]
 }
 public function testDeleteFileAtNonExistingLocation() returns error? {
-    Error? receivedError = clientEp->delete("/nonExistingFile");
+    Error? receivedError = (<Client>clientEp)->delete("/nonExistingFile");
     if receivedError is Error {
         test:assertTrue(receivedError.message().startsWith("Failed to delete file: "),
             msg = "Unexpected error during the `delete` operation of an non-existing file. " + receivedError.message());
@@ -181,7 +181,7 @@ public function testDeleteFileAtNonExistingLocation() returns error? {
     dependsOn: [testRemoveDirectory]
 }
 public function testRemoveDirectoryWithWrongUrl() {
-    Error? receivedError = clientEp->rmdir("/nonExistingDirectory");
+    Error? receivedError = (<Client>clientEp)->rmdir("/nonExistingDirectory");
     if receivedError is Error {
         test:assertTrue(receivedError.message().startsWith("Failed to delete directory: "),
             msg = "Unexpected error during the `rmdir` operation of a non-existing directory. " + receivedError.message());
