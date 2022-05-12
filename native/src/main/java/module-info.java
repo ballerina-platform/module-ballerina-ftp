@@ -18,7 +18,6 @@
 
 module io.ballerina.stdlib.ftp {
     requires commons.vfs2;
-    requires io.ballerina.core;
     requires io.ballerina.runtime;
     requires io.ballerina.lang;
     requires io.ballerina.stdlib.io;

@@ -18,8 +18,6 @@
 
 package io.ballerina.stdlib.ftp.util;
 
-import org.ballerinalang.core.model.types.BType;
-
 /**
  * Holds the byte array buffer to be used by the InputStream.
  */
@@ -27,9 +25,9 @@ public class BufferHolder {
 
     private byte[] buffer = new byte[0];
     private boolean terminal = false;
-    private final BType terminalType = null;
+    private final Object terminalType = null;
 
-    public BType getTerminalType() {
+    public Object getTerminalType() {
         return terminalType;
     }
 
