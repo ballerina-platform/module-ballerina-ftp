@@ -5,7 +5,6 @@ _Reviewers_: @shafreenAnfar @Bhashinee
 _Created_: 2020/10/28   
 _Updated_: 2022/03/09  
 _Edition_: Swan Lake    
-_Issue_: [#2202](https://github.com/ballerina-platform/ballerina-standard-library/issues/2202)
 
 # Introduction
 This is the specification for the FTP standard library of [Ballerina language](https://ballerina.io/), which provides FTP client/listener functionalities to send and receive files by connecting to FTP/SFTP server.
