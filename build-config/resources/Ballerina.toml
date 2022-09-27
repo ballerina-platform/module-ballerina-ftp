@@ -19,9 +19,6 @@ path = "./lib/jsch-@jsch.version@.jar"
 path = "./lib/commons-net-@commons.net.version@.jar"
 
 [[platform.java11.dependency]]
-path = "./lib/testng-@testng.version@.jar"
-
-[[platform.java11.dependency]]
 path = "./lib/MockFtpServer-@mockftpserver.version@.jar"
 scope = "testOnly"
 
