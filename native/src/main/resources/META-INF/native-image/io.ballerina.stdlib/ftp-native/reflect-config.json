@@ -319,6 +319,15 @@
     "name": "java.security.AlgorithmParametersSpi"
   },
   {
+    "name": "java.lang.Thread",
+    "methods": [
+      {
+        "name": "getContextClassLoader",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "java.beans.PropertyVetoException"
   },
   {
