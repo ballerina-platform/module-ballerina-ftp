@@ -1,0 +1,12 @@
+{
+  "resources":{
+  "includes":[
+    {
+      "pattern":"\\Qorg/apache/commons/vfs2/impl/providers.xml\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/quartz/core/quartz-build.properties\\E"
+    }
+  ]},
+  "bundles":[]
+}
