@@ -1,0 +1,9 @@
+{
+  "resources":{
+    "includes":[
+      {
+        "pattern":"\\Qorg/apache/commons/vfs2/impl/providers.xml\\E"
+      }
+    ]},
+  "bundles":[]
+}

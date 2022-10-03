@@ -29,7 +29,6 @@ ext.stdlibIoVersion = project.stdlibIoVersion
 ext.puppycrawlCheckstyleVersion = project.puppycrawlCheckstyleVersion
 ext.testngVersion = project.testngVersion
 ext.slf4jVersion = project.slf4jVersion
-ext.javaFtpVersion = project.javaFtpVersion
 ext.commonsVfsVersion = project.commonsVfsVersion
 ext.commonsNetVersion = project.commonsNetVersion
 ext.jschVersion = project.jschVersion

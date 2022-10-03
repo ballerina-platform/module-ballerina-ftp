@@ -99,9 +99,6 @@ dependencies {
     externalJars(group: 'org.slf4j', name: 'jcl-over-slf4j', version: "${jclSlf4jVersion}") {
         transitive = false
     }
-    externalJars(group: 'org.testng', name: 'testng', version: "${testngVersion}") {
-        transitive = false
-    }
     externalJars(group: 'org.slf4j', name: 'slf4j-api', version: "${slf4jVersion}") {
         transitive = false
     }
@@ -112,7 +109,6 @@ task updateTomlFiles {
         def stdlibDependentCommonsVfsVersion = project.commonsVfsVersion
         def stdlibDependentJschVersion = project.jschVersion
         def stdlibDependentCommonsNetVersion = project.commonsNetVersion
-        def stdlibDependentTestngVersion = project.testngVersion
         def stdlibDependentMockFtpServerVersion = project.mockFtpServerVersion
         def stdlibDependentSshdCoreVersion = project.sshdCoreVersion
         def stdlibDependentFtpServerVersion = project.ftpServerVersion
@@ -126,7 +122,6 @@ task updateTomlFiles {
         newConfig = newConfig.replace("@commons.vfs2.version@", stdlibDependentCommonsVfsVersion)
         newConfig = newConfig.replace("@jsch.version@", stdlibDependentJschVersion)
         newConfig = newConfig.replace("@commons.net.version@", stdlibDependentCommonsNetVersion)
-        newConfig = newConfig.replace("@testng.version@", stdlibDependentTestngVersion)
         newConfig = newConfig.replace("@mockftpserver.version@", stdlibDependentMockFtpServerVersion)
         newConfig = newConfig.replace("@sshd.core.version@", stdlibDependentSshdCoreVersion)
         newConfig = newConfig.replace("@ftpserver.core.version@", stdlibDependentFtpServerVersion)
