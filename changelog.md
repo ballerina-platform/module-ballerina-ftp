@@ -5,10 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+- [API docs updated](https://github.com/ballerina-platform/ballerina-standard-library/issues/3463)
+
+## [2.3.0] - 2022-05-30
+
 ### Added
  - [[#2525] Introduced `ftp:Caller` API and added as an optional parameter in `onFileChange` method](https://github.com/ballerina-platform/ballerina-standard-library/issues/2525)
- - [[#1514] Added compiler plugin validation support for ftp service](https://github.com/ballerina-platform/ballerina-standard-library/issues/1514)
- - [[#2704] Added code snippet generation for ftp service](https://github.com/ballerina-platform/ballerina-standard-library/issues/2704)
+ - [[#1514] Added compiler plugin validation support for `ftp:Service`](https://github.com/ballerina-platform/ballerina-standard-library/issues/1514)
+ - [[#2704] Added code snippet generation for `ftp:Service`](https://github.com/ballerina-platform/ballerina-standard-library/issues/2704)
 
 ## [2.2.0] - 2022-01-28
 
