@@ -254,7 +254,7 @@ Execute the commands below to build from source.
    ```
    ./gradlew clean test -Pgroups=<test_group_names>
    ```
-Discord server](https://discord.gg/ballerinalang).
+
 4. To build the library without the tests:
    ```
    ./gradlew clean build -x test
