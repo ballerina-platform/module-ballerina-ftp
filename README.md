@@ -254,7 +254,7 @@ Execute the commands below to build from source.
    ```
    ./gradlew clean test -Pgroups=<test_group_names>
    ```
-
+Discord server](https://discord.gg/ballerinalang).
 4. To build the library without the tests:
    ```
    ./gradlew clean build -x test
@@ -294,5 +294,5 @@ All contributors are encouraged to read the [Ballerina Code of Conduct](https://
 
 * For more information go to the [`ftp` library](https://lib.ballerina.io/ballerina/ftp/latest).
 * For example demonstrations of the usage, go to [Ballerina By Examples](https://ballerina.io/learn/by-example/).
-* Chat live with us via our [Slack channel](https://ballerina.io/community/slack/).
+* Chat live with us via our [Discord server](https://discord.gg/ballerinalang).
 * Post all technical questions on Stack Overflow with the [#ballerina](https://stackoverflow.com/questions/tagged/ballerina) tag.
