@@ -25,10 +25,10 @@ jobs:
               echo $(echo "$result" | jq -r '.result') >> load-tests/$test_scenario/results/summary.csv
               git add load-tests/$test_scenario/results/summary.csv
               git commit -m "Update $test_scenario test results on $(date)"
-              printf "hasPassed=true"
+              printf "hasPassed=true" >> $GITHUB_OUTPUT
             else
               echo $test_scenario "test has failed with error rate" $(echo "$result" | jq -r '.errorRate')
-              printf "hasFailed=true"
+              printf "hasFailed=true" >> $GITHUB_OUTPUT
             fi
           done
         env:
