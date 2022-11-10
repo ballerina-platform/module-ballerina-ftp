@@ -183,6 +183,15 @@
     ]
   },
   {
+    "name": "com.jcraft.jsch.jce.HMACMD5",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.jcraft.jsch.jce.SHA256",
     "methods": [
       {
