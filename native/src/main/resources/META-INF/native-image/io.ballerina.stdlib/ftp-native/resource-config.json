@@ -3,6 +3,9 @@
     "includes":[
       {
         "pattern":"\\Qorg/apache/commons/vfs2/impl/providers.xml\\E"
+      },
+      {
+        "pattern":"\\Qorg/apache/commons/vfs2/Resources.properties\\E"
       }
     ]},
   "bundles":[]

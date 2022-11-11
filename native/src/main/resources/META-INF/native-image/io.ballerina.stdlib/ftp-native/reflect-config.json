@@ -183,6 +183,15 @@
     ]
   },
   {
+    "name": "com.jcraft.jsch.jce.HMACMD5",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.jcraft.jsch.jce.SHA256",
     "methods": [
       {
@@ -238,38 +247,6 @@
   },
   {
     "name": "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl",
-    "methods": [
-      {
-        "name": "<init>",
-        "parameterTypes": []
-      }
-    ]
-  },
-  {
-    "name": "org.apache.commons.logging.impl.Jdk14Logger",
-    "methods": [
-      {
-        "name": "<init>",
-        "parameterTypes": [
-          "java.lang.String"
-        ]
-      }
-    ]
-  },
-  {
-    "name": "org.apache.commons.logging.impl.Log4JLogger"
-  },
-  {
-    "name": "org.apache.commons.logging.impl.LogFactoryImpl",
-    "methods": [
-      {
-        "name": "<init>",
-        "parameterTypes": []
-      }
-    ]
-  },
-  {
-    "name": "org.apache.commons.logging.impl.WeakHashtable",
     "methods": [
       {
         "name": "<init>",
