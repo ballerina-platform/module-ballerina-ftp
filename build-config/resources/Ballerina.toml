@@ -7,7 +7,7 @@ keywords = ["FTP", "SFTP", "remote file", "file transfer", "client", "service"]
 repository = "https://github.com/ballerina-platform/module-ballerina-ftp"
 icon = "icon.png"
 license = ["Apache-2.0"]
-distribution = "2201.3.0"
+distribution = "2201.4.0"
 
 [[platform.java11.dependency]]
 path = "./lib/commons-vfs2-@commons.vfs2.version@.jar"
