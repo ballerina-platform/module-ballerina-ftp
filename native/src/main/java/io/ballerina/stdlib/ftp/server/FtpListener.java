@@ -134,8 +134,8 @@ public class FtpListener implements RemoteFileSystemListener {
                 error.printStackTrace();
             }
         };
-        ObjectType type = (ObjectType) TypeUtils.getReferredType(service.getType());
-        if (type.isIsolated() && type.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
+        ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(service.getType());
+        if (serviceType.isIsolated() && serviceType.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
             runtime.invokeMethodAsyncConcurrently(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
                     ON_FILECHANGE_METADATA, callback, null, null, args);
         } else {
