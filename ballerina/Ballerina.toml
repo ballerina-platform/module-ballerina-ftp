@@ -42,9 +42,9 @@ scope = "testOnly"
 path = "./lib/aopalliance-1.0.jar"
 scope = "testOnly"
 
-#[[platform.java11.dependency]]
-#path = "./lib/jcl-over-slf4j-1.7.21.jar"
-#scope = "testOnly"
+[[platform.java11.dependency]]
+path = "./lib/jcl-over-slf4j-1.7.21.jar"
+scope = "testOnly"
 
 [[platform.java11.dependency]]
 groupId = "io.ballerina.stdlib"
