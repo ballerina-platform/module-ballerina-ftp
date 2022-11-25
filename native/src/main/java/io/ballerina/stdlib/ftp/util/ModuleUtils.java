@@ -21,6 +21,10 @@ package io.ballerina.stdlib.ftp.util;
 import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Module;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.logging.LogManager;
+
 /**
  * This class will hold module related utility functions.
  *
@@ -38,6 +42,15 @@ public class ModuleUtils {
 
     public static void setModule(Environment env) {
         ftpModule = env.getCurrentModule();
+    }
+
+    public static void initializeLoggingConfigurations() {
+        try (InputStream is = ModuleUtils.class.getClassLoader().getResourceAsStream("logging.properties")) {
+            LogManager.getLogManager().reset();
+            LogManager.getLogManager().readConfiguration(is);
+        } catch (IOException e) {
+            throw new RuntimeException("failed to read logging.properties file from the classpath", e);
+        }
     }
 
     public static Module getModule() {
