@@ -16,7 +16,7 @@ path = "./lib/commons-vfs2-2.8.0.jar"
 path = "./lib/jsch-0.1.54.jar"
 
 [[platform.java11.dependency]]
-path = "./lib/commons-net-3.6.jar"
+path = "./lib/commons-net-3.9.0.jar"
 
 [[platform.java11.dependency]]
 path = "./lib/testng-6.14.3.jar"
