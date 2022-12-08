@@ -21,7 +21,6 @@ module io.ballerina.stdlib.ftp.testutils {
     requires io.ballerina.runtime;
     requires io.ballerina.stdlib.ftp;
     requires org.slf4j;
-    requires testng;
     requires MockFtpServer;
     requires ftpserver.core;
     requires ftplet.api;
