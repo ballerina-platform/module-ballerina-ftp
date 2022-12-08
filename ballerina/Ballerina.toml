@@ -50,8 +50,8 @@ scope = "testOnly"
 groupId = "io.ballerina.stdlib"
 artifactId = "ftp-native"
 version = "2.4.1"
-path = "../native/build/libs/ftp-native-2.4.1-SNAPSHOT.jar"
+path = "../native/build/libs/ftp-native-2.4.1.jar"
 
 [[platform.java11.dependency]]
-path = "../test-utils/build/libs/ftp-test-utils-2.4.1-SNAPSHOT.jar"
+path = "../test-utils/build/libs/ftp-test-utils-2.4.1.jar"
 scope = "testOnly"
