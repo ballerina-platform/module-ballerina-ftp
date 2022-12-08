@@ -20,6 +20,7 @@ path = "./lib/commons-net-3.9.0.jar"
 
 [[platform.java11.dependency]]
 path = "./lib/testng-6.14.3.jar"
+scope = "testOnly"
 
 [[platform.java11.dependency]]
 path = "./lib/MockFtpServer-2.7.1.jar"
