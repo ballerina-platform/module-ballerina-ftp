@@ -22,9 +22,9 @@ version = "0.1.54"
 path = "./lib/jsch-0.1.54.jar"
 
 [[platform.java11.dependency]]
-groupId = "io.ballerina.stdlib"
-artifactId = "ftp-native"
-version = "2.5.1"
+groupId = "commons-net"
+artifactId = "commons-net"
+version = "3.9.0"
 path = "./lib/commons-net-3.9.0.jar"
 
 [[platform.java11.dependency]]
