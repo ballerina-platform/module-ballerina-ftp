@@ -108,11 +108,11 @@ public class FtpListener implements RemoteFileSystemListener {
         if (params.length == 1) {
             return new Object[] {getWatchEvent(params[0], watchEventParamValues), true};
         } else if (params.length == 2) {
-            if ((params[0].type.isReadOnly() || params[0].type.getTag() == RECORD_TYPE_TAG) &&
-                    params[1].type.getTag() == OBJECT_TYPE_TAG) {
+            if ((params[0].type.isReadOnly() || TypeUtils.getReferredType(params[0].type).getTag() == RECORD_TYPE_TAG)
+                    && TypeUtils.getReferredType(params[1].type).getTag() == OBJECT_TYPE_TAG) {
                 return new Object[] {getWatchEvent(params[0], watchEventParamValues), true, caller, true};
-            } else if ((params[1].type.isReadOnly() || params[1].type.getTag() == RECORD_TYPE_TAG) &&
-                    params[0].type.getTag() == OBJECT_TYPE_TAG) {
+            } else if ((params[1].type.isReadOnly() || TypeUtils.getReferredType(params[1].type).getTag() ==
+                    RECORD_TYPE_TAG) && TypeUtils.getReferredType(params[0].type).getTag() == OBJECT_TYPE_TAG) {
                 return new Object[] {caller, true, getWatchEvent(params[1], watchEventParamValues), true};
             } else {
                 log.error("Invalid parameter types in onFileChange method");

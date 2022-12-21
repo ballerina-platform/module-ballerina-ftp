@@ -10,13 +10,22 @@ license = ["Apache-2.0"]
 distribution = "2201.4.0"
 
 [[platform.java11.dependency]]
+groupId = "org.apache.commons"
+artifactId = "commons-vfs2"
+version = "2.8.0"
 path = "./lib/commons-vfs2-2.8.0.jar"
 
 [[platform.java11.dependency]]
+groupId = "com.jcraft"
+artifactId = "jsch"
+version = "0.1.54"
 path = "./lib/jsch-0.1.54.jar"
 
 [[platform.java11.dependency]]
-path = "./lib/commons-net-3.6.jar"
+groupId = "commons-net"
+artifactId = "commons-net"
+version = "3.9.0"
+path = "./lib/commons-net-3.9.0.jar"
 
 [[platform.java11.dependency]]
 path = "./lib/MockFtpServer-2.7.1.jar"

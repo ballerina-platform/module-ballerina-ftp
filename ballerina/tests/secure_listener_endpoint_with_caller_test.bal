@@ -22,6 +22,8 @@ FileInfo[] fileList = [];
 boolean fileGetContentCorrect = false;
 int fileSize = 0;
 boolean isDir = false;
+string filename = "mutableWatchEvent.caller";
+string addedFile = "";
 
 ListenerConfiguration callerListenerConfig = {
     protocol: SFTP,
@@ -184,4 +186,27 @@ public function testFileSizeWithCaller() returns error? {
     runtime:sleep(3);
     test:assertEquals(fileSize, 11);
     check (<Client>sftpClientEp)->delete("/size.caller");
+}
+
+@test:Config {
+    dependsOn: [testSecureAddedFileCount]
+}
+public function testMutableWatchEventWithCaller() returns error? {
+    Service watchEventService = service object {
+        remote function onFileChange(WatchEvent event, Caller caller) returns error? {
+            event.addedFiles.forEach(function (FileInfo fileInfo) {
+                if fileInfo.name == filename {
+                    addedFile = filename;
+                }
+            });
+        }
+    };
+    Listener 'listener = check new (callerListenerConfig);
+    check 'listener.attach(watchEventService);
+    check 'listener.start();
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>sftpClientEp)->put("/" + filename, bStream);
+    runtime:sleep(3);
+    test:assertEquals(addedFile, filename);
+    check (<Client>sftpClientEp)->delete("/" + filename);
 }
