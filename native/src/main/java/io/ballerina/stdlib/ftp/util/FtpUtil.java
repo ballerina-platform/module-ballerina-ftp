@@ -22,8 +22,10 @@ import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
+import io.ballerina.runtime.api.types.ObjectType;
 import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -215,7 +217,7 @@ public class FtpUtil {
     }
 
     public static Optional<MethodType> getOnFileChangeMethod(BObject service) {
-        MethodType[] methodTypes = service.getType().getMethods();
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(service.getType())).getMethods();
         return Stream.of(methodTypes)
                 .filter(methodType -> ON_FILE_CHANGE_REMOTE_FUNCTION.equals(methodType.getName()))
                 .findFirst();
