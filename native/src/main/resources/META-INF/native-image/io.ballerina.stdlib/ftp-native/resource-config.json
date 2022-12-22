@@ -6,6 +6,9 @@
       },
       {
         "pattern":"\\Qorg/apache/commons/vfs2/Resources.properties\\E"
+      },
+      {
+        "pattern":"\\Qlogging.properties\\E"
       }
     ]},
   "bundles":[]
