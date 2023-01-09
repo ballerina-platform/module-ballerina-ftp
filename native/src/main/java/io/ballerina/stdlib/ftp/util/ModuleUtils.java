@@ -45,7 +45,7 @@ public class ModuleUtils {
     }
 
     public static void initializeLoggingConfigurations() {
-        try (InputStream is = ModuleUtils.class.getClassLoader().getResourceAsStream("ftp-logging.properties")) {
+        try (InputStream is = ModuleUtils.class.getClassLoader().getResourceAsStream("ftp_logging.properties")) {
             LogManager.getLogManager().readConfiguration(is);
         } catch (IOException e) {
             throw new RuntimeException("failed to read logging.properties file from the classpath", e);
