@@ -148,11 +148,7 @@ task populateTestUtilExecutableName() {
 task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
     executable = testUtilExecutable
     workingDir = "$projectDir"
-    standardOutput = new File("$projectDir/tests/tempUtilLogs.log")
-}
-
-task removeTestUtilJar(type: Delete) {
-    delete "$projectDir/tests/tempUtilLogs.log"
+    standardOutput = new File("$buildDir/tempUtilLogs.log")
 }
 
 publishing {
@@ -184,7 +180,6 @@ populateTestUtilExecutableName.dependsOn ":${packageName}-test-utils:build"
 startTestUtilAsDaemon.dependsOn populateTestUtilExecutableName
 test.dependsOn startTestUtilAsDaemon
 test.dependsOn ":${packageName}-compiler-plugin:build"
-build.finalizedBy removeTestUtilJar
 
 publishToMavenLocal.dependsOn build
 publish.dependsOn build
