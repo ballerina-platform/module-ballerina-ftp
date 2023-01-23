@@ -18,12 +18,9 @@
 
 package io.ballerina.stdlib.ftp.testutils.mockServerUtils;
 
-import io.ballerina.runtime.api.utils.StringUtils;
-import io.ballerina.runtime.api.values.BMap;
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.Authority;
-import org.apache.ftpserver.ftplet.FtpException;
 import org.apache.ftpserver.ftplet.UserManager;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.ssl.SslConfigurationFactory;
@@ -37,9 +34,6 @@ import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.scp.ScpCommandFactory;
 import org.apache.sshd.server.shell.ProcessShellFactory;
 import org.apache.sshd.server.subsystem.sftp.SftpSubsystemFactory;
-import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
-import io.ballerina.stdlib.ftp.util.FtpConstants;
-import io.ballerina.stdlib.ftp.util.FtpUtil;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
@@ -68,12 +62,13 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
-
 /**
  * Creates a Mock FTP Servers
  */
 public class MockFtpServer {
+
+    private static final String username = "wso2";
+    private static final String password = "wso2123";
 
     MockFtpServer() {
         // empty constructor
@@ -86,9 +81,8 @@ public class MockFtpServer {
     private static FtpServer ftpsServer;
     private static SftpAuthStatusHolder sftpAuthStatusHolder = new SftpAuthStatusHolder();
 
-    public static Object initAnonymousFtpServer(BMap<Object, Object> config) {
-        int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_PORT)));
+    public static Object initAnonymousFtpServer() throws Exception {
+        int port = 21210;
         anonFtpServer = new FakeFtpServer();
         anonFtpServer.setServerControlPort(port);
         String rootFolder = "/home/in";
@@ -111,35 +105,15 @@ public class MockFtpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                return FtpUtil.createError("Error in starting anonymous mock FTP server: " + e.getMessage(), null, Error.errorType());
+                throw new Exception("Error in starting anonymous mock FTP server: " + e.getMessage());
             }
         }
         logger.info("Started Anonymous Mock FTP server");
         return null;
     }
 
-    public static Object initFtpServer(BMap<Object, Object> config) {
-        int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_PORT)));
-        final BMap auth = config.getMapValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_AUTH));
-        String username = null;
-        String password = null;
-        if (auth != null) {
-            final BMap credentials = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
-            if (credentials != null) {
-                username = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
-                        .getValue();
-                password = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
-                        .getValue();
-            }
-        }
-
-        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-            return FtpUtil.createError("Error in starting anonymous mock FTP server", null, Error.errorType());
-        }
-
+    public static Object initFtpServer() throws Exception {
+        final int port = 21212;
         ftpServer = new FakeFtpServer();
         ftpServer.setServerControlPort(port);
         String rootFolder = "/home/in";
@@ -178,41 +152,19 @@ public class MockFtpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                return FtpUtil.createError("Error in starting mock FTP server: " + e.getMessage(), null,
-                        Error.errorType());
+                throw new Exception("Error in starting mock FTP server: " + e.getMessage());
             }
         }
         logger.info("Started Mock FTP server");
         return null;
     }
 
-    public static void startFtpsServer(BMap<Object, Object> config) throws FtpException, BallerinaFtpException {
-                final FtpServerFactory serverFactory = new FtpServerFactory();
-        int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_PORT)));
-        final BMap auth = config.getMapValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_AUTH));
-        String username = null;
-        String password = null;
-        if (auth != null) {
-            final BMap credentials = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
-            if (credentials != null) {
-                username = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
-                        .getValue();
-                password = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
-                        .getValue();
-            }
-        }
-
-        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-            throw new BallerinaFtpException("Username and password cannot be empty");
-        }
-
+    public static void startFtpsServer(String resources) throws Exception {
+        final FtpServerFactory serverFactory = new FtpServerFactory();
+        int port = 21214;
         final ListenerFactory factory = new ListenerFactory();
-
         SslConfigurationFactory ssl = new SslConfigurationFactory();
-        ssl.setKeystoreFile(new File("tests/resources/keystore.jks"));
+        ssl.setKeystoreFile(new File(resources + "/keystore.jks"));
         ssl.setKeystorePassword("changeit");
         factory.setSslConfiguration(ssl.createSslConfiguration());
         factory.setImplicitSsl(true);
@@ -222,7 +174,7 @@ public class MockFtpServer {
         BaseUser user = new BaseUser();
         user.setName(username);
         user.setPassword(password);
-        File dataDirectory = new File("tests/resources/datafiles");
+        File dataDirectory = new File(resources + "/datafiles");
         user.setHomeDirectory(dataDirectory.getAbsolutePath());
         List<Authority> authorities = new ArrayList<>();
         authorities.add(new WritePermission());
@@ -241,7 +193,7 @@ public class MockFtpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new BallerinaFtpException("Error in starting Apache FTPS server");
+                throw new Exception("Error in starting Apache FTPS server");
             }
         }
         if (i < 10) {
@@ -251,30 +203,9 @@ public class MockFtpServer {
         }
     }
 
-    public static Object initSftpServer(BMap<Object, Object> config) {
-        int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_PORT)));
-        final BMap auth = config.getMapValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_AUTH));
-        String username = null;
-        String password = null;
-        if (auth != null) {
-            final BMap credentials = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
-            if (credentials != null) {
-                username = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
-                        .getValue();
-                password = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
-                        .getValue();
-            }
-        }
-
-        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-            return FtpUtil.createError("Username and password cannot be empty", null, Error.errorType());
-        }
-
-        File homeFolder = new File("tests/resources/datafiles/");
-
+    public static Object initSftpServer(String resources) throws Exception {
+        final int port = 21213;
+        File homeFolder = new File(resources + "/datafiles");
         sftpServer = SshServer.setUpDefaultServer();
         VirtualFileSystemFactory virtualFileSystemFactory
                 = new VirtualFileSystemFactory(homeFolder.getAbsoluteFile().toPath());
@@ -284,18 +215,16 @@ public class MockFtpServer {
         sftpServer.setSubsystemFactories(Collections.singletonList(new SftpSubsystemFactory()));
         sftpServer.setCommandFactory(new ScpCommandFactory());
         try {
-            sftpServer.setKeyPairProvider(getKeyPairProvider());
+            sftpServer.setKeyPairProvider(getKeyPairProvider(resources));
             sftpServer.setPublickeyAuthenticator(new TwoFactorAuthorizedKeysAuthenticator(
-                    new File("tests/resources/authorized_keys"), sftpAuthStatusHolder));
-            String finalUsername = username;
-            String finalPassword = password;
+                    new File(resources + "/authorized_keys"), sftpAuthStatusHolder));
             sftpServer.setPasswordAuthenticator(
                     (authUsername, authPassword, session) -> sftpAuthStatusHolder.isPublicKeyAuthenticated()
-                            && finalUsername.equals(authUsername) && finalPassword.equals(authPassword));
+                            && username.equals(authUsername) && password.equals(authPassword));
             sftpServer.setShellFactory(new ProcessShellFactory("/bin/sh", "-i", "-l"));
             sftpServer.start();
         } catch (Exception e) {
-            return FtpUtil.createError("Error while starting SFTP server: " + e.getMessage(), null, Error.errorType());
+            throw new Exception("Error while starting SFTP server: " + e.getMessage());
         }
 
         int i = 0;
@@ -305,17 +234,18 @@ public class MockFtpServer {
                 i++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                return FtpUtil.createError("Error in starting mock FTP server: " + e.getMessage(), null,
-                        Error.errorType());
+                throw new Exception("Error in starting mock FTP server: " + e.getMessage());
             }
         }
         logger.info("Started Mock SFTP server");
         return null;
     }
 
-    private static KeyPairProvider getKeyPairProvider() throws IOException, CertificateException, NoSuchAlgorithmException,
-            KeyStoreException, UnrecoverableKeyException {
-        String keystorePath = "tests/resources/keystore.jks";
+    private static KeyPairProvider getKeyPairProvider(String resources) throws IOException, CertificateException,
+            NoSuchAlgorithmException,
+            KeyStoreException,
+            UnrecoverableKeyException {
+        String keystorePath = resources + "/keystore.jks";
         char[] keystorePassword = "changeit".toCharArray();
         char[] keyPassword = "changeit".toCharArray();
         KeyStore ks  = KeyStore.getInstance(KeyStore.getDefaultType());

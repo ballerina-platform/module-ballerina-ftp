@@ -19,7 +19,6 @@ import ballerina/test;
 import ballerina/lang.runtime as runtime;
 import ballerina/lang.'string as strings;
 import ballerina/log;
-import ballerina/jballerina.java;
 
 string filePath = "/home/in/test1.txt";
 string nonFittingFilePath = "/home/in/test4.txt";
@@ -68,9 +67,6 @@ Listener? secureRemoteServerListener = ();
 @test:BeforeSuite
 function initTestEnvironment() returns error?  {
     io:println("Starting servers");
-    check initAnonymousFtpServer(anonConfig);
-    check initFtpServer(config);
-    check initSftpServer(sftpConfig);
     anonClientEp = check new (anonConfig);
     clientEp = check new (config);
     sftpClientEp = check new (sftpConfig);
@@ -576,38 +572,4 @@ public function cleanTestEnvironment() returns error? {
     check (<Listener>remoteServerListener).gracefulStop();
     check (<Listener>anonymousRemoteServerListener).gracefulStop();
     check (<Listener>secureRemoteServerListener).gracefulStop();
-
-    _ = stopAnonymousFtpServer();
-    _ = stopFtpServer();
-    check stopSftpServer();
 }
-
-function initAnonymousFtpServer(map<anydata> config) returns Error? = @java:Method {
-    name: "initAnonymousFtpServer",
-    'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
-} external;
-
-function initFtpServer(map<anydata> config) returns Error? = @java:Method {
-    name: "initFtpServer",
-    'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
-} external;
-
-function initSftpServer(map<anydata> config) returns Error? = @java:Method {
-    name: "initSftpServer",
-    'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
-} external;
-
-function stopFtpServer() returns () = @java:Method {
-    name: "stopFtpServer",
-    'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
-} external;
-
-function stopAnonymousFtpServer() returns () = @java:Method {
-    name: "stopAnonymousFtpServer",
-    'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
-} external;
-
-function stopSftpServer() returns error? = @java:Method {
-    name: "stopSftpServer",
-    'class: "io.ballerina.stdlib.ftp.testutils.mockServerUtils.MockFtpServer"
-} external;
