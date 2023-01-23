@@ -137,11 +137,6 @@ task commitTomlFiles {
     }
 }
 
-task copyTestUtilJar(type: Copy) {
-    from("$rootDir/test-utils/build/libs/ftp-test-utils.jar")
-    into("$projectDir/tests/resources/")
-}
-
 task populateTestUtilExecutableName() {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         testUtilExecutable = "$projectDir/tests/resources/startJava.bat"
@@ -186,12 +181,10 @@ build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":${packageName}-native:build"
 build.dependsOn ":${packageName}-compiler-plugin:build"
 test.dependsOn ":${packageName}-native:build"
-copyTestUtilJar.dependsOn ":${packageName}-test-utils:build"
-startTestUtilAsDaemon.dependsOn copyTestUtilJar
+populateTestUtilExecutableName.dependsOn ":${packageName}-test-utils:build"
 startTestUtilAsDaemon.dependsOn populateTestUtilExecutableName
 test.dependsOn startTestUtilAsDaemon
 test.dependsOn ":${packageName}-compiler-plugin:build"
-//build.finalizedBy removeTestUtilJar
 
 publishToMavenLocal.dependsOn build
 publish.dependsOn build
