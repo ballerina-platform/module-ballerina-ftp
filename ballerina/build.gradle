@@ -195,9 +195,9 @@ task copyTestUtilJar(type: Copy) {
 
 task populateTestUtilExecutableName() {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        testUtilExecutable = "startJava.bat"
+        testUtilExecutable = "$projectDir/tests/resources/startJava.bat"
     } else {
-        testUtilExecutable = "./startJava.sh"
+        testUtilExecutable = "$projectDir/tests/resources/startJava.sh"
     }
 }
 
@@ -208,7 +208,7 @@ task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
 }
 
 task removeTestUtilJar(type: Delete) {
-    delete "./tests/resources/ftp-test-utils.jar"
+    delete "$projectDir/tests/resources/ftp-test-utils.jar"
     delete "$projectDir/tests/tempUtilLogs.log"
 }
 
