@@ -138,60 +138,9 @@ task commitTomlFiles {
 }
 
 task copyTestUtilJar(type: Copy) {
-    from('../test-utils/build/libs/ftp-test-utils.jar')
-    into('./tests/resources/')
+    from("$rootDir/test-utils/build/libs/ftp-test-utils.jar")
+    into("$projectDir/tests/resources/")
 }
-
-//task startFTPServer() {
-//    doLast {
-//        def stdOut = new ByteArrayOutputStream()
-//        exec {
-//            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-//                commandLine 'cmd', '/c', '""%JAVA_HOME%/bin/jps.exe""'
-//            } else {
-//                commandLine 'sh', '-c', "jps"
-//            }
-//            standardOutput = stdOut
-//        }
-//        if (!stdOut.toString().contains("ftp-test-utils")) {
-//            println "Starting FTP servers."
-//            exec {
-//                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-//                    commandLine 'cmd', '/c', "javaw -jar ./tests/resources/ftp-test-utils.jar tests/resources"
-//                } else {
-//                    commandLine 'sh', '-c', "java -jar ./tests/resources/ftp-test-utils.jar tests/resources > /tmp/ftp-logs.log 2>&1 &"
-//                }
-//            }
-//            sleep(5 * 1000)
-//        } else {
-//            println "FTP servers are already running."
-//        }
-//    }
-//}
-
-//task stopFTPServer() {
-//    doLast {
-//        def stdOut = new ByteArrayOutputStream()
-//        exec {
-//            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-//                commandLine 'cmd', '/c', '""%JAVA_HOME%/bin/jps.exe""'
-//            } else {
-//                commandLine 'sh', '-c', "jps"
-//            }
-//            standardOutput = stdOut
-//        }
-//        if (stdOut.toString().contains("ftp-test-utils")) {
-//            println "Stopping FTP servers."
-//            exec {
-//                if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-//                    commandLine 'cmd', '/c', "taskkill /t /im ftp-test-utils.jar"
-//                } else {
-//                    commandLine 'sh', '-c', "kill -9 \$(jps | grep ftp-test-utils | awk '{print \$1}')"
-//                }
-//            }
-//        }
-//    }
-//}
 
 task populateTestUtilExecutableName() {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
