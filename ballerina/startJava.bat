@@ -1,0 +1,1 @@
+java -jar ./tests/resources/ftp-test-utils.jar tests/resources

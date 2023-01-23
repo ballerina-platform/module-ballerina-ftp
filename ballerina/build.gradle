@@ -32,6 +32,10 @@ buildscript {
     }
 }
 
+plugins {
+    id 'com.github.psxpaul.execfork' version '0.2.0'
+}
+
 description = 'Ballerina - Ballerina FTP Library'
 
 def packageName = "ftp"
@@ -41,6 +45,7 @@ def ballerinaTomlFilePlaceHolder = new File("${project.rootDir}/build-config/res
 def compilerPluginTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/CompilerPlugin.toml")
 def ballerinaTomlFile = new File("$project.projectDir/Ballerina.toml")
 def ballerinaCompilerPluginFile = new File("$project.projectDir/CompilerPlugin.toml")
+def testUtilExecutable = ""
 
 def stripBallerinaExtensionVersion(String extVersion) {
     if (extVersion.matches(project.ext.timestampedVersionRegex)) {
@@ -137,59 +142,74 @@ task copyTestUtilJar(type: Copy) {
     into('./tests/resources/')
 }
 
-task startFTPServer() {
-    doLast {
-        def stdOut = new ByteArrayOutputStream()
-        exec {
-            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', '""%JAVA_HOME%/bin/jps.exe""'
-            } else {
-                commandLine 'sh', '-c', "jps"
-            }
-            standardOutput = stdOut
-        }
-        if (!stdOut.toString().contains("ftp-test-utils")) {
-            println "Starting FTP servers."
-            exec {
-                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                    commandLine 'cmd', '/c', "javaw -jar ./tests/resources/ftp-test-utils.jar tests/resources"
-                } else {
-                    commandLine 'sh', '-c', "java -jar ./tests/resources/ftp-test-utils.jar tests/resources > /tmp/ftp-logs.log 2>&1 &"
-                }
-            }
-            sleep(5 * 1000)
-        } else {
-            println "FTP servers are already running."
-        }
+//task startFTPServer() {
+//    doLast {
+//        def stdOut = new ByteArrayOutputStream()
+//        exec {
+//            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+//                commandLine 'cmd', '/c', '""%JAVA_HOME%/bin/jps.exe""'
+//            } else {
+//                commandLine 'sh', '-c', "jps"
+//            }
+//            standardOutput = stdOut
+//        }
+//        if (!stdOut.toString().contains("ftp-test-utils")) {
+//            println "Starting FTP servers."
+//            exec {
+//                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+//                    commandLine 'cmd', '/c', "javaw -jar ./tests/resources/ftp-test-utils.jar tests/resources"
+//                } else {
+//                    commandLine 'sh', '-c', "java -jar ./tests/resources/ftp-test-utils.jar tests/resources > /tmp/ftp-logs.log 2>&1 &"
+//                }
+//            }
+//            sleep(5 * 1000)
+//        } else {
+//            println "FTP servers are already running."
+//        }
+//    }
+//}
+
+//task stopFTPServer() {
+//    doLast {
+//        def stdOut = new ByteArrayOutputStream()
+//        exec {
+//            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+//                commandLine 'cmd', '/c', '""%JAVA_HOME%/bin/jps.exe""'
+//            } else {
+//                commandLine 'sh', '-c', "jps"
+//            }
+//            standardOutput = stdOut
+//        }
+//        if (stdOut.toString().contains("ftp-test-utils")) {
+//            println "Stopping FTP servers."
+//            exec {
+//                if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+//                    commandLine 'cmd', '/c', "taskkill /t /im ftp-test-utils.jar"
+//                } else {
+//                    commandLine 'sh', '-c', "kill -9 \$(jps | grep ftp-test-utils | awk '{print \$1}')"
+//                }
+//            }
+//        }
+//    }
+//}
+
+task populateTestUtilExecutableName() {
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        testUtilExecutable = "startJava.bat"
+    } else {
+        testUtilExecutable = "./startJava.sh"
     }
 }
 
-task stopFTPServer() {
-    doLast {
-        def stdOut = new ByteArrayOutputStream()
-        exec {
-            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', '""%JAVA_HOME%/bin/jps.exe""'
-            } else {
-                commandLine 'sh', '-c', "jps"
-            }
-            standardOutput = stdOut
-        }
-        if (stdOut.toString().contains("ftp-test-utils")) {
-            println "Stopping FTP servers."
-            exec {
-                if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-                    commandLine 'cmd', '/c', "taskkill /t /im ftp-test-utils.jar"
-                } else {
-                    commandLine 'sh', '-c', "kill -9 \$(jps | grep ftp-test-utils | awk '{print \$1}')"
-                }
-            }
-        }
-    }
+task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
+    executable = testUtilExecutable
+    workingDir = "$projectDir"
+    standardOutput = new File("$projectDir/tests/tempUtilLogs.log")
 }
 
 task removeTestUtilJar(type: Delete) {
-    delete './tests/resources/ftp-test-utils.jar'
+    delete "./tests/resources/ftp-test-utils.jar"
+    delete "$projectDir/tests/tempUtilLogs.log"
 }
 
 publishing {
@@ -218,10 +238,10 @@ build.dependsOn ":${packageName}-native:build"
 build.dependsOn ":${packageName}-compiler-plugin:build"
 test.dependsOn ":${packageName}-native:build"
 copyTestUtilJar.dependsOn ":${packageName}-test-utils:build"
-startFTPServer.dependsOn copyTestUtilJar
-test.dependsOn startFTPServer
+startTestUtilAsDaemon.dependsOn copyTestUtilJar
+startTestUtilAsDaemon.dependsOn populateTestUtilExecutableName
+test.dependsOn startTestUtilAsDaemon
 test.dependsOn ":${packageName}-compiler-plugin:build"
-removeTestUtilJar.dependsOn stopFTPServer
 build.finalizedBy removeTestUtilJar
 
 publishToMavenLocal.dependsOn build
