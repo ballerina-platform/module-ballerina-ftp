@@ -191,7 +191,7 @@ startTestUtilAsDaemon.dependsOn copyTestUtilJar
 startTestUtilAsDaemon.dependsOn populateTestUtilExecutableName
 test.dependsOn startTestUtilAsDaemon
 test.dependsOn ":${packageName}-compiler-plugin:build"
-build.finalizedBy removeTestUtilJar
+//build.finalizedBy removeTestUtilJar
 
 publishToMavenLocal.dependsOn build
 publish.dependsOn build
