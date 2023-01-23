@@ -142,7 +142,7 @@ task startFTPServer() {
         def stdOut = new ByteArrayOutputStream()
         exec {
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', "jps"
+                commandLine 'cmd', '/c', '""%JAVA_HOME%/bin/jps.exe""'
             } else {
                 commandLine 'sh', '-c', "jps"
             }
@@ -152,7 +152,7 @@ task startFTPServer() {
             println "Starting FTP servers."
             exec {
                 if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                    commandLine 'cmd', '/c', "java -jar ./tests/resources/ftp-test-utils.jar tests/resources > /tmp/ftp-logs.log 2>&1 &"
+                    commandLine 'cmd', '/c', "javaw -jar ./tests/resources/ftp-test-utils.jar tests/resources"
                 } else {
                     commandLine 'sh', '-c', "java -jar ./tests/resources/ftp-test-utils.jar tests/resources > /tmp/ftp-logs.log 2>&1 &"
                 }
@@ -169,7 +169,7 @@ task stopFTPServer() {
         def stdOut = new ByteArrayOutputStream()
         exec {
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', "jps"
+                commandLine 'cmd', '/c', '""%JAVA_HOME%/bin/jps.exe""'
             } else {
                 commandLine 'sh', '-c', "jps"
             }
@@ -178,8 +178,8 @@ task stopFTPServer() {
         if (stdOut.toString().contains("ftp-test-utils")) {
             println "Stopping FTP servers."
             exec {
-                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                    commandLine 'cmd', '/c', "kill -9 \$(jps | grep ftp-test-utils | awk '{print \$1}')"
+                if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+                    commandLine 'cmd', '/c', "taskkill /t /im ftp-test-utils.jar"
                 } else {
                     commandLine 'sh', '-c', "kill -9 \$(jps | grep ftp-test-utils | awk '{print \$1}')"
                 }
