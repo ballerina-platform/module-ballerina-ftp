@@ -206,7 +206,6 @@ public class MockFtpServer {
     public static Object initSftpServer(String resources) throws Exception {
         final int port = 21213;
         File homeFolder = new File(resources + "/datafiles");
-        System.out.println(homeFolder.getAbsoluteFile());
         sftpServer = SshServer.setUpDefaultServer();
         VirtualFileSystemFactory virtualFileSystemFactory
                 = new VirtualFileSystemFactory(homeFolder.getAbsoluteFile().toPath());
