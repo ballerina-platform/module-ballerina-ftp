@@ -78,24 +78,6 @@ dependencies {
     externalJars(group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}") {
         transitive = false
     }
-    externalJars(group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}") {
-        transitive = false
-    }
-    externalJars(group: 'org.apache.sshd', name: 'sshd-core', version: "${sshdCoreVersion}") {
-        transitive = false
-    }
-    externalJars(group: 'org.apache.ftpserver', name: 'ftpserver-core', version: "${ftpServerVersion}") {
-        transitive = false
-    }
-    externalJars(group: 'org.apache.ftpserver', name: 'ftplet-api', version: "${ftpletApiVersion}") {
-        transitive = false
-    }
-    externalJars(group: 'org.apache.mina', name: 'mina-core', version: "${minaCoreVersion}") {
-        transitive = false
-    }
-    externalJars(group: 'aopalliance', name: 'aopalliance', version: "${aopallianceVersion}") {
-        transitive = false
-    }
     externalJars(group: 'org.slf4j', name: 'jcl-over-slf4j', version: "${jclSlf4jVersion}") {
         transitive = false
     }
@@ -150,6 +132,66 @@ task commitTomlFiles {
     }
 }
 
+task copyTestUtilJar(type: Copy) {
+    from('../test-utils/build/libs/ftp-test-utils.jar')
+    into('./tests/resources/')
+}
+
+task startFTPServer() {
+    doLast {
+        def stdOut = new ByteArrayOutputStream()
+        exec {
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "jps"
+            } else {
+                commandLine 'sh', '-c', "jps"
+            }
+            standardOutput = stdOut
+        }
+        if (!stdOut.toString().contains("ftp-test-utils")) {
+            println "Starting FTP servers."
+            exec {
+                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                    commandLine 'cmd', '/c', "java -jar ./tests/resources/ftp-test-utils.jar tests/resources > /tmp/ftp-logs.log 2>&1 &"
+                } else {
+                    commandLine 'sh', '-c', "java -jar ./tests/resources/ftp-test-utils.jar tests/resources > /tmp/ftp-logs.log 2>&1 &"
+                }
+            }
+            sleep(5 * 1000)
+        } else {
+            println "FTP servers are already running."
+        }
+    }
+}
+
+task stopFTPServer() {
+    doLast {
+        def stdOut = new ByteArrayOutputStream()
+        exec {
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "jps"
+            } else {
+                commandLine 'sh', '-c', "jps"
+            }
+            standardOutput = stdOut
+        }
+        if (stdOut.toString().contains("ftp-test-utils")) {
+            println "Stopping FTP servers."
+            exec {
+                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                    commandLine 'cmd', '/c', "kill -9 \$(jps | grep ftp-test-utils | awk '{print \$1}')"
+                } else {
+                    commandLine 'sh', '-c', "kill -9 \$(jps | grep ftp-test-utils | awk '{print \$1}')"
+                }
+            }
+        }
+    }
+}
+
+task removeTestUtilJar(type: Delete) {
+    delete './tests/resources/ftp-test-utils.jar'
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
@@ -174,10 +216,13 @@ updateTomlFiles.dependsOn copyStdlibs
 build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":${packageName}-native:build"
 build.dependsOn ":${packageName}-compiler-plugin:build"
-build.dependsOn ":${packageName}-test-utils:build"
 test.dependsOn ":${packageName}-native:build"
-test.dependsOn ":${packageName}-test-utils:build"
+copyTestUtilJar.dependsOn ":${packageName}-test-utils:build"
+startFTPServer.dependsOn copyTestUtilJar
+test.dependsOn startFTPServer
 test.dependsOn ":${packageName}-compiler-plugin:build"
+removeTestUtilJar.dependsOn stopFTPServer
+build.finalizedBy removeTestUtilJar
 
 publishToMavenLocal.dependsOn build
 publish.dependsOn build
