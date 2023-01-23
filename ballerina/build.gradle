@@ -152,7 +152,6 @@ task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
 }
 
 task removeTestUtilJar(type: Delete) {
-    delete "$projectDir/tests/resources/ftp-test-utils.jar"
     delete "$projectDir/tests/tempUtilLogs.log"
 }
 
@@ -185,6 +184,7 @@ populateTestUtilExecutableName.dependsOn ":${packageName}-test-utils:build"
 startTestUtilAsDaemon.dependsOn populateTestUtilExecutableName
 test.dependsOn startTestUtilAsDaemon
 test.dependsOn ":${packageName}-compiler-plugin:build"
+build.finalizedBy removeTestUtilJar
 
 publishToMavenLocal.dependsOn build
 publish.dependsOn build
