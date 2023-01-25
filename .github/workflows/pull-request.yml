@@ -57,4 +57,4 @@ jobs:
         env:
           packageUser: ${{ github.actor }}
           packagePAT: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew.bat build -x test --scan
+        run: ./gradlew.bat build --scan
