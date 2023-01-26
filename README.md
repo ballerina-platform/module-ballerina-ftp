@@ -1,6 +1,8 @@
 Ballerina FTP Library
 =====================
 
+Test PR to check for codecov retry option
+
   [![Build](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/build-timestamped-master.yml/badge.svg)](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/build-timestamped-master.yml)
   [![codecov](https://codecov.io/gh/ballerina-platform/module-ballerina-ftp/branch/master/graph/badge.svg)](https://codecov.io/gh/ballerina-platform/module-ballerina-ftp)
   [![Trivy](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/trivy-scan.yml/badge.svg)](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/trivy-scan.yml)
