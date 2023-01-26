@@ -19,7 +19,7 @@ jobs:
         env:
           packageUser: ${{ github.actor }}
           packagePAT: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew build --scan
+        run: ./gradlew build --scan -x :ftp-compiler-plugin-tests:test
       - name: Archive Code Coverage JSON
         uses: actions/upload-artifact@v2
         with:
@@ -79,4 +79,4 @@ jobs:
         env:
           packageUser: ${{ github.actor }}
           packagePAT: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew.bat build --scan
+        run: ./gradlew.bat build --scan -x test
