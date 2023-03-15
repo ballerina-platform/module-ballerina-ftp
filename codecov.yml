@@ -1,3 +1,6 @@
+fixes:
+  - "io/ballerina/stdlib/ftp/compiler/::./compiler-plugin/src/main/java/io/ballerina/stdlib/ftp/plugin/"
+
 coverage:
   precision: 2
   round: down

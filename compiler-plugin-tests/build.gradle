@@ -20,6 +20,7 @@ plugins {
     id 'java'
     id 'checkstyle'
     id 'com.github.spotbugs'
+    id 'jacoco'
 }
 
 description = 'Ballerina - FTP Compiler Plugin Tests'
@@ -79,6 +80,20 @@ compileJava {
     }
 }
 
+jacoco {
+    toolVersion = "${jacocoVersion}"
+    reportsDirectory = file("$buildDir/reports/jacoco")
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        csv.required = false
+        html.required = false
+    }
+    sourceSets project(':ftp-compiler-plugin').sourceSets.main
+}
+
 test {
     systemProperty "ballerina.offline.flag", "true"
     useTestNG() {
@@ -87,3 +102,5 @@ test {
 }
 
 test.dependsOn ":ftp-ballerina:build"
+test.finalizedBy jacocoTestReport
+jacocoTestReport.dependsOn test
