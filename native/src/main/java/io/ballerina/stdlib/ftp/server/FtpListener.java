@@ -126,12 +126,16 @@ public class FtpListener implements RemoteFileSystemListener {
     private void invokeMethodAsync(BObject service, Object ...args) {
         Callback callback = new Callback() {
             @Override
-            public void notifySuccess(Object o) {
+            public void notifySuccess(Object result) {
+                if (result instanceof BError) {
+                    ((BError) result).printStackTrace();
+                }
             }
             
             @Override
             public void notifyFailure(BError error) {
                 error.printStackTrace();
+                System.exit(1);
             }
         };
         ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(service.getType());
