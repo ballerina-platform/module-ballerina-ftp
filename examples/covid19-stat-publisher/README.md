@@ -1,5 +1,12 @@
 # COVID-19 Statistics Publisher
 
+[![Star on Github](https://img.shields.io/badge/-Star%20on%20Github-blue?style=social&logo=github)](https://github.com/ballerina-platform/module-ballerina-ftp)
+
+_Authors_: @Maninda  
+_Reviewers_: @shafreenAnfar  
+_Created_: 2021/12/17  
+_Updated_: 2023/04/18
+
 ## Overview
 
 This guide explains how to listen to remotely located files, receive them, process, and publish their content to a RabbitMQ queue using Ballerina.
