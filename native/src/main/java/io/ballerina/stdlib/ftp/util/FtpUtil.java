@@ -217,7 +217,7 @@ public class FtpUtil {
     }
 
     public static Optional<MethodType> getOnFileChangeMethod(BObject service) {
-        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(service.getType())).getMethods();
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
         return Stream.of(methodTypes)
                 .filter(methodType -> ON_FILE_CHANGE_REMOTE_FUNCTION.equals(methodType.getName()))
                 .findFirst();
