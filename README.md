@@ -1,4 +1,4 @@
-Ballerina FTP Library
+Ballerina FTP LibrarTest
 =====================
 
   [![Build](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/build-timestamped-master.yml/badge.svg)](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/build-timestamped-master.yml)
