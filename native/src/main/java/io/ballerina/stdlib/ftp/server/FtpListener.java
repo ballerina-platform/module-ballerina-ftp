@@ -27,6 +27,7 @@ import io.ballerina.runtime.api.types.IntersectionType;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.types.ObjectType;
 import io.ballerina.runtime.api.types.Parameter;
+import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BArray;
@@ -138,7 +139,7 @@ public class FtpListener implements RemoteFileSystemListener {
                 System.exit(1);
             }
         };
-        ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(service.getType());
+        ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
         if (serviceType.isIsolated() && serviceType.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
             runtime.invokeMethodAsyncConcurrently(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
                     ON_FILECHANGE_METADATA, callback, null, null, args);
@@ -283,8 +284,9 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     protected void addService(BObject service) {
-        if (service != null && service.getType() != null && service.getType().getName() != null) {
-            registeredServices.put(service.getType().getName(), service);
+        Type serviceType = TypeUtils.getType(service);
+        if (service != null && serviceType != null && serviceType.getName() != null) {
+            registeredServices.put(serviceType.getName(), service);
         }
     }
 
