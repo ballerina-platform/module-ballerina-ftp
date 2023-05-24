@@ -5,8 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+- [Fixed log manager getting reset by `ftp` module](https://github.com/ballerina-platform/ballerina-standard-library/issues/4478)
+
+## [2.7.0] - 2022-04-10
+
 ### Changed
 - [Exit the service when a panic occurs inside the service method](https://github.com/ballerina-platform/ballerina-standard-library/issues/4241)
+
+## [2.5.1] - 2022-12-22
+
+### Fixed
+
+- [GraalVM build failure due to missing configs](https://github.com/ballerina-platform/ballerina-standard-library/issues/4483)
 
 ## [2.5.0] - 2022-11-29
 
