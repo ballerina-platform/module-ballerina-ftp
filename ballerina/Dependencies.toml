@@ -10,7 +10,7 @@ distribution-version = "2201.5.0"
 [[package]]
 org = "ballerina"
 name = "ftp"
-version = "2.7.1"
+version = "2.8.0"
 dependencies = [
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
@@ -27,7 +27,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "io"
-version = "1.4.0"
+version = "1.4.1"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.value"}

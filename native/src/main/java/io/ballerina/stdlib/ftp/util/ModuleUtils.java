@@ -21,9 +21,12 @@ package io.ballerina.stdlib.ftp.util;
 import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Module;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
+
+import static io.ballerina.stdlib.ftp.util.FtpConstants.APACHE_VFS2_PACKAGE_NAME;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.BALLERINA_FTP_PACKAGE_NAME;
 
 /**
  * This class will hold module related utility functions.
@@ -45,11 +48,12 @@ public class ModuleUtils {
     }
 
     public static void initializeLoggingConfigurations() {
-        try (InputStream is = ModuleUtils.class.getClassLoader().getResourceAsStream("ftp_logging.properties")) {
-            LogManager.getLogManager().readConfiguration(is);
-        } catch (IOException e) {
-            throw new RuntimeException("failed to read logging.properties file from the classpath", e);
-        }
+        Logger vfsLogger = Logger.getLogger(APACHE_VFS2_PACKAGE_NAME);
+        Logger ftpLogger = Logger.getLogger(BALLERINA_FTP_PACKAGE_NAME);
+        vfsLogger.setLevel(Level.OFF);
+        ftpLogger.setLevel(Level.OFF);
+        LogManager.getLogManager().addLogger(vfsLogger);
+        LogManager.getLogManager().addLogger(ftpLogger);
     }
 
     public static Module getModule() {

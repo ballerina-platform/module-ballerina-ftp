@@ -6,9 +6,6 @@
       },
       {
         "pattern":"\\Qorg/apache/commons/vfs2/Resources.properties\\E"
-      },
-      {
-        "pattern":"\\Qftp_logging.properties\\E"
       }
     ]},
   "bundles":[]
