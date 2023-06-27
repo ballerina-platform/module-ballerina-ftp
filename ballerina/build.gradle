@@ -172,6 +172,8 @@ publishing {
 
 updateTomlFiles.dependsOn copyStdlibs
 
+tasks.generatePomFileForMavenPublication.dependsOn(startTestUtilAsDaemon)
+tasks.copyToLib.dependsOn(startTestUtilAsDaemon)
 build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":${packageName}-native:build"
 build.dependsOn ":${packageName}-compiler-plugin:build"
