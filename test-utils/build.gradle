@@ -27,7 +27,7 @@ dependencies {
     implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "${slf4jVersion}"
     implementation group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}"
     implementation group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}"
-    implementation group: 'com.jcraft', name: 'jsch', version: "${jcraftVersion}"
+    implementation group: 'com.jcraft', name: 'jsch', version: "${jschVersion}"
     implementation group: 'org.mockftpserver', name: 'MockFtpServer', version: "${mockFtpServerVersion}"
 }
 

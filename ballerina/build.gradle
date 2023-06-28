@@ -77,7 +77,7 @@ dependencies {
     externalJars(group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
         transitive = false
     }
-    externalJars(group: 'com.jcraft', name: 'jsch', version: "${jcraftVersion}") {
+    externalJars(group: 'com.jcraft', name: 'jsch', version: "${jschVersion}") {
         transitive = false
     }
     externalJars(group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}") {
