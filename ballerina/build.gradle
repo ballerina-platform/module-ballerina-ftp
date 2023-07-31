@@ -77,7 +77,7 @@ dependencies {
     externalJars(group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}") {
         transitive = false
     }
-    externalJars(group: 'com.jcraft', name: 'jsch', version: "${jcraftVersion}") {
+    externalJars(group: 'com.jcraft', name: 'jsch', version: "${jschVersion}") {
         transitive = false
     }
     externalJars(group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}") {
@@ -172,6 +172,8 @@ publishing {
 
 updateTomlFiles.dependsOn copyStdlibs
 
+tasks.generatePomFileForMavenPublication.dependsOn(startTestUtilAsDaemon)
+tasks.copyToLib.dependsOn(startTestUtilAsDaemon)
 build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":${packageName}-native:build"
 build.dependsOn ":${packageName}-compiler-plugin:build"
