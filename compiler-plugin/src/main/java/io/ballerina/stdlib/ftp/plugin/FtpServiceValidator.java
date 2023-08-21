@@ -65,7 +65,6 @@ public class FtpServiceValidator {
                     serviceDeclarationNode.location()));
         }
 
-        validateAnnotation(context);
         FunctionDefinitionNode onFileChange = null;
 
         for (Node node : memberNodes) {
@@ -87,19 +86,5 @@ public class FtpServiceValidator {
             }
         }
         new FtpFunctionValidator(context, onFileChange).validate();
-    }
-
-    private void validateAnnotation(SyntaxNodeAnalysisContext context) {
-        SemanticModel semanticModel = context.semanticModel();
-        ServiceDeclarationNode serviceDeclarationNode = (ServiceDeclarationNode) context.node();
-        Optional<Symbol> symbol = semanticModel.symbol(serviceDeclarationNode);
-        if (symbol.isPresent()) {
-            ServiceDeclarationSymbol serviceDeclarationSymbol = (ServiceDeclarationSymbol) symbol.get();
-            List<AnnotationSymbol> symbolList = serviceDeclarationSymbol.annotations();
-            if (!symbolList.isEmpty()) {
-                context.reportDiagnostic(PluginUtils.getDiagnostic(CompilationErrors.INVALID_ANNOTATION_NUMBER,
-                        DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
-            }
-        }
     }
 }
