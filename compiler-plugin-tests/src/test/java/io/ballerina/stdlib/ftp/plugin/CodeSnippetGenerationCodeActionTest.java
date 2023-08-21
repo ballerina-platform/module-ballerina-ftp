@@ -102,7 +102,7 @@ public class CodeSnippetGenerationCodeActionTest extends AbstractCodeActionTest 
                 LinePosition.from(line, offset));
         CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION, lineRange);
         CodeActionInfo codeAction = CodeActionInfo.from(actionName, List.of(locationArg));
-        codeAction.setProviderName("FTP_112/ballerina/ftp/" + templateName);
+        codeAction.setProviderName("FTP_111/ballerina/ftp/" + templateName);
         return codeAction;
     }
 }
