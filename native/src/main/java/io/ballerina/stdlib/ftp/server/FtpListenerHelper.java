@@ -19,7 +19,6 @@
 package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Environment;
-import io.ballerina.runtime.api.Runtime;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.utils.StringUtils;
