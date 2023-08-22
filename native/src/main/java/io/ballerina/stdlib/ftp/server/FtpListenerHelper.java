@@ -18,7 +18,7 @@
 
 package io.ballerina.stdlib.ftp.server;
 
-import io.ballerina.runtime.api.Runtime;
+import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -60,11 +60,11 @@ public class FtpListenerHelper {
      * @param ftpListener Listener that places `ftp:WatchEvent` by Ballerina runtime
      * @param serviceEndpointConfig FTP server endpoint configuration
      */
-    public static Object init(BObject ftpListener, BMap<BString, Object> serviceEndpointConfig) {
+    public static Object init(Environment env, BObject ftpListener, BMap<BString, Object> serviceEndpointConfig) {
         try {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-            final FtpListener listener = new FtpListener(Runtime.getCurrentRuntime());
+            final FtpListener listener = new FtpListener(env.getRuntime());
             RemoteFileSystemServerConnector serverConnector = fileSystemConnectorFactory
                     .createServerConnector(paramMap, listener);
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);

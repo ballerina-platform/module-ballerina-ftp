@@ -82,6 +82,14 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
+    @Test(description = "Validation with service containing annotations")
+    public void testValidService6() {
+        Package currentPackage = loadPackage("valid_service_6");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
     @Test(description = "Validation when no onFileChange function is defined")
     public void testInvalidService1() {
         Package currentPackage = loadPackage("invalid_service_1");

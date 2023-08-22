@@ -41,22 +41,21 @@ public class PluginConstants {
     public static final String CODE_TEMPLATE_NAME_WITHOUT_CALLER = "ADD_REMOTE_FUNCTION_CODE_SNIPPET_WITHOUT_CALLER";
 
     enum CompilationErrors {
-        INVALID_ANNOTATION_NUMBER("No annotations are allowed for ftp services.", "FTP_101"),
-        INVALID_REMOTE_FUNCTION("Only onFileChange remote method is allowed for ftp services.", "FTP_102"),
-        METHOD_MUST_BE_REMOTE("onFileChange method must be remote.", "FTP_103"),
+        INVALID_REMOTE_FUNCTION("Only onFileChange remote method is allowed for ftp services.", "FTP_101"),
+        METHOD_MUST_BE_REMOTE("onFileChange method must be remote.", "FTP_102"),
         RESOURCE_FUNCTION_NOT_ALLOWED("Resource functions are not allowed for ftp services.", "FTP_103"),
-        NO_ON_FILE_CHANGE("onFileChange method not found.", "FTP_105"),
+        NO_ON_FILE_CHANGE("onFileChange method not found.", "FTP_104"),
         MUST_HAVE_WATCHEVENT("Must have the required parameter ftp:WatchEvent & readonly or ftp:WatchEvent.",
-                "FTP_106"),
+                "FTP_105"),
         ONLY_PARAMS_ALLOWED("Invalid method parameter count. Only ftp:WatchEvent & readonly " +
-                "or ftp:WatchEvent is allowed.", "FTP_107"),
+                "or ftp:WatchEvent is allowed.", "FTP_106"),
         INVALID_WATCHEVENT_PARAMETER("Invalid method parameter. Only ftp:WatchEvent & readonly or " +
-                "ftp:WatchEvent is allowed.", "FTP_108"),
-        INVALID_CALLER_PARAMETER("Invalid method parameter. Only ftp:Caller is allowed", "FTP_109"),
+                "ftp:WatchEvent is allowed.", "FTP_107"),
+        INVALID_CALLER_PARAMETER("Invalid method parameter. Only ftp:Caller is allowed", "FTP_108"),
         INVALID_PARAMETERS("Invalid method parameters. Only ftp:WatchEvent & readonly or ftp:WatchEvent and " +
-                "ftp:Caller is allowed.", "FTP_110"),
-        INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_111"),
-        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_112");
+                "ftp:Caller is allowed.", "FTP_109"),
+        INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_110"),
+        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_111");
         private final String error;
         private final String errorCode;
 
