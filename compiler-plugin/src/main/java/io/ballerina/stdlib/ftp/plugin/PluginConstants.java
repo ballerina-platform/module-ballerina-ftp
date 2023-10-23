@@ -21,7 +21,9 @@ package io.ballerina.stdlib.ftp.plugin;
 /**
  * Ftp compiler plugin constants.
  */
-public class PluginConstants {
+public final class PluginConstants {
+
+    private PluginConstants() {}
 
     public static final String PACKAGE_PREFIX = "ftp";
     public static final String ON_FILE_CHANGE_FUNC = "onFileChange";

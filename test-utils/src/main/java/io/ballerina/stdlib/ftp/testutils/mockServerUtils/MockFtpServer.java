@@ -65,14 +65,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * Creates a Mock FTP Servers
  */
-public class MockFtpServer {
+public final class MockFtpServer {
+
+    private MockFtpServer() {}
 
     private static final String username = "wso2";
     private static final String password = "wso2123";
-
-    MockFtpServer() {
-        // empty constructor
-    }
 
     private static final Logger logger = LoggerFactory.getLogger("ballerina");
     private static FakeFtpServer anonFtpServer;

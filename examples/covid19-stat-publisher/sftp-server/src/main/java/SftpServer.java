@@ -46,7 +46,9 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class SftpServer {
+public final class SftpServer {
+
+    private SftpServer() {}
 
     private static final Logger logger = LoggerFactory.getLogger("ballerina");
     private static FakeFtpServer ftpServer;

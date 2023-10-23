@@ -21,7 +21,9 @@ package io.ballerina.stdlib.ftp.testutils.mockServerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StartServer {
+public final class StartServer {
+
+    private StartServer() {}
 
     private static final Logger logger = LoggerFactory.getLogger(StartServer.class);
 
