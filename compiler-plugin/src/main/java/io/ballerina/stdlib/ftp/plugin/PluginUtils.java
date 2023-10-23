@@ -43,7 +43,9 @@ import java.util.Optional;
 /**
  * Util class for the compiler plugin.
  */
-public class PluginUtils {
+public final class PluginUtils {
+
+    private PluginUtils() {}
 
     public static Diagnostic getDiagnostic(CompilationErrors error, DiagnosticSeverity severity, Location location) {
         String errorMessage = error.getError();

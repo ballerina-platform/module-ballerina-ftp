@@ -34,7 +34,9 @@ import java.nio.file.Paths;
 /**
  * A class containing the utilities related for compiler plugin tests.
  */
-public class CompilerPluginTestUtils {
+public final class CompilerPluginTestUtils {
+
+    private CompilerPluginTestUtils() {}
 
     public static final Path RESOURCE_DIRECTORY = Paths.get("src", "test", "resources").toAbsolutePath();
     public static final Path DISTRIBUTION_PATH = Paths.get("../", "target", "ballerina-runtime")

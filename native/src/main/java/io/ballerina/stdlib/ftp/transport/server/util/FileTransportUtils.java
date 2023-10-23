@@ -41,7 +41,9 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_SFTP;
 /**
  * Utility class for File Transport.
  */
-public class FileTransportUtils {
+public final class FileTransportUtils {
+
+    private FileTransportUtils() {}
 
     private static final Pattern URL_PATTERN = Pattern.compile("[a-z]+://.*");
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(":(?:[^/]+)@");
