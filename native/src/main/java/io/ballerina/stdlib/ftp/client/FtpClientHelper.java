@@ -277,6 +277,12 @@ class FtpClientHelper {
                     return;
                 }
                 BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
+                if (arrayValue == null) {
+                    entity.addNativeData(ENTITY_BYTE_STREAM, null);
+                    bufferHolder.setTerminal(true);
+                    latch.countDown();
+                    return;
+                }
                 byte[] bytes = arrayValue.getBytes();
                 bufferHolder.setBuffer(bytes);
                 bufferHolder.setTerminal(false);
