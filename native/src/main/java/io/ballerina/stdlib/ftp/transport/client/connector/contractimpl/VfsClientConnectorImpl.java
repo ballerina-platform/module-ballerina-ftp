@@ -69,7 +69,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             path = fsManager.resolveFile(fileURI, opts);
         } catch (FileSystemException e) {
             throw new RemoteFileSystemConnectorException("Error while connecting to the FTP server with URL: "
-                    + (fileURI != null ? fileURI : ""));
+                    + (fileURI != null ? fileURI : ""), e.getCause());
         }
     }
 
@@ -88,7 +88,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             try {
                 fileObject = path.resolveFile(filePath);
             } catch (FileSystemException e) {
-                throw new BallerinaFtpException(e.getMessage());
+                throw new BallerinaFtpException(e.getMessage(), e.getCause());
             }
             switch (action) {
                 case MKDIR:

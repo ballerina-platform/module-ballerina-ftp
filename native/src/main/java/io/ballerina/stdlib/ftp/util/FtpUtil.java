@@ -43,6 +43,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -152,6 +153,15 @@ public class FtpUtil {
         return ErrorCreator.createError(ModuleUtils.getModule(), errorTypeName, StringUtils.fromString(message),
                 cause == null ? null : cause instanceof BError ?
                         (BError) cause : ErrorCreator.createError(cause), null);
+    }
+
+    public static Throwable findRootCause(Throwable throwable) {
+        Objects.requireNonNull(throwable);
+        Throwable rootCause = throwable;
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+            rootCause = rootCause.getCause();
+        }
+        return rootCause;
     }
 
     /**

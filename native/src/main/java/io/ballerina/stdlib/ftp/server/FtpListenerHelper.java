@@ -37,13 +37,13 @@ import io.ballerina.stdlib.ftp.util.ModuleUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CLIENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVICE_ENDPOINT_CONFIG;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
 
 /**
@@ -98,15 +98,6 @@ public class FtpListenerHelper {
             listener.setCaller(caller);
         }
         return null;
-    }
-
-    protected static Throwable findRootCause(Throwable throwable) {
-        Objects.requireNonNull(throwable);
-        Throwable rootCause = throwable;
-        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
-            rootCause = rootCause.getCause();
-        }
-        return rootCause;
     }
 
     private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)

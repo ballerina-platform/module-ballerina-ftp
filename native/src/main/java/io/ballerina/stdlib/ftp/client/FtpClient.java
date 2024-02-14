@@ -48,6 +48,7 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.VFS_CLIENT_CONNECTOR;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
 
 /**
  * Contains functionality of FTP client.
@@ -106,7 +107,7 @@ public class FtpClient {
             VfsClientConnector connector = fileSystemConnectorFactory.createVfsClientConnector(ftpConfig);
             clientEndpoint.addNativeData(VFS_CLIENT_CONNECTOR, connector);
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), Error.errorType());
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         }
         return null;
     }
