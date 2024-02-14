@@ -272,9 +272,7 @@ public class FtpListener implements RemoteFileSystemListener {
                     }
                 }
             } catch (RemoteFileSystemConnectorException e) {
-                Throwable rootCause = findRootCause(e);
-                String detail = (rootCause != null) ? rootCause.getMessage() : null;
-                return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
+                return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
             } finally {
                 service.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
             }

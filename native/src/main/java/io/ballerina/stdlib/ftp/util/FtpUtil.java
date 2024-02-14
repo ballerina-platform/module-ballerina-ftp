@@ -148,9 +148,10 @@ public class FtpUtil {
                 null, null);
     }
 
-    public static BError createError(String message, String details, String errorTypeName) {
-        return ErrorCreator.createError(ModuleUtils.getModule(), errorTypeName, StringUtils.fromString(message), null,
-                null);
+    public static BError createError(String message, Throwable cause, String errorTypeName) {
+        return ErrorCreator.createError(ModuleUtils.getModule(), errorTypeName, StringUtils.fromString(message),
+                cause == null ? null : cause instanceof BError ?
+                        (BError) cause : ErrorCreator.createError(cause), null);
     }
 
     /**

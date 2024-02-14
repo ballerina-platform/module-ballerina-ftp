@@ -73,9 +73,7 @@ public class FtpListenerHelper {
             ftpListener.addNativeData(FTP_SERVICE_ENDPOINT_CONFIG, serviceEndpointConfig);
             return null;
         } catch (RemoteFileSystemConnectorException | BallerinaFtpException | BError e) {
-            Throwable rootCause = findRootCause(e);
-            String detail = (rootCause != null) ? rootCause.getMessage() : null;
-            return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         }
     }
 
@@ -94,10 +92,8 @@ public class FtpListenerHelper {
         }
         BMap serviceEndpointConfig  = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);;
         BObject caller = createCaller(serviceEndpointConfig);
-        if (caller instanceof BError) {
-            BError endpointError = (BError) caller;
-            return FtpUtil.createError(endpointError.getMessage(), endpointError.getDetails().toString(),
-                    Error.errorType());
+        if (caller instanceof BError endpointError) {
+            return FtpUtil.createError(endpointError.getMessage(), endpointError.getCause(), Error.errorType());
         } else {
             listener.setCaller(caller);
         }
@@ -178,9 +174,7 @@ public class FtpListenerHelper {
                 }
             }
         } catch (RemoteFileSystemConnectorException e) {
-            Throwable rootCause = findRootCause(e);
-            String detail = (rootCause != null) ? rootCause.getMessage() : null;
-            return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         } finally {
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
         }
