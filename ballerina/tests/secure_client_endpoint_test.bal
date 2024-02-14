@@ -309,3 +309,16 @@ public function testSecureDeleteFileContent() returns error? {
             msg = "Correct error is not given when trying to get a non-existing file.");
     }
 }
+
+@test:Config {
+    dependsOn: [testSecurePutFileContent]
+}
+public function testSecureFileStreamReuse() returns error? {
+    stream<io:Block, io:Error?> localFileStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>sftpClientEp)->put("/tempFile1.txt", localFileStream);
+    stream<byte[] & readonly, io:Error?> remoteFileStream = check (<Client>sftpClientEp)->get("/tempFile1.txt");
+    check (<Client>sftpClientEp)->put("/tempFile2.txt", remoteFileStream);
+    stream<byte[] & readonly, io:Error?> remoteFileStream2 = check (<Client>sftpClientEp)->get("/tempFile2.txt");
+
+    test:assertTrue(check matchStreamContent(remoteFileStream2, "Put content"));
+}
