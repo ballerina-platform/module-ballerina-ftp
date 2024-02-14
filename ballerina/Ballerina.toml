@@ -21,8 +21,8 @@ path = "./lib/commons-vfs2-2.8.0.jar"
 [[platform.java17.dependency]]
 groupId = "com.github.mwiede"
 artifactId = "jsch"
-version = "0.2.16"
-path = "./lib/jsch-0.2.16.jar"
+version = "0.1.56"
+path = "./lib/jsch-0.1.56.jar"
 
 [[platform.java17.dependency]]
 groupId = "commons-net"
