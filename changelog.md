@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+### Added
+
+- [Added cause details to the errors](https://github.com/ballerina-platform/ballerina-library/issues/6064)
+
+### Fixed
+
+- [Fix NPE when reusing a file stream returned from a `ftp:get` operation](https://github.com/ballerina-platform/ballerina-library/issues/5990)
+
+## [2.9.0] - 2023-09-15
+
 ### Changed
 
 - [Changed disallowing service level annotations in the compiler plugin](https://github.com/ballerina-platform/ballerina-standard-library/issues/4741)
