@@ -72,8 +72,10 @@ public class FtpListenerHelper {
 
             ftpListener.addNativeData(FTP_SERVICE_ENDPOINT_CONFIG, serviceEndpointConfig);
             return null;
-        } catch (RemoteFileSystemConnectorException | BallerinaFtpException | BError e) {
+        } catch (RemoteFileSystemConnectorException | BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
+        } catch (BError e) {
+            return e;
         }
     }
 
@@ -92,8 +94,8 @@ public class FtpListenerHelper {
         }
         BMap serviceEndpointConfig  = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);;
         BObject caller = createCaller(serviceEndpointConfig);
-        if (caller instanceof BError endpointError) {
-            return FtpUtil.createError(endpointError.getMessage(), endpointError.getCause(), Error.errorType());
+        if (caller instanceof BError) {
+            return caller;
         } else {
             listener.setCaller(caller);
         }
@@ -148,7 +150,8 @@ public class FtpListenerHelper {
         try {
             connector.poll();
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError("Error during the poll operation: " + e.getMessage(), null, Error.errorType());
+            return FtpUtil.createError("Error during the poll operation: " + e.getMessage(),
+                    findRootCause(e), Error.errorType());
         }
         return null;
     }

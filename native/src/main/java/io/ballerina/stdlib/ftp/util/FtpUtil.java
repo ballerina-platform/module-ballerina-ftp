@@ -152,7 +152,7 @@ public class FtpUtil {
     public static BError createError(String message, Throwable cause, String errorTypeName) {
         return ErrorCreator.createError(ModuleUtils.getModule(), errorTypeName, StringUtils.fromString(message),
                 cause == null ? null : cause instanceof BError ?
-                        (BError) cause : ErrorCreator.createError(cause), null);
+                        (BError) cause : ErrorCreator.createError(StringUtils.fromString(cause.getMessage())), null);
     }
 
     public static Throwable findRootCause(Throwable throwable) {
