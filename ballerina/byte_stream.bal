@@ -53,7 +53,7 @@ class ByteStream {
 
     # Reads and return the next `byte[]` of the related stream.
     #
-    # + return - A `record` of `byte[]`s when the stream is avaliable,
+    # + return - A `record` of `byte[]`s when the stream is available,
     #            `()` if the stream has reached the end or else an `io:Error`
     public isolated function next() returns record {|byte[] & readonly value;|}|io:Error? {
         if self.initialStreamEntryConsumed {

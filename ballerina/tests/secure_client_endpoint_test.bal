@@ -309,3 +309,38 @@ public function testSecureDeleteFileContent() returns error? {
             msg = "Correct error is not given when trying to get a non-existing file.");
     }
 }
+
+@test:Config {
+    dependsOn: [testSecurePutFileContent]
+}
+public function testSecureFileStreamReuse() returns error? {
+    stream<io:Block, io:Error?> localFileStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>sftpClientEp)->put("/tempFile1.txt", localFileStream);
+    stream<byte[] & readonly, io:Error?> remoteFileStream = check (<Client>sftpClientEp)->get("/tempFile1.txt");
+    check (<Client>sftpClientEp)->put("/tempFile2.txt", remoteFileStream);
+    stream<byte[] & readonly, io:Error?> remoteFileStream2 = check (<Client>sftpClientEp)->get("/tempFile2.txt");
+
+    test:assertTrue(check matchStreamContent(remoteFileStream2, "Put content"));
+    check (<Client>sftpClientEp)->delete("/tempFile1.txt");
+    check (<Client>sftpClientEp)->delete("/tempFile2.txt");
+}
+
+@test:Config {
+    dependsOn: [testSecureFileStreamReuse]
+}
+public function testSecureLargeFileStreamReuse() returns error? {
+    int i = 0;
+    string nonFittingContent = "";
+    while i < 1000 {
+        nonFittingContent += "123456789";
+        i += 1;
+    }
+    check (<Client>sftpClientEp)->put("/tempFile3.txt", nonFittingContent);
+    stream<byte[] & readonly, io:Error?> remoteFileStream = check (<Client>sftpClientEp)->get("/tempFile3.txt");
+    check (<Client>sftpClientEp)->put("/tempFile4.txt", remoteFileStream);
+    stream<byte[] & readonly, io:Error?> remoteFileStream2 = check (<Client>sftpClientEp)->get("/tempFile4.txt");
+
+    test:assertTrue(check matchStreamContent(remoteFileStream2, nonFittingContent));
+    check (<Client>sftpClientEp)->delete("/tempFile3.txt");
+    check (<Client>sftpClientEp)->delete("/tempFile4.txt");
+}

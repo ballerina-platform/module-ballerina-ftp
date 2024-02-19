@@ -56,8 +56,7 @@ public class FtpClientListener implements RemoteFileSystemListener {
     @Override
     public void onError(Throwable throwable) {
         log.error(throwable.getMessage(), throwable);
-        String detail = (throwable.getCause() != null) ? throwable.getCause().getMessage() : null;
-        balFuture.complete(FtpUtil.createError(throwable.getMessage(), detail, Error.errorType()));
+        balFuture.complete(FtpUtil.createError(throwable.getMessage(), throwable.getCause(), Error.errorType()));
     }
 
     @Override

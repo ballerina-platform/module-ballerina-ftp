@@ -271,15 +271,23 @@ class FtpClientHelper {
             @Override
             public void notifySuccess(Object result) {
                 if (result == bufferHolder.getTerminalType()) {
-                    entity.addNativeData(ENTITY_BYTE_STREAM, null);
-                    bufferHolder.setTerminal(true);
-                    latch.countDown();
+                    handleStreamEnd();
                     return;
                 }
                 BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
+                if (arrayValue == null) {
+                    handleStreamEnd();
+                    return;
+                }
                 byte[] bytes = arrayValue.getBytes();
                 bufferHolder.setBuffer(bytes);
                 bufferHolder.setTerminal(false);
+                latch.countDown();
+            }
+
+            private void handleStreamEnd() {
+                entity.addNativeData(ENTITY_BYTE_STREAM, null);
+                bufferHolder.setTerminal(true);
                 latch.countDown();
             }
 

@@ -37,13 +37,13 @@ import io.ballerina.stdlib.ftp.util.ModuleUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CLIENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVICE_ENDPOINT_CONFIG;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
 
 /**
@@ -72,10 +72,10 @@ public class FtpListenerHelper {
 
             ftpListener.addNativeData(FTP_SERVICE_ENDPOINT_CONFIG, serviceEndpointConfig);
             return null;
-        } catch (RemoteFileSystemConnectorException | BallerinaFtpException | BError e) {
-            Throwable rootCause = findRootCause(e);
-            String detail = (rootCause != null) ? rootCause.getMessage() : null;
-            return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
+        } catch (RemoteFileSystemConnectorException | BallerinaFtpException e) {
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
+        } catch (BError e) {
+            return e;
         }
     }
 
@@ -95,22 +95,11 @@ public class FtpListenerHelper {
         BMap serviceEndpointConfig  = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);;
         BObject caller = createCaller(serviceEndpointConfig);
         if (caller instanceof BError) {
-            BError endpointError = (BError) caller;
-            return FtpUtil.createError(endpointError.getMessage(), endpointError.getDetails().toString(),
-                    Error.errorType());
+            return caller;
         } else {
             listener.setCaller(caller);
         }
         return null;
-    }
-
-    protected static Throwable findRootCause(Throwable throwable) {
-        Objects.requireNonNull(throwable);
-        Throwable rootCause = throwable;
-        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
-            rootCause = rootCause.getCause();
-        }
-        return rootCause;
     }
 
     private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
@@ -161,7 +150,8 @@ public class FtpListenerHelper {
         try {
             connector.poll();
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError("Error during the poll operation: " + e.getMessage(), null, Error.errorType());
+            return FtpUtil.createError("Error during the poll operation: " + e.getMessage(),
+                    findRootCause(e), Error.errorType());
         }
         return null;
     }
@@ -178,9 +168,7 @@ public class FtpListenerHelper {
                 }
             }
         } catch (RemoteFileSystemConnectorException e) {
-            Throwable rootCause = findRootCause(e);
-            String detail = (rootCause != null) ? rootCause.getMessage() : null;
-            return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         } finally {
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
         }

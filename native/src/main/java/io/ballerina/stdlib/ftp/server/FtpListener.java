@@ -56,13 +56,13 @@ import java.util.Set;
 
 import static io.ballerina.runtime.api.TypeTags.OBJECT_TYPE_TAG;
 import static io.ballerina.runtime.api.TypeTags.RECORD_TYPE_TAG;
-import static io.ballerina.stdlib.ftp.server.FtpListenerHelper.findRootCause;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVER_EVENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_ADDED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILECHANGE_METADATA;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
 
 /**
@@ -272,9 +272,7 @@ public class FtpListener implements RemoteFileSystemListener {
                     }
                 }
             } catch (RemoteFileSystemConnectorException e) {
-                Throwable rootCause = findRootCause(e);
-                String detail = (rootCause != null) ? rootCause.getMessage() : null;
-                return FtpUtil.createError(e.getMessage(), detail, Error.errorType());
+                return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
             } finally {
                 service.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
             }
