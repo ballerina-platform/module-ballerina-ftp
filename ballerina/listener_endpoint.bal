@@ -14,12 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/jballerina.java;
 import ballerina/log;
 import ballerina/task;
-import ballerina/jballerina.java;
 
 # Represents a service listener that monitors the FTP location.
-public class Listener {
+public isolated class Listener {
 
     private handle EMPTY_JAVA_STRING = java:fromString("");
     private ListenerConfiguration config = {};
@@ -30,8 +30,10 @@ public class Listener {
     # + listenerConfig - Configurations for FTP listener
     # + return - `()` or else an `ftp:Error` upon failure to initialize the listener
     public isolated function init(ListenerConfiguration listenerConfig) returns Error? {
-        self.config = listenerConfig;
-        return initListener(self, self.config);
+        self.config = listenerConfig.clone();
+        lock {
+            return initListener(self, self.config);
+        }
     }
 
     # Starts the `ftp:Listener`.
@@ -91,13 +93,17 @@ public class Listener {
     }
 
     isolated function internalStart() returns error? {
-        self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), self.config.pollingInterval);
+        lock {
+            self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), self.config.pollingInterval);
+        }
     }
 
     isolated function stop() returns error? {
-        var id = self.jobId;
-        if id is task:JobId {
-            check task:unscheduleJob(id);
+        lock {
+            var id = self.jobId;
+            if id is task:JobId {
+                check task:unscheduleJob(id);
+            }
         }
     }
 
