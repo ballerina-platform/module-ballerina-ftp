@@ -83,7 +83,7 @@ public final class FileTransportUtils {
             throws RemoteFileSystemConnectorException {
         final SftpFileSystemConfigBuilder configBuilder = SftpFileSystemConfigBuilder.getInstance();
         configBuilder.setPreferredAuthentications(opts,
-                "gssapi-with-mic,publickey,keyboard-interactive,password");
+                "gssapi-with-mic,publickey,password");
         if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
             configBuilder.setUserDirIsRoot(opts, false);
         }
