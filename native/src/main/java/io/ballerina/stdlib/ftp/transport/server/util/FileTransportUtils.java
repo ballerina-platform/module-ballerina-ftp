@@ -86,9 +86,6 @@ public final class FileTransportUtils {
         if (options.containsKey(ENDPOINT_CONFIG_PREFERRED_METHODS)) {
             String value = options.get(ENDPOINT_CONFIG_PREFERRED_METHODS);
             configBuilder.setPreferredAuthentications(opts, value);
-        } else {
-            configBuilder.setPreferredAuthentications(opts,
-                    "gssapi-with-mic,publickey,keyboard-interactive,password");
         }
         if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
             configBuilder.setUserDirIsRoot(opts, false);
