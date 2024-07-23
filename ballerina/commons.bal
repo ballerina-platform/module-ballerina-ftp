@@ -52,9 +52,15 @@ public type Credentials record {|
 public type AuthConfiguration record {|
     Credentials credentials?;
     PrivateKey privateKey?;
-    PreferredMethod[] preferredMethods?;
+    PreferredMethod[] preferredMethods = [PUBLICKEY, PASSWORD];
 |};
 
+# Authentication methods for the FTP listener.
+# 
+# + KEYBOARD_INTERACTIVE - Keyboard interactive authentication
+# + GSSAPI_WITH_MIC - GSSAPI with MIC authentication
+# + PASSWORD - Password authentication
+# + PUBLICKEY - Public key authentication
 public enum PreferredMethod {
     KEYBOARD_INTERACTIVE,
     GSSAPI_WITH_MIC,
