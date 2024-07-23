@@ -101,12 +101,8 @@ public class FtpClient {
                 if (preferredMethods.isEmpty()) {
                     return FtpUtil.createError(NO_AUTH_METHOD_ERROR, Error.errorType());
                 }
-                String authMethods = Arrays.stream(preferredMethods.getValues())
-                        .map(Object::toString)
-                        .map(String::toLowerCase)
-                        .collect(Collectors.joining(","))
-                        .replace("_", "-");
-                ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, authMethods);
+                String preferredAuthMethods = getPreferredMethods(preferredMethods);
+                ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, preferredAuthMethods);
             }
         }
         ftpConfig.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
@@ -128,6 +124,19 @@ public class FtpClient {
             return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         }
         return null;
+    }
+
+    public static String getPreferredMethods(BArray preferredMethods) {
+        String[] array = getStringArray(preferredMethods.getValues());
+        return getCombinedString(array);
+    }
+
+    public static String[] getStringArray(Object[] values) {
+        return Arrays.stream(values).map(Object::toString).map(String::toLowerCase).toArray(String[]::new);
+    }
+
+    private static String getCombinedString(String[] values) {
+        return Arrays.stream(values).collect(Collectors.joining(",")).replace("_", "-");
     }
 
     public static Object getFirst(Environment env, BObject clientConnector, BString filePath) {
