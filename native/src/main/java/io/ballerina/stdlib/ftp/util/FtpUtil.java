@@ -26,6 +26,7 @@ import io.ballerina.runtime.api.types.ObjectType;
 import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
+import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -41,17 +42,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ANONYMOUS_PASSWORD;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ANONYMOUS_USERNAME;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.NO_AUTH_METHOD_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 import static io.ballerina.stdlib.ftp.util.ModuleUtils.getModule;
 
 /**
@@ -232,6 +238,25 @@ public class FtpUtil {
         return Stream.of(methodTypes)
                 .filter(methodType -> ON_FILE_CHANGE_REMOTE_FUNCTION.equals(methodType.getName()))
                 .findFirst();
+    }
+
+    public static String getAuthMethod(Object authMethodObj) {
+        return authMethodObj.toString().toLowerCase().replace("_", "-");
+    }
+
+    public static String getPreferredMethodsFromAuthConfig(BMap authenticationConfig) {
+        final BArray preferredMethods = authenticationConfig.getArrayValue((StringUtils.fromString(
+                ENDPOINT_CONFIG_PREFERRED_METHODS)));
+        String preferredAuthMethods = "";
+        if (preferredMethods != null) {
+            if (preferredMethods.isEmpty()) {
+                throw FtpUtil.createError(NO_AUTH_METHOD_ERROR, Error.errorType());
+            }
+            preferredAuthMethods = Arrays.stream(preferredMethods.getValues()).limit(preferredMethods.size())
+                    .map(FtpUtil::getAuthMethod)
+                    .collect(Collectors.joining(","));
+        }
+        return preferredAuthMethods;
     }
 
     /**
