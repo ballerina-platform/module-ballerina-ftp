@@ -21,6 +21,7 @@ package io.ballerina.stdlib.ftp.client;
 import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Future;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
@@ -41,9 +42,12 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.VFS_CLIENT_CONNECTOR;
@@ -89,6 +93,16 @@ public class FtpClient {
                 if (privateKeyPassword != null && !privateKeyPassword.getValue().isEmpty()) {
                     ftpConfig.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
                 }
+            }
+            final BArray preferredMethods = auth.getArrayValue((StringUtils.fromString(
+                    ENDPOINT_CONFIG_PREFERRED_METHODS)));
+            if (preferredMethods != null) {
+                String authMethods = Arrays.stream(preferredMethods.getValues())
+                        .map(Object::toString)
+                        .map(String::toLowerCase)
+                        .collect(Collectors.joining(","))
+                        .replace("_", "-");
+                ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, authMethods);
             }
         }
         ftpConfig.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));

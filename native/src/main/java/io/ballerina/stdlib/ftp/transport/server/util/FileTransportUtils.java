@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.IDENTITY_PASS_PHRASE;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_FTP;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_SFTP;
@@ -82,8 +83,13 @@ public final class FileTransportUtils {
     private static void setSftpOptions(Map<String, String> options, FileSystemOptions opts)
             throws RemoteFileSystemConnectorException {
         final SftpFileSystemConfigBuilder configBuilder = SftpFileSystemConfigBuilder.getInstance();
-        configBuilder.setPreferredAuthentications(opts,
-                "gssapi-with-mic,publickey,keyboard-interactive,password");
+        if (options.containsKey(ENDPOINT_CONFIG_PREFERRED_METHODS)) {
+            String value = options.get(ENDPOINT_CONFIG_PREFERRED_METHODS);
+            configBuilder.setPreferredAuthentications(opts, value);
+        } else {
+            configBuilder.setPreferredAuthentications(opts,
+                    "gssapi-with-mic,publickey,keyboard-interactive,password");
+        }
         if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
             configBuilder.setUserDirIsRoot(opts, false);
         }

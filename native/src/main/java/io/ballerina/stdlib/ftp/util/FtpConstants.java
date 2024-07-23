@@ -77,6 +77,7 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_AUTH = "auth";
     public static final String ENDPOINT_CONFIG_CREDENTIALS = "credentials";
     public static final String ENDPOINT_CONFIG_PRIVATE_KEY = "privateKey";
+    public static final String ENDPOINT_CONFIG_PREFERRED_METHODS = "preferredMethods";
 
     public static final String INPUT_CONTENT_FILE_PATH_KEY = "filePath";
     public static final String INPUT_CONTENT_IS_FILE_KEY = "isFile";
