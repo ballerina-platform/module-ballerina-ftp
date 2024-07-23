@@ -48,10 +48,19 @@ public type Credentials record {|
 #
 # + credentials - Username and password to be used
 # + privateKey - Private key to be used
+# + preferredMethods - Preferred authentication methods
 public type AuthConfiguration record {|
     Credentials credentials?;
     PrivateKey privateKey?;
+    PreferredMethod[] preferredMethods?;
 |};
+
+public enum PreferredMethod {
+    KEYBOARD_INTERACTIVE,
+    GSSAPI_WITH_MIC,
+    PASSWORD,
+    PUBLICKEY
+}
 
 # Configuration for the input given for `put` and `append` operations of
 # the FTP module.
