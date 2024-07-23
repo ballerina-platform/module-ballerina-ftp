@@ -88,6 +88,7 @@ public class FtpConstants {
     public static final String ON_FILE_CHANGE_REMOTE_FUNCTION = "onFileChange";
     public static final String APACHE_VFS2_PACKAGE_NAME = "org.apache.commons.vfs2";
     public static final String BALLERINA_FTP_PACKAGE_NAME = "io.ballerina.stdlib.ftp";
+    public static final String NO_AUTH_METHOD_ERROR = "No preferred auth method is specified in the SFTP client";
 
     public static final StrandMetadata ON_FILECHANGE_METADATA = new StrandMetadata(ModuleUtils.getModule().getOrg(),
             ModuleUtils.getModule().getName(), ModuleUtils.getModule().getMajorVersion(),

@@ -83,10 +83,8 @@ public final class FileTransportUtils {
     private static void setSftpOptions(Map<String, String> options, FileSystemOptions opts)
             throws RemoteFileSystemConnectorException {
         final SftpFileSystemConfigBuilder configBuilder = SftpFileSystemConfigBuilder.getInstance();
-        if (options.containsKey(ENDPOINT_CONFIG_PREFERRED_METHODS)) {
-            String value = options.get(ENDPOINT_CONFIG_PREFERRED_METHODS);
-            configBuilder.setPreferredAuthentications(opts, value);
-        }
+        String value = options.get(ENDPOINT_CONFIG_PREFERRED_METHODS);
+        configBuilder.setPreferredAuthentications(opts, value);
         if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
             configBuilder.setUserDirIsRoot(opts, false);
         }
