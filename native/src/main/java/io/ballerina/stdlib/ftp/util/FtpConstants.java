@@ -77,6 +77,7 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_AUTH = "auth";
     public static final String ENDPOINT_CONFIG_CREDENTIALS = "credentials";
     public static final String ENDPOINT_CONFIG_PRIVATE_KEY = "privateKey";
+    public static final String ENDPOINT_CONFIG_PREFERRED_METHODS = "preferredMethods";
 
     public static final String INPUT_CONTENT_FILE_PATH_KEY = "filePath";
     public static final String INPUT_CONTENT_IS_FILE_KEY = "isFile";
@@ -87,6 +88,8 @@ public class FtpConstants {
     public static final String ON_FILE_CHANGE_REMOTE_FUNCTION = "onFileChange";
     public static final String APACHE_VFS2_PACKAGE_NAME = "org.apache.commons.vfs2";
     public static final String BALLERINA_FTP_PACKAGE_NAME = "io.ballerina.stdlib.ftp";
+    public static final String NO_AUTH_METHOD_ERROR = "No preferred auth method is specified in the " +
+            "SFTP client configurations";
 
     public static final StrandMetadata ON_FILECHANGE_METADATA = new StrandMetadata(ModuleUtils.getModule().getOrg(),
             ModuleUtils.getModule().getName(), ModuleUtils.getModule().getMajorVersion(),

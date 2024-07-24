@@ -9,6 +9,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - [Isolated the `ftp:Listener`](https://github.com/ballerina-platform/module-ballerina-ftp/pull/1287)
 
+## [2.10.1] - 2024-07-24
+
+## Added
+
+- [Added customizable authentication methods in SFTP listener](https://github.com/ballerina-platform/ballerina-library/issues/6771)
+
+## [2.10.0] - 2024-07-23
+
+### Added
+
+- [Added customizable authentication methods in SFTP client](https://github.com/ballerina-platform/ballerina-library/issues/6768)
+
 ## [2.9.1] - 2024-02-19
 
 ### Added

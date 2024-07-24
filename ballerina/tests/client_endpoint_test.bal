@@ -51,7 +51,8 @@ ClientConfiguration sftpConfig = {
         privateKey: {
             path: "tests/resources/sftp.private.key",
             password: "changeit"
-        }
+        },
+        preferredMethods: [GSSAPI_WITH_MIC, PUBLICKEY, KEYBOARD_INTERACTIVE, PASSWORD]
     }
 };
 
