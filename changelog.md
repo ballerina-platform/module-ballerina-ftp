@@ -3,6 +3,18 @@ This file contains all the notable changes done to the Ballerina Email package t
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+## Added
+
+- [Added customizable authentication methods in SFTP listener](https://github.com/ballerina-platform/ballerina-library/issues/6771)
+
+## [2.10.0] - 2024-07-23
+
+### Added
+
+- [Added customizable authentication methods in SFTP client](https://github.com/ballerina-platform/ballerina-library/issues/6768)
+
 ## [2.9.1] - 2024-02-19
 
 ### Added
