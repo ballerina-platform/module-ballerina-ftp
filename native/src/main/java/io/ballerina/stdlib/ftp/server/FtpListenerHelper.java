@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CLIENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVICE_ENDPOINT_CONFIG;
@@ -92,7 +93,7 @@ public class FtpListenerHelper {
         if (listener.getCaller() != null) {
             return null;
         }
-        BMap serviceEndpointConfig  = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);;
+        BMap serviceEndpointConfig  = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
         BObject caller = createCaller(serviceEndpointConfig);
         if (caller instanceof BError) {
             return caller;
@@ -129,6 +130,7 @@ public class FtpListenerHelper {
                     params.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword);
                 }
             }
+            params.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
         }
         params.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(false));
         params.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));

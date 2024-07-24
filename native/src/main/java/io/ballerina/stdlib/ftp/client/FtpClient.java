@@ -44,6 +44,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.VFS_CLIENT_CONNECTOR;
@@ -90,6 +91,7 @@ public class FtpClient {
                     ftpConfig.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
                 }
             }
+            ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
         }
         ftpConfig.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
         ftpConfig.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(false));
