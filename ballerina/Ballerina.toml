@@ -1,7 +1,7 @@
 [package]
 org = "ballerina"
 name = "ftp"
-version = "2.11.0"
+version = "2.11.1"
 authors = ["Ballerina"]
 keywords = ["FTP", "SFTP", "remote file", "file transfer", "client", "service"]
 repository = "https://github.com/ballerina-platform/module-ballerina-ftp"
@@ -9,29 +9,29 @@ icon = "icon.png"
 license = ["Apache-2.0"]
 distribution = "2201.10.0"
 
-[platform.java17]
+[platform.java21]
 graalvmCompatible = true
 
-[[platform.java17.dependency]]
+[[platform.java21.dependency]]
 groupId = "org.apache.commons"
 artifactId = "commons-vfs2"
 version = "2.8.0"
 path = "./lib/commons-vfs2-2.8.0.jar"
 
-[[platform.java17.dependency]]
+[[platform.java21.dependency]]
 groupId = "com.jcraft"
 artifactId = "jsch"
 version = "0.1.55"
 path = "./lib/jsch-0.1.55.jar"
 
-[[platform.java17.dependency]]
+[[platform.java21.dependency]]
 groupId = "commons-net"
 artifactId = "commons-net"
 version = "3.9.0"
 path = "./lib/commons-net-3.9.0.jar"
 
-[[platform.java17.dependency]]
+[[platform.java21.dependency]]
 groupId = "io.ballerina.stdlib"
 artifactId = "ftp-native"
-version = "2.11.0"
-path = "../native/build/libs/ftp-native-2.11.0.jar"
+version = "2.11.1"
+path = "../native/build/libs/ftp-native-2.11.1-SNAPSHOT.jar"
