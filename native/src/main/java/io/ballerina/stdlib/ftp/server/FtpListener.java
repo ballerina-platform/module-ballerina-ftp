@@ -20,7 +20,6 @@ package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.Runtime;
-import io.ballerina.runtime.api.async.Callback;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.IntersectionType;
@@ -125,27 +124,12 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     private void invokeMethodAsync(BObject service, Object ...args) {
-        Callback callback = new Callback() {
-            @Override
-            public void notifySuccess(Object result) {
-                if (result instanceof BError) {
-                    ((BError) result).printStackTrace();
-                }
-            }
-            
-            @Override
-            public void notifyFailure(BError error) {
-                error.printStackTrace();
-                System.exit(1);
-            }
-        };
         ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
         if (serviceType.isIsolated() && serviceType.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
-            runtime.invokeMethodAsyncConcurrently(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
-                    ON_FILECHANGE_METADATA, callback, null, null, args);
+            runtime.call(service, ON_FILE_CHANGE_REMOTE_FUNCTION, args);
         } else {
-            runtime.invokeMethodAsyncSequentially(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
-                    ON_FILECHANGE_METADATA, callback, null, null, args);
+            runtime.startNonIsolatedWorker(service, ON_FILE_CHANGE_REMOTE_FUNCTION, ON_FILE_CHANGE_REMOTE_FUNCTION,
+                    ON_FILECHANGE_METADATA, null, args);
         }
     }
 

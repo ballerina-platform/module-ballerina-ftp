@@ -19,7 +19,6 @@
 package io.ballerina.stdlib.ftp.client;
 
 import io.ballerina.runtime.api.Environment;
-import io.ballerina.runtime.api.Future;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -43,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
@@ -116,7 +116,7 @@ public class FtpClient {
 
     public static Object getFirst(Environment env, BObject clientConnector, BString filePath) {
         clientConnector.addNativeData(ENTITY_BYTE_STREAM, null);
-        Future balFuture = env.markAsync();
+        CompletableFuture<Object> balFuture = new CompletableFuture<>();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGetAction(remoteFileSystemBaseMessage,
                         balFuture, clientConnector));
@@ -159,7 +159,7 @@ public class FtpClient {
             InputStream stream = new ByteArrayInputStream(textContent.getBytes());
             message = new RemoteFileSystemMessage(stream);
         }
-        Future balFuture = env.markAsync();
+        CompletableFuture<Object> balFuture = new CompletableFuture<>();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         VfsClientConnectorImpl connector
@@ -199,7 +199,7 @@ public class FtpClient {
         } else {
             return FtpUtil.createError("Error while reading a file", Error.errorType());
         }
-        Future balFuture = env.markAsync();
+        CompletableFuture<Object> balFuture = new CompletableFuture<>();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         VfsClientConnectorImpl connector
@@ -223,7 +223,7 @@ public class FtpClient {
     }
 
     public static Object delete(Environment env, BObject clientConnector, BString filePath) {
-        Future balFuture = env.markAsync();
+        CompletableFuture<Object> balFuture = new CompletableFuture<>();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
@@ -233,7 +233,7 @@ public class FtpClient {
     }
 
     public static Object isDirectory(Environment env, BObject clientConnector, BString filePath) {
-        Future balFuture = env.markAsync();
+        CompletableFuture<Object> balFuture = new CompletableFuture<>();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeIsDirectoryAction(remoteFileSystemBaseMessage, balFuture));
         VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
@@ -243,7 +243,7 @@ public class FtpClient {
     }
 
     public static Object list(Environment env, BObject clientConnector, BString filePath) {
-        Future balFuture = env.markAsync();
+        CompletableFuture<Object> balFuture = new CompletableFuture<>();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeListAction(remoteFileSystemBaseMessage, balFuture));
         VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
@@ -253,7 +253,7 @@ public class FtpClient {
     }
 
     public static Object mkdir(Environment env, BObject clientConnector, BString path) {
-        Future balFuture = env.markAsync();
+        CompletableFuture<Object> balFuture = new CompletableFuture<>();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
@@ -274,7 +274,7 @@ public class FtpClient {
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
-        Future balFuture = env.markAsync();
+        CompletableFuture<Object> balFuture = new CompletableFuture<>();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
@@ -284,7 +284,7 @@ public class FtpClient {
     }
 
     public static Object rmdir(Environment env, BObject clientConnector, BString filePath) {
-        Future balFuture = env.markAsync();
+        CompletableFuture<Object> balFuture = new CompletableFuture<>();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                 remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
         VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
@@ -297,7 +297,7 @@ public class FtpClient {
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         propertyMap.put(FtpConstants.PASSIVE_MODE, Boolean.TRUE.toString());
-        Future balFuture = env.markAsync();
+        CompletableFuture<Object> balFuture = new CompletableFuture<>();
         FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
                 FtpClientHelper.executeSizeAction(remoteFileSystemBaseMessage, balFuture));
         VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
