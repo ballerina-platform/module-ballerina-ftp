@@ -24,7 +24,6 @@ import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.IntersectionType;
 import io.ballerina.runtime.api.types.MethodType;
-import io.ballerina.runtime.api.types.ObjectType;
 import io.ballerina.runtime.api.types.Parameter;
 import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -58,7 +57,6 @@ import static io.ballerina.runtime.api.TypeTags.RECORD_TYPE_TAG;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVER_EVENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_ADDED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_FILES;
-import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILECHANGE_METADATA;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
@@ -124,13 +122,7 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     private void invokeMethodAsync(BObject service, Object ...args) {
-        ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
-        if (serviceType.isIsolated() && serviceType.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
-            runtime.call(service, ON_FILE_CHANGE_REMOTE_FUNCTION, args);
-        } else {
-            runtime.startNonIsolatedWorker(service, ON_FILE_CHANGE_REMOTE_FUNCTION, ON_FILE_CHANGE_REMOTE_FUNCTION,
-                    ON_FILECHANGE_METADATA, null, args);
-        }
+        runtime.call(service, ON_FILE_CHANGE_REMOTE_FUNCTION, args);
     }
 
     private BMap<BString, Object> getWatchEvent(Parameter parameter, Map<String, Object> parameters) {
