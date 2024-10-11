@@ -18,7 +18,6 @@
 
 package io.ballerina.stdlib.ftp.util;
 
-
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BString;
 
