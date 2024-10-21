@@ -20,7 +20,6 @@ package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.Runtime;
-import io.ballerina.runtime.api.async.Callback;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.IntersectionType;
@@ -107,14 +106,14 @@ public class FtpListener implements RemoteFileSystemListener {
 
     private Object[] getMethodArguments(Parameter[] params, Map<String, Object> watchEventParamValues) {
         if (params.length == 1) {
-            return new Object[] {getWatchEvent(params[0], watchEventParamValues), true};
+            return new Object[] {getWatchEvent(params[0], watchEventParamValues)};
         } else if (params.length == 2) {
             if ((params[0].type.isReadOnly() || TypeUtils.getReferredType(params[0].type).getTag() == RECORD_TYPE_TAG)
                     && TypeUtils.getReferredType(params[1].type).getTag() == OBJECT_TYPE_TAG) {
-                return new Object[] {getWatchEvent(params[0], watchEventParamValues), true, caller, true};
+                return new Object[] {getWatchEvent(params[0], watchEventParamValues), caller};
             } else if ((params[1].type.isReadOnly() || TypeUtils.getReferredType(params[1].type).getTag() ==
                     RECORD_TYPE_TAG) && TypeUtils.getReferredType(params[0].type).getTag() == OBJECT_TYPE_TAG) {
-                return new Object[] {caller, true, getWatchEvent(params[1], watchEventParamValues), true};
+                return new Object[] {caller, getWatchEvent(params[1], watchEventParamValues)};
             } else {
                 log.error("Invalid parameter types in onFileChange method");
             }
@@ -125,28 +124,25 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     private void invokeMethodAsync(BObject service, Object ...args) {
-        Callback callback = new Callback() {
-            @Override
-            public void notifySuccess(Object result) {
+        Thread.startVirtualThread(() -> {
+            ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
+            Object result;
+            try {
+                if (serviceType.isIsolated() && serviceType.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
+                    result = runtime.startIsolatedWorker(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
+                            ON_FILECHANGE_METADATA, null, args).get();
+                } else {
+                    result = runtime.startNonIsolatedWorker(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
+                            ON_FILECHANGE_METADATA, null, args).get();
+                }
                 if (result instanceof BError) {
                     ((BError) result).printStackTrace();
                 }
-            }
-            
-            @Override
-            public void notifyFailure(BError error) {
+            } catch (Throwable error) {
                 error.printStackTrace();
                 System.exit(1);
             }
-        };
-        ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
-        if (serviceType.isIsolated() && serviceType.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
-            runtime.invokeMethodAsyncConcurrently(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
-                    ON_FILECHANGE_METADATA, callback, null, null, args);
-        } else {
-            runtime.invokeMethodAsyncSequentially(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
-                    ON_FILECHANGE_METADATA, callback, null, null, args);
-        }
+        });
     }
 
     private BMap<BString, Object> getWatchEvent(Parameter parameter, Map<String, Object> parameters) {

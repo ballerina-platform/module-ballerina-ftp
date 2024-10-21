@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -257,6 +258,14 @@ public class FtpUtil {
                     .collect(Collectors.joining(","));
         }
         return preferredAuthMethods;
+    }
+
+    public static Object getResult(CompletableFuture<Object> balFuture) {
+        try {
+            return balFuture.get();
+        } catch (Throwable t) {
+            return ErrorCreator.createError(t);
+        }
     }
 
     /**

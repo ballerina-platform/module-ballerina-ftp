@@ -19,14 +19,11 @@
 package io.ballerina.stdlib.ftp.client;
 
 import io.ballerina.runtime.api.Environment;
-import io.ballerina.runtime.api.Future;
 import io.ballerina.runtime.api.Module;
-import io.ballerina.runtime.api.async.Callback;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BArray;
-import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BStream;
@@ -54,8 +51,7 @@ import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ARRAY_SIZE;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.BYTE_STREAM_CLOSE_FUNC;
@@ -83,7 +79,7 @@ class FtpClientHelper {
     }
 
     static boolean executeGetAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
-                                    Future balFuture, BObject clientConnector) {
+                                    CompletableFuture<Object> balFuture, BObject clientConnector) {
         try {
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
                 final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
@@ -125,7 +121,7 @@ class FtpClientHelper {
     }
 
     static boolean executeIsDirectoryAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
-                                            Future balFuture) {
+                                            CompletableFuture<Object> balFuture) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             balFuture.complete(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).isDirectory());
         }
@@ -133,7 +129,7 @@ class FtpClientHelper {
     }
 
     static boolean executeListAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
-                                     Future balFuture) {
+                                     CompletableFuture<Object> balFuture) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
             Map<String, FileInfo> childrenInfo = message.getChildrenInfo();
@@ -180,7 +176,7 @@ class FtpClientHelper {
     }
 
     static boolean executeSizeAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
-                                     Future balFuture) {
+                                     CompletableFuture<Object> balFuture) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
             balFuture.complete((int) message.getSize());
@@ -202,21 +198,7 @@ class FtpClientHelper {
                     @Override
                     public int read(byte[] b) {
                         if (bufferHolder.getBuffer().length == 0) {
-                            CountDownLatch latch = new CountDownLatch(1);
-                            callStreamNext(env, clientConnector, bufferHolder, iteratorObj, latch);
-                            int timeout = 120;
-                            boolean countDownReached;
-                            try {
-                                countDownReached = latch.await(timeout, TimeUnit.SECONDS);
-                                if (!countDownReached) {
-                                    log.error("Could not complete byte stream serialization within " + timeout +
-                                            " seconds.");
-                                    return -1;
-                                }
-                            } catch (InterruptedException e) {
-                                log.error("Interrupted before completing the 'next' method of the stream.");
-                                return -1;
-                            }
+                            callStreamNext(env, clientConnector, bufferHolder, iteratorObj);
                         }
                         int bLength = b.length;
                         int buffLength = bufferHolder.getBuffer().length;
@@ -245,14 +227,7 @@ class FtpClientHelper {
 
                     @Override
                     public void close() {
-                        CountDownLatch latch = new CountDownLatch(1);
-                        callStreamClose(env, clientConnector, bufferHolder, iteratorObj, latch);
-                        int timeout = 120;
-                        try {
-                            latch.await(timeout, TimeUnit.SECONDS);
-                         } catch (InterruptedException e) {
-                            log.error("Interrupted before completing the 'close' method of the stream.");
-                        }
+                        callStreamClose(env, clientConnector, bufferHolder, iteratorObj);
                     }
                 };
                 return fileInputStream;
@@ -266,57 +241,41 @@ class FtpClientHelper {
     }
 
     private static void callStreamNext(Environment env, BObject entity, BufferHolder bufferHolder,
-                                       BObject iteratorObj, CountDownLatch latch) {
-        env.getRuntime().invokeMethodAsyncConcurrently(iteratorObj, BYTE_STREAM_NEXT_FUNC, null, null, new Callback() {
-            @Override
-            public void notifySuccess(Object result) {
-                if (result == bufferHolder.getTerminalType()) {
-                    handleStreamEnd();
-                    return;
-                }
-                BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
-                if (arrayValue == null) {
-                    handleStreamEnd();
-                    return;
-                }
-                byte[] bytes = arrayValue.getBytes();
-                bufferHolder.setBuffer(bytes);
-                bufferHolder.setTerminal(false);
-                latch.countDown();
-            }
+                                       BObject iteratorObj) {
 
-            private void handleStreamEnd() {
-                entity.addNativeData(ENTITY_BYTE_STREAM, null);
-                bufferHolder.setTerminal(true);
-                latch.countDown();
-            }
+        Object result = env.getRuntime().call(iteratorObj, BYTE_STREAM_NEXT_FUNC);
+        if (result == bufferHolder.getTerminalType()) {
+            handleStreamEnd(entity, bufferHolder);
+            return;
+        }
+        BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
+        if (arrayValue == null) {
+            handleStreamEnd(entity, bufferHolder);
+            return;
+        }
+        byte[] bytes = arrayValue.getBytes();
+        bufferHolder.setBuffer(bytes);
+        bufferHolder.setTerminal(false);
+    }
 
-            @Override
-            public void notifyFailure(BError bError) {
-                latch.countDown();
-            }
-        }, null, null, null, true);
+    private static void handleStreamEnd(BObject entity, BufferHolder bufferHolder) {
+        entity.addNativeData(ENTITY_BYTE_STREAM, null);
+        bufferHolder.setTerminal(true);
     }
 
     private static void callStreamClose(Environment env, BObject entity, BufferHolder bufferHolder,
-                                       BObject iteratorObj, CountDownLatch latch) {
-        env.getRuntime().invokeMethodAsyncConcurrently(iteratorObj, BYTE_STREAM_CLOSE_FUNC, null, null, new Callback() {
-            @Override
-            public void notifySuccess(Object result) {
-                this.terminateStream();
-            }
+                                        BObject iteratorObj) {
+        try {
+            env.getRuntime().call(iteratorObj, BYTE_STREAM_CLOSE_FUNC);
+            terminateStream(entity, bufferHolder);
+        } catch (Throwable t) {
+            terminateStream(entity, bufferHolder);
+        }
+    }
 
-            @Override
-            public void notifyFailure(BError bError) {
-                this.terminateStream();
-            }
-
-            private void terminateStream() {
-                entity.addNativeData(ENTITY_BYTE_STREAM, null);
-                bufferHolder.setTerminal(true);
-                latch.countDown();
-            }
-        }, null, null, null, true);
+    private static void terminateStream(BObject entity, BufferHolder bufferHolder) {
+        entity.addNativeData(ENTITY_BYTE_STREAM, null);
+        bufferHolder.setTerminal(true);
     }
 
     static RemoteFileSystemMessage getUncompressedMessage(BObject clientConnector, String filePath,
