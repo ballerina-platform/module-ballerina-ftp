@@ -24,7 +24,6 @@ import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BArray;
-import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BStream;
@@ -244,33 +243,28 @@ class FtpClientHelper {
 
     private static void callStreamNext(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj) {
-        try {
-            Object result = env.getRuntime().startIsolatedWorker(iteratorObj, BYTE_STREAM_NEXT_FUNC, null,
-                    null, null).get();
-            if (result == bufferHolder.getTerminalType()) {
-                Util.handleStreamEnd(entity, bufferHolder);
-                return;
-            }
-            BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
-            if (arrayValue == null) {
-                Util.handleStreamEnd(entity, bufferHolder);
-                return;
-            }
-            byte[] bytes = arrayValue.getBytes();
-            bufferHolder.setBuffer(bytes);
-            bufferHolder.setTerminal(false);
-        } catch (BError ignored) {
+        Object result = env.getRuntime().call(iteratorObj, BYTE_STREAM_NEXT_FUNC);
+        if (result == bufferHolder.getTerminalType()) {
+            Util.handleStreamEnd(entity, bufferHolder);
+            return;
         }
+        BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
+        if (arrayValue == null) {
+            Util.handleStreamEnd(entity, bufferHolder);
+            return;
+        }
+        byte[] bytes = arrayValue.getBytes();
+        bufferHolder.setBuffer(bytes);
+        bufferHolder.setTerminal(false);
     }
 
     private static void callStreamClose(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj) {
         try {
-            env.getRuntime().startIsolatedWorker(iteratorObj, BYTE_STREAM_CLOSE_FUNC, null,
-                    null, null).get();
-            entity.addNativeData(ENTITY_BYTE_STREAM, null);
-            bufferHolder.setTerminal(true);
-        } catch (BError ignored) {
+            env.getRuntime().call(iteratorObj, BYTE_STREAM_CLOSE_FUNC);
+            Util.handleStreamEnd(entity, bufferHolder);
+        } catch (Throwable t) {
+            Util.handleStreamEnd(entity, bufferHolder);
         }
     }
 
