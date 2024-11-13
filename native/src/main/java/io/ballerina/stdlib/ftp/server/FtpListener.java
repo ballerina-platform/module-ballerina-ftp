@@ -20,6 +20,7 @@ package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.Runtime;
+import io.ballerina.runtime.api.concurrent.StrandMetadata;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.IntersectionType;
@@ -53,12 +54,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static io.ballerina.runtime.api.TypeTags.OBJECT_TYPE_TAG;
-import static io.ballerina.runtime.api.TypeTags.RECORD_TYPE_TAG;
+import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
+import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVER_EVENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_ADDED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_FILES;
-import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILECHANGE_METADATA;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
@@ -127,14 +127,10 @@ public class FtpListener implements RemoteFileSystemListener {
         Thread.startVirtualThread(() -> {
             try {
                 ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
-                Object result;
-                if (serviceType.isIsolated() && serviceType.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION)) {
-                    result = runtime.startIsolatedWorker(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
-                            ON_FILECHANGE_METADATA, null, args).get();
-                } else {
-                    result = runtime.startNonIsolatedWorker(service, ON_FILE_CHANGE_REMOTE_FUNCTION, null,
-                            ON_FILECHANGE_METADATA, null, args).get();
-                }
+                boolean isConcurrentSafe = serviceType.isIsolated() &&
+                        serviceType.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION);
+                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, null);
+                Object result = runtime.callMethod(service, ON_FILE_CHANGE_REMOTE_FUNCTION, strandMetadata, args);
                 if (result instanceof BError) {
                     ((BError) result).printStackTrace();
                 }
