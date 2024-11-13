@@ -197,7 +197,7 @@ public class FtpUtil {
      */
     public static Type getFileInfoType() {
         BMap<BString, Object> fileInfoStruct = ValueCreator.createRecordValue(new Module(
-                FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME, FtpUtil.getFtpPackage().getVersion()),
+                FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME, FtpUtil.getFtpPackage().getMajorVersion()),
                 FtpConstants.FTP_FILE_INFO);
         return fileInfoStruct.getType();
     }

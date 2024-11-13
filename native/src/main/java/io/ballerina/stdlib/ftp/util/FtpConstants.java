@@ -18,7 +18,6 @@
 
 package io.ballerina.stdlib.ftp.util;
 
-import io.ballerina.runtime.api.async.StrandMetadata;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BString;
 
@@ -90,8 +89,4 @@ public class FtpConstants {
     public static final String BALLERINA_FTP_PACKAGE_NAME = "io.ballerina.stdlib.ftp";
     public static final String NO_AUTH_METHOD_ERROR = "No preferred auth method is specified in the " +
             "SFTP client configurations";
-
-    public static final StrandMetadata ON_FILECHANGE_METADATA = new StrandMetadata(ModuleUtils.getModule().getOrg(),
-            ModuleUtils.getModule().getName(), ModuleUtils.getModule().getMajorVersion(),
-            ON_FILE_CHANGE_REMOTE_FUNCTION);
 }

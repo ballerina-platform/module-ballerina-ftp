@@ -243,7 +243,7 @@ class FtpClientHelper {
 
     private static void callStreamNext(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj) {
-        Object result = env.getRuntime().call(iteratorObj, BYTE_STREAM_NEXT_FUNC);
+        Object result = env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_NEXT_FUNC, null);
         if (result == bufferHolder.getTerminalType()) {
             Util.handleStreamEnd(entity, bufferHolder);
             return;
@@ -261,7 +261,7 @@ class FtpClientHelper {
     private static void callStreamClose(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj) {
         try {
-            env.getRuntime().call(iteratorObj, BYTE_STREAM_CLOSE_FUNC);
+            env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_CLOSE_FUNC, null);
             Util.handleStreamEnd(entity, bufferHolder);
         } catch (Throwable t) {
             Util.handleStreamEnd(entity, bufferHolder);
