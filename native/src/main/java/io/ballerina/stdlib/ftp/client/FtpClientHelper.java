@@ -35,7 +35,6 @@ import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
 import io.ballerina.stdlib.ftp.util.BufferHolder;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
-import io.ballerina.stdlib.ftp.util.Util;
 import io.ballerina.stdlib.io.channels.base.Channel;
 import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
@@ -245,12 +244,12 @@ class FtpClientHelper {
                                        BObject iteratorObj) {
         Object result = env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_NEXT_FUNC, null);
         if (result == bufferHolder.getTerminalType()) {
-            Util.handleStreamEnd(entity, bufferHolder);
+            handleStreamEnd(entity, bufferHolder);
             return;
         }
         BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
         if (arrayValue == null) {
-            Util.handleStreamEnd(entity, bufferHolder);
+            handleStreamEnd(entity, bufferHolder);
             return;
         }
         byte[] bytes = arrayValue.getBytes();
@@ -262,10 +261,15 @@ class FtpClientHelper {
                                        BObject iteratorObj) {
         try {
             env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_CLOSE_FUNC, null);
-            Util.handleStreamEnd(entity, bufferHolder);
+            handleStreamEnd(entity, bufferHolder);
         } catch (Throwable t) {
-            Util.handleStreamEnd(entity, bufferHolder);
+            handleStreamEnd(entity, bufferHolder);
         }
+    }
+
+    public static void handleStreamEnd(BObject entity, BufferHolder bufferHolder) {
+        entity.addNativeData(ENTITY_BYTE_STREAM, null);
+        bufferHolder.setTerminal(true);
     }
 
     static RemoteFileSystemMessage getUncompressedMessage(BObject clientConnector, String filePath,

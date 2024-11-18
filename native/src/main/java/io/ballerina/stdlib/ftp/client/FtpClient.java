@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.client;
 
 import io.ballerina.runtime.api.Environment;
+import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -31,9 +32,9 @@ import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConn
 import io.ballerina.stdlib.ftp.transport.client.connector.contractimpl.VfsClientConnectorImpl;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
+import io.ballerina.stdlib.ftp.util.BufferHolder;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
-import io.ballerina.stdlib.ftp.util.Util;
 import io.ballerina.stdlib.io.utils.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,7 +127,7 @@ public class FtpClient {
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.GET, filePath.getValue(), null);
-            return Util.getResult(balFuture);
+            return getResult(balFuture);
         });
     }
 
@@ -172,7 +173,7 @@ public class FtpClient {
             connector.addListener(connectorListener);
             connector.send(message, FtpAction.APPEND, (inputContent.getStringValue(StringUtils.fromString(
                     FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(), null);
-            return Util.getResult(balFuture);
+            return getResult(balFuture);
         });
     }
 
@@ -218,7 +219,7 @@ public class FtpClient {
                 filePath = FtpUtil.getCompressedFileName(filePath);
             }
             connector.send(message, FtpAction.PUT, filePath, null);
-            return Util.getResult(balFuture);
+            return getResult(balFuture);
         });
         try {
             stream.close();
@@ -240,7 +241,7 @@ public class FtpClient {
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.DELETE, filePath.getValue(), null);
-            return Util.getResult(balFuture);
+            return getResult(balFuture);
         });
     }
 
@@ -253,7 +254,7 @@ public class FtpClient {
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.ISDIR, filePath.getValue(), null);
-            return Util.getResult(balFuture);
+            return getResult(balFuture);
         });
     }
 
@@ -266,7 +267,7 @@ public class FtpClient {
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.LIST, filePath.getValue(), null);
-            return Util.getResult(balFuture);
+            return getResult(balFuture);
         });
 
     }
@@ -280,7 +281,7 @@ public class FtpClient {
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.MKDIR, path.getValue(), null);
-            return Util.getResult(balFuture);
+            return getResult(balFuture);
         });
     }
 
@@ -304,7 +305,7 @@ public class FtpClient {
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.RENAME, origin.getValue(), destinationUrl);
-            return Util.getResult(balFuture);
+            return getResult(balFuture);
         });
     }
 
@@ -317,7 +318,7 @@ public class FtpClient {
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.RMDIR, filePath.getValue(), null);
-            return Util.getResult(balFuture);
+            return getResult(balFuture);
         });
 
     }
@@ -335,7 +336,22 @@ public class FtpClient {
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.SIZE, filePath.getValue(), null);
-            return Util.getResult(balFuture);
+            return getResult(balFuture);
         });
+    }
+
+    public static Object getResult(CompletableFuture<Object> balFuture) {
+        try {
+            return balFuture.get();
+        } catch (InterruptedException e) {
+            throw ErrorCreator.createError(e);
+        } catch (Throwable throwable) {
+            throw ErrorCreator.createError(throwable);
+        }
+    }
+
+    public static void handleStreamEnd(BObject entity, BufferHolder bufferHolder) {
+        entity.addNativeData(ENTITY_BYTE_STREAM, null);
+        bufferHolder.setTerminal(true);
     }
 }
