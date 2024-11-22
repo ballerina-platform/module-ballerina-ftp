@@ -242,29 +242,35 @@ class FtpClientHelper {
 
     private static void callStreamNext(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj) {
-        Object result = env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_NEXT_FUNC, null);
-        if (result == bufferHolder.getTerminalType()) {
-            handleStreamEnd(entity, bufferHolder);
-            return;
-        }
-        BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
-        if (arrayValue == null) {
-            handleStreamEnd(entity, bufferHolder);
-            return;
-        }
-        byte[] bytes = arrayValue.getBytes();
-        bufferHolder.setBuffer(bytes);
-        bufferHolder.setTerminal(false);
+        env.yieldAndRun(() -> {
+            Object result = env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_NEXT_FUNC, null);
+            if (result == bufferHolder.getTerminalType()) {
+                handleStreamEnd(entity, bufferHolder);
+                return null;
+            }
+            BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
+            if (arrayValue == null) {
+                handleStreamEnd(entity, bufferHolder);
+                return null;
+            }
+            byte[] bytes = arrayValue.getBytes();
+            bufferHolder.setBuffer(bytes);
+            bufferHolder.setTerminal(false);
+            return null;
+        });
     }
 
     private static void callStreamClose(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj) {
-        try {
-            env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_CLOSE_FUNC, null);
-            handleStreamEnd(entity, bufferHolder);
-        } catch (Throwable t) {
-            handleStreamEnd(entity, bufferHolder);
-        }
+        env.yieldAndRun(() -> {
+            try {
+                env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_CLOSE_FUNC, null);
+                handleStreamEnd(entity, bufferHolder);
+            } catch (Throwable t) {
+                handleStreamEnd(entity, bufferHolder);
+            }
+            return null;
+        });
     }
 
     public static void handleStreamEnd(BObject entity, BufferHolder bufferHolder) {
