@@ -226,20 +226,20 @@ public function testServerRegisterFailureEmptyUsername() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureInvalidUsername() returns error? {
-    Listener|Error invalidUsernameServer = new ({
-        protocol: FTP,
-        host: "127.0.0.1",
-        auth: {
+    Listener|Error invalidUsernameServer = new (
+        protocol = FTP,
+        host = "127.0.0.1",
+        auth = {
             credentials: {
                 username: "ballerina",
                 password: "wso2"
             }
         },
-        port: 21212,
-        path: "/home/in",
-        pollingInterval: 2,
-        fileNamePattern: "(.*).txt"
-    });
+        port = 21212,
+        path = "/home/in",
+        pollingInterval = 2,
+        fileNamePattern = "(.*).txt"
+    );
 
     if invalidUsernameServer is Error {
         test:assertEquals(invalidUsernameServer.message(), "Failed to initialize File server connector.");
