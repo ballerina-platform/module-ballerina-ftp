@@ -35,14 +35,14 @@ ftp:ClientConfiguration sftpClientConfig = {
     auth: authConfig
 };
 
-listener ftp:Listener secureRemoteServer = check new({
-    protocol: ftp:SFTP,
-    host: "localhost",
-    auth: authConfig,
-    port: 21213,
-    pollingInterval: 2,
-    fileNamePattern: "(.*).csv"
-});
+listener ftp:Listener secureRemoteServer = check new(
+    protocol = ftp:SFTP,
+    host = "localhost",
+    auth = authConfig,
+    port = 21213,
+    pollingInterval = 2,
+    fileNamePattern = "(.*).csv"
+);
 
 service "Covid19UpdateDownloader" on secureRemoteServer {
 
