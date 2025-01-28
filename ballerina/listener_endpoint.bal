@@ -29,7 +29,7 @@ public isolated class Listener {
     #
     # + listenerConfig - Configurations for FTP listener
     # + return - `()` or else an `ftp:Error` upon failure to initialize the listener
-    public isolated function init(ListenerConfiguration listenerConfig) returns Error? {
+    public isolated function init(*ListenerConfiguration listenerConfig) returns Error? {
         self.config = listenerConfig.clone();
         lock {
             return initListener(self, self.config);
