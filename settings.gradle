@@ -14,6 +14,7 @@ pluginManagement {
         id "de.undercouch.download" version "${downloadPluginVersion}"
         id "net.researchgate.release" version "${releasePluginVersion}"
         id "io.ballerina.plugin" version "${ballerinaGradlePluginVersion}"
+        id "com.github.psxpaul.execfork"  version "${execForkPluginVersion}"
     }
 
     repositories {
