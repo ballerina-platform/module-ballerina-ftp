@@ -16,30 +16,11 @@
  */
 
 plugins {
-    id "com.github.spotbugs" version "${spotbugsPluginVersion}"
-    id "com.github.johnrengelman.shadow" version "${shadowJarPluginVersion}"
-    id "de.undercouch.download" version "${downloadPluginVersion}"
-    id "net.researchgate.release" version "${releasePluginVersion}"
+    id "com.github.spotbugs"
+    id "com.github.johnrengelman.shadow"
+    id "de.undercouch.download"
+    id "net.researchgate.release"
 }
-
-ext.ballerinaLangVersion = project.ballerinaLangVersion
-ext.stdlibTaskVersion = project.stdlibTaskVersion
-ext.stdlibLogVersion = project.stdlibLogVersion
-ext.stdlibIoVersion = project.stdlibIoVersion
-ext.puppycrawlCheckstyleVersion = project.puppycrawlCheckstyleVersion
-ext.testngVersion = project.testngVersion
-ext.slf4jVersion = project.slf4jVersion
-ext.commonsVfsVersion = project.commonsVfsVersion
-ext.commonsNetVersion = project.commonsNetVersion
-ext.jschVersion = project.jschVersion
-ext.mockFtpServerVersion = project.mockFtpServerVersion
-ext.sshdMinaVersion = project.sshdMinaVersion
-ext.ftpServerVersion = project.ftpServerVersion
-ext.sshdCoreVersion = project.sshdCoreVersion
-ext.ftpletApiVersion = project.ftpletApiVersion
-ext.minaCoreVersion = project.minaCoreVersion
-ext.aopallianceVersion = project.aopallianceVersion
-ext.jclSlf4jVersion = project.jclSlf4jVersion
 
 allprojects {
     group = project.group
@@ -81,8 +62,15 @@ subprojects {
 
     configurations {
         ballerinaStdLibs
+        jbalTools
     }
+
     dependencies {
+        /* JBallerina Tools */
+        jbalTools ("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
+            transitive = false
+        }
+
         /* Standard libraries */
         ballerinaStdLibs "io.ballerina.stdlib:log-ballerina:${stdlibLogVersion}"
         ballerinaStdLibs "io.ballerina.stdlib:io-ballerina:${stdlibIoVersion}"
