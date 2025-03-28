@@ -89,6 +89,12 @@ dependencies {
     externalJars(group: 'org.slf4j', name: 'slf4j-api', version: "${slf4jVersion}") {
         transitive = false
     }
+    externalJars(group: 'org.apache.commons', name: 'commons-lang3', version: "${commonsLang3Version}") {
+        transitive = false
+    }
+    externalJars(group: 'commons-io', name: 'commons-io', version: "${commonsIoVersion}") {
+        transitive = false
+    }
 }
 
 task updateTomlFiles {
@@ -103,6 +109,8 @@ task updateTomlFiles {
         def stdlibDependentMinaCoreVersion = project.minaCoreVersion
         def stdlibDependentAopallianceVersion = project.aopallianceVersion
         def stdlibDependentJclSlf4jVersion = project.jclSlf4jVersion
+        def stdlibDependentCommonsIoVersion = project.commonsIoVersion
+        def stdlibDependentCommonsLang3Version = project.commonsLang3Version
 
         def newConfig = ballerinaTomlFilePlaceHolder.text.replace("@project.version@", project.version)
         newConfig = newConfig.replace("@toml.version@", tomlVersion)
@@ -116,6 +124,8 @@ task updateTomlFiles {
         newConfig = newConfig.replace("@mina.core.version@", stdlibDependentMinaCoreVersion)
         newConfig = newConfig.replace("@aopalliance.version@", stdlibDependentAopallianceVersion)
         newConfig = newConfig.replace("@jcl.slf4j.version@", stdlibDependentJclSlf4jVersion)
+        newConfig = newConfig.replace("@commons.io.version@", stdlibDependentCommonsIoVersion)
+        newConfig = newConfig.replace("@commons.lang3.version@", stdlibDependentCommonsLang3Version)
 
         ballerinaTomlFile.text = newConfig
 
