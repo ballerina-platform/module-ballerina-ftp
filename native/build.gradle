@@ -33,6 +33,8 @@ dependencies {
     implementation group: 'io.ballerina.stdlib', name: 'io-native', version: "${stdlibIoVersion}"
     implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "${slf4jVersion}"
     implementation group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}"
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: "${commonsLang3Version}"
+    implementation group: 'commons-io', name: 'commons-io', version: "${commonsIoVersion}"
 }
 
 checkstyle {
