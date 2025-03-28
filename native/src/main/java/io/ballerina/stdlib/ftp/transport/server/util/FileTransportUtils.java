@@ -89,18 +89,14 @@ public final class FileTransportUtils {
             configBuilder.setUserDirIsRoot(opts, false);
         }
         if (options.get(FtpConstants.IDENTITY) != null) {
-            try {
-                IdentityInfo identityInfo;
-                if (options.containsKey(IDENTITY_PASS_PHRASE)) {
-                    identityInfo = new IdentityInfo(new File(options.get(FtpConstants.IDENTITY)),
-                            options.get(IDENTITY_PASS_PHRASE).getBytes());
-                } else {
-                    identityInfo = new IdentityInfo(new File(options.get(FtpConstants.IDENTITY)));
-                }
-                configBuilder.setIdentityInfo(opts, identityInfo);
-            } catch (FileSystemException e) {
-                throw new RemoteFileSystemConnectorException(e.getMessage(), e);
+            IdentityInfo identityInfo;
+            if (options.containsKey(IDENTITY_PASS_PHRASE)) {
+                identityInfo = new IdentityInfo(new File(options.get(FtpConstants.IDENTITY)),
+                        options.get(IDENTITY_PASS_PHRASE).getBytes());
+            } else {
+                identityInfo = new IdentityInfo(new File(options.get(FtpConstants.IDENTITY)));
             }
+            configBuilder.setIdentityInfo(opts, identityInfo);
         }
         if (options.get(FtpConstants.AVOID_PERMISSION_CHECK) != null) {
             try {
