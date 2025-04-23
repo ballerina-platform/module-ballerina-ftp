@@ -17,13 +17,13 @@
  */
 
 module io.ballerina.stdlib.ftp {
-    requires commons.vfs2;
     requires io.ballerina.runtime;
     requires io.ballerina.lang;
     requires io.ballerina.stdlib.io;
     requires io.ballerina.tools.api;
     requires org.slf4j;
     requires java.logging;
+    requires org.apache.commons.vfs2;
     exports io.ballerina.stdlib.ftp.client;
     exports io.ballerina.stdlib.ftp.server;
     exports io.ballerina.stdlib.ftp.util;
