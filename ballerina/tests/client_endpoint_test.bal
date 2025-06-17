@@ -19,6 +19,7 @@ import ballerina/test;
 import ballerina/lang.runtime as runtime;
 import ballerina/lang.'string as strings;
 import ballerina/log;
+import ballerina/file;
 
 string filePath = "/home/in/test1.txt";
 string nonFittingFilePath = "/home/in/test4.txt";
@@ -266,7 +267,7 @@ isolated function matchStreamContent(stream<byte[] & readonly, io:Error?> binary
         }
     }
     return matchedString == fullContent;
-}
+}  
 
 @test:Config {
     dependsOn: [testPutLargeFileContent]
@@ -573,4 +574,5 @@ public function cleanTestEnvironment() returns error? {
     check (<Listener>remoteServerListener).gracefulStop();
     check (<Listener>anonymousRemoteServerListener).gracefulStop();
     check (<Listener>secureRemoteServerListener).gracefulStop();
+    check file:remove(check file:joinPath("tests", "resources", "datafiles", "out"), option = file:RECURSIVE);
 }

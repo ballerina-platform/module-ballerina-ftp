@@ -207,6 +207,8 @@ public final class MockFtpServer {
         sftpServer = SshServer.setUpDefaultServer();
         VirtualFileSystemFactory virtualFileSystemFactory
                 = new VirtualFileSystemFactory(homeFolder.getAbsoluteFile().toPath());
+        virtualFileSystemFactory.getDefaultHomeDir().resolve("in").toFile().mkdirs();
+        virtualFileSystemFactory.getDefaultHomeDir().resolve("out").toFile().mkdirs();
         sftpServer.setFileSystemFactory(virtualFileSystemFactory);
         sftpServer.setHost("localhost");
         sftpServer.setPort(port);

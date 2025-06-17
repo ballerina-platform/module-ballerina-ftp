@@ -39,84 +39,93 @@ ListenerConfiguration callerListenerConfig = {
         }
     },
     port: 21213,
-    pollingInterval: 2,
+    pollingInterval: 1,
+    path: "/in",
     fileNamePattern: "(.*).caller"
 };
 
 Service callerService = service object {
-    string addedFilepath = "";
 
     remote function onFileChange(WatchEvent & readonly event, Caller caller) returns error? {
-        event.addedFiles.forEach(function (FileInfo fileInfo) {
-            self.addedFilepath = fileInfo.path;
-        });
-        if self.addedFilepath.endsWith("/put.caller") {
-            stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-            check caller->put("/put2.caller", bStream);
-        } else if self.addedFilepath.endsWith("/append.caller") {
-            stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(appendFilePath, 7);
-            check caller->append("/append.caller", bStream);
-        } else if self.addedFilepath.endsWith("/rename.caller") {
-            check caller->rename("/rename.caller", "/rename2.caller");
-        } else if self.addedFilepath.endsWith("/delete.caller") {
-            check caller->delete("/delete.caller");
-        } else if self.addedFilepath.endsWith("/list.caller") {
-             fileList = check caller->list("/");
-        } else if self.addedFilepath.endsWith("/get.caller") {
-            stream<io:Block, io:Error?> fileStream = check caller->get("/get.caller");
-            fileGetContentCorrect = check matchStreamContent(fileStream, "Put content");
-        } else if self.addedFilepath.endsWith("/mkdir.caller") {
-            check caller->mkdir("/callerDir");
-        } else if self.addedFilepath.endsWith("/rmdir.caller") {
-            check caller->rmdir("/callerDir");
-        } else if self.addedFilepath.endsWith("/size.caller") {
-            fileSize = check caller->size("/size.caller");
-        } else if self.addedFilepath.endsWith("/isdirectory.caller") {
-            isDir = check caller->isDirectory("/callerDir");
+        foreach FileInfo fileInfo in event.addedFiles {
+            string addedFilepath = fileInfo.path;
+            if addedFilepath.endsWith("/put.caller") {
+                stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+                check caller->put("/out/put2.caller", bStream);
+                check caller->rename("/in/put.caller", "/out/put.caller");
+            } else if addedFilepath.endsWith("/append.caller") {
+                stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(appendFilePath, 7);
+                check caller->append("/in/append.caller", bStream);
+                check caller->rename("/in/append.caller", "/out/append.caller");
+            } else if addedFilepath.endsWith("/rename.caller") {
+                check caller->rename("/in/rename.caller", "/out/rename.caller");
+            } else if addedFilepath.endsWith("/delete.caller") {
+                check caller->delete("/in/delete.caller");
+            } else if addedFilepath.endsWith("/list.caller") {
+                fileList = check caller->list("/in");
+                check caller->rename("/in/list.caller", "/out/list.caller");
+            } else if addedFilepath.endsWith("/get.caller") {
+                stream<io:Block, io:Error?> fileStream = check caller->get("/in/get.caller");
+                fileGetContentCorrect = check matchStreamContent(fileStream, "Put content");
+                check caller->rename("/in/get.caller", "/out/get.caller");
+            } else if addedFilepath.endsWith("/mkdir.caller") {
+                check caller->mkdir("/out/callerDir");
+                check caller->rename("/in/mkdir.caller", "/out/mkdir.caller");
+            } else if addedFilepath.endsWith("/rmdir.caller") {
+                check caller->rmdir("/out/callerDir");
+                check caller->rename("/in/rmdir.caller", "/out/rmdir.caller");
+            } else if addedFilepath.endsWith("/size.caller") {
+                fileSize = check caller->size("/in/size.caller");
+                check caller->rename("/in/size.caller", "/out/size.caller");
+            } else if addedFilepath.endsWith("/isdirectory.caller") {
+                isDir = check caller->isDirectory("/out/callerDir");
+                check caller->rename("/in/isdirectory.caller", "/out/isdirectory.caller");
+            }
         }
+
     }
 };
 
 @test:Config {}
 public function testFilePutWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/put.caller", bStream);
+    check (<Client>sftpClientEp)->put("/in/put.caller", bStream);
     runtime:sleep(3);
-    stream<byte[] & readonly, io:Error?> str = check (<Client>sftpClientEp)->get("/put2.caller");
+    stream<byte[] & readonly, io:Error?> str = check (<Client>sftpClientEp)->get("/out/put2.caller");
     test:assertTrue(check matchStreamContent(str, "Put content"));
     check str.close();
-    check (<Client>sftpClientEp)->delete("/put.caller");
-    check (<Client>sftpClientEp)->delete("/put2.caller");
+    check (<Client>sftpClientEp)->delete("/out/put2.caller");
+    check (<Client>sftpClientEp)->delete("/out/put.caller");
 }
 
 @test:Config {}
 public function testFileAppendWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/append.caller", bStream);
+    check (<Client>sftpClientEp)->put("/in/append.caller", bStream);
     runtime:sleep(3);
-    stream<byte[] & readonly, io:Error?> str = check (<Client>sftpClientEp)->get("/append.caller");
+    stream<byte[] & readonly, io:Error?> str = check (<Client>sftpClientEp)->get("/out/append.caller");
     test:assertTrue(check matchStreamContent(str, "Put contentAppend content"));
     check str.close();
-    check (<Client>sftpClientEp)->delete("/append.caller");
+    check (<Client>sftpClientEp)->delete("/out/append.caller");
 }
 
 @test:Config {}
 public function testFileRenameWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/rename.caller", bStream);
+    check (<Client>sftpClientEp)->put("/in/rename.caller", bStream);
     runtime:sleep(3);
-    stream<byte[] & readonly, io:Error?> str = check (<Client>sftpClientEp)->get("/rename2.caller");
+    stream<byte[] & readonly, io:Error?> str = check (<Client>sftpClientEp)->get("/out/rename.caller");
     test:assertTrue(check matchStreamContent(str, "Put content"));
     check str.close();
-    check (<Client>sftpClientEp)->delete("/rename2.caller");
+    check (<Client>sftpClientEp)->delete("/out/rename.caller");
 }
 
 @test:Config {}
 public function testFileDeleteWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/delete.caller", bStream);
+    check (<Client>sftpClientEp)->put("/in/delete.caller", bStream);
     runtime:sleep(3);
-    stream<byte[] & readonly, io:Error?>|Error result = (<Client>sftpClientEp)->get("/delete.caller");
+    stream<byte[] & readonly, io:Error?>|Error result = (<Client>sftpClientEp)->get("/in/delete.caller");
     if result is Error {
         test:assertTrue(result.message().endsWith("delete.caller not found"));
     } else {
@@ -127,29 +136,30 @@ public function testFileDeleteWithCaller() returns error? {
 @test:Config {}
 public function testFileListWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/list.caller", bStream);
+    check (<Client>sftpClientEp)->put("/in/list.caller", bStream);
     runtime:sleep(3);
-    test:assertEquals(fileList[0].path, "/list.caller");
-    check (<Client>sftpClientEp)->delete("/list.caller");
+    test:assertEquals(fileList.length(), 1);
+    test:assertEquals(fileList[0].path, "/in/list.caller");
+    check (<Client>sftpClientEp)->delete("/out/list.caller");
 }
 
 @test:Config {}
 public function testFileGetWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/get.caller", bStream);
+    check (<Client>sftpClientEp)->put("/in/get.caller", bStream);
     runtime:sleep(3);
     test:assertTrue(fileGetContentCorrect);
-    check (<Client>sftpClientEp)->delete("/get.caller");
+    check (<Client>sftpClientEp)->delete("/out/get.caller");
 }
 
 @test:Config {}
 public function testMkDirWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/mkdir.caller", bStream);
+    check (<Client>sftpClientEp)->put("/in/mkdir.caller", bStream);
     runtime:sleep(3);
-    boolean isDir = check (<Client>sftpClientEp)->isDirectory("/callerDir");
+    boolean isDir = check (<Client>sftpClientEp)->isDirectory("/out/callerDir");
     test:assertTrue(isDir);
-    check (<Client>sftpClientEp)->delete("/mkdir.caller");
+    check (<Client>sftpClientEp)->delete("/out/mkdir.caller");
 }
 
 @test:Config {
@@ -157,10 +167,10 @@ public function testMkDirWithCaller() returns error? {
 }
 public function testIsDirectoryWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/isdirectory.caller", bStream);
+    check (<Client>sftpClientEp)->put("/in/isdirectory.caller", bStream);
     runtime:sleep(3);
     test:assertTrue(isDir);
-    check (<Client>sftpClientEp)->delete("/isdirectory.caller");
+    check (<Client>sftpClientEp)->delete("/out/isdirectory.caller");
 }
 
 @test:Config {
@@ -168,24 +178,24 @@ public function testIsDirectoryWithCaller() returns error? {
 }
 public function testRmDirWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/rmdir.caller", bStream);
+    check (<Client>sftpClientEp)->put("/in/rmdir.caller", bStream);
     runtime:sleep(3);
-    boolean|Error result = (<Client>sftpClientEp)->isDirectory("/callerDir");
+    boolean|Error result = (<Client>sftpClientEp)->isDirectory("/out/callerDir");
     if result is Error {
-        test:assertEquals(result.message(), "/callerDir does not exists to check if it is a directory.");
+        test:assertEquals(result.message(), "/out/callerDir does not exists to check if it is a directory.");
     } else {
         test:assertFail("Expected an error");
     }
-    check (<Client>sftpClientEp)->delete("/rmdir.caller");
+    check (<Client>sftpClientEp)->delete("/out/rmdir.caller");
 }
 
 @test:Config {}
 public function testFileSizeWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/size.caller", bStream);
+    check (<Client>sftpClientEp)->put("/in/size.caller", bStream);
     runtime:sleep(3);
     test:assertEquals(fileSize, 11);
-    check (<Client>sftpClientEp)->delete("/size.caller");
+    check (<Client>sftpClientEp)->delete("/out/size.caller");
 }
 
 @test:Config {
@@ -205,8 +215,8 @@ public function testMutableWatchEventWithCaller() returns error? {
     check 'listener.attach(watchEventService);
     check 'listener.start();
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>sftpClientEp)->put("/" + filename, bStream);
+    check (<Client>sftpClientEp)->put("/in/" + filename, bStream);
     runtime:sleep(3);
     test:assertEquals(addedFile, filename);
-    check (<Client>sftpClientEp)->delete("/" + filename);
+    check (<Client>sftpClientEp)->delete("/in/" + filename);
 }
