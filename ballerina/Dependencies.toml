@@ -9,9 +9,25 @@ distribution-version = "2201.12.0"
 
 [[package]]
 org = "ballerina"
-name = "ftp"
-version = "2.13.1"
+name = "file"
+version = "1.11.0"
+scope = "testOnly"
 dependencies = [
+	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "os"},
+	{org = "ballerina", name = "time"}
+]
+modules = [
+	{org = "ballerina", packageName = "file", moduleName = "file"}
+]
+
+[[package]]
+org = "ballerina"
+name = "ftp"
+version = "2.13.2"
+dependencies = [
+	{org = "ballerina", name = "file"},
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.runtime"},
@@ -140,6 +156,16 @@ org = "ballerina"
 name = "observe"
 version = "1.5.0"
 dependencies = [
+	{org = "ballerina", name = "jballerina.java"}
+]
+
+[[package]]
+org = "ballerina"
+name = "os"
+version = "1.9.0"
+scope = "testOnly"
+dependencies = [
+	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"}
 ]
 
