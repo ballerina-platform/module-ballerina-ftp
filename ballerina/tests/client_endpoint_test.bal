@@ -266,7 +266,7 @@ isolated function matchStreamContent(stream<byte[] & readonly, io:Error?> binary
         }
     }
     return matchedString == fullContent;
-}  
+}
 
 @test:Config {
     dependsOn: [testPutLargeFileContent]
