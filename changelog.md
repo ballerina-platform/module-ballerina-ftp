@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## unreleased
 
 ### Fixed
-- Fix the issue where the FTP listener stops working if the file name is the same.
+- [Fix the issue where the FTP listener stops working if the file name is the same](https://github.com/ballerina-platform/ballerina-library/issues/8035)
 
 ## [2.13.1] - 2025-04-23
 
