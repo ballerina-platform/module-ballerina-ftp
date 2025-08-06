@@ -189,8 +189,7 @@ public enum Compression {
 # + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and 
 #                   prevents the underlying VFS from attempting to change to the actual server root. 
 #                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command 
-#                   that can fail on servers restricting root access (e.g., chrooted environments). 
-#                   Defaults to `false` if not specified.
+#                   that can fail on servers restricting root access (e.g., chrooted environments).
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
