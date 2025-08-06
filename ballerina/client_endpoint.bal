@@ -196,7 +196,7 @@ public type ClientConfiguration record {|
     string host = "127.0.0.1";
     int port = 21;
     AuthConfiguration auth?;
-    boolean userDirIsRoot?;
+    boolean userDirIsRoot = false;
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,

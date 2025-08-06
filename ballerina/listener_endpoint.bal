@@ -172,7 +172,7 @@ public type ListenerConfiguration record {|
     string path = "/";
     string fileNamePattern?;
     decimal pollingInterval = 60;
-    boolean userDirIsRoot?;
+    boolean userDirIsRoot = false;
 |};
 
 # Represents a FTP service.
