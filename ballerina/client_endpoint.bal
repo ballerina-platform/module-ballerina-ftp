@@ -186,11 +186,17 @@ public enum Compression {
 # + host - Target service URL
 # + port - Port number of the remote service
 # + auth - Authentication options
+# + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and 
+#                   prevents the underlying VFS from attempting to change to the actual server root. 
+#                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command 
+#                   that can fail on servers restricting root access (e.g., chrooted environments). 
+#                   Defaults to `false` if not specified.
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
     int port = 21;
     AuthConfiguration auth?;
+    boolean userDirIsRoot?;
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,

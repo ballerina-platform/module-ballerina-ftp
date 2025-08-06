@@ -78,7 +78,7 @@ public class FtpClient {
                 FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PORT))));
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
-        Map<String, String> ftpConfig = new HashMap<>(5);
+        Map<String, String> ftpConfig = new HashMap<>(6);
         BMap auth = config.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_AUTH));
         if (auth != null) {
             final BMap privateKey = auth.getMapValue(StringUtils.fromString(
@@ -96,7 +96,12 @@ public class FtpClient {
             ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
         }
         ftpConfig.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
-        ftpConfig.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(false));
+        boolean userDirIsRoot = false;
+        Object userDirIsRootValue = config.get(StringUtils.fromString("userDirIsRoot"));
+        if (userDirIsRootValue != null) {
+            userDirIsRoot = config.getBooleanValue(StringUtils.fromString("userDirIsRoot"));
+        }
+        ftpConfig.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         ftpConfig.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
         String url;
         try {
