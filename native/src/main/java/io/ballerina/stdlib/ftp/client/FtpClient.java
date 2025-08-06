@@ -96,7 +96,7 @@ public class FtpClient {
             ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
         }
         ftpConfig.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
-        boolean userDirIsRoot = config.getBooleanValue(StringUtils.fromString("userDirIsRoot"));;
+        boolean userDirIsRoot = config.getBooleanValue(StringUtils.fromString("userDirIsRoot"));
         ftpConfig.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         ftpConfig.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
         String url;
