@@ -38,6 +38,7 @@ public class FtpConstants {
     public static final String URI = "uri";
     public static final String PASSIVE_MODE = "PASSIVE_MODE";
     public static final String USER_DIR_IS_ROOT = "USER_DIR_IS_ROOT";
+    public static final BString USER_DIR_IS_ROOT_FIELD = StringUtils.fromString("userDirIsRoot");
     public static final String DESTINATION = "destination";
     public static final String IDENTITY = "IDENTITY";
     public static final String IDENTITY_PASS_PHRASE = "IDENTITY_PASS_PHRASE";

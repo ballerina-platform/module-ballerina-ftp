@@ -76,7 +76,7 @@ public final class FileTransportUtils {
             configBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(FtpConstants.PASSIVE_MODE)));
         }
         if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
-            configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(FtpConstants.USER_DIR_IS_ROOT));
+            configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT)));
         }
     }
 
