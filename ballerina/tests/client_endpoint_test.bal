@@ -38,7 +38,16 @@ ClientConfiguration config = {
     protocol: FTP,
     host: "127.0.0.1",
     port: 21212,
-    auth: {credentials: {username: "wso2", password: "wso2123"}}
+    auth: {credentials: {username: "wso2", password: "wso2123"}},
+    userDirIsRoot: false
+};
+
+ClientConfiguration ftpUserHomeRootConfig = {
+    protocol: FTP,
+    host: "127.0.0.1",
+    port: 21212,
+    auth: { credentials: { username: "wso2", password: "wso2123" } },
+    userDirIsRoot: true
 };
 
 // Create the config to access mock SFTP server
@@ -59,6 +68,7 @@ ClientConfiguration sftpConfig = {
 Client? anonClientEp = ();
 Client? clientEp = ();
 Client? sftpClientEp = ();
+Client? ftpUserHomeRootClientEp = ();
 
 Listener? callerListener = ();
 Listener? remoteServerListener = ();
@@ -71,6 +81,7 @@ function initTestEnvironment() returns error?  {
     anonClientEp = check new (anonConfig);
     clientEp = check new (config);
     sftpClientEp = check new (sftpConfig);
+    ftpUserHomeRootClientEp = check new (ftpUserHomeRootConfig);
 
     callerListener = check new (callerListenerConfig);
     check (<Listener>callerListener).attach(callerService);
@@ -207,6 +218,22 @@ public function testPutCompressedFileContent() returns error? {
     stream<byte[] & readonly, io:Error?>|Error str = (<Client>clientEp)->get("/home/in/test3.zip");
     if str is Error {
         test:assertFail(msg = "Error occurred during compressed `put` operation" + str.message());
+    }
+}
+
+@test:Config {}
+function testFtpUserDirIsRootTrue() returns error? {
+    stream<byte[] & readonly, io:Error?>|Error res = (<Client>ftpUserHomeRootClientEp)->get("test1.txt");
+    if res is Error {
+        test:assertFail("FTP get failed with userDirIsRoot=true: " + res.message());
+    }
+    
+    stream<byte[] & readonly, io:Error?> str = res;
+    test:assertTrue(check matchStreamContent(str, "File content"), "Expected file content not found when userDirIsRoot=true");
+
+    io:Error? closeErr = str.close();
+    if closeErr is io:Error {
+        test:assertFail("Error closing stream: " + closeErr.message());
     }
 }
 
