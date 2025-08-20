@@ -14,3 +14,5 @@ jobs:
     with:
       package-name: ftp
       package-org: ballerina
+    env:
+      CENTRAL_VERBOSE_ENABLED: true
