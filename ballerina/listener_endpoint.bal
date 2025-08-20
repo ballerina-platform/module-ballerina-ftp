@@ -159,6 +159,10 @@ class Job {
 # + path - Remote FTP directory location
 # + fileNamePattern - File name pattern that event need to trigger
 # + pollingInterval - Periodic time interval to check new update
+# + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and 
+#                   prevents the underlying VFS from attempting to change to the actual server root. 
+#                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command 
+#                   that can fail on servers restricting root access (e.g., chrooted environments).
 public type ListenerConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -167,6 +171,7 @@ public type ListenerConfiguration record {|
     string path = "/";
     string fileNamePattern?;
     decimal pollingInterval = 60;
+    boolean userDirIsRoot = false;
 |};
 
 # Represents a FTP service.

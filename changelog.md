@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 - [Fix the issue where the FTP listener stops working if the file name is the same](https://github.com/ballerina-platform/ballerina-library/issues/8035)
+- [Added support for `userDirIsRoot` configuration in FTP/SFTP clients and listeners to handle jailed home directory environments](https://github.com/ballerina-platform/ballerina-library/issues/8153)
 
 ## [2.13.1] - 2025-04-23
 
