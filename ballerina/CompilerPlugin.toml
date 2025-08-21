@@ -3,4 +3,4 @@ id = "ftp-compiler-plugin"
 class = "io.ballerina.stdlib.ftp.plugin.FtpCompilerPlugin"
 
 [[dependency]]
-path = "../compiler-plugin/build/libs/ftp-compiler-plugin-2.14.0-SNAPSHOT.jar"
+path = "../compiler-plugin/build/libs/ftp-compiler-plugin-2.14.0.jar"
