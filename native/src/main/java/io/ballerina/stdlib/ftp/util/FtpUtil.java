@@ -109,18 +109,16 @@ public class FtpUtil {
         return createUrl(protocol, host, port, username, password, filePath);
     }
 
-    private static String createUrl(String protocol, String host, int port, String username,
-                                    String password, String filePath) throws BallerinaFtpException {
+    private static String createUrl(String protocol, String host, int port, String username, String password,
+                                    String filePath) throws BallerinaFtpException {
         String userInfo = username + ":" + password;
         final String normalizedPath = normalizeFtpPath(filePath);
         try {
-            URI uri = new URI(protocol, userInfo, host, port, normalizedPath,
-                    null, null);
+            URI uri = new URI(protocol, userInfo, host, port, normalizedPath, null, null);
             return uri.toString();
         } catch (URISyntaxException e) {
             throw new BallerinaFtpException("Error occurred while constructing a URI from host: " + host +
-                    ", port: " + port + ", username: " + username + " and basePath: " +
-                    filePath + e.getMessage(), e);
+                    ", port: " + port + ", username: " + username + " and basePath: " + filePath + e.getMessage(), e);
         }
     }
 
