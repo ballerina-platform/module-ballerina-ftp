@@ -109,26 +109,19 @@ public class FtpUtil {
         return createUrl(protocol, host, port, username, password, filePath);
     }
 
-    private static String createUrl(String protocolScheme, String serverHost, int serverPort, String credentialUsername,
-                                    String credentialPassword, String requestedPath) throws BallerinaFtpException {
-        final String userInfo = buildUserInfo(credentialUsername, credentialPassword);
-        final String normalizedPath = normalizeFtpPath(requestedPath);
+    private static String createUrl(String protocol, String host, int port, String username,
+                                    String password, String filePath) throws BallerinaFtpException {
+        String userInfo = username + ":" + password;
+        final String normalizedPath = normalizeFtpPath(filePath);
         try {
-            URI uri = new URI(protocolScheme, userInfo, serverHost, serverPort, normalizedPath,
+            URI uri = new URI(protocol, userInfo, host, port, normalizedPath,
                     null, null);
             return uri.toString();
         } catch (URISyntaxException e) {
-            throw new BallerinaFtpException("Error occurred while constructing a URI from host: " + serverHost +
-                    ", port: " + serverPort + ", username: " + credentialUsername + " and basePath: " +
-                    requestedPath + e.getMessage(), e);
+            throw new BallerinaFtpException("Error occurred while constructing a URI from host: " + host +
+                    ", port: " + port + ", username: " + username + " and basePath: " +
+                    filePath + e.getMessage(), e);
         }
-    }
-
-    private static String buildUserInfo(String username, String password) {
-        if (username == null || username.isBlank()) {
-            return null;
-        }
-        return (password == null) ? username : username + ":" + password;
     }
 
     private static String normalizeFtpPath(String rawPath) {

@@ -26,6 +26,8 @@ string newFilePath = "/home/in/test2.txt";
 string appendFilePath = "tests/resources/datafiles/file1.txt";
 string putFilePath = "tests/resources/datafiles/file2.txt";
 string relativePath = "rel-put.txt";
+string relativePathWithSlash = "/rel-path-slash-put.txt";
+string absPath = "//home/in/double-abs.txt";
 
 // Create the config to access anonymous mock FTP server
 ClientConfiguration anonConfig = {
@@ -283,12 +285,38 @@ public function testPutRelativePath_userDirIsRootTrue() returns error? {
     }
 }
 
+@test:Config {
+    dependsOn: [testListFiles]
+}
+public function testPutRelativePathWithSlash_userDirIsRootTrue() returns error? {
+    Error? putRes = (<Client>ftpUserHomeRootClientEp)->put(relativePathWithSlash, "hello-jailed-rel-with-slash");
+    if putRes is Error {
+        test:assertFail("PUT(relative, with slash) failed on userDirIsRoot=true: " + putRes.message());
+    }
+
+    stream<byte[] & readonly, io:Error?>|Error getRes = (<Client>ftpUserHomeRootClientEp)->get(relativePathWithSlash);
+    if getRes is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check matchStreamContent(getRes, "hello-jailed-rel-with-slash"),
+            msg = "Unexpected content from GET(relative) after PUT on userDirIsRoot=true");
+        io:Error? closeErr = getRes.close();
+        if closeErr is io:Error {
+            test:assertFail("Error closing relative GET stream: " + closeErr.message());
+        }
+    } else {
+        test:assertFail("GET(relative) failed on userDirIsRoot=true: " + getRes.message());
+    }
+
+    Error? delRes = (<Client>ftpUserHomeRootClientEp)->delete(relativePathWithSlash);
+    if delRes is Error {
+        log:printWarn("Cleanup delete failed for " + relativePathWithSlash + ": " + delRes.message());
+    }
+}
+
 @test:Config { dependsOn: [testListFiles] }
 public function testPutAbsoluteDoubleSlash_userDirIsRootFalse() returns error? {
-    string absPath = "//home/in/double-abs.txt";
     Error? putRes = (<Client>clientEp)->put(absPath, "hello-abs-double-slash");
     if putRes is Error { test:assertFail("PUT(//absolute) failed: " + putRes.message()); }
-    stream<byte[] & readonly, io:Error?>|Error getRes = check (<Client>clientEp)->get(absPath);
+    stream<byte[] & readonly, io:Error?>|Error getRes = (<Client>clientEp)->get(absPath);
     if getRes is stream<byte[] & readonly, io:Error?> {
         test:assertTrue(check matchStreamContent(getRes, "hello-abs-double-slash"));
         check getRes.close();
@@ -308,7 +336,6 @@ public function testSftpUserDirIsRootTrue_RelativePutGet() returns error? {
     } else { test:assertFail("SFTP relative GET failed: " + getRes.message()); }
     check (<Client>sftpClientUserDirRootEp)->delete("sftp-rel.txt");
 }
-
 
 @test:Config {
     dependsOn: [testPutCompressedFileContent]
