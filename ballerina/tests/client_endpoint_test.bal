@@ -66,9 +66,26 @@ ClientConfiguration sftpConfig = {
     }
 };
 
+// Create the config to access mock SFTP server
+ClientConfiguration sftpConfigUserDirRoot = {
+    protocol: SFTP,
+    host: "127.0.0.1",
+    port: 21213,
+    auth: {
+        credentials: {username: "wso2", password: "wso2123"},
+        privateKey: {
+            path: "tests/resources/sftp.private.key",
+            password: "changeit"
+        },
+        preferredMethods: [GSSAPI_WITH_MIC, PUBLICKEY, KEYBOARD_INTERACTIVE, PASSWORD]
+    },
+    userDirIsRoot: true
+};
+
 Client? anonClientEp = ();
 Client? clientEp = ();
 Client? sftpClientEp = ();
+Client? sftpClientUserDirRootEp = ();
 Client? ftpUserHomeRootClientEp = ();
 
 Listener? callerListener = ();
@@ -82,6 +99,7 @@ function initTestEnvironment() returns error?  {
     anonClientEp = check new (anonConfig);
     clientEp = check new (config);
     sftpClientEp = check new (sftpConfig);
+    sftpClientUserDirRootEp = check new (sftpConfigUserDirRoot);
     ftpUserHomeRootClientEp = check new (ftpUserHomeRootConfig);
 
     callerListener = check new (callerListenerConfig);
@@ -264,6 +282,33 @@ public function testPutRelativePath_userDirIsRootTrue() returns error? {
         log:printWarn("Cleanup delete failed for " + relativePath + ": " + delRes.message());
     }
 }
+
+@test:Config { dependsOn: [testListFiles] }
+public function testPutAbsoluteDoubleSlash_userDirIsRootFalse() returns error? {
+    string absPath = "//home/in/double-abs.txt";
+    Error? putRes = (<Client>clientEp)->put(absPath, "hello-abs-double-slash");
+    if putRes is Error { test:assertFail("PUT(//absolute) failed: " + putRes.message()); }
+    stream<byte[] & readonly, io:Error?>|Error getRes = check (<Client>clientEp)->get(absPath);
+    if getRes is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check matchStreamContent(getRes, "hello-abs-double-slash"));
+        check getRes.close();
+    } else { test:assertFail("GET(//absolute) failed: " + getRes.message()); }
+    check (<Client>clientEp)->delete(absPath);
+}
+
+@test:Config { dependsOn: [testListFiles] }
+public function testSftpUserDirIsRootTrue_RelativePutGet() returns error? {
+    stream<io:Block, io:Error?> bStream = ["hello-sftp-rel".toBytes().cloneReadOnly()].toStream();
+    Error? putRes = (<Client>ftpUserHomeRootClientEp)->put("sftp-rel.txt", bStream);
+    if putRes is Error { test:assertFail("SFTP relative PUT failed: " + putRes.message()); }
+    stream<byte[] & readonly, io:Error?>|Error getRes = (<Client>ftpUserHomeRootClientEp)->get("sftp-rel.txt");
+    if getRes is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check matchStreamContent(getRes, "hello-sftp-rel"));
+        check getRes.close();
+    } else { test:assertFail("SFTP relative GET failed: " + getRes.message()); }
+    check (<Client>ftpUserHomeRootClientEp)->delete("sftp-rel.txt");
+}
+
 
 @test:Config {
     dependsOn: [testPutCompressedFileContent]
