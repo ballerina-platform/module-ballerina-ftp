@@ -25,6 +25,7 @@ string nonFittingFilePath = "/home/in/test4.txt";
 string newFilePath = "/home/in/test2.txt";
 string appendFilePath = "tests/resources/datafiles/file1.txt";
 string putFilePath = "tests/resources/datafiles/file2.txt";
+string relativePath = "rel-put.txt";
 
 // Create the config to access anonymous mock FTP server
 ClientConfiguration anonConfig = {
@@ -234,6 +235,33 @@ function testFtpUserDirIsRootTrue() returns error? {
     io:Error? closeErr = str.close();
     if closeErr is io:Error {
         test:assertFail("Error closing stream: " + closeErr.message());
+    }
+}
+
+@test:Config {
+    dependsOn: [testListFiles]
+}
+public function testPutRelativePath_userDirIsRootTrue() returns error? {
+    Error? putRes = (<Client>ftpUserHomeRootClientEp)->put(relativePath, "hello-jailed-rel");
+    if putRes is Error {
+        test:assertFail("PUT(relative, no slash) failed on userDirIsRoot=true: " + putRes.message());
+    }
+
+    stream<byte[] & readonly, io:Error?>|Error getRes = (<Client>ftpUserHomeRootClientEp)->get(relativePath);
+    if getRes is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check matchStreamContent(getRes, "hello-jailed-rel"),
+            msg = "Unexpected content from GET(relative) after PUT on userDirIsRoot=true");
+        io:Error? closeErr = getRes.close();
+        if closeErr is io:Error {
+            test:assertFail("Error closing relative GET stream: " + closeErr.message());
+        }
+    } else {
+        test:assertFail("GET(relative) failed on userDirIsRoot=true: " + getRes.message());
+    }
+
+    Error? delRes = (<Client>ftpUserHomeRootClientEp)->delete(relativePath);
+    if delRes is Error {
+        log:printWarn("Cleanup delete failed for " + relativePath + ": " + delRes.message());
     }
 }
 
