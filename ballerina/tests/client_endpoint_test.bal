@@ -51,7 +51,7 @@ ClientConfiguration ftpUserHomeRootConfig = {
     userDirIsRoot: true
 };
 
-// Create the config to access mock SFTP server
+// Create the config to access mock SFTP server with jailed home
 ClientConfiguration sftpConfig = {
     protocol: SFTP,
     host: "127.0.0.1",
