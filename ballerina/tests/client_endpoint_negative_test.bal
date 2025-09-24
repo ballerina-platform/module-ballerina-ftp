@@ -61,7 +61,7 @@ public function testConnectionWithInvalidConfiguration() returns error? {
 public function testReadNonExistingFile() returns error? {
     stream<byte[] & readonly, io:Error?>|Error str = (<Client>clientEp)->get("/home/in/nonexisting.txt");
     if str is Error {
-        test:assertEquals(str.message(), "Failed to read file: ftp://wso2:wso2123@127.0.0.1:21212/home/in/nonexisting.txt not found",
+        test:assertEquals(str.message(), "Failed to read file: ftp://wso2:***@127.0.0.1:21212/home/in/nonexisting.txt not found",
             msg = "Unexpected error during the `get` operation of an non-existing file.");
     } else {
         test:assertFail(msg = "Found a non-error response while accessing a non-existing file path");

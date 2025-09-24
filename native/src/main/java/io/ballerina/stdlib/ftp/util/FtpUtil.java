@@ -52,6 +52,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils.maskUrlPassword;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ANONYMOUS_PASSWORD;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ANONYMOUS_USERNAME;
@@ -151,14 +152,17 @@ public class FtpUtil {
      * @return an error which will be propagated to ballerina user.
      */
     public static BError createError(String message, String errorTypeName) {
-        return ErrorCreator.createError(ModuleUtils.getModule(), errorTypeName, StringUtils.fromString(message),
+        String safeMessage = maskUrlPassword(message);
+        return ErrorCreator.createError(ModuleUtils.getModule(), errorTypeName, StringUtils.fromString(safeMessage),
                 null, null);
     }
 
     public static BError createError(String message, Throwable cause, String errorTypeName) {
-        return ErrorCreator.createError(ModuleUtils.getModule(), errorTypeName, StringUtils.fromString(message),
+        String safeMessage = maskUrlPassword(message);
+        return ErrorCreator.createError(ModuleUtils.getModule(), errorTypeName, StringUtils.fromString(safeMessage),
                 cause == null ? null : cause instanceof BError ?
-                        (BError) cause : ErrorCreator.createError(StringUtils.fromString(cause.getMessage())), null);
+                        (BError) cause : ErrorCreator.createError(StringUtils
+                        .fromString(maskUrlPassword(cause.getMessage()))), null);
     }
 
     public static Throwable findRootCause(Throwable throwable) {
