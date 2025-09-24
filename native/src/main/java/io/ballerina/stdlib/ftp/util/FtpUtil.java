@@ -113,14 +113,24 @@ public class FtpUtil {
     private static String createUrl(String protocol, String host, int port, String username, String password,
                                     String filePath) throws BallerinaFtpException {
         String userInfo = username + ":" + password;
-        URI uri;
+        final String normalizedPath = normalizeFtpPath(filePath);
         try {
-            uri = new URI(protocol, userInfo, host, port, filePath, null, null);
+            URI uri = new URI(protocol, userInfo, host, port, normalizedPath, null, null);
+            return uri.toString();
         } catch (URISyntaxException e) {
             throw new BallerinaFtpException("Error occurred while constructing a URI from host: " + host +
                     ", port: " + port + ", username: " + username + " and basePath: " + filePath + e.getMessage(), e);
         }
-        return uri.toString();
+    }
+
+    private static String normalizeFtpPath(String rawPath) {
+        if (rawPath == null || rawPath.isEmpty()) {
+            return "/";
+        }
+        if (rawPath.startsWith("/")) {
+            return rawPath;
+        }
+        return "/" + rawPath;
     }
 
     public static Map<String, String> getAuthMap(BMap config) {
