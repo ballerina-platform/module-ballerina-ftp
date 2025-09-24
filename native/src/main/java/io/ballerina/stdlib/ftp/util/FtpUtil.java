@@ -126,7 +126,7 @@ public class FtpUtil {
         if (rawPath == null || rawPath.isEmpty()) {
             return "/";
         }
-        if (rawPath.startsWith("/") || rawPath.startsWith("//")) {
+        if (rawPath.startsWith("/")) {
             return rawPath;
         }
         return "/" + rawPath;
