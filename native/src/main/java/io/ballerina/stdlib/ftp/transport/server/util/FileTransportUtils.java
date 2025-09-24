@@ -31,7 +31,6 @@ import java.io.File;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
@@ -46,8 +45,8 @@ public final class FileTransportUtils {
 
     private FileTransportUtils() {}
 
-    private static final Pattern URL_PATTERN = Pattern.compile("[a-z]+://.*");
-    private static final Pattern PASSWORD_PATTERN = Pattern.compile(":(?:[^/]+)@");
+    private static final Pattern URL_PATTERN = Pattern.compile("^[a-z][a-z0-9+.-]*://", Pattern.CASE_INSENSITIVE);
+    private static final Pattern USERINFO_WITH_PASSWORD = Pattern.compile("://([^/@:]+):([^/@]*)@");
 
     /**
      * A utility method for setting the relevant configurations for the file system in question.
@@ -115,12 +114,12 @@ public final class FileTransportUtils {
      */
     @ExcludeCoverageFromGeneratedReport
     public static String maskUrlPassword(String url) {
-        Matcher urlMatcher = URL_PATTERN.matcher(url);
-        if (urlMatcher.find()) {
-            Matcher pwdMatcher = PASSWORD_PATTERN.matcher(url);
-            return pwdMatcher.replaceFirst("\":***@\"");
-        } else {
+        if (url == null) {
+            return null;
+        }
+        if (!URL_PATTERN.matcher(url).find()) {
             return url;
         }
+        return USERINFO_WITH_PASSWORD.matcher(url).replaceFirst("://$1:***@");
     }
 }

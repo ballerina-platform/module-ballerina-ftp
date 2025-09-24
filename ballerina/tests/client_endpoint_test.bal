@@ -621,7 +621,7 @@ public function testDeleteFile() returns error? {
         }
     } else {
         test:assertEquals(str.message(),
-            "Failed to read file: ftp://wso2:wso2123@127.0.0.1:21212/home/in/test1.txt not found",
+            "Failed to read file: ftp://wso2:***@127.0.0.1:21212/home/in/test1.txt not found",
             msg = "Correct error is not given when the file is deleted." + str.message());
     }
 }

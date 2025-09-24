@@ -305,7 +305,7 @@ public function testSecureDeleteFileContent() returns error? {
         }
     } else {
         test:assertEquals(str.message(),
-            "Failed to read file: sftp://wso2:wso2123@127.0.0.1:21213/tempFile1.txt not found",
+            "Failed to read file: sftp://wso2:***@127.0.0.1:21213/tempFile1.txt not found",
             msg = "Correct error is not given when trying to get a non-existing file.");
     }
 }
