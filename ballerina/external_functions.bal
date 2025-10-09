@@ -21,6 +21,16 @@ isolated function initEndpoint(Client clientEndpoint, map<anydata> config) retur
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
+isolated function getBytes(Client clientEndpoint, string path) returns byte[]|Error = @java:Method {
+    name: "getBytes",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
+isolated function getText(Client clientEndpoint, string path) returns string|Error = @java:Method {
+    name: "getText",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
 isolated function delete(Client clientEndpoint, string path) returns Error? = @java:Method {
     name: "delete",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"

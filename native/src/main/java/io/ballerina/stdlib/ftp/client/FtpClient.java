@@ -18,12 +18,16 @@
 
 package io.ballerina.stdlib.ftp.client;
 
+import io.ballerina.lib.data.jsondata.json.Native;
 import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.creators.ErrorCreator;
+import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.runtime.api.values.BTypedesc;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
@@ -136,6 +140,55 @@ public class FtpClient {
         return FtpClientHelper.generateInputStreamEntry((InputStream) clientConnector.getNativeData(READ_INPUT_STREAM));
     }
 
+    public static Object getBytes(Environment env, BObject clientConnector, BString filePath) {
+        return getAllContent(env, clientConnector, filePath);
+    }
+
+    public static Object getText(Environment env, BObject clientConnector, BString filePath) {
+        try {
+            byte[] content = (byte[]) getAllContent(env, clientConnector, filePath);
+            return StringUtils.fromString(new String(content));
+        } catch (Exception e) {
+            return e;
+        }
+    }
+
+    public static Object getJson(Environment env, BObject clientConnector, BString filePath,
+                                 BTypedesc typeDesc) {
+        Map<String, Object> valueMap = new HashMap<>();
+        valueMap.put("validation", Boolean.FALSE);
+        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
+                io.ballerina.lib.data.ModuleUtils.getModule(),
+                "Options", valueMap);
+        mapValue.put(StringUtils.fromString("allowDataProjection"), Boolean.FALSE);
+
+        Object content = getAllContent(env, clientConnector, filePath);
+        if (content instanceof byte[]) {
+            Object bJson = Native.parseBytes(ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
+            if (bJson instanceof BError) {
+                // todo same as http printable
+                throw ErrorCreator.createError(((BError) bJson).getErrorMessage());
+            }
+            return bJson;
+        } else {
+            return content;
+        }
+    }
+
+    private static Object getAllContent(Environment env, BObject clientConnector, BString filePath) {
+        return env.yieldAndRun(() -> {
+            CompletableFuture<Object> balFuture = new CompletableFuture<>();
+            FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
+                    remoteFileSystemBaseMessage -> FtpClientHelper.executeGetAllAction(remoteFileSystemBaseMessage,
+                            balFuture));
+            VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
+                    getNativeData(VFS_CLIENT_CONNECTOR);
+            connector.addListener(connectorListener);
+            connector.send(null, FtpAction.GET_ALL, filePath.getValue(), null);
+            return getResult(balFuture);
+        });
+    }
+
     public static Object closeInputByteStream(BObject clientObject) {
         InputStream readInputStream = (InputStream) clientObject.getNativeData(READ_INPUT_STREAM);
         if (readInputStream != null) {
@@ -193,12 +246,12 @@ public class FtpClient {
                 compressedStream = FtpUtil.compress(stream, (inputContent.getStringValue(StringUtils.fromString(
                         FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue());
                 message = FtpClientHelper.getCompressedMessage(clientConnector, (inputContent.getStringValue(
-                        StringUtils.fromString(FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(),
+                                StringUtils.fromString(FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(),
                         propertyMap, compressedStream);
             } else {
                 try {
                     message = FtpClientHelper.getUncompressedMessage(clientConnector, (inputContent.getStringValue(
-                            StringUtils.fromString(FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(),
+                                    StringUtils.fromString(FtpConstants.INPUT_CONTENT_FILE_PATH_KEY))).getValue(),
                             propertyMap, stream);
                 } catch (BallerinaFtpException e) {
                     return FtpUtil.createError(e.getMessage(), Error.errorType());
@@ -299,7 +352,7 @@ public class FtpClient {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         return env.yieldAndRun(() -> {
-           CompletableFuture<Object> balFuture = new CompletableFuture<>();
+            CompletableFuture<Object> balFuture = new CompletableFuture<>();
             FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                     remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.

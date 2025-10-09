@@ -190,6 +190,16 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                                         + " not found");
                     }
                     break;
+                case GET_ALL:
+                    if (fileObject.exists()) {
+                        byte[] content = fileObject.getContent().getByteArray();
+                        remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(content));
+                    } else {
+                        throw new RemoteFileSystemConnectorException(
+                        "Failed to read file: " + maskUrlPassword(fileObject.getName().getURI())
+                                + " not found");
+            }
+                    break;
                 case SIZE:
                     remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.getContent().getSize()));
                     break;
