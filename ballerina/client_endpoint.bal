@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/io;
+import ballerina/jballerina.java;
 
 # Represents an FTP client that intracts with an FTP server
 public isolated client class Client {
@@ -37,8 +38,11 @@ public isolated client class Client {
     # stream<byte[] & readonly, io:Error?>|ftp:Error channel = client->get(path);
     # ```
     #
+    # Deprecated: Use `getText` or `getJson` instead for retrieving file content.
+    #
     # + path - The resource path
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
+    @deprecated
     remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error {
         ByteStream|Error byteStream = new (self, path);
         if byteStream is ByteStream {
@@ -48,6 +52,42 @@ public isolated client class Client {
         }
 
     }
+
+    # Retrieves the file content as bytes from a remote resource.
+    # ```ballerina
+    # byte[] content = check client->getBytes(path);
+    # ```
+    # 
+    # + path - The resource path
+    # + return - content as a byte array or `ftp:Error` in case of errors
+    remote isolated function getBytes(string path) returns byte[]|Error {
+        return getBytes(self, path);
+    }
+
+    # Retrieves the file content as text from a remote resource.
+    # ```ballerina
+    # string content = check client->getText(path);
+    # ```
+    #
+    # + path - The resource path
+    # + return - content as a string or `ftp:Error` in case of errors
+    remote isolated function getText(string path) returns string|Error {
+        return getText(self, path);
+    }
+
+    # Retrieves the file content as json from a remote resource.
+    # ```ballerina
+    # json content = check client->getJson(path);
+    # ```
+    #
+    # + path - The resource path
+    # + targetType - The target type of the json content
+    #                 (e.g., `json`, `record {}`, or a user-defined record type)
+    # + return - content as a json or `ftp:Error` in case of errors
+    remote isolated function getJson(string path, typedesc<json|record{}> targetType = <>) returns targetType|Error = @java:Method {
+        name: "getJson",
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+    } external;
 
     # Appends the content to an existing file in an FTP server.
     # ```ballerina
@@ -71,10 +111,10 @@ public isolated client class Client {
     # + path - The resource path
     # + content - Content to be written to the file in server
     # + compressionType - Type of the compression to be used, if
-    #                     the file should be compressed before
-    #                     uploading
+    # the file should be compressed before
+    # uploading
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # the communication with the FTP server
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
             |string|xml|json content, Compression compressionType = NONE) returns Error? {
         boolean compress = false;
@@ -91,7 +131,7 @@ public isolated client class Client {
     #
     # + path - The directory path
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # the communication with the FTP server
     remote isolated function mkdir(string path) returns Error? {
         return mkdir(self, path);
     }
@@ -103,7 +143,7 @@ public isolated client class Client {
     #
     # + path - The directory path
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # the communication with the FTP server
     remote isolated function rmdir(string path) returns Error? {
         return rmdir(self, path);
     }
@@ -117,7 +157,7 @@ public isolated client class Client {
     # + origin - The source file location
     # + destination - The destination file location
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # the communication with the FTP server
     remote isolated function rename(string origin, string destination) returns Error? {
         return rename(self, origin, destination);
     }
@@ -129,7 +169,7 @@ public isolated client class Client {
     #
     # + path - The resource path
     # + return - The file size in bytes or an `ftp:Error` if
-    #            failed to establish the communication with the FTP server
+    # failed to establish the communication with the FTP server
     remote isolated function size(string path) returns int|Error {
         return size(self, path);
     }
@@ -141,7 +181,7 @@ public isolated client class Client {
     #
     # + path - The directory path
     # + return - An array of file names or an `ftp:Error` if failed to
-    #            establish the communication with the FTP server
+    # establish the communication with the FTP server
     remote isolated function list(string path) returns FileInfo[]|Error {
         return list(self, path);
     }
@@ -153,7 +193,7 @@ public isolated client class Client {
     #
     # + path - The resource path
     # + return - `true` if given resource is a directory or an `ftp:Error` if
-    #            an error occurred while checking the path
+    # an error occurred while checking the path
     remote isolated function isDirectory(string path) returns boolean|Error {
         return isDirectory(self, path);
     }
@@ -165,7 +205,7 @@ public isolated client class Client {
     #
     # + path - The resource path
     # + return - `()` or else an `ftp:Error` if failed to establish
-    #             the communication with the FTP server
+    # the communication with the FTP server
     remote isolated function delete(string path) returns Error? {
         return delete(self, path);
     }
@@ -187,9 +227,9 @@ public enum Compression {
 # + port - Port number of the remote service
 # + auth - Authentication options
 # + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and 
-#                   prevents the underlying VFS from attempting to change to the actual server root. 
-#                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command 
-#                   that can fail on servers restricting root access (e.g., chrooted environments).
+# prevents the underlying VFS from attempting to change to the actual server root. 
+# If `false`, treats the actual server root as `/`, which may cause a `CWD /` command 
+# that can fail on servers restricting root access (e.g., chrooted environments).
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";

@@ -135,6 +135,16 @@ public function testReadFromAnonServer() returns error? {
     }
 }
 
+@test:Config {}
+public function testReadTextFromAnonServer() returns error? {
+    string|Error str = (<Client>anonClientEp)->getText(filePath);
+    if str is string {
+        test:assertTrue(str == "File content", msg = "Found unexpected content from `get` operation");
+    } else {
+        test:assertFail(msg = "Found unexpected response type" + str.message());
+    }
+}
+
 @test:Config {
     dependsOn: [testReadFromAnonServer, testAddedFileCount, testSecureAddedFileCount]
 }

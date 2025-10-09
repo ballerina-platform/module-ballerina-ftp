@@ -97,6 +97,15 @@ class FtpClientHelper {
         return true;
     }
 
+    static boolean executeGetAllAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
+                                    CompletableFuture<Object> balFuture) {
+        if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
+            byte[] content = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getBytesArray();
+            balFuture.complete(content);
+        }
+        return true;
+    }
+
     public static BMap<BString, Object> generateInputStreamEntry(InputStream inputStream) {
         BMap<BString, Object> streamEntry = ValueCreator.createRecordValue(getFtpPackage(), STREAM_ENTRY_RECORD);
         try {
@@ -167,7 +176,7 @@ class FtpClientHelper {
 
                 final BMap<BString, Object> ballerinaFileInfo = ValueCreator.createRecordValue(
                         new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
-                                FtpUtil.getFtpPackage().getMajorVersion()), FtpConstants.FTP_FILE_INFO, fileInfoParams);
+                                getFtpPackage().getMajorVersion()), FtpConstants.FTP_FILE_INFO, fileInfoParams);
                 arrayValue.add(i++, ballerinaFileInfo);
             }
             balFuture.complete(arrayValue);
