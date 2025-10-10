@@ -29,11 +29,22 @@ import io.ballerina.tools.diagnostics.DiagnosticFactory;
 import io.ballerina.tools.diagnostics.DiagnosticInfo;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_REMOTE_FUNCTION;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MIXED_GENERIC_AND_FORMAT_SPECIFIC;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_CONTENT_METHODS;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_GENERIC_CONTENT_METHODS;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_ON_FILE_CHANGE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CHANGE_FUNC;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CSV_FUNC;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_FUNC;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_JSON_FUNC;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_TEXT_FUNC;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_XML_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getDiagnostic;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isRemoteFunction;
 
@@ -60,6 +71,8 @@ public class FtpServiceValidator {
         }
 
         FunctionDefinitionNode onFileChange = null;
+        List<FunctionDefinitionNode> contentMethods = new ArrayList<>();
+        List<String> contentMethodNames = new ArrayList<>();
 
         for (Node node : memberNodes) {
             if (node.kind() == SyntaxKind.OBJECT_METHOD_DEFINITION) {
@@ -67,8 +80,12 @@ public class FtpServiceValidator {
                 MethodSymbol methodSymbol = PluginUtils.getMethodSymbol(context, functionDefinitionNode);
                 Optional<String> functionName = methodSymbol.getName();
                 if (functionName.isPresent()) {
-                    if (functionName.get().equals(ON_FILE_CHANGE_FUNC)) {
+                    String funcName = functionName.get();
+                    if (funcName.equals(ON_FILE_CHANGE_FUNC)) {
                         onFileChange = functionDefinitionNode;
+                    } else if (isContentMethod(funcName)) {
+                        contentMethods.add(functionDefinitionNode);
+                        contentMethodNames.add(funcName);
                     } else if (isRemoteFunction(context, functionDefinitionNode)) {
                         context.reportDiagnostic(getDiagnostic(INVALID_REMOTE_FUNCTION,
                                 DiagnosticSeverity.ERROR, functionDefinitionNode.location()));
@@ -79,6 +96,66 @@ public class FtpServiceValidator {
                         DiagnosticSeverity.ERROR, node.location()));
             }
         }
-        new FtpFunctionValidator(context, onFileChange).validate();
+
+        // Validate method exclusivity rules
+        validateMethodExclusivity(context, serviceDeclarationNode, onFileChange, contentMethods, contentMethodNames);
+
+        // Validate parameters based on which method type is present
+        if (onFileChange != null && contentMethods.isEmpty()) {
+            // Traditional onFileChange validation
+            new FtpFunctionValidator(context, onFileChange).validate();
+        } else if (onFileChange == null && !contentMethods.isEmpty()) {
+            // Content method validation
+            for (int i = 0; i < contentMethods.size(); i++) {
+                new FtpContentFunctionValidator(context, contentMethods.get(i),
+                        contentMethodNames.get(i)).validate();
+            }
+        } else if (onFileChange == null && contentMethods.isEmpty()) {
+            // No valid method found - maintain backward compatibility by reporting NO_ON_FILE_CHANGE
+            context.reportDiagnostic(getDiagnostic(NO_ON_FILE_CHANGE,
+                    DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
+        }
+    }
+
+    private boolean isContentMethod(String methodName) {
+        return methodName.equals(ON_FILE_FUNC) ||
+                methodName.equals(ON_FILE_TEXT_FUNC) ||
+                methodName.equals(ON_FILE_JSON_FUNC) ||
+                methodName.equals(ON_FILE_XML_FUNC) ||
+                methodName.equals(ON_FILE_CSV_FUNC);
+    }
+
+    private void validateMethodExclusivity(SyntaxNodeAnalysisContext context,
+                                           ServiceDeclarationNode serviceDeclarationNode,
+                                           FunctionDefinitionNode onFileChange,
+                                           List<FunctionDefinitionNode> contentMethods,
+                                           List<String> contentMethodNames) {
+        // Rule 1: Cannot mix onFileChange with content methods
+        if (onFileChange != null && !contentMethods.isEmpty()) {
+            context.reportDiagnostic(getDiagnostic(MULTIPLE_CONTENT_METHODS,
+                    DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
+            return;
+        }
+
+        // Rule 2: If using content methods, validate strategy
+        if (!contentMethods.isEmpty()) {
+            boolean hasGenericOnFile = contentMethodNames.contains(ON_FILE_FUNC);
+            boolean hasFormatSpecific = contentMethodNames.stream()
+                    .anyMatch(name -> !name.equals(ON_FILE_FUNC));
+
+            // Cannot mix generic onFile with format-specific methods
+            if (hasGenericOnFile && hasFormatSpecific) {
+                context.reportDiagnostic(getDiagnostic(MIXED_GENERIC_AND_FORMAT_SPECIFIC,
+                        DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
+                return;
+            }
+
+            // Cannot have multiple generic onFile methods
+            long onFileCount = contentMethodNames.stream().filter(name -> name.equals(ON_FILE_FUNC)).count();
+            if (onFileCount > 1) {
+                context.reportDiagnostic(getDiagnostic(MULTIPLE_GENERIC_CONTENT_METHODS,
+                        DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
+            }
+        }
     }
 }
