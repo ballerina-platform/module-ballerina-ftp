@@ -44,6 +44,8 @@ import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSys
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.FileSystemOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +64,7 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_F
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.getContentHandlerMethod;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
 
 /**
@@ -73,28 +76,42 @@ public class FtpListener implements RemoteFileSystemListener {
     private final Runtime runtime;
     private Map<String, BObject> registeredServices = new HashMap<>();
     private BObject caller;
+    private FileSystemManager fileSystemManager;
+    private FileSystemOptions fileSystemOptions;
 
     FtpListener(Runtime runtime) {
         this.runtime = runtime;
+    }
+
+    public void setFileSystemManager(FileSystemManager fileSystemManager) {
+        this.fileSystemManager = fileSystemManager;
+    }
+
+    public void setFileSystemOptions(FileSystemOptions fileSystemOptions) {
+        this.fileSystemOptions = fileSystemOptions;
     }
 
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
-            Map<String, Object> watchEventParamValues = processWatchEventParamValues(event);
+
             if (runtime != null) {
                 for (BObject service : registeredServices.values()) {
-                    Optional<MethodType> methodType = getOnFileChangeMethod(service);
-                    if (methodType.isPresent()) {
-                        Parameter[] params = methodType.get().getParameters();
-                        Object[] args = getMethodArguments(params, watchEventParamValues);
-                        if (args == null) {
-                            return false;
-                        }
-                        invokeMethodAsync(service, args);
+                    // Check for content handler methods first
+                    Optional<MethodType> contentHandlerMethodType = getContentHandlerMethod(service);
+
+                    if (contentHandlerMethodType.isPresent()) {
+                        // Process content-based callbacks
+                        processContentBasedCallbacks(service, event, contentHandlerMethodType.get());
                     } else {
-                        log.error("No onFileChange method found");
+                        // Fall back to traditional onFileChange
+                        Optional<MethodType> onFileChangeMethodType = getOnFileChangeMethod(service);
+                        if (onFileChangeMethodType.isPresent()) {
+                            processMetadataOnlyCallbacks(service, event, onFileChangeMethodType.get());
+                        } else {
+                            log.error("No valid remote method found in service");
+                        }
                     }
                 }
             } else {
@@ -102,6 +119,39 @@ public class FtpListener implements RemoteFileSystemListener {
             }
         }
         return true;
+    }
+
+    /**
+     * Processes content-based callbacks for the new content listener methods.
+     */
+    private void processContentBasedCallbacks(BObject service, RemoteFileSystemEvent event,
+                                              MethodType methodType) {
+        if (fileSystemManager == null || fileSystemOptions == null) {
+            log.error("FileSystemManager or FileSystemOptions not initialized for content callbacks. " +
+                    "Content methods require proper FileSystem initialization. Skipping event processing.");
+            return;
+        }
+
+        try {
+            FtpContentCallbackHandler contentHandler = new FtpContentCallbackHandler(
+                    runtime, fileSystemManager, fileSystemOptions);
+            contentHandler.processContentCallbacks(service, event, methodType, caller);
+        } catch (Exception e) {
+            log.error("Error in content callback processing", e);
+        }
+    }
+
+    /**
+     * Processes metadata-only callbacks for the traditional onFileChange method.
+     */
+    private void processMetadataOnlyCallbacks(BObject service, RemoteFileSystemEvent event,
+                                              MethodType methodType) {
+        Map<String, Object> watchEventParamValues = processWatchEventParamValues(event);
+        Parameter[] params = methodType.getParameters();
+        Object[] args = getMethodArguments(params, watchEventParamValues);
+        if (args != null) {
+            invokeMethodAsync(service, args);
+        }
     }
 
     private Object[] getMethodArguments(Parameter[] params, Map<String, Object> watchEventParamValues) {

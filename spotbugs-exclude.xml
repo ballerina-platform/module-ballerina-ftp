@@ -20,4 +20,8 @@
         <Class name="io.ballerina.stdlib.ftp.plugin.FtpFunctionValidator"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <Match>
+        <Class name="io.ballerina.stdlib.ftp.plugin.FtpContentFunctionValidator"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

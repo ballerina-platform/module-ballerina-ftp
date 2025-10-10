@@ -29,9 +29,17 @@ public final class PluginConstants {
     public static final String ON_FILE_CHANGE_FUNC = "onFileChange";
     public static final String PACKAGE_ORG = "ballerina";
 
+    // Content listener function names
+    public static final String ON_FILE_FUNC = "onFile";
+    public static final String ON_FILE_TEXT_FUNC = "onFileText";
+    public static final String ON_FILE_JSON_FUNC = "onFileJson";
+    public static final String ON_FILE_XML_FUNC = "onFileXml";
+    public static final String ON_FILE_CSV_FUNC = "onFileCsv";
+
     // parameters
     public static final String WATCHEVENT = "WatchEvent";
     public static final String CALLER = "Caller";
+    public static final String FILE_INFO = "FileInfo";
 
     // return types error or nil
     public static final String ERROR = "error";
@@ -57,7 +65,22 @@ public final class PluginConstants {
         INVALID_PARAMETERS("Invalid method parameters. Only ftp:WatchEvent & readonly or ftp:WatchEvent and " +
                 "ftp:Caller is allowed.", "FTP_109"),
         INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_110"),
-        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_111");
+        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_111"),
+
+        // Content listener validation errors
+        MULTIPLE_CONTENT_METHODS("Only one content handling strategy is allowed. Cannot mix onFileChange " +
+                "with content methods (onFile, onFileText, onFileJson, onFileXml, onFileCsv).", "FTP_112"),
+        MULTIPLE_GENERIC_CONTENT_METHODS("Only one generic onFile method is allowed in a service.", "FTP_113"),
+        MIXED_GENERIC_AND_FORMAT_SPECIFIC("Cannot mix generic onFile method with format-specific methods " +
+                "(onFileText, onFileJson, onFileXml, onFileCsv).", "FTP_114"),
+        CONTENT_METHOD_MUST_BE_REMOTE("Content handler method must be remote.", "FTP_115"),
+        INVALID_CONTENT_PARAMETER_TYPE("Invalid first parameter type. Expected content type based on method name.",
+                "FTP_116"),
+        INVALID_FILEINFO_PARAMETER("Invalid fileInfo parameter. Only ftp:FileInfo is allowed.", "FTP_117"),
+        TOO_MANY_PARAMETERS("Too many parameters. Content methods accept at most 3 parameters: " +
+                "(content, fileInfo?, caller?).", "FTP_118"),
+        NO_VALID_REMOTE_METHOD("No valid remote method found. Service must have either onFileChange or " +
+                "content handler methods.", "FTP_119");
         private final String error;
         private final String errorCode;
 

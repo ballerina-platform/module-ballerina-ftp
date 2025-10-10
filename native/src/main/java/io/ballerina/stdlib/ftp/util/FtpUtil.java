@@ -254,6 +254,34 @@ public class FtpUtil {
                 .findFirst();
     }
 
+    /**
+     * Gets the content handler method from a service if it exists.
+     * Checks for content methods in priority order: onFile, onFileText, onFileJson, onFileXml, onFileCsv.
+     *
+     * @param service The BObject service
+     * @return Optional containing the MethodType if a content method exists
+     */
+    public static Optional<MethodType> getContentHandlerMethod(BObject service) {
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
+        return Stream.of(methodTypes)
+                .filter(methodType -> isContentHandlerMethodName(methodType.getName()))
+                .findFirst();
+    }
+
+    /**
+     * Checks if the given method name is a content handler method.
+     *
+     * @param methodName The name of the method
+     * @return true if it's a content handler method
+     */
+    public static boolean isContentHandlerMethodName(String methodName) {
+        return FtpConstants.ON_FILE_REMOTE_FUNCTION.equals(methodName) ||
+                FtpConstants.ON_FILE_TEXT_REMOTE_FUNCTION.equals(methodName) ||
+                FtpConstants.ON_FILE_JSON_REMOTE_FUNCTION.equals(methodName) ||
+                FtpConstants.ON_FILE_XML_REMOTE_FUNCTION.equals(methodName) ||
+                FtpConstants.ON_FILE_CSV_REMOTE_FUNCTION.equals(methodName);
+    }
+
     public static String getAuthMethod(Object authMethodObj) {
         return authMethodObj.toString().toLowerCase().replace("_", "-");
     }
