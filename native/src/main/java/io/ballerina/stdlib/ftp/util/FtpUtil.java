@@ -269,6 +269,37 @@ public class FtpUtil {
     }
 
     /**
+     * Gets all content handler methods from a service.
+     *
+     * @param service The BObject service
+     * @return Array of MethodType objects representing all content handler methods
+     */
+    public static MethodType[] getAllContentHandlerMethods(BObject service) {
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
+        return Stream.of(methodTypes)
+                .filter(methodType -> isContentHandlerMethodName(methodType.getName()))
+                .toArray(MethodType[]::new);
+    }
+
+    /**
+     * Finds a specific content handler method by name from a service.
+     *
+     * @param service The BObject service
+     * @param methodName The name of the method to find
+     * @return Optional containing the MethodType if found
+     */
+    public static Optional<MethodType> findContentMethodByName(BObject service, String methodName) {
+        if (!isContentHandlerMethodName(methodName)) {
+            return Optional.empty();
+        }
+
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
+        return Stream.of(methodTypes)
+                .filter(methodType -> methodName.equals(methodType.getName()))
+                .findFirst();
+    }
+
+    /**
      * Checks if the given method name is a content handler method.
      *
      * @param methodName The name of the method

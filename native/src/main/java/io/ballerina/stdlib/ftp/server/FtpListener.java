@@ -64,7 +64,6 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_F
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
-import static io.ballerina.stdlib.ftp.util.FtpUtil.getContentHandlerMethod;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
 
 /**
@@ -98,12 +97,13 @@ public class FtpListener implements RemoteFileSystemListener {
 
             if (runtime != null) {
                 for (BObject service : registeredServices.values()) {
-                    // Check for content handler methods first
-                    Optional<MethodType> contentHandlerMethodType = getContentHandlerMethod(service);
+                    // Create router to handle content method selection
+                    ContentMethodRouter router = new ContentMethodRouter(service);
 
-                    if (contentHandlerMethodType.isPresent()) {
-                        // Process content-based callbacks
-                        processContentBasedCallbacks(service, event, contentHandlerMethodType.get());
+                    // Check if any content handler methods are available
+                    if (router.hasContentMethods()) {
+                        // Process content-based callbacks with routing
+                        processContentBasedCallbacks(service, event, router);
                     } else {
                         // Fall back to traditional onFileChange
                         Optional<MethodType> onFileChangeMethodType = getOnFileChangeMethod(service);
@@ -123,9 +123,10 @@ public class FtpListener implements RemoteFileSystemListener {
 
     /**
      * Processes content-based callbacks for the new content listener methods.
+     * Uses ContentMethodRouter to dispatch files to appropriate handlers.
      */
     private void processContentBasedCallbacks(BObject service, RemoteFileSystemEvent event,
-                                              MethodType methodType) {
+                                              ContentMethodRouter router) {
         if (fileSystemManager == null || fileSystemOptions == null) {
             log.error("FileSystemManager or FileSystemOptions not initialized for content callbacks. " +
                     "Content methods require proper FileSystem initialization. Skipping event processing.");
@@ -135,7 +136,7 @@ public class FtpListener implements RemoteFileSystemListener {
         try {
             FtpContentCallbackHandler contentHandler = new FtpContentCallbackHandler(
                     runtime, fileSystemManager, fileSystemOptions);
-            contentHandler.processContentCallbacks(service, event, methodType, caller);
+            contentHandler.processContentCallbacks(service, event, router, caller);
         } catch (Exception e) {
             log.error("Error in content callback processing", e);
         }

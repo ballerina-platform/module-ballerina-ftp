@@ -50,6 +50,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static io.ballerina.runtime.api.types.TypeTags.ARRAY_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
@@ -80,13 +81,25 @@ public class FtpContentCallbackHandler {
 
     /**
      * Processes content callbacks for added files in the event.
+     * Routes each file to the appropriate content handler based on file extension and annotations.
      */
     public void processContentCallbacks(BObject service, RemoteFileSystemEvent event,
-                                        MethodType methodType, BObject callerObject) {
+                                        ContentMethodRouter router, BObject callerObject) {
         List<FileInfo> addedFiles = event.getAddedFiles();
 
         for (FileInfo fileInfo : addedFiles) {
             try {
+                // Route file to appropriate method
+                Optional<MethodType> methodTypeOpt = router.routeFile(fileInfo);
+
+                if (methodTypeOpt.isEmpty()) {
+                    log.warn("No content handler method found for file: {}. Skipping content processing.",
+                            fileInfo.getPath());
+                    continue;
+                }
+
+                MethodType methodType = methodTypeOpt.get();
+
                 // Fetch file content
                 byte[] fileContent = fetchFileContentFromRemote(fileInfo);
 
