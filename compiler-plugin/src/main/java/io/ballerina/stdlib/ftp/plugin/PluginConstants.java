@@ -41,6 +41,10 @@ public final class PluginConstants {
     public static final String CALLER = "Caller";
     public static final String FILE_INFO = "FileInfo";
 
+    // annotation
+    public static final String FILE_CONFIG_ANNOTATION = "FileConfig";
+    public static final String ANNOTATION_PATTERN_FIELD = "pattern";
+
     // return types error or nil
     public static final String ERROR = "error";
 
@@ -80,7 +84,13 @@ public final class PluginConstants {
         TOO_MANY_PARAMETERS("Too many parameters. Content methods accept at most 3 parameters: " +
                 "(content, fileInfo?, caller?).", "FTP_118"),
         NO_VALID_REMOTE_METHOD("No valid remote method found. Service must have either onFileChange or " +
-                "content handler methods.", "FTP_119");
+                "content handler methods.", "FTP_119"),
+        ANNOTATION_PATTERN_NOT_SUBSET("FileConfig annotation pattern must be a subset of listener's fileNamePattern.",
+                "FTP_120"),
+        OVERLAPPING_ANNOTATION_PATTERNS("Multiple methods have overlapping FileConfig annotation patterns.",
+                "FTP_121"),
+        INVALID_ANNOTATION_USAGE("FileConfig annotation can only be used on content handler methods " +
+                "(onFile, onFileText, onFileJson, onFileXml, onFileCsv).", "FTP_122");
         private final String error;
         private final String errorCode;
 

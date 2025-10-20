@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_REMOTE_FUNCTION;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MIXED_GENERIC_AND_FORMAT_SPECIFIC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_CONTENT_METHODS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_GENERIC_CONTENT_METHODS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_ON_FILE_CHANGE;
@@ -139,23 +138,15 @@ public class FtpServiceValidator {
 
         // Rule 2: If using content methods, validate strategy
         if (!contentMethods.isEmpty()) {
-            boolean hasGenericOnFile = contentMethodNames.contains(ON_FILE_FUNC);
-            boolean hasFormatSpecific = contentMethodNames.stream()
-                    .anyMatch(name -> !name.equals(ON_FILE_FUNC));
-
-            // Cannot mix generic onFile with format-specific methods
-            if (hasGenericOnFile && hasFormatSpecific) {
-                context.reportDiagnostic(getDiagnostic(MIXED_GENERIC_AND_FORMAT_SPECIFIC,
-                        DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
-                return;
-            }
-
             // Cannot have multiple generic onFile methods
             long onFileCount = contentMethodNames.stream().filter(name -> name.equals(ON_FILE_FUNC)).count();
             if (onFileCount > 1) {
                 context.reportDiagnostic(getDiagnostic(MULTIPLE_GENERIC_CONTENT_METHODS,
                         DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
             }
+
+            // Note: We now allow mixing generic onFile with format-specific methods
+            // The onFile method will serve as a fallback for unmatched file extensions
         }
     }
 }
