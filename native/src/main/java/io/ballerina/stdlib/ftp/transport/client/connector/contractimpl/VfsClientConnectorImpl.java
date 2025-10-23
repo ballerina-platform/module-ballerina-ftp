@@ -44,6 +44,8 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils.maskUrlPassword;
+
 /**
  * Implementation for {@link VfsClientConnector} interface.
  */
@@ -68,8 +70,9 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             fileURI = connectorConfig.get(FtpConstants.URI);
             path = fsManager.resolveFile(fileURI, opts);
         } catch (FileSystemException e) {
+            String safeUri = maskUrlPassword(fileURI);
             throw new RemoteFileSystemConnectorException("Error while connecting to the FTP server with URL: "
-                    + (fileURI != null ? fileURI : ""), e.getCause());
+                    + (safeUri != null ? safeUri : ""), e.getCause());
         }
     }
 
@@ -94,7 +97,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                 case MKDIR:
                     if (fileObject.exists()) {
                         throw new RemoteFileSystemConnectorException("Directory exists: "
-                                + fileObject.getName().getURI());
+                                + maskUrlPassword(fileObject.getName().getURI()));
                     }
                     fileObject.createFolder();
                     break;
@@ -130,7 +133,8 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         }
                     } else {
                         throw new RemoteFileSystemConnectorException(
-                                "Failed to delete file: " + fileObject.getName().getURI() + " not found");
+                                "Failed to delete file: " + maskUrlPassword(fileObject.getName().getURI())
+                                        + " not found");
                     }
                     break;
                 case RMDIR:
@@ -141,7 +145,8 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         }
                     } else {
                         throw new RemoteFileSystemConnectorException(
-                                "Failed to delete directory: " + fileObject.getName().getURI() + " not found");
+                                "Failed to delete directory: " + maskUrlPassword(fileObject.getName().getURI())
+                                        + " not found");
                     }
                     break;
                 case RENAME:
@@ -157,7 +162,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                                         fileObject.moveTo(finalPath);
                                     } else {
                                         throw new RemoteFileSystemConnectorException(
-                                                "The file at " + newPath.getURL().toString()
+                                                "The file at " + maskUrlPassword(newPath.getURL().toString())
                                                         + " already exists or it is a directory");
                                     }
                                 }
@@ -165,7 +170,8 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         }
                     } else {
                         throw new RemoteFileSystemConnectorException(
-                                "Failed to rename file: " + fileObject.getName().getURI() + " not found");
+                                "Failed to rename file: " + maskUrlPassword(fileObject.getName().getURI())
+                                        + " not found");
                     }
                     break;
                 case GET:
@@ -180,7 +186,8 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         pathClose = false;
                     } else {
                         throw new RemoteFileSystemConnectorException(
-                                "Failed to read file: " + fileObject.getName().getURI() + " not found");
+                                "Failed to read file: " + maskUrlPassword(fileObject.getName().getURI())
+                                        + " not found");
                     }
                     break;
                 case SIZE:
