@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- [Added missing Commons VFS configuration parameters](https://github.com/ballerina-platform/ballerina-library/issues/8369)
+
 ### Fixed
 
 - [Fix the issue where the FTP URL is improperly formatted for the jail-break scnenarios](https://github.com/ballerina-platform/ballerina-library/issues/8267)
