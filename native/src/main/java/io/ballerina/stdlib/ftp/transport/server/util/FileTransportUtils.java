@@ -24,8 +24,11 @@ import io.ballerina.stdlib.ftp.util.FtpConstants;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
+import org.apache.commons.vfs2.provider.ftp.FtpFileType;
 import org.apache.commons.vfs2.provider.sftp.IdentityInfo;
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.time.Duration;
@@ -43,6 +46,8 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_SFTP;
  * Utility class for File Transport.
  */
 public final class FileTransportUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(FileTransportUtils.class);
 
     private FileTransportUtils() {}
 
@@ -70,13 +75,68 @@ public final class FileTransportUtils {
         return opts;
     }
 
-    private static void setFtpOptions(Map<String, String> options, FileSystemOptions opts) {
+    private static void setFtpOptions(Map<String, String> options, FileSystemOptions opts)
+            throws RemoteFileSystemConnectorException {
         final FtpFileSystemConfigBuilder configBuilder = FtpFileSystemConfigBuilder.getInstance();
+
+        // Existing configurations
         if (options.get(FtpConstants.PASSIVE_MODE) != null) {
             configBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(FtpConstants.PASSIVE_MODE)));
         }
         if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
             configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT)));
+        }
+
+        // New timeout configurations
+        if (options.get(FtpConstants.CONNECT_TIMEOUT) != null) {
+            try {
+                double connectTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.CONNECT_TIMEOUT));
+                Duration connectTimeout = Duration.ofMillis((long) (connectTimeoutSeconds * 1000));
+                configBuilder.setConnectTimeout(opts, connectTimeout);
+                log.debug("FTP connectTimeout set to {} seconds", connectTimeoutSeconds);
+            } catch (NumberFormatException e) {
+                throw new RemoteFileSystemConnectorException("Invalid connectTimeout value: " +
+                        options.get(FtpConstants.CONNECT_TIMEOUT), e);
+            }
+        }
+
+        if (options.get(FtpConstants.FTP_DATA_TIMEOUT) != null) {
+            try {
+                double dataTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.FTP_DATA_TIMEOUT));
+                Duration dataTimeout = Duration.ofMillis((long) (dataTimeoutSeconds * 1000));
+                configBuilder.setDataTimeout(opts, dataTimeout);
+                log.debug("FTP dataTimeout set to {} seconds", dataTimeoutSeconds);
+            } catch (NumberFormatException e) {
+                throw new RemoteFileSystemConnectorException("Invalid ftpDataTimeout value: " +
+                        options.get(FtpConstants.FTP_DATA_TIMEOUT), e);
+            }
+        }
+
+        if (options.get(FtpConstants.FTP_SOCKET_TIMEOUT) != null) {
+            try {
+                double socketTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.FTP_SOCKET_TIMEOUT));
+                Duration socketTimeout = Duration.ofMillis((long) (socketTimeoutSeconds * 1000));
+                configBuilder.setSoTimeout(opts, socketTimeout);
+                log.debug("FTP socketTimeout set to {} seconds", socketTimeoutSeconds);
+            } catch (NumberFormatException e) {
+                throw new RemoteFileSystemConnectorException("Invalid ftpSocketTimeout value: " +
+                        options.get(FtpConstants.FTP_SOCKET_TIMEOUT), e);
+            }
+        }
+
+        // File type configuration
+        if (options.get(FtpConstants.FTP_FILE_TYPE) != null) {
+            String fileTypeStr = options.get(FtpConstants.FTP_FILE_TYPE);
+            if (FtpConstants.FILE_TYPE_ASCII.equalsIgnoreCase(fileTypeStr)) {
+                configBuilder.setFileType(opts, FtpFileType.ASCII);
+                log.debug("FTP file type set to ASCII");
+            } else if (FtpConstants.FILE_TYPE_BINARY.equalsIgnoreCase(fileTypeStr)) {
+                configBuilder.setFileType(opts, FtpFileType.BINARY);
+                log.debug("FTP file type set to BINARY");
+            } else {
+                log.warn("Unknown FTP file type: {}, defaulting to BINARY", fileTypeStr);
+                configBuilder.setFileType(opts, FtpFileType.BINARY);
+            }
         }
     }
 
@@ -104,7 +164,99 @@ public final class FileTransportUtils {
                 throw new RemoteFileSystemConnectorException(e.getMessage(), e);
             }
         }
-        configBuilder.setConnectTimeout(opts, Duration.ofSeconds(10));
+
+        if (options.get(FtpConstants.CONNECT_TIMEOUT) != null) {
+            try {
+                double connectTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.CONNECT_TIMEOUT));
+                Duration connectTimeout = Duration.ofMillis((long) (connectTimeoutSeconds * 1000));
+                configBuilder.setConnectTimeout(opts, connectTimeout);
+                log.debug("SFTP connectTimeout set to {} seconds", connectTimeoutSeconds);
+            } catch (NumberFormatException e) {
+                throw new RemoteFileSystemConnectorException("Invalid connectTimeout value: " +
+                        options.get(FtpConstants.CONNECT_TIMEOUT), e);
+            }
+        } else {
+            // Default to 10 seconds for backward compatibility
+            configBuilder.setConnectTimeout(opts, Duration.ofSeconds(10));
+        }
+
+        if (options.get(FtpConstants.SFTP_SESSION_TIMEOUT) != null) {
+            try {
+                double sessionTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.SFTP_SESSION_TIMEOUT));
+                // Convert to integer milliseconds for session timeout
+                Integer sessionTimeoutMillis = (int) (sessionTimeoutSeconds * 1000);
+                configBuilder.setTimeout(opts, sessionTimeoutMillis);
+                log.debug("SFTP sessionTimeout set to {} seconds", sessionTimeoutSeconds);
+            } catch (NumberFormatException e) {
+                throw new RemoteFileSystemConnectorException("Invalid sftpSessionTimeout value: " +
+                        options.get(FtpConstants.SFTP_SESSION_TIMEOUT), e);
+            }
+        }
+
+        // Compression configuration
+        if (options.get(FtpConstants.SFTP_COMPRESSION) != null) {
+            String compression = options.get(FtpConstants.SFTP_COMPRESSION);
+            if (!compression.isEmpty() && !compression.equalsIgnoreCase("none")) {
+                configBuilder.setCompression(opts, compression);
+                log.debug("SFTP compression set to: {}", compression);
+            }
+        }
+
+        // Known hosts configuration
+        if (options.get(FtpConstants.SFTP_KNOWN_HOSTS) != null) {
+            String knownHostsPath = options.get(FtpConstants.SFTP_KNOWN_HOSTS);
+            String expandedPath = expandTildePath(knownHostsPath);
+            File knownHostsFile = new File(expandedPath);
+            if (knownHostsFile.exists()) {
+                try {
+                    configBuilder.setKnownHosts(opts, knownHostsFile);
+                    configBuilder.setStrictHostKeyChecking(opts, "yes");
+                    log.debug("SFTP known_hosts configured from: {}", expandedPath);
+                } catch (FileSystemException e) {
+                    log.warn("Failed to set known_hosts file '{}': {}", expandedPath, e.getMessage());
+                }
+            } else {
+                log.warn("SFTP known_hosts file not found at: {}", expandedPath);
+            }
+        }
+
+        // Proxy configuration
+        if (options.get(FtpConstants.PROXY_HOST) != null) {
+            String proxyHost = options.get(FtpConstants.PROXY_HOST);
+            String proxyPortStr = options.get(FtpConstants.PROXY_PORT);
+            String proxyType = options.getOrDefault(FtpConstants.PROXY_TYPE, FtpConstants.PROXY_TYPE_HTTP);
+
+            if (proxyHost != null && !proxyHost.isEmpty()) {
+                int proxyPort = proxyPortStr != null ? Integer.parseInt(proxyPortStr) : 8080;
+                configBuilder.setProxyHost(opts, proxyHost);
+                configBuilder.setProxyPort(opts, proxyPort);
+
+                // Set proxy type if supported (HTTP/SOCKS)
+                configBuilder.setProxyType(opts, SftpFileSystemConfigBuilder.PROXY_HTTP);
+
+                // Set proxy authentication if provided
+                String proxyUsername = options.get(FtpConstants.PROXY_USERNAME);
+                String proxyPassword = options.get(FtpConstants.PROXY_PASSWORD);
+                if (proxyUsername != null && !proxyUsername.isEmpty()) {
+                    configBuilder.setProxyUser(opts, proxyUsername);
+                    if (proxyPassword != null) {
+                        configBuilder.setProxyPassword(opts, proxyPassword);
+                    }
+                    log.debug("SFTP proxy authentication configured for user: {}", proxyUsername);
+                }
+
+                log.info("SFTP proxy configured: {} ({}:{})", proxyType, proxyHost, proxyPort);
+            }
+        }
+    }
+
+    private static String expandTildePath(String path) {
+        if (path.startsWith("~/")) {
+            return System.getProperty("user.home") + path.substring(1);
+        } else if (path.equals("~")) {
+            return System.getProperty("user.home");
+        }
+        return path;
     }
 
     /**

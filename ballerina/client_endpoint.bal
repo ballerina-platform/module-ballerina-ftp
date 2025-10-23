@@ -190,12 +190,24 @@ public enum Compression {
 #                   prevents the underlying VFS from attempting to change to the actual server root. 
 #                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command 
 #                   that can fail on servers restricting root access (e.g., chrooted environments).
+# + connectTimeout - Connection timeout in seconds (default: 30.0 for FTP, 10.0 for SFTP)
+# + socketConfig - Socket timeout configurations (optional)
+# + ftpFileType - File transfer type: BINARY or ASCII (FTP only, default: BINARY)
+# + sftpCompression - Compression algorithms (SFTP only, default: "none")
+# + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
+# + proxy - Proxy configuration for SFTP connections (SFTP only)
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
     int port = 21;
     AuthConfiguration auth?;
     boolean userDirIsRoot = false;
+    decimal connectTimeout = 30.0;
+    SocketConfig socketConfig?;
+    ProxyConfiguration proxy?;
+    FtpFileType ftpFileType = BINARY;
+    string sftpCompression = "none";
+    string sftpSshKnownHosts?;
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,
