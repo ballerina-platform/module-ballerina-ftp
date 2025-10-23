@@ -180,6 +180,12 @@ class Job {
 # + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
 #                    null values in JSON/XML are allowed to be mapped to optional fields
 #                    missing fields in JSON/XML are allowed to be mapped as null values
+# + connectTimeout - Connection timeout in seconds (default: 30.0 for FTP, 10.0 for SFTP)
+# + socketConfig - Socket timeout configurations (optional)
+# + ftpFileTransfer - File transfer type: BINARY or ASCII (FTP only, default: BINARY)
+# + sftpCompression - Compression algorithms (SFTP only, default: "none")
+# + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
+# + proxy - Proxy configuration for SFTP connections (SFTP only)
 public type ListenerConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -192,6 +198,12 @@ public type ListenerConfiguration record {|
     FileAgeFilter fileAgeFilter?;
     FileDependencyCondition[] fileDependencyConditions = [];
     boolean laxDataBinding = false;
+    decimal connectTimeout = 30.0;
+    SocketConfig socketConfig?;
+    ProxyConfiguration proxy?;
+    FtpFileTransfer ftpFileTransfer = BINARY;
+    string sftpCompression = "none";
+    string sftpSshKnownHosts?;
 |};
 
 # FTP service for handling file system change events.

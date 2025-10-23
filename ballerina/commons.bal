@@ -67,6 +67,61 @@ public enum PreferredMethod {
     PUBLICKEY
 }
 
+# FTP file transfer type
+#
+# + BINARY - Binary mode (no conversion, suitable for all file types)
+# + ASCII - ASCII mode (CRLF conversion for text files)
+public enum FtpFileTransfer {
+    BINARY,
+    ASCII
+}
+
+# Proxy type for SFTP connections
+#
+# + HTTP - HTTP CONNECT proxy
+# + SOCKS5 - SOCKS version 5 proxy
+# + STREAM - Stream proxy (advanced usage)
+public enum ProxyType {
+    HTTP,
+    SOCKS5,
+    STREAM
+}
+
+# Proxy authentication credentials
+#
+# + username - Proxy username
+# + password - Proxy password
+public type ProxyCredentials record {|
+    string username;
+    string password;
+|};
+
+# Proxy configuration for SFTP connections
+#
+# + host - Proxy server hostname or IP address
+# + port - Proxy server port number
+# + type - Type of proxy (HTTP, SOCKS5, or STREAM)
+# + auth - Optional proxy authentication credentials
+# + command - STREAM-only: proxy command (SFTP jump-host), e.g., "ssh -W %h:%p jumphost"
+public type ProxyConfiguration record {|
+    string host;
+    int port;
+    ProxyType 'type = HTTP;
+    ProxyCredentials auth?;
+    string command?;
+|};
+
+# Socket timeout configurations
+#
+# + ftpDataTimeout - Data transfer timeout in seconds (FTP only, default: 120.0)
+# + ftpSocketTimeout - Socket operation timeout in seconds (FTP only, default: 60.0)
+# + sftpSessionTimeout - SSH session timeout in seconds (SFTP only, default: 300.0)
+public type SocketConfig record {|
+    decimal ftpDataTimeout = 120.0;
+    decimal ftpSocketTimeout = 60.0;
+    decimal sftpSessionTimeout = 300.0;
+|};
+
 # Internal configuration for content to be written in put and append operations.
 #
 # + filePath - Path of the file to be created or appended
