@@ -22,6 +22,7 @@ import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BDecimal;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -152,7 +153,7 @@ public class FtpListenerHelper {
         // Extract connectTimeout
         Object connectTimeoutObj = serviceEndpointConfig.get(StringUtils.fromString(FtpConstants.CONNECT_TIMEOUT));
         if (connectTimeoutObj != null) {
-            double connectTimeout = ((Number) connectTimeoutObj).doubleValue();
+            double connectTimeout = ((BDecimal) connectTimeoutObj).floatValue();
             validateListenerTimeout(connectTimeout, "connectTimeout");
             params.put(FtpConstants.CONNECT_TIMEOUT, String.valueOf(connectTimeout));
         } else {
@@ -167,7 +168,7 @@ public class FtpListenerHelper {
             // Extract ftpDataTimeout
             Object ftpDataTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.FTP_DATA_TIMEOUT));
             if (ftpDataTimeoutObj != null) {
-                double ftpDataTimeout = ((Number) ftpDataTimeoutObj).doubleValue();
+                double ftpDataTimeout = ((BDecimal) ftpDataTimeoutObj).floatValue();
                 validateListenerTimeout(ftpDataTimeout, "ftpDataTimeout");
                 params.put(FtpConstants.FTP_DATA_TIMEOUT, String.valueOf(ftpDataTimeout));
             }
@@ -175,7 +176,7 @@ public class FtpListenerHelper {
             // Extract ftpSocketTimeout
             Object ftpSocketTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.FTP_SOCKET_TIMEOUT));
             if (ftpSocketTimeoutObj != null) {
-                double ftpSocketTimeout = ((Number) ftpSocketTimeoutObj).doubleValue();
+                double ftpSocketTimeout = ((BDecimal) ftpSocketTimeoutObj).floatValue();
                 validateListenerTimeout(ftpSocketTimeout, "ftpSocketTimeout");
                 params.put(FtpConstants.FTP_SOCKET_TIMEOUT, String.valueOf(ftpSocketTimeout));
             }
@@ -183,7 +184,7 @@ public class FtpListenerHelper {
             // Extract sftpSessionTimeout
             Object sftpSessionTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.SFTP_SESSION_TIMEOUT));
             if (sftpSessionTimeoutObj != null) {
-                double sftpSessionTimeout = ((Number) sftpSessionTimeoutObj).doubleValue();
+                double sftpSessionTimeout = ((BDecimal) sftpSessionTimeoutObj).floatValue();
                 validateListenerTimeout(sftpSessionTimeout, "sftpSessionTimeout");
                 params.put(FtpConstants.SFTP_SESSION_TIMEOUT, String.valueOf(sftpSessionTimeout));
             }
