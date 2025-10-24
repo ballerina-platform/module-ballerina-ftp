@@ -78,7 +78,6 @@ public final class FileTransportUtils {
             throws RemoteFileSystemConnectorException {
         final FtpFileSystemConfigBuilder configBuilder = FtpFileSystemConfigBuilder.getInstance();
 
-        // Existing configurations
         if (options.get(FtpConstants.PASSIVE_MODE) != null) {
             configBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(FtpConstants.PASSIVE_MODE)));
         }
@@ -86,7 +85,6 @@ public final class FileTransportUtils {
             configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT)));
         }
 
-        // New timeout configurations
         if (options.get(FtpConstants.CONNECT_TIMEOUT) != null) {
             try {
                 double connectTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.CONNECT_TIMEOUT));
@@ -123,7 +121,6 @@ public final class FileTransportUtils {
             }
         }
 
-        // File type configuration
         if (options.get(FtpConstants.FTP_FILE_TYPE) != null) {
             String fileTypeStr = options.get(FtpConstants.FTP_FILE_TYPE);
             if (FtpConstants.FILE_TYPE_ASCII.equalsIgnoreCase(fileTypeStr)) {
