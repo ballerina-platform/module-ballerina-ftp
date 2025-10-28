@@ -313,6 +313,19 @@ public class FtpUtil {
                 FtpConstants.ON_FILE_CSV_REMOTE_FUNCTION.equals(methodName);
     }
 
+    /**
+     * Gets the onFileDeleted method from a service if it exists.
+     *
+     * @param service The BObject service
+     * @return Optional containing the MethodType if onFileDeleted method exists
+     */
+    public static Optional<MethodType> getOnFileDeletedMethod(BObject service) {
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
+        return Stream.of(methodTypes)
+                .filter(methodType -> FtpConstants.ON_FILE_DELETED_REMOTE_FUNCTION.equals(methodType.getName()))
+                .findFirst();
+    }
+
     public static String getAuthMethod(Object authMethodObj) {
         return authMethodObj.toString().toLowerCase().replace("_", "-");
     }
