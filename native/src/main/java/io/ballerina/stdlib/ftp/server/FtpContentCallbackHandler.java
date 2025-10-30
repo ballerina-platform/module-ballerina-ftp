@@ -124,7 +124,8 @@ public class FtpContentCallbackHandler {
      * Fetches file content from the remote FTP/SFTP server.
      */
     private byte[] fetchFileContentFromRemote(FileInfo fileInfo) throws Exception {
-        String fileUri = fileInfo.getUrl().getPath();
+        // Use the path from fileInfo which contains the full URI (e.g., ftp://host/path/file.txt)
+        String fileUri = fileInfo.getPath();
         FileObject fileObject = null;
         InputStream inputStream = null;
 

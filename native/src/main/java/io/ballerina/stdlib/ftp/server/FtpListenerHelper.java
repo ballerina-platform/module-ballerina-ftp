@@ -115,6 +115,16 @@ public class FtpListenerHelper {
             }
         }
 
+        // Also check for onFileDeleted method that might need caller
+        Optional<MethodType> onFileDeletedMethod = FtpUtil.getOnFileDeletedMethod(service);
+        if (onFileDeletedMethod.isPresent()) {
+            // onFileDeleted can have caller as 2nd parameter
+            Parameter[] params = onFileDeletedMethod.get().getParameters();
+            if (params.length >= 2) {
+                needsCaller = true;
+            }
+        }
+
         if (!needsCaller) {
             return null;
         }

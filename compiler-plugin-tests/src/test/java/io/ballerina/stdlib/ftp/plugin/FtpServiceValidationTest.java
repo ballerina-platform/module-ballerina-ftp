@@ -28,14 +28,19 @@ import org.testng.annotations.Test;
 import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.assertDiagnostic;
 import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.loadPackage;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_CALLER_PARAMETER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_FILE_DELETED_CALLER_PARAMETER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_FILE_DELETED_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_WATCHEVENT_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.METHOD_MUST_BE_REMOTE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_CONTENT_METHODS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MUST_HAVE_WATCHEVENT;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_ON_FILE_CHANGE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_DELETED_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ONLY_PARAMS_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS_ON_FILE_DELETED;
 
 /**
  * Tests for FTP package compiler plugin.
@@ -319,5 +324,57 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic3, INVALID_CALLER_PARAMETER);
         Diagnostic diagnostic4 = (Diagnostic) diagnostics[3];
         assertDiagnostic(diagnostic4, INVALID_WATCHEVENT_PARAMETER);
+    }
+
+    // =================== onFileDeleted Validation Tests ===================
+
+    @Test(description = "Validation when onFileDeleted first parameter is not string[]")
+    public void testInvalidOnFileDeleted1() {
+        Package currentPackage = loadPackage("sample_package_20");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_ON_FILE_DELETED_PARAMETER);
+    }
+
+    @Test(description = "Validation when onFileDeleted second parameter is not Caller")
+    public void testInvalidOnFileDeleted2() {
+        Package currentPackage = loadPackage("sample_package_21");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_ON_FILE_DELETED_CALLER_PARAMETER);
+    }
+
+    @Test(description = "Validation when onFileDeleted has too many parameters")
+    public void testInvalidOnFileDeleted3() {
+        Package currentPackage = loadPackage("sample_package_22");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, TOO_MANY_PARAMETERS_ON_FILE_DELETED);
+    }
+
+    @Test(description = "Validation when onFileDeleted is not a remote function")
+    public void testInvalidOnFileDeleted4() {
+        Package currentPackage = loadPackage("sample_package_23");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, ON_FILE_DELETED_MUST_BE_REMOTE);
+    }
+
+    @Test(description = "Validation when onFileChange and onFileDeleted are both present")
+    public void testInvalidOnFileDeleted5() {
+        Package currentPackage = loadPackage("sample_package_24");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, MULTIPLE_CONTENT_METHODS);
     }
 }

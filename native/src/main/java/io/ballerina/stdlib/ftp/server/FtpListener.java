@@ -102,10 +102,26 @@ public class FtpListener implements RemoteFileSystemListener {
                     // Create router to handle content method selection
                     ContentMethodRouter router = new ContentMethodRouter(service);
 
+                    // Check for onFileDeleted method
+                    Optional<MethodType> onFileDeletedMethodType = getOnFileDeletedMethod(service);
+
                     // Check if any content handler methods are available
                     if (router.hasContentMethods()) {
-                        // Process content-based callbacks with routing
+                        // Process content-based callbacks with routing (includes added files and deleted files)
                         processContentBasedCallbacks(service, event, router);
+                    } else if (onFileDeletedMethodType.isPresent()) {
+                        // Service has only onFileDeleted method (no content methods)
+                        // Process deleted files directly
+                        if (!event.getDeletedFiles().isEmpty()) {
+                            processFileDeletedCallback(service, event, onFileDeletedMethodType.get());
+                        }
+                        // For added files, fall back to onFileChange if present
+                        if (!event.getAddedFiles().isEmpty()) {
+                            Optional<MethodType> onFileChangeMethodType = getOnFileChangeMethod(service);
+                            if (onFileChangeMethodType.isPresent()) {
+                                processMetadataOnlyCallbacks(service, event, onFileChangeMethodType.get());
+                            }
+                        }
                     } else {
                         // Fall back to traditional onFileChange
                         Optional<MethodType> onFileChangeMethodType = getOnFileChangeMethod(service);
