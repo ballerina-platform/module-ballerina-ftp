@@ -116,8 +116,6 @@ public function testOnFileTextBasic() returns error? {
     FileInfo fileInfo = check lastFileInfo.ensureType();
     // Verify that we processed at least one .txt file successfully
     test:assertTrue(fileInfo.name.endsWith(".txt"), "Should process .txt files");
-
-    log:printInfo("✓ testOnFileTextBasic PASSED");
 }
 
 @test:Config {
@@ -189,8 +187,6 @@ public function testOnFileJsonBasic() returns error? {
     test:assertEquals(check jsonMap["age"].ensureType(), 30, "Age field should match");
     test:assertEquals(jsonMap["city"], "New York", "City field should match");
     test:assertTrue(check jsonMap["isActive"].ensureType(), "isActive should be true");
-
-    log:printInfo("✓ testOnFileJsonBasic PASSED");
 }
 
 @test:Config {
@@ -262,8 +258,6 @@ public function testOnFileXmlBasic() returns error? {
     test:assertTrue(xmlString.includes("Jane Smith"), "XML should contain person name");
     test:assertTrue(xmlString.includes("Los Angeles"), "XML should contain city");
     test:assertTrue(xmlString.includes("Engineering"), "XML should contain department");
-
-    log:printInfo("✓ testOnFileXmlBasic PASSED");
 }
 
 @test:Config {
@@ -341,8 +335,6 @@ public function testOnFileCsvStringArray() returns error? {
     string[] firstDataRow = csvContentReceived[1];
     test:assertEquals(firstDataRow[0], "Alice Johnson", "First person's name should match");
     test:assertEquals(firstDataRow[1], "25", "First person's age should match");
-
-    log:printInfo("✓ testOnFileCsvStringArray PASSED");
 }
 
 @test:Config {
@@ -411,8 +403,6 @@ public function testOnFileByteArray() returns error? {
     // Verify byte content can be converted to string
     string contentAsString = check string:fromBytes(byteContentReceived);
     test:assertTrue(contentAsString.length() > 0, "Should be able to convert bytes to string");
-
-    log:printInfo("✓ testOnFileByteArray PASSED");
 }
 
 @test:Config {
@@ -490,8 +480,6 @@ public function testOnFileStream() returns error? {
 
     test:assertTrue(contentMethodInvoked, "onFile (stream) should have been invoked");
     test:assertTrue(streamByteCount > 0, string `Should have processed bytes, got ${streamByteCount}`);
-
-    log:printInfo("✓ testOnFileStream PASSED");
 }
 
 @test:Config {
@@ -575,8 +563,6 @@ public function testExtensionBasedRouting() returns error? {
     test:assertTrue(txtFilesProcessed >= 1, "Should have processed at least 1 TXT file");
     test:assertTrue(jsonFilesProcessed >= 1, "Should have processed at least 1 JSON file");
     test:assertTrue(xmlFilesProcessed >= 1, "Should have processed at least 1 XML file");
-
-    log:printInfo("✓ testExtensionBasedRouting PASSED");
 }
 
 @test:Config {
@@ -650,8 +636,6 @@ public function testFallbackToGenericOnFile() returns error? {
 
     test:assertTrue(fallbackJsonFilesProcessed >= 1, "JSON file should use onFileJson");
     test:assertTrue(fallbackFilesProcessed >= 1, "TXT file should fall back to onFile");
-
-    log:printInfo("✓ testFallbackToGenericOnFile PASSED");
 }
 
 @test:Config {
@@ -720,8 +704,6 @@ public function testFileConfigAnnotationOverride() returns error? {
     }
 
     test:assertTrue(specialFilesProcessed >= 1, "Should have processed .special file as JSON");
-
-    log:printInfo("✓ testFileConfigAnnotationOverride PASSED");
 }
 
 @test:Config {
@@ -786,6 +768,4 @@ public function testOptionalParametersWithoutCaller() returns error? {
 
     test:assertTrue(contentMethodInvoked, "Method should work without Caller parameter");
     test:assertTrue(textContentReceived.length() > 0, "Should have received content");
-
-    log:printInfo("✓ testOptionalParametersWithoutCaller PASSED");
 }
