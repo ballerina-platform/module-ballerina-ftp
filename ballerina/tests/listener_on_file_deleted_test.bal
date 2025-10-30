@@ -194,7 +194,7 @@ public function testOnFileDeletedMultipleFiles() returns error? {
     }
 
     test:assertTrue(deleteEventReceived, "Delete event should have been received");
-    test:assertEquals(deletedFilesReceived.length(), 7,
+    test:assertEquals(deletedFilesReceived.length(), 3,
         string `Should have 3 deleted files, but got ${deletedFilesReceived.length()}`);
 
     // Verify all deleted files are in the list
