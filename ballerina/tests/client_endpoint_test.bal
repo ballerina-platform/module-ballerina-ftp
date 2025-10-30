@@ -242,6 +242,56 @@ public function testPutCompressedFileContent() returns error? {
     }
 }
 
+@test:Config { dependsOn: [testPutFileContent]}
+function testPutBytes() returns error? {
+    byte[] content = "hello-bytes".toBytes();
+    string path = "/home/in/put-bytes.txt";
+
+    check (<Client>clientEp)->putBytes(path, content);
+    byte[] got = check (<Client>clientEp)->getBytes(path);
+
+    test:assertEquals(got.length(), content.length(), msg = "Byte length mismatch");
+    foreach int i in 0 ..< content.length() {
+        test:assertEquals(got[i], content[i], msg = "Byte content mismatch at index " + i.toString());
+    }
+}
+
+@test:Config { dependsOn: [testPutFileContent]}
+function testPutJson() returns error? {
+    json j = { name: "wso2", count: 2, ok: true };
+    string path = "/home/in/put.json";
+
+    check (<Client>clientEp)->putJson(path, j);
+    json got = check (<Client>clientEp)->getJson(path);
+
+    test:assertEquals(got, j, msg = "JSON content mismatch");
+}
+
+@test:Config { dependsOn: [testPutFileContent]}
+function testPutXml() returns error? {
+    xml x = xml`<root><item k="v">42</item></root>`;
+    string path = "/home/in/put.xml";
+
+    check (<Client>clientEp)->putXml(path, x);
+    xml got = check (<Client>clientEp)->getXml(path);
+
+    // Compare string representations for stability
+    test:assertEquals(got.toString(), x.toString(), msg = "XML content mismatch");
+    return;
+}
+
+@test:Config { dependsOn: [testPutFileContent]}
+function testPutText() returns error? {
+    string txt = "hello text content";
+    string path = "/home/in/put.txt";
+
+    check (<Client>clientEp)->putText(path, txt);
+    string got = check (<Client>clientEp)->getText(path);
+
+    test:assertEquals(got, txt, msg = "Text content mismatch");
+    return;
+}
+
 @test:Config {}
 function testFtpUserDirIsRootTrue() returns error? {
     stream<byte[] & readonly, io:Error?>|Error res = (<Client>ftpUserHomeRootClientEp)->get("test1.txt");
