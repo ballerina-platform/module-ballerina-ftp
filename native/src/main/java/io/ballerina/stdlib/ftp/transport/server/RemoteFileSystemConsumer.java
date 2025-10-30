@@ -117,9 +117,6 @@ public class RemoteFileSystemConsumer {
                 this.ageCalculationMode = mode;
             }
         }
-
-        // File dependency conditions will be added from external configuration
-        // The parsing will be done in the factory/helper class
     }
 
     /**
@@ -268,16 +265,15 @@ public class RemoteFileSystemConsumer {
         // Step 1: Check file age filter
         if (!passesAgeFilter(file)) {
             logDebugFileFilteredByAge(file);
-            return; // Skip this file
+            return;
         }
 
         // Step 2: Check file dependencies
         if (!passesDependencyCheck(file)) {
             logDebugFileFilteredByDependency(file);
-            return; // Skip this file
+            return;
         }
 
-        // File passed all filters - add to results
         FileInfo info = new FileInfo(path);
         info.setFileSize(file.getContent().getSize());
         info.setLastModifiedTime(file.getContent().getLastModifiedTime());
@@ -312,7 +308,7 @@ public class RemoteFileSystemConsumer {
         long fileTime;
         try {
             if (FtpConstants.AGE_CALCULATION_MODE_CREATION_TIME.equals(ageCalculationMode)) {
-                // Try to get creation time (not all file systems support this)
+                // Get creation time (not all file systems support this)
                 if (file.getContent().hasAttribute("creationTime")) {
                     Object creationTimeAttr = file.getContent().getAttribute("creationTime");
                     if (creationTimeAttr instanceof Long) {
@@ -339,14 +335,13 @@ public class RemoteFileSystemConsumer {
 
         // Check minimum age
         if (minAge >= 0 && ageInSeconds < minAge) {
-            return false; // File is too young
+            return false;
         }
 
         // Check maximum age
         if (maxAge >= 0 && ageInSeconds > maxAge) {
-            return false; // File is too old
+            return false;
         }
-
         return true;
     }
 
@@ -358,7 +353,7 @@ public class RemoteFileSystemConsumer {
      */
     private boolean passesDependencyCheck(FileObject file) throws FileSystemException {
         if (dependencyConditions.isEmpty()) {
-            return true; // No dependency conditions, pass all files
+            return true;
         }
 
         String fileName = file.getName().getBaseName();
@@ -367,7 +362,7 @@ public class RemoteFileSystemConsumer {
         for (FileDependencyCondition condition : dependencyConditions) {
             // Check if this file matches the target pattern
             if (!fileName.matches(condition.getTargetPattern())) {
-                continue; // This condition doesn't apply to this file
+                continue;
             }
 
             // This file matches the target pattern, check if required files exist
@@ -375,7 +370,7 @@ public class RemoteFileSystemConsumer {
             Matcher matcher = targetPatternCompiled.matcher(fileName);
 
             if (!matcher.matches()) {
-                continue; // Shouldn't happen, but be safe
+                continue;
             }
 
             // Extract capture groups for substitution
@@ -386,11 +381,11 @@ public class RemoteFileSystemConsumer {
 
             // Check required files based on matching mode
             if (!checkRequiredFiles(condition, captureGroups)) {
-                return false; // Required files not found
+                return false;
             }
         }
 
-        return true; // All applicable dependency conditions passed
+        return true;
     }
 
     /**
@@ -436,7 +431,7 @@ public class RemoteFileSystemConsumer {
                     }
                 }
                 if (!found) {
-                    return false; // Required file not found
+                    return false;
                 }
             }
             return true;
@@ -446,11 +441,11 @@ public class RemoteFileSystemConsumer {
             for (String pattern : resolvedPatterns) {
                 for (String siblingName : siblingNames) {
                     if (siblingName.matches(pattern)) {
-                        return true; // Found at least one
+                        return true;
                     }
                 }
             }
-            return false; // No required files found
+            return false;
 
         } else if (FtpConstants.DEPENDENCY_MATCHING_MODE_EXACT_COUNT.equals(matchingMode)) {
             // Exact count of files must match (across all patterns)
@@ -465,7 +460,7 @@ public class RemoteFileSystemConsumer {
             return matchCount == condition.getRequiredFileCount();
         }
 
-        return true; // Unknown matching mode, pass by default
+        return true;
     }
 
     @ExcludeCoverageFromGeneratedReport

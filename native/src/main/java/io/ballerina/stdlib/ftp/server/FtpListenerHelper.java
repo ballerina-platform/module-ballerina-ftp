@@ -39,6 +39,7 @@ import io.ballerina.stdlib.ftp.util.CronScheduler;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.ftp.util.ModuleUtils;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -290,7 +291,7 @@ public class FtpListenerHelper {
                 Object result = poll(ftpListener);
                 if (result instanceof BError) {
                     // Log error but don't stop scheduler
-                    org.slf4j.LoggerFactory.getLogger(FtpListenerHelper.class)
+                    LoggerFactory.getLogger(FtpListenerHelper.class)
                             .error("Error during FTP poll: {}", ((BError) result).getMessage());
                 }
             };
