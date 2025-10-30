@@ -182,7 +182,7 @@ public isolated client class Client {
     # + return - `()` or else an `ftp:Error` if failed to write
     remote isolated function putBytes(string path, byte[] content, FileWriteOption option = OVERWRITE) returns Error? = @java:Method {
         name: "putBytes",
-        'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
     } external;
 
     # Adds a file to an FTP server with the specified write option.
@@ -196,7 +196,7 @@ public isolated client class Client {
     # + return - `()` or else an `ftp:Error` if failed to write
     remote isolated function putText(string path, string content, FileWriteOption option = OVERWRITE) returns Error? = @java:Method {
         name: "putText",
-        'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
     } external;
 
     # Adds a file to an FTP server with the specified write option.
