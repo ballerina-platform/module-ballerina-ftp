@@ -15,6 +15,9 @@
 // under the License.
 
 import ballerina/io;
+import ballerina/jballerina.java;
+import ballerina/data.jsondata as _;
+import ballerina/data.xmldata;
 
 # Represents an FTP client that intracts with an FTP server
 public isolated client class Client {
@@ -37,8 +40,11 @@ public isolated client class Client {
     # stream<byte[] & readonly, io:Error?>|ftp:Error channel = client->get(path);
     # ```
     #
+    # Deprecated: Use `getText` or `getJson` instead for retrieving file content.
+    #
     # + path - The resource path
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
+    @deprecated
     remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error {
         ByteStream|Error byteStream = new (self, path);
         if byteStream is ByteStream {
@@ -49,15 +55,94 @@ public isolated client class Client {
 
     }
 
+    # Retrieves the file content as bytes from a remote resource.
+    # ```ballerina
+    # byte[] content = check client->getBytes(path);
+    # ```
+    # 
+    # + path - The resource path
+    # + return - content as a byte array or `ftp:Error` in case of errors
+    remote isolated function getBytes(string path) returns byte[]|Error {
+        return getBytes(self, path);
+    }
+
+    # Retrieves the file content as text from a remote resource.
+    # ```ballerina
+    # string content = check client->getText(path);
+    # ```
+    #
+    # + path - The resource path
+    # + return - content as a string or `ftp:Error` in case of errors
+    remote isolated function getText(string path) returns string|Error {
+        return getText(self, path);
+    }
+
+    # Retrieves the file content as json from a remote resource.
+    # ```ballerina
+    # json content = check client->getJson(path);
+    # ```
+    #
+    # + path - The resource path
+    # + targetType - The target type of the json content
+    #                 (e.g., `json`, `record {}`, or a user-defined record type)
+    # + return - content as a json or `ftp:Error` in case of errors
+    remote isolated function getJson(string path, typedesc<json|record{}> targetType = <>) returns targetType|Error = @java:Method {
+        name: "getJson",
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+    } external;
+
+    # Retrieves the file content as xml from a remote resource.
+    # ```ballerina
+    # xml content = check client->getXml(path);
+    # ```
+    #
+    # + path - The resource path
+    # + targetType - The target type of the xml content
+    #                 (e.g., `xml`, `record {}`, or a user-defined record type)
+    # + return - content as a xml or `ftp:Error` in case of errors
+    remote isolated function getXml(string path, typedesc<xml|record{}> targetType = <>) returns targetType|Error = @java:Method {
+        name: "getXml",
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+    } external;
+
+    # Fetches file content from the FTP server as CSV.
+    # When the expected data type is record[], the first entry of the csv file should contain matching headers.
+    # ```ballerina
+    # string[][] content = check client->getCsv(path);
+    # ```
+    # 
+    # + path - The path to the file on the FTP server
+    # + targetType - The target type of the CSV content
+    #                 (e.g., `string[][]`, `record {}[]`, or an array of user-defined record type)
+    # + return - content as a string[][] or `ftp:Error` in case of errors
+    remote isolated function getCsv(string path, typedesc<string[][]|record{}[]> targetType = <>) returns targetType|Error  = @java:Method {
+        name: "getCsv",
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+    } external;
+
+    # Retrieves the file content as a byte stream from a remote resource.
+    # ```ballerina
+    # stream<byte[], error?> response = check client->getBytesAsStream(path);
+    # ```
+    #
+    # + path - The path to the file on the FTP server
+    # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
+    remote isolated function getBytesAsStream(string path) returns stream<byte[], error?>|Error = @java:Method {
+        name: "getBytesAsStream",
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+    } external;
+
     # Appends the content to an existing file in an FTP server.
     # ```ballerina
     # ftp:Error? response = client->append(path, channel);
     # ```
+    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvFromStream`
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
+    @deprecated
     remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content)
             returns Error? {
         return append(self, getInputContent(path, content));
@@ -67,6 +152,7 @@ public isolated client class Client {
     # ```ballerina
     # ftp:Error? response = client->put(path, channel);
     # ```
+    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvFromStream`
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
@@ -75,6 +161,7 @@ public isolated client class Client {
     #                     uploading
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
+    @deprecated
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
             |string|xml|json content, Compression compressionType = NONE) returns Error? {
         boolean compress = false;
@@ -82,6 +169,65 @@ public isolated client class Client {
             compress = true;
         }
         return put(self, getInputContent(path, content, compress));
+    }
+
+    # Adds a byte array as a file to an FTP server with the specified write option.
+    # ```ballerina
+    # ftp:Error? response = client->putBytes(path, content, option);
+    # ```
+    # 
+    # + path - The resource path
+    # + content - Content to be written to the file in server
+    # + option - To indicate whether to overwrite or append the given content
+    # + return - `()` or else an `ftp:Error` if failed to write
+    remote isolated function putBytes(string path, byte[] content, FileWriteOption option = OVERWRITE) returns Error? = @java:Method {
+        name: "putBytes",
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
+    } external;
+
+    # Adds a file to an FTP server with the specified write option.
+    # ```ballerina
+    # ftp:Error? response = client->putText(path, content, option);
+    # ```
+    # 
+    # + path - The resource path
+    # + content - Content to be written to the file in server
+    # + option - To indicate whether to overwrite or append the given content
+    # + return - `()` or else an `ftp:Error` if failed to write
+    remote isolated function putText(string path, string content, FileWriteOption option = OVERWRITE) returns Error? = @java:Method {
+        name: "putText",
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
+    } external;
+
+    # Adds a file to an FTP server with the specified write option.
+    # ```ballerina
+    # ftp:Error? response = client->putJson(path, content, option);
+    # ```
+    # 
+    # + path - The resource path
+    # + content - Content to be written to the file in server
+    # + option - To indicate whether to overwrite or append the given content
+    # + return - `()` or else an `ftp:Error` if failed to write
+    remote isolated function putJson(string path, json|record{} content, FileWriteOption option = OVERWRITE) returns Error? {
+        string jsonVal = content is json ? content.toJsonString() : content.toJsonString();
+        return putJson(self, path, jsonVal, option);
+    }
+
+    # Adds a file to an FTP server with the specified write option.
+    # ```ballerina
+    # ftp:Error? response = client->putXml(path, content, option);
+    # ```
+    # 
+    # + path - The resource path
+    # + content - Content to be written to the file in server
+    # + option - To indicate whether to overwrite or append the given content
+    # + return - `()` or else an `ftp:Error` if failed to write
+    remote isolated function putXml(string path, xml|record{} content, FileWriteOption option = OVERWRITE) returns Error? {
+        xml|error xmldata = content is xml ? content : xmldata:toXml(content);
+        if xmldata is error {
+            return error Error("Failed to convert record to XML: " + xmldata.message());
+        }
+        return putXml(self, path, xmldata, option);
     }
 
     # Creates a new directory in an FTP server.
@@ -171,6 +317,15 @@ public isolated client class Client {
     }
 }
 
+# Represents a file opening options for writing.
+#
+# + OVERWRITE - Overwrite(truncate the existing content)
+# + APPEND - Append to the existing content
+public enum FileWriteOption {
+    OVERWRITE,
+    APPEND
+}
+
 # Compression type.
 #
 # + ZIP - Zip compression
@@ -190,12 +345,16 @@ public enum Compression {
 #                   prevents the underlying VFS from attempting to change to the actual server root. 
 #                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command 
 #                   that can fail on servers restricting root access (e.g., chrooted environments).
+# + laxDataBinding - If set to `true`, enables relaxed  data binding for XML and JSON responses.
+#                    null values in JSON/XML are allowed to be mapped to optional fields
+#                    missing fields in JSON/XML are allowed to be mapped as null values
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
     int port = 21;
     AuthConfiguration auth?;
     boolean userDirIsRoot = false;
+    boolean laxDataBinding = false;
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,
