@@ -74,4 +74,8 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
     public FtpListener getFtpListener() {
         return consumer.getFtpListener();
     }
+
+    public RemoteFileSystemConsumer getConsumer() {
+        return consumer;
+    }
 }

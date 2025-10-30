@@ -36,9 +36,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Provides the capability to process a file and move/delete it afterwards.
@@ -56,6 +59,12 @@ public class RemoteFileSystemConsumer {
     private List<String> processed = new ArrayList<>();
     private List<String> current;
     private List<FileInfo> addedFileInfo;
+
+    // Advanced file selection fields
+    private double minAge = -1; // in seconds, -1 means disabled
+    private double maxAge = -1; // in seconds, -1 means disabled
+    private String ageCalculationMode = FtpConstants.AGE_CALCULATION_MODE_LAST_MODIFIED;
+    private List<FileDependencyCondition> dependencyConditions = new ArrayList<>();
 
     /**
      * Constructor for the RemoteFileSystemConsumer.
@@ -88,6 +97,29 @@ public class RemoteFileSystemConsumer {
         if (fileProperties.get(FtpConstants.FILE_NAME_PATTERN) != null) {
             fileNamePattern = fileProperties.get(FtpConstants.FILE_NAME_PATTERN);
         }
+
+        // Parse file age filter configuration
+        if (fileProperties.containsKey(FtpConstants.FILE_AGE_FILTER_MIN_AGE)) {
+            String minAgeStr = fileProperties.get(FtpConstants.FILE_AGE_FILTER_MIN_AGE);
+            if (minAgeStr != null && !minAgeStr.isEmpty()) {
+                this.minAge = Double.parseDouble(minAgeStr);
+            }
+        }
+        if (fileProperties.containsKey(FtpConstants.FILE_AGE_FILTER_MAX_AGE)) {
+            String maxAgeStr = fileProperties.get(FtpConstants.FILE_AGE_FILTER_MAX_AGE);
+            if (maxAgeStr != null && !maxAgeStr.isEmpty()) {
+                this.maxAge = Double.parseDouble(maxAgeStr);
+            }
+        }
+        if (fileProperties.containsKey(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE)) {
+            String mode = fileProperties.get(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE);
+            if (mode != null && !mode.isEmpty()) {
+                this.ageCalculationMode = mode;
+            }
+        }
+
+        // File dependency conditions will be added from external configuration
+        // The parsing will be done in the factory/helper class
     }
 
     /**
@@ -174,6 +206,15 @@ public class RemoteFileSystemConsumer {
         return (FtpListener) remoteFileSystemListener;
     }
 
+    /**
+     * Set file dependency conditions for conditional file processing.
+     *
+     * @param conditions List of dependency conditions
+     */
+    public void setFileDependencyConditions(List<FileDependencyCondition> conditions) {
+        this.dependencyConditions = conditions != null ? conditions : new ArrayList<>();
+    }
+
     private void closeDirectories() {
         try {
             if (listeningDir != null) {
@@ -223,6 +264,20 @@ public class RemoteFileSystemConsumer {
      */
     private void handleFile(FileObject file) throws FileSystemException {
         String path = file.getName().getURI();
+
+        // Step 1: Check file age filter
+        if (!passesAgeFilter(file)) {
+            logDebugFileFilteredByAge(file);
+            return; // Skip this file
+        }
+
+        // Step 2: Check file dependencies
+        if (!passesDependencyCheck(file)) {
+            logDebugFileFilteredByDependency(file);
+            return; // Skip this file
+        }
+
+        // File passed all filters - add to results
         FileInfo info = new FileInfo(path);
         info.setFileSize(file.getContent().getSize());
         info.setLastModifiedTime(file.getContent().getLastModifiedTime());
@@ -240,6 +295,177 @@ public class RemoteFileSystemConsumer {
         info.setUrl(file.getURL());
         addedFileInfo.add(info);
         processed.add(path);
+    }
+
+    /**
+     * Check if a file passes the age filter.
+     *
+     * @param file The file to check
+     * @return true if the file passes the age filter, false otherwise
+     */
+    private boolean passesAgeFilter(FileObject file) throws FileSystemException {
+        // If both minAge and maxAge are disabled, pass all files
+        if (minAge < 0 && maxAge < 0) {
+            return true;
+        }
+
+        long fileTime;
+        try {
+            if (FtpConstants.AGE_CALCULATION_MODE_CREATION_TIME.equals(ageCalculationMode)) {
+                // Try to get creation time (not all file systems support this)
+                if (file.getContent().hasAttribute("creationTime")) {
+                    Object creationTimeAttr = file.getContent().getAttribute("creationTime");
+                    if (creationTimeAttr instanceof Long) {
+                        fileTime = (Long) creationTimeAttr;
+                    } else {
+                        // Fall back to last modified time
+                        fileTime = file.getContent().getLastModifiedTime();
+                    }
+                } else {
+                    // Fall back to last modified time
+                    fileTime = file.getContent().getLastModifiedTime();
+                }
+            } else {
+                // Use last modified time (default)
+                fileTime = file.getContent().getLastModifiedTime();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to get file time for age filtering, using last modified time", e);
+            fileTime = file.getContent().getLastModifiedTime();
+        }
+
+        long currentTime = System.currentTimeMillis();
+        double ageInSeconds = (currentTime - fileTime) / 1000.0;
+
+        // Check minimum age
+        if (minAge >= 0 && ageInSeconds < minAge) {
+            return false; // File is too young
+        }
+
+        // Check maximum age
+        if (maxAge >= 0 && ageInSeconds > maxAge) {
+            return false; // File is too old
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if a file passes all dependency conditions.
+     *
+     * @param file The file to check
+     * @return true if the file passes all dependency checks, false otherwise
+     */
+    private boolean passesDependencyCheck(FileObject file) throws FileSystemException {
+        if (dependencyConditions.isEmpty()) {
+            return true; // No dependency conditions, pass all files
+        }
+
+        String fileName = file.getName().getBaseName();
+
+        // Check each dependency condition
+        for (FileDependencyCondition condition : dependencyConditions) {
+            // Check if this file matches the target pattern
+            if (!fileName.matches(condition.getTargetPattern())) {
+                continue; // This condition doesn't apply to this file
+            }
+
+            // This file matches the target pattern, check if required files exist
+            Pattern targetPatternCompiled = Pattern.compile(condition.getTargetPattern());
+            Matcher matcher = targetPatternCompiled.matcher(fileName);
+
+            if (!matcher.matches()) {
+                continue; // Shouldn't happen, but be safe
+            }
+
+            // Extract capture groups for substitution
+            Map<String, String> captureGroups = new HashMap<>();
+            for (int i = 0; i <= matcher.groupCount(); i++) {
+                captureGroups.put("$" + i, matcher.group(i));
+            }
+
+            // Check required files based on matching mode
+            if (!checkRequiredFiles(condition, captureGroups)) {
+                return false; // Required files not found
+            }
+        }
+
+        return true; // All applicable dependency conditions passed
+    }
+
+    /**
+     * Check if required files exist based on the matching mode.
+     *
+     * @param condition The dependency condition
+     * @param captureGroups Map of capture groups from the target pattern match
+     * @return true if required files exist according to matching mode
+     */
+    private boolean checkRequiredFiles(FileDependencyCondition condition,
+                                        Map<String, String> captureGroups) throws FileSystemException {
+        List<String> requiredPatterns = condition.getRequiredFiles();
+        String matchingMode = condition.getMatchingMode();
+
+        // Substitute capture groups in required file patterns
+        List<String> resolvedPatterns = new ArrayList<>();
+        for (String pattern : requiredPatterns) {
+            String resolved = pattern;
+            for (Map.Entry<String, String> entry : captureGroups.entrySet()) {
+                resolved = resolved.replace(entry.getKey(), entry.getValue());
+            }
+            resolvedPatterns.add(resolved);
+        }
+
+        // Get all files in the listening directory (shallow, non-recursive)
+        FileObject[] siblings = listeningDir.getChildren();
+        List<String> siblingNames = new ArrayList<>();
+        for (FileObject sibling : siblings) {
+            if (sibling.getType() == FileType.FILE) {
+                siblingNames.add(sibling.getName().getBaseName());
+            }
+        }
+
+        // Count matches based on matching mode
+        if (FtpConstants.DEPENDENCY_MATCHING_MODE_ALL.equals(matchingMode)) {
+            // All patterns must have at least one match
+            for (String pattern : resolvedPatterns) {
+                boolean found = false;
+                for (String siblingName : siblingNames) {
+                    if (siblingName.matches(pattern)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    return false; // Required file not found
+                }
+            }
+            return true;
+
+        } else if (FtpConstants.DEPENDENCY_MATCHING_MODE_ANY.equals(matchingMode)) {
+            // At least one pattern must have a match
+            for (String pattern : resolvedPatterns) {
+                for (String siblingName : siblingNames) {
+                    if (siblingName.matches(pattern)) {
+                        return true; // Found at least one
+                    }
+                }
+            }
+            return false; // No required files found
+
+        } else if (FtpConstants.DEPENDENCY_MATCHING_MODE_EXACT_COUNT.equals(matchingMode)) {
+            // Exact count of files must match (across all patterns)
+            int matchCount = 0;
+            for (String pattern : resolvedPatterns) {
+                for (String siblingName : siblingNames) {
+                    if (siblingName.matches(pattern)) {
+                        matchCount++;
+                    }
+                }
+            }
+            return matchCount == condition.getRequiredFileCount();
+        }
+
+        return true; // Unknown matching mode, pass by default
     }
 
     @ExcludeCoverageFromGeneratedReport
@@ -298,6 +524,30 @@ public class RemoteFileSystemConsumer {
         if (log.isDebugEnabled()) {
             log.debug("End : Scanning directory or file : " + FileTransportUtils
                     .maskUrlPassword(listeningDirURI));
+        }
+    }
+
+    @ExcludeCoverageFromGeneratedReport
+    private void logDebugFileFilteredByAge(FileObject file) {
+        if (log.isDebugEnabled()) {
+            try {
+                log.debug("File " + file.getName().getFriendlyURI()
+                        + " is filtered out by age filter (minAge: " + minAge + ", maxAge: " + maxAge + ")");
+            } catch (Exception e) {
+                log.debug("File is filtered out by age filter", e);
+            }
+        }
+    }
+
+    @ExcludeCoverageFromGeneratedReport
+    private void logDebugFileFilteredByDependency(FileObject file) {
+        if (log.isDebugEnabled()) {
+            try {
+                log.debug("File " + file.getName().getFriendlyURI()
+                        + " is filtered out due to missing required dependency files");
+            } catch (Exception e) {
+                log.debug("File is filtered out by dependency check", e);
+            }
         }
     }
 }

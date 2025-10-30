@@ -83,3 +83,49 @@ public type InputContent record {|
     string textContent?;
     boolean compressInput = false;
 |};
+
+# Mode for calculating file age.
+#
+# + LAST_MODIFIED - Use file's last modified timestamp (default)
+# + CREATION_TIME - Use file's creation timestamp (where supported by file system)
+public enum AgeCalculationMode {
+    LAST_MODIFIED,
+    CREATION_TIME
+}
+
+# Configuration for file age filtering.
+#
+# + minAge - Minimum age of file in seconds since last modification/creation (inclusive).
+#            Files younger than this will be skipped. -1 or absence means no minimum age requirement.
+# + maxAge - Maximum age of file in seconds since last modification/creation (inclusive).
+#            Files older than this will be skipped. -1 or absence means no maximum age requirement.
+# + ageCalculationMode - Whether to calculate age based on last modified time or creation time
+public type FileAgeFilter record {|
+    decimal minAge = -1;
+    decimal maxAge = -1;
+    AgeCalculationMode ageCalculationMode = LAST_MODIFIED;
+|};
+
+# How required dependency files should be matched.
+#
+# + ALL - All required file patterns must have at least one matching file (default)
+# + ANY - At least one required file pattern must have a matching file
+# + EXACT_COUNT - Exact number of required files must match (count specified in requiredFileCount)
+public enum DependencyMatchingMode {
+    ALL,
+    ANY,
+    EXACT_COUNT
+}
+
+# Represents a dependency condition where processing of target files depends on existence of other files.
+#
+# + targetPattern - Regex pattern for files that should be processed conditionally
+# + requiredFiles - Array of file patterns that must exist. Supports capture group substitution (e.g., "$1")
+# + matchingMode - How to match required files (ALL, ANY, or EXACT_COUNT)
+# + requiredFileCount - For EXACT_COUNT mode, specifies the exact number of required files
+public type FileDependencyCondition record {|
+    string targetPattern;
+    string[] requiredFiles;
+    DependencyMatchingMode matchingMode = ALL;
+    int requiredFileCount = 1;
+|};
