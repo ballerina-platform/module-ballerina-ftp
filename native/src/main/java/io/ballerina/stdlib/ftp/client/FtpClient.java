@@ -412,12 +412,6 @@ public class FtpClient {
         });
     }
 
-
-    public static Object putBytesFromStream(Environment env, BObject clientConnector, BString path,
-                                            BStream inputContent, BString options) {
-        return null;
-    }
-
     public static Object delete(Environment env, BObject clientConnector, BString filePath) {
         return env.yieldAndRun(() -> {
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
