@@ -119,8 +119,6 @@ public function testOnFileDeletedSingleFile() returns error? {
         }
     }
     test:assertTrue(foundOurFile, "Should have deleted testFile1.deleted1");
-
-    log:printInfo("✓ testOnFileDeletedSingleFile PASSED");
 }
 
 @test:Config {
@@ -196,7 +194,7 @@ public function testOnFileDeletedMultipleFiles() returns error? {
     }
 
     test:assertTrue(deleteEventReceived, "Delete event should have been received");
-    test:assertEquals(deletedFilesReceived.length(), 10,
+    test:assertEquals(deletedFilesReceived.length(), 3,
         string `Should have 3 deleted files, but got ${deletedFilesReceived.length()}`);
 
     // Verify all deleted files are in the list
@@ -217,8 +215,6 @@ public function testOnFileDeletedMultipleFiles() returns error? {
     test:assertTrue(foundFileA, "Should find testFile2A.deleted2 in deleted files");
     test:assertTrue(foundFileB, "Should find testFile2B.deleted2 in deleted files");
     test:assertTrue(foundFileC, "Should find testFile2C.deleted2 in deleted files");
-
-    log:printInfo("✓ testOnFileDeletedMultipleFiles PASSED");
 }
 
 @test:Config {
@@ -290,8 +286,6 @@ public function testOnFileDeletedWithCaller() returns error? {
     test:assertEquals(deletedFilesWithCaller.length(), 1, "Should have 1 deleted file");
     test:assertTrue(deletedFilesWithCaller[0].includes("testFile3.deleted3"),
         "Deleted file path should contain 'testFile3.deleted3'");
-
-    log:printInfo("✓ testOnFileDeletedWithCaller PASSED");
 }
 
 @test:Config {
@@ -374,8 +368,6 @@ public function testOnFileDeletedWithFileNamePattern() returns error? {
         test:assertFalse(deletedFile.includes("nonMatchingFile.other"),
             "Non-matching file should not be in deleted files list");
     }
-
-    log:printInfo("✓ testOnFileDeletedWithFileNamePattern PASSED");
 }
 
 @test:Config {
@@ -422,8 +414,6 @@ public function testOnFileDeletedNoFilesDeleted() returns error? {
     // Assertions - onFileDeleted should NOT have been invoked
     test:assertFalse(deleteEventReceived, "Delete event should NOT have been received when no files deleted");
     test:assertEquals(deleteEventCount, 0, "Should have received 0 delete events");
-
-    log:printInfo("✓ testOnFileDeletedNoFilesDeleted PASSED");
 }
 
 @test:Config {
@@ -487,8 +477,6 @@ public function testOnFileDeletedErrorHandling() returns error? {
     }
 
     test:assertTrue(deleteEventReceived, "Delete event should have been received even with error");
-
-    log:printInfo("✓ testOnFileDeletedErrorHandling PASSED");
 }
 
 @test:Config {
@@ -554,6 +542,4 @@ public function testOnFileDeletedIsolatedService() returns error? {
 
     test:assertTrue(deleteEventReceived, "Delete event should have been received");
     test:assertEquals(deletedFilesReceived.length(), 1, "Should have 1 deleted file");
-
-    log:printInfo("✓ testOnFileDeletedIsolatedService PASSED");
 }
