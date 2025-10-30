@@ -257,6 +257,25 @@ function testPutBytes() returns error? {
 }
 
 @test:Config { dependsOn: [testPutFileContent]}
+function testGetBytesAsStream() returns error? {
+    byte[] content = "hello-bytes".toBytes();
+    string path = "/home/in/put-bytes.txt";
+
+    check (<Client>clientEp)->putBytes(path, content);
+    stream<byte[], error?> got = check (<Client>clientEp)->getBytesAsStream(path);
+    byte[] accumulatedBytes = [];
+    check from byte[] byteChunk in got 
+    do {
+        accumulatedBytes.push(...byteChunk);
+    };
+
+    test:assertEquals(accumulatedBytes.length(), content.length(), msg = "Byte length mismatch");
+    foreach int i in 0 ..< content.length() {
+        test:assertEquals(accumulatedBytes[i], content[i], msg = "Byte content mismatch at index " + i.toString());
+    }
+}
+
+@test:Config { dependsOn: [testPutFileContent]}
 function testPutJson() returns error? {
     json j = { name: "wso2", count: 2, ok: true };
     string path = "/home/in/put.json";
