@@ -67,7 +67,7 @@ public class FtpClient {
     public static Object initClientEndpoint(BObject clientEndpoint, BMap<Object, Object> config) {
         String protocol = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL)))
                 .getValue();
-        Map<String, String> authMap = FtpUtil.getAuthMap(config);
+        Map<String, String> authMap = FtpUtil.getAuthMap(config, protocol);
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME,
                 authMap.get(FtpConstants.ENDPOINT_CONFIG_USERNAME));
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PASS_KEY,
