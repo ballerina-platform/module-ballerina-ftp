@@ -143,6 +143,10 @@ public class FtpUtil {
         return "/" + rawPath;
     }
 
+    public static Map<String, String> getAuthMap(BMap config) {
+        return getAuthMap(config, FtpConstants.SCHEME_FTP);
+    }
+
     public static Map<String, String> getAuthMap(BMap config, String protocol) {
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
