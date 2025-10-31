@@ -35,9 +35,9 @@ import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryIm
 import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
 import io.ballerina.stdlib.ftp.transport.server.RemoteFileSystemConsumer;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
+import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.RemoteFileSystemServerConnectorImpl;
 import io.ballerina.stdlib.ftp.util.CronExpression;
 import io.ballerina.stdlib.ftp.util.CronScheduler;
-import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.RemoteFileSystemServerConnectorImpl;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.ftp.util.ModuleUtils;
@@ -92,6 +92,7 @@ public class FtpListenerHelper {
             RemoteFileSystemConsumer consumer = serverConnector.getConsumer();
             if (consumer != null && !dependencyConditions.isEmpty()) {
                 consumer.setFileDependencyConditions(dependencyConditions);
+            }
 
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             // This is a temporary solution

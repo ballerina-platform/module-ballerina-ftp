@@ -79,6 +79,8 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
 
     public RemoteFileSystemConsumer getConsumer() {
         return consumer;
+    }
+
     public FileSystemManager getFileSystemManager() {
         return consumer.getFileSystemManager();
     }
