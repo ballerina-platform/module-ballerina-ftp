@@ -47,3 +47,22 @@ groupId = "io.ballerina.stdlib"
 artifactId = "ftp-native"
 version = "@toml.version@"
 path = "../native/build/libs/ftp-native-@project.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.ballerina.lib"
+artifactId = "data.jsondata-native"
+version = "@data.jsondata.version@"
+path = "./lib/data.jsondata-native-@data.jsondata.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.ballerina.lib"
+artifactId = "data.xmldata-native"
+version = "@data.xmldata.version@"
+path = "./lib/data.xmldata-native-@data.xmldata.version@.jar"
+
+
+[[platform.java21.dependency]]
+groupId = "io.ballerina.lib"
+artifactId = "data.csv-native"
+version = "@data.csv.version@"
+path = "./lib/data.csv-native-@data.csv.version@.jar"

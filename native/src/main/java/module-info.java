@@ -24,6 +24,9 @@ module io.ballerina.stdlib.ftp {
     requires org.slf4j;
     requires java.logging;
     requires org.apache.commons.vfs2;
+    requires io.ballerina.lib.data;
+    requires io.ballerina.lib.data.xmldata;
+    requires io.ballerina.lib.data.csvdata;
     exports io.ballerina.stdlib.ftp.client;
     exports io.ballerina.stdlib.ftp.server;
     exports io.ballerina.stdlib.ftp.util;

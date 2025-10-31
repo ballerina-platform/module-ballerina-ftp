@@ -23,7 +23,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "ftp"
-version = "2.14.2"
+version = "2.15.0"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "io"},
