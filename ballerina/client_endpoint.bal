@@ -345,6 +345,12 @@ public enum Compression {
 #                   prevents the underlying VFS from attempting to change to the actual server root. 
 #                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command 
 #                   that can fail on servers restricting root access (e.g., chrooted environments).
+# + connectTimeout - Connection timeout in seconds (default: 30.0 for FTP, 10.0 for SFTP)
+# + socketConfig - Socket timeout configurations (optional)
+# + ftpFileType - File transfer type: BINARY or ASCII (FTP only, default: BINARY)
+# + sftpCompression - Compression algorithms (SFTP only, default: "none")
+# + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
+# + proxy - Proxy configuration for SFTP connections (SFTP only)
 # + laxDataBinding - If set to `true`, enables relaxed  data binding for XML and JSON responses.
 #                    null values in JSON/XML are allowed to be mapped to optional fields
 #                    missing fields in JSON/XML are allowed to be mapped as null values
@@ -354,6 +360,12 @@ public type ClientConfiguration record {|
     int port = 21;
     AuthConfiguration auth?;
     boolean userDirIsRoot = false;
+    decimal connectTimeout = 30.0;
+    SocketConfig socketConfig?;
+    ProxyConfiguration proxy?;
+    FtpFileType ftpFileType = BINARY;
+    string sftpCompression = "none";
+    string sftpSshKnownHosts?;
     boolean laxDataBinding = false;
 |};
 

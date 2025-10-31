@@ -28,6 +28,7 @@ import io.ballerina.runtime.api.types.PredefinedTypes;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.XmlUtils;
 import io.ballerina.runtime.api.values.BArray;
+import io.ballerina.runtime.api.values.BDecimal;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -93,7 +94,7 @@ public class FtpClient {
                 FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PORT))));
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
-        Map<String, String> ftpConfig = new HashMap<>(6);
+        Map<String, String> ftpConfig = new HashMap<>(20);
         BMap auth = config.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_AUTH));
         if (auth != null) {
             final BMap privateKey = auth.getMapValue(StringUtils.fromString(
@@ -114,6 +115,18 @@ public class FtpClient {
         boolean userDirIsRoot = config.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
         ftpConfig.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         ftpConfig.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
+
+        // Extract new VFS configurations
+        try {
+            extractTimeoutConfigurations(config, ftpConfig, protocol);
+            extractFileTypeConfiguration(config, ftpConfig);
+            extractCompressionConfiguration(config, ftpConfig);
+            extractKnownHostsConfiguration(config, ftpConfig);
+            extractProxyConfiguration(config, ftpConfig);
+        } catch (BallerinaFtpException e) {
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
+        }
+
         String url;
         try {
             url = FtpUtil.createUrl(clientEndpoint, "");
@@ -130,6 +143,129 @@ public class FtpClient {
             return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         }
         return null;
+    }
+
+    private static void extractTimeoutConfigurations(BMap<Object, Object> config, Map<String, String> ftpConfig,
+                                                     String protocol) throws BallerinaFtpException {
+        // Extract connectTimeout
+        Object connectTimeoutObj = config.get(StringUtils.fromString(FtpConstants.CONNECT_TIMEOUT));
+        if (connectTimeoutObj != null) {
+            double connectTimeout = ((BDecimal) connectTimeoutObj).floatValue();
+            validateTimeout(connectTimeout, "connectTimeout");
+            ftpConfig.put(FtpConstants.CONNECT_TIMEOUT, String.valueOf(connectTimeout));
+        } else {
+            // Default: 30.0 for FTP, 10.0 for SFTP
+            String defaultTimeout = protocol.equalsIgnoreCase(FtpConstants.SCHEME_SFTP) ? "10.0" : "30.0";
+            ftpConfig.put(FtpConstants.CONNECT_TIMEOUT, defaultTimeout);
+        }
+
+        // Extract socketConfig
+        BMap socketConfig = config.getMapValue(StringUtils.fromString(FtpConstants.SOCKET_CONFIG));
+        if (socketConfig != null) {
+            // Extract ftpDataTimeout
+            Object ftpDataTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.FTP_DATA_TIMEOUT));
+            if (ftpDataTimeoutObj != null) {
+                double ftpDataTimeout = ((BDecimal) ftpDataTimeoutObj).floatValue();
+                validateTimeout(ftpDataTimeout, "ftpDataTimeout");
+                ftpConfig.put(FtpConstants.FTP_DATA_TIMEOUT, String.valueOf(ftpDataTimeout));
+            }
+
+            // Extract ftpSocketTimeout
+            Object ftpSocketTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.FTP_SOCKET_TIMEOUT));
+            if (ftpSocketTimeoutObj != null) {
+                double ftpSocketTimeout = ((BDecimal) ftpSocketTimeoutObj).floatValue();
+                validateTimeout(ftpSocketTimeout, "ftpSocketTimeout");
+                ftpConfig.put(FtpConstants.FTP_SOCKET_TIMEOUT, String.valueOf(ftpSocketTimeout));
+            }
+
+            // Extract sftpSessionTimeout
+            Object sftpSessionTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.SFTP_SESSION_TIMEOUT));
+            if (sftpSessionTimeoutObj != null) {
+                double sftpSessionTimeout = ((BDecimal) sftpSessionTimeoutObj).floatValue();
+                validateTimeout(sftpSessionTimeout, "sftpSessionTimeout");
+                ftpConfig.put(FtpConstants.SFTP_SESSION_TIMEOUT, String.valueOf(sftpSessionTimeout));
+            }
+        }
+    }
+
+    private static void validateTimeout(double timeout, String fieldName) throws BallerinaFtpException {
+        if (timeout < 0) {
+            throw new BallerinaFtpException(fieldName + " must be positive or zero (got: " + timeout + ")");
+        }
+        if (timeout > 600) {
+            throw new BallerinaFtpException(fieldName + " must not exceed 600 seconds (got: " + timeout + ")");
+        }
+    }
+
+    private static void extractFileTypeConfiguration(BMap<Object, Object> config, Map<String, String> ftpConfig) {
+        BString ftpFileType = config.getStringValue(StringUtils.fromString(FtpConstants.FTP_FILE_TYPE));
+        if (ftpFileType != null && !ftpFileType.getValue().isEmpty()) {
+            ftpConfig.put(FtpConstants.FTP_FILE_TYPE, ftpFileType.getValue());
+        }
+    }
+
+    private static void extractCompressionConfiguration(BMap<Object, Object> config, Map<String, String> ftpConfig) {
+        BString sftpCompression = config.getStringValue(StringUtils.fromString(FtpConstants.SFTP_COMPRESSION));
+        if (sftpCompression != null && !sftpCompression.getValue().isEmpty()) {
+            ftpConfig.put(FtpConstants.SFTP_COMPRESSION, sftpCompression.getValue());
+        }
+    }
+
+    private static void extractKnownHostsConfiguration(BMap<Object, Object> config, Map<String, String> ftpConfig) {
+        BString knownHosts = config.getStringValue(StringUtils.fromString(FtpConstants.SFTP_KNOWN_HOSTS));
+        if (knownHosts != null && !knownHosts.getValue().isEmpty()) {
+            ftpConfig.put(FtpConstants.SFTP_KNOWN_HOSTS, knownHosts.getValue());
+        }
+    }
+
+    private static void extractProxyConfiguration(BMap<Object, Object> config, Map<String, String> ftpConfig)
+            throws BallerinaFtpException {
+        BMap proxyConfig = config.getMapValue(StringUtils.fromString(FtpConstants.PROXY));
+        if (proxyConfig != null) {
+            // Extract proxy host
+            BString proxyHost = proxyConfig.getStringValue(StringUtils.fromString(FtpConstants.PROXY_HOST));
+            if (proxyHost == null || proxyHost.getValue().isEmpty()) {
+                throw new BallerinaFtpException("Proxy host cannot be empty");
+            }
+            ftpConfig.put(FtpConstants.PROXY_HOST, proxyHost.getValue());
+
+            // Extract proxy port
+            Object proxyPortObj = proxyConfig.get(StringUtils.fromString(FtpConstants.PROXY_PORT));
+            if (proxyPortObj != null) {
+                long proxyPort = ((Number) proxyPortObj).longValue();
+                if (proxyPort < 1 || proxyPort > 65535) {
+                    throw new BallerinaFtpException("Proxy port must be between 1 and 65535 (got: " + proxyPort + ")");
+                }
+                ftpConfig.put(FtpConstants.PROXY_PORT, String.valueOf(proxyPort));
+            }
+
+            // Extract proxy type
+            BString proxyType = proxyConfig.getStringValue(StringUtils.fromString(FtpConstants.PROXY_TYPE));
+            if (proxyType != null && !proxyType.getValue().isEmpty()) {
+                ftpConfig.put(FtpConstants.PROXY_TYPE, proxyType.getValue());
+            }
+
+            // Extract proxy auth
+            BMap proxyAuth = proxyConfig.getMapValue(StringUtils.fromString(FtpConstants.PROXY_AUTH));
+            if (proxyAuth != null) {
+                BString proxyUsername = proxyAuth.getStringValue(StringUtils.fromString(
+                        FtpConstants.PROXY_USERNAME));
+                BString proxyPassword = proxyAuth.getStringValue(StringUtils.fromString(
+                        FtpConstants.PROXY_PASSWORD));
+                if (proxyUsername != null) {
+                    ftpConfig.put(FtpConstants.PROXY_USERNAME, proxyUsername.getValue());
+                }
+                if (proxyPassword != null) {
+                    ftpConfig.put(FtpConstants.PROXY_PASSWORD, proxyPassword.getValue());
+                }
+            }
+
+            // Extract proxy command (for STREAM proxy)
+            BString proxyCommand = proxyConfig.getStringValue(StringUtils.fromString(FtpConstants.PROXY_COMMAND));
+            if (proxyCommand != null && !proxyCommand.getValue().isEmpty()) {
+                ftpConfig.put(FtpConstants.PROXY_COMMAND, proxyCommand.getValue());
+            }
+        }
     }
 
     public static Object getFirst(Environment env, BObject clientConnector, BString filePath) {

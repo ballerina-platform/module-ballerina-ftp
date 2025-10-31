@@ -22,6 +22,7 @@ import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BDecimal;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -105,7 +106,9 @@ public class FtpListenerHelper {
 
     private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
             throws BallerinaFtpException {
-        Map<String, String> params = new HashMap<>(12);
+        Map<String, String> params = new HashMap<>(25);
+        String protocol = (serviceEndpointConfig.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
         BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String url = FtpUtil.createUrl(serviceEndpointConfig);
@@ -136,7 +139,140 @@ public class FtpListenerHelper {
         params.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         params.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
         params.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
+        extractListenerTimeoutConfigurations(serviceEndpointConfig, params, protocol);
+        extractListenerFileTypeConfiguration(serviceEndpointConfig, params);
+        extractListenerCompressionConfiguration(serviceEndpointConfig, params);
+        extractListenerKnownHostsConfiguration(serviceEndpointConfig, params);
+        extractListenerProxyConfiguration(serviceEndpointConfig, params);
+
         return params;
+    }
+
+    private static void extractListenerTimeoutConfigurations(BMap serviceEndpointConfig, Map<String, String> params,
+                                                            String protocol) throws BallerinaFtpException {
+        // Extract connectTimeout
+        Object connectTimeoutObj = serviceEndpointConfig.get(StringUtils.fromString(FtpConstants.CONNECT_TIMEOUT));
+        if (connectTimeoutObj != null) {
+            double connectTimeout = ((BDecimal) connectTimeoutObj).floatValue();
+            validateListenerTimeout(connectTimeout, "connectTimeout");
+            params.put(FtpConstants.CONNECT_TIMEOUT, String.valueOf(connectTimeout));
+        } else {
+            // Default: 30.0 for FTP, 10.0 for SFTP
+            String defaultTimeout = protocol.equalsIgnoreCase(FtpConstants.SCHEME_SFTP) ? "10.0" : "30.0";
+            params.put(FtpConstants.CONNECT_TIMEOUT, defaultTimeout);
+        }
+
+        // Extract socketConfig
+        BMap socketConfig = serviceEndpointConfig.getMapValue(StringUtils.fromString(FtpConstants.SOCKET_CONFIG));
+        if (socketConfig != null) {
+            // Extract ftpDataTimeout
+            Object ftpDataTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.FTP_DATA_TIMEOUT));
+            if (ftpDataTimeoutObj != null) {
+                double ftpDataTimeout = ((BDecimal) ftpDataTimeoutObj).floatValue();
+                validateListenerTimeout(ftpDataTimeout, "ftpDataTimeout");
+                params.put(FtpConstants.FTP_DATA_TIMEOUT, String.valueOf(ftpDataTimeout));
+            }
+
+            // Extract ftpSocketTimeout
+            Object ftpSocketTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.FTP_SOCKET_TIMEOUT));
+            if (ftpSocketTimeoutObj != null) {
+                double ftpSocketTimeout = ((BDecimal) ftpSocketTimeoutObj).floatValue();
+                validateListenerTimeout(ftpSocketTimeout, "ftpSocketTimeout");
+                params.put(FtpConstants.FTP_SOCKET_TIMEOUT, String.valueOf(ftpSocketTimeout));
+            }
+
+            // Extract sftpSessionTimeout
+            Object sftpSessionTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.SFTP_SESSION_TIMEOUT));
+            if (sftpSessionTimeoutObj != null) {
+                double sftpSessionTimeout = ((BDecimal) sftpSessionTimeoutObj).floatValue();
+                validateListenerTimeout(sftpSessionTimeout, "sftpSessionTimeout");
+                params.put(FtpConstants.SFTP_SESSION_TIMEOUT, String.valueOf(sftpSessionTimeout));
+            }
+        }
+    }
+
+    private static void validateListenerTimeout(double timeout, String fieldName) throws BallerinaFtpException {
+        if (timeout < 0) {
+            throw new BallerinaFtpException(fieldName + " must be positive or zero (got: " + timeout + ")");
+        }
+        if (timeout > 600) {
+            throw new BallerinaFtpException(fieldName + " must not exceed 600 seconds (got: " + timeout + ")");
+        }
+    }
+
+    private static void extractListenerFileTypeConfiguration(BMap serviceEndpointConfig, Map<String, String> params) {
+        BString ftpFileType = serviceEndpointConfig.getStringValue(StringUtils.fromString(FtpConstants.FTP_FILE_TYPE));
+        if (ftpFileType != null && !ftpFileType.getValue().isEmpty()) {
+            params.put(FtpConstants.FTP_FILE_TYPE, ftpFileType.getValue());
+        }
+    }
+
+    private static void extractListenerCompressionConfiguration(BMap serviceEndpointConfig,
+                                                               Map<String, String> params) {
+        BString sftpCompression = serviceEndpointConfig.getStringValue(StringUtils.fromString(
+                FtpConstants.SFTP_COMPRESSION));
+        if (sftpCompression != null && !sftpCompression.getValue().isEmpty()) {
+            params.put(FtpConstants.SFTP_COMPRESSION, sftpCompression.getValue());
+        }
+    }
+
+    private static void extractListenerKnownHostsConfiguration(BMap serviceEndpointConfig,
+                                                              Map<String, String> params) {
+        BString knownHosts = serviceEndpointConfig.getStringValue(StringUtils.fromString(
+                FtpConstants.SFTP_KNOWN_HOSTS));
+        if (knownHosts != null && !knownHosts.getValue().isEmpty()) {
+            params.put(FtpConstants.SFTP_KNOWN_HOSTS, knownHosts.getValue());
+        }
+    }
+
+    private static void extractListenerProxyConfiguration(BMap serviceEndpointConfig, Map<String, String> params)
+            throws BallerinaFtpException {
+        BMap proxyConfig = serviceEndpointConfig.getMapValue(StringUtils.fromString(FtpConstants.PROXY));
+        if (proxyConfig != null) {
+            // Extract proxy host
+            BString proxyHost = proxyConfig.getStringValue(StringUtils.fromString(FtpConstants.PROXY_HOST));
+            if (proxyHost == null || proxyHost.getValue().isEmpty()) {
+                throw new BallerinaFtpException("Proxy host cannot be empty");
+            }
+            params.put(FtpConstants.PROXY_HOST, proxyHost.getValue());
+
+            // Extract proxy port
+            Object proxyPortObj = proxyConfig.get(StringUtils.fromString(FtpConstants.PROXY_PORT));
+            if (proxyPortObj != null) {
+                long proxyPort = ((Number) proxyPortObj).longValue();
+                if (proxyPort < 1 || proxyPort > 65535) {
+                    throw new BallerinaFtpException("Proxy port must be between 1 and 65535 (got: " + proxyPort + ")");
+                }
+                params.put(FtpConstants.PROXY_PORT, String.valueOf(proxyPort));
+            }
+
+            // Extract proxy type
+            BString proxyType = proxyConfig.getStringValue(StringUtils.fromString(FtpConstants.PROXY_TYPE));
+            if (proxyType != null && !proxyType.getValue().isEmpty()) {
+                params.put(FtpConstants.PROXY_TYPE, proxyType.getValue());
+            }
+
+            // Extract proxy auth
+            BMap proxyAuth = proxyConfig.getMapValue(StringUtils.fromString(FtpConstants.PROXY_AUTH));
+            if (proxyAuth != null) {
+                BString proxyUsername = proxyAuth.getStringValue(StringUtils.fromString(
+                        FtpConstants.PROXY_USERNAME));
+                BString proxyPassword = proxyAuth.getStringValue(StringUtils.fromString(
+                        FtpConstants.PROXY_PASSWORD));
+                if (proxyUsername != null) {
+                    params.put(FtpConstants.PROXY_USERNAME, proxyUsername.getValue());
+                }
+                if (proxyPassword != null) {
+                    params.put(FtpConstants.PROXY_PASSWORD, proxyPassword.getValue());
+                }
+            }
+
+            // Extract proxy command (for STREAM proxy)
+            BString proxyCommand = proxyConfig.getStringValue(StringUtils.fromString(FtpConstants.PROXY_COMMAND));
+            if (proxyCommand != null && !proxyCommand.getValue().isEmpty()) {
+                params.put(FtpConstants.PROXY_COMMAND, proxyCommand.getValue());
+            }
+        }
     }
 
     private static void addStringProperty(BMap config, Map<String, String> params) {
