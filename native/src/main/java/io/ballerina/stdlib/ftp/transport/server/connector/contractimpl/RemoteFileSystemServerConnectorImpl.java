@@ -23,6 +23,8 @@ import io.ballerina.stdlib.ftp.server.FtpListener;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.server.RemoteFileSystemConsumer;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.FileSystemOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,5 +79,11 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
 
     public RemoteFileSystemConsumer getConsumer() {
         return consumer;
+    public FileSystemManager getFileSystemManager() {
+        return consumer.getFileSystemManager();
+    }
+
+    public FileSystemOptions getFileSystemOptions() {
+        return consumer.getFileSystemOptions();
     }
 }

@@ -271,6 +271,78 @@ public class FtpUtil {
                 .findFirst();
     }
 
+    /**
+     * Gets the content handler method from a service if it exists.
+     * Checks for content methods in priority order: onFile, onFileText, onFileJson, onFileXml, onFileCsv.
+     *
+     * @param service The BObject service
+     * @return Optional containing the MethodType if a content method exists
+     */
+    public static Optional<MethodType> getContentHandlerMethod(BObject service) {
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
+        return Stream.of(methodTypes)
+                .filter(methodType -> isContentHandlerMethodName(methodType.getName()))
+                .findFirst();
+    }
+
+    /**
+     * Gets all content handler methods from a service.
+     *
+     * @param service The BObject service
+     * @return Array of MethodType objects representing all content handler methods
+     */
+    public static MethodType[] getAllContentHandlerMethods(BObject service) {
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
+        return Stream.of(methodTypes)
+                .filter(methodType -> isContentHandlerMethodName(methodType.getName()))
+                .toArray(MethodType[]::new);
+    }
+
+    /**
+     * Finds a specific content handler method by name from a service.
+     *
+     * @param service The BObject service
+     * @param methodName The name of the method to find
+     * @return Optional containing the MethodType if found
+     */
+    public static Optional<MethodType> findContentMethodByName(BObject service, String methodName) {
+        if (!isContentHandlerMethodName(methodName)) {
+            return Optional.empty();
+        }
+
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
+        return Stream.of(methodTypes)
+                .filter(methodType -> methodName.equals(methodType.getName()))
+                .findFirst();
+    }
+
+    /**
+     * Checks if the given method name is a content handler method.
+     *
+     * @param methodName The name of the method
+     * @return true if it's a content handler method
+     */
+    public static boolean isContentHandlerMethodName(String methodName) {
+        return FtpConstants.ON_FILE_REMOTE_FUNCTION.equals(methodName) ||
+                FtpConstants.ON_FILE_TEXT_REMOTE_FUNCTION.equals(methodName) ||
+                FtpConstants.ON_FILE_JSON_REMOTE_FUNCTION.equals(methodName) ||
+                FtpConstants.ON_FILE_XML_REMOTE_FUNCTION.equals(methodName) ||
+                FtpConstants.ON_FILE_CSV_REMOTE_FUNCTION.equals(methodName);
+    }
+
+    /**
+     * Gets the onFileDeleted method from a service if it exists.
+     *
+     * @param service The BObject service
+     * @return Optional containing the MethodType if onFileDeleted method exists
+     */
+    public static Optional<MethodType> getOnFileDeletedMethod(BObject service) {
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
+        return Stream.of(methodTypes)
+                .filter(methodType -> FtpConstants.ON_FILE_DELETED_REMOTE_FUNCTION.equals(methodType.getName()))
+                .findFirst();
+    }
+
     public static String getAuthMethod(Object authMethodObj) {
         return authMethodObj.toString().toLowerCase().replace("_", "-");
     }

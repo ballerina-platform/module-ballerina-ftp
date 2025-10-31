@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - [Added support for advanced file selection and processing](https://github.com/ballerina-platform/ballerina-library/issues/8376)
+- [Add a file content listener to read the content of a file once it is added to the remote file system](https://github.com/ballerina-platform/ballerina-library/issues/1490)
 
 ### Fixed
 

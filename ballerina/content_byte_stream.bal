@@ -59,7 +59,7 @@ public class ContentByteStream {
 }
 
 isolated function externGetContentStreamEntry(ContentByteStream iterator)
-        returns record {|byte[] value;|}|error? = @java:Method {    
+        returns record {|byte[] value;|}|error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.ContentByteStreamIteratorUtils",
     name: "next"
 } external;
