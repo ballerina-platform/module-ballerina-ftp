@@ -21,6 +21,7 @@ package io.ballerina.stdlib.ftp.server;
 import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
+import io.ballerina.runtime.api.types.Parameter;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
@@ -31,6 +32,7 @@ import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
+import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.RemoteFileSystemServerConnectorImpl;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.ftp.util.ModuleUtils;
@@ -68,6 +70,15 @@ public class FtpListenerHelper {
             final FtpListener listener = new FtpListener(env.getRuntime());
             RemoteFileSystemServerConnector serverConnector = fileSystemConnectorFactory
                     .createServerConnector(paramMap, listener);
+
+            // Pass FileSystemManager and options to listener for content fetching
+            if (serverConnector instanceof RemoteFileSystemServerConnectorImpl) {
+                RemoteFileSystemServerConnectorImpl connectorImpl =
+                        (RemoteFileSystemServerConnectorImpl) serverConnector;
+                listener.setFileSystemManager(connectorImpl.getFileSystemManager());
+                listener.setFileSystemOptions(connectorImpl.getFileSystemOptions());
+            }
+
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             // This is a temporary solution
 
@@ -86,8 +97,35 @@ public class FtpListenerHelper {
         FtpListener listener = ftpConnector.getFtpListener();
         listener.addService(service);
 
-        Optional<MethodType> methodType = getOnFileChangeMethod(service);
-        if (methodType.isEmpty() || methodType.get().getParameters().length != 2) {
+        // Check if caller is needed (for onFileChange with 2 params or content methods with caller param)
+        boolean needsCaller = false;
+
+        Optional<MethodType> onFileChangeMethod = getOnFileChangeMethod(service);
+        if (onFileChangeMethod.isPresent() && onFileChangeMethod.get().getParameters().length == 2) {
+            needsCaller = true;
+        }
+
+        // Also check for content methods that might need caller
+        Optional<MethodType> contentMethod = FtpUtil.getContentHandlerMethod(service);
+        if (contentMethod.isPresent()) {
+            // Content methods can have caller as 2nd or 3rd parameter
+            Parameter[] params = contentMethod.get().getParameters();
+            if (params.length >= 2) {
+                needsCaller = true;
+            }
+        }
+
+        // Also check for onFileDeleted method that might need caller
+        Optional<MethodType> onFileDeletedMethod = FtpUtil.getOnFileDeletedMethod(service);
+        if (onFileDeletedMethod.isPresent()) {
+            // onFileDeleted can have caller as 2nd parameter
+            Parameter[] params = onFileDeletedMethod.get().getParameters();
+            if (params.length >= 2) {
+                needsCaller = true;
+            }
+        }
+
+        if (!needsCaller) {
             return null;
         }
         if (listener.getCaller() != null) {

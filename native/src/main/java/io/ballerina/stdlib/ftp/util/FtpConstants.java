@@ -87,6 +87,15 @@ public class FtpConstants {
     public static final String INPUT_CONTENT_COMPRESS_INPUT_KEY = "compressInput";
 
     public static final String ON_FILE_CHANGE_REMOTE_FUNCTION = "onFileChange";
+
+    // Content listener remote function names
+    public static final String ON_FILE_REMOTE_FUNCTION = "onFile";
+    public static final String ON_FILE_TEXT_REMOTE_FUNCTION = "onFileText";
+    public static final String ON_FILE_JSON_REMOTE_FUNCTION = "onFileJson";
+    public static final String ON_FILE_XML_REMOTE_FUNCTION = "onFileXml";
+    public static final String ON_FILE_CSV_REMOTE_FUNCTION = "onFileCsv";
+    public static final String ON_FILE_DELETED_REMOTE_FUNCTION = "onFileDeleted";
+
     public static final String APACHE_VFS2_PACKAGE_NAME = "org.apache.commons.vfs2";
     public static final String BALLERINA_FTP_PACKAGE_NAME = "io.ballerina.stdlib.ftp";
     public static final String NO_AUTH_METHOD_ERROR = "No preferred auth method is specified in the " +
