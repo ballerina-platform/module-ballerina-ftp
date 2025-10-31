@@ -28,6 +28,7 @@ import java.util.Map;
  */
 public class RemoteFileSystemMessage extends RemoteFileSystemBaseMessage {
 
+    private byte[] bytesArray;
     private ByteBuffer bytes;
     private InputStream inputStream;
     private String text;
@@ -51,6 +52,10 @@ public class RemoteFileSystemMessage extends RemoteFileSystemBaseMessage {
         this.text = text;
     }
 
+    public RemoteFileSystemMessage(byte[] bytesArray) {
+        this.bytesArray = bytesArray;
+    }
+
     public RemoteFileSystemMessage(long size) {
         this.size = size;
     }
@@ -65,6 +70,10 @@ public class RemoteFileSystemMessage extends RemoteFileSystemBaseMessage {
 
     public InputStream getInputStream() {
         return inputStream;
+    }
+
+    public byte[] getBytesArray() {
+        return bytesArray;
     }
 
     public String getText() {

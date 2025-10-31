@@ -78,6 +78,7 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_CREDENTIALS = "credentials";
     public static final String ENDPOINT_CONFIG_PRIVATE_KEY = "privateKey";
     public static final String ENDPOINT_CONFIG_PREFERRED_METHODS = "preferredMethods";
+    public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
 
     // Advanced file selection configuration constants
     public static final String ENDPOINT_CONFIG_POLLING_INTERVAL = "pollingInterval";

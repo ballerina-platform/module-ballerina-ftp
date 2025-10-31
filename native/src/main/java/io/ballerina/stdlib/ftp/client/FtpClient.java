@@ -18,12 +18,22 @@
 
 package io.ballerina.stdlib.ftp.client;
 
+import io.ballerina.lib.data.jsondata.json.Native;
 import io.ballerina.runtime.api.Environment;
+import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.creators.ErrorCreator;
+import io.ballerina.runtime.api.creators.TypeCreator;
+import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.PredefinedTypes;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.utils.XmlUtils;
+import io.ballerina.runtime.api.values.BArray;
+import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.runtime.api.values.BTypedesc;
+import io.ballerina.runtime.api.values.BXml;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
@@ -67,6 +77,11 @@ public class FtpClient {
     public static Object initClientEndpoint(BObject clientEndpoint, BMap<Object, Object> config) {
         String protocol = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL)))
                 .getValue();
+
+        // Keep databinding config for later
+        clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING,
+                config.getBooleanValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING)));
+
         Map<String, String> authMap = FtpUtil.getAuthMap(config, protocol);
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME,
                 authMap.get(FtpConstants.ENDPOINT_CONFIG_USERNAME));
@@ -134,6 +149,122 @@ public class FtpClient {
 
     public static Object get(BObject clientConnector) {
         return FtpClientHelper.generateInputStreamEntry((InputStream) clientConnector.getNativeData(READ_INPUT_STREAM));
+    }
+
+    public static Object getBytes(Environment env, BObject clientConnector, BString filePath) {
+        Object content = getAllContent(env, clientConnector, filePath);
+        if (!(content instanceof byte[])) {
+            throw (BError) content;
+        }
+        return ValueCreator.createArrayValue((byte[]) content);
+    }
+
+    public static Object getText(Environment env, BObject clientConnector, BString filePath) {
+        Object content = getAllContent(env, clientConnector, filePath);
+        if (!(content instanceof byte[])) {
+            throw (BError) content;
+        }
+        return StringUtils.fromString(new String((byte[]) content));
+    }
+
+    public static Object getJson(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
+        Object content = getAllContent(env, clientConnector, filePath);
+        if (!(content instanceof byte[])) {
+            throw (BError) content;
+        }
+
+        boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
+        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
+                io.ballerina.lib.data.ModuleUtils.getModule(), "Options");
+        if (laxDataBinding) {
+            BMap allowDataProjection = mapValue.getMapValue(StringUtils.fromString("allowDataProjection"));
+            allowDataProjection.put(StringUtils.fromString("nilAsOptionalField"), Boolean.TRUE);
+            allowDataProjection.put(StringUtils.fromString("absentAsNilableType"), Boolean.TRUE);
+            mapValue.put(StringUtils.fromString("allowDataProjection"), allowDataProjection);
+        } else {
+            mapValue.put(StringUtils.fromString("allowDataProjection"), Boolean.FALSE);
+        }
+        Object bJson = Native.parseBytes(ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
+        if (bJson instanceof BError) {
+            throw ErrorCreator.createError(((BError) bJson).getErrorMessage());
+        }
+        return bJson;
+    }
+
+    public static Object getXml(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
+        Object content = getAllContent(env, clientConnector, filePath);
+        if (!(content instanceof byte[])) {
+            throw (BError) content;
+        }
+
+        if (typeDesc.getDescribingType().getQualifiedName().equals("xml")) {
+            Object bXml = XmlUtils.parse(StringUtils.fromString(new String((byte[]) content)));
+            if (bXml instanceof BError) {
+                throw ErrorCreator.createError(((BError) bXml).getErrorMessage());
+            }
+            return bXml;
+        }
+
+        boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
+        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
+                new Module("ballerina", "data.xmldata", "1"),
+                "SourceOptions");
+        mapValue.put(StringUtils.fromString("allowDataProjection"), laxDataBinding);
+
+        Object bXml = io.ballerina.lib.data.xmldata.xml.Native.parseBytes(
+                ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
+        if (bXml instanceof BError) {
+            throw ErrorCreator.createError(((BError) bXml).getErrorMessage());
+        }
+        return bXml;
+    }
+
+    public static Object getCsv(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
+        Object content = getAllContent(env, clientConnector, filePath);
+        if (!(content instanceof byte[])) {
+            throw (BError) content;
+        }
+
+        boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
+        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
+                io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(), "ParseOptions");
+        mapValue.put(StringUtils.fromString("allowDataProjection"), laxDataBinding);
+
+        Object csv = io.ballerina.lib.data.csvdata.csv.Native.parseBytes(
+                ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
+        if (csv instanceof BError) {
+            throw ErrorCreator.createError(((BError) csv).getErrorMessage());
+        }
+        return csv;
+    }
+
+    public static Object getBytesAsStream(Environment env, BObject clientConnector, BString filePath) {
+        return env.yieldAndRun(() -> {
+            CompletableFuture<Object> balFuture = new CompletableFuture<>();
+            FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
+                    remoteFileSystemBaseMessage ->
+                            FtpClientHelper.executeStreamingAction(remoteFileSystemBaseMessage,
+                            balFuture, TypeCreator.createArrayType(PredefinedTypes.TYPE_BYTE)));
+            VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
+                    getNativeData(VFS_CLIENT_CONNECTOR);
+            connector.addListener(connectorListener);
+            connector.send(null, FtpAction.GET, filePath.getValue(), null);
+            return getResult(balFuture);
+        });
+    }
+
+    private static Object getAllContent(Environment env, BObject clientConnector, BString filePath) {
+        return env.yieldAndRun(() -> {
+            CompletableFuture<Object> balFuture = new CompletableFuture<>();
+            FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
+                    remoteFileSystemBaseMessage -> FtpClientHelper.executeGetAllAction(remoteFileSystemBaseMessage,
+                            balFuture));
+            VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
+                    getNativeData(VFS_CLIENT_CONNECTOR);
+            connector.addListener(connectorListener);
+            connector.send(null, FtpAction.GET_ALL, filePath.getValue(), null);
+            return getResult(balFuture);
+        });
     }
 
     public static Object closeInputByteStream(BObject clientObject) {
@@ -233,6 +364,53 @@ public class FtpClient {
         return result;
     }
 
+    public static Object putBytes(Environment env, BObject clientConnector, BString path, BArray inputContent,
+                                  BString options) {
+        InputStream stream = new ByteArrayInputStream(inputContent.getBytes());
+        RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
+        return putGenericAction(env, clientConnector, path, options, message);
+    }
+
+    public static Object putText(Environment env, BObject clientConnector, BString path, BString inputContent,
+                                  BString options) {
+        InputStream stream = new ByteArrayInputStream(inputContent.getValue().getBytes());
+        RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
+        return putGenericAction(env, clientConnector, path, options, message);
+    }
+
+    public static Object putJson(Environment env, BObject clientConnector, BString path, BString inputContent,
+                                 BString options) {
+        InputStream stream = new ByteArrayInputStream(inputContent.getValue().getBytes());
+        RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
+        return putGenericAction(env, clientConnector, path, options, message);
+    }
+
+    public static Object putXml(Environment env, BObject clientConnector, BString path, BXml inputContent,
+                                 BString options) {
+        InputStream stream = new ByteArrayInputStream(inputContent.toString().getBytes());
+        RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
+        return putGenericAction(env, clientConnector, path, options, message);
+    }
+
+    private static Object putGenericAction(Environment env, BObject clientConnector, BString path, BString options,
+                                           RemoteFileSystemMessage message) {
+        return env.yieldAndRun(() -> {
+            CompletableFuture<Object> balFuture = new CompletableFuture<>();
+            FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
+                    remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
+            VfsClientConnectorImpl connector
+                    = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
+            connector.addListener(connectorListener);
+            String filePath = path.getValue();
+            if (options.getValue().equals("OVERWRITE")) {
+                connector.send(message, FtpAction.PUT, filePath, null);
+            } else {
+                connector.send(message, FtpAction.APPEND, filePath, null);
+            }
+            return getResult(balFuture);
+        });
+    }
+
     public static Object delete(Environment env, BObject clientConnector, BString filePath) {
         return env.yieldAndRun(() -> {
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
@@ -299,7 +477,7 @@ public class FtpClient {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         return env.yieldAndRun(() -> {
-           CompletableFuture<Object> balFuture = new CompletableFuture<>();
+            CompletableFuture<Object> balFuture = new CompletableFuture<>();
             FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                     remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
