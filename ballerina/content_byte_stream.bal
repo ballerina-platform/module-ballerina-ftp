@@ -14,45 +14,41 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
 import ballerina/jballerina.java;
 
 # Represents the type of the record which returned from the contentByteStream.next() call.
 #
 # + value - The array of byte
 public type ContentStreamEntry record {|
-    byte[] & readonly value;
+    byte[] value;
 |};
 
 # `ContentByteStream` used to initialize a stream of type byte[] for content callbacks.
 # This stream wraps byte array content and provides it as chunks.
 public class ContentByteStream {
 
-    private handle iteratorHandle;
     private boolean isClosed = false;
+    private Error? err;
 
-    # Initialize a `ContentByteStream` from byte array content.
-    #
-    # + iteratorHandle - The native iterator handle that wraps the byte array
-    public isolated function init(handle iteratorHandle) {
-        self.iteratorHandle = iteratorHandle;
+    public isolated function init(Error? err = ()) {
+        self.err = err;
     }
 
     # Reads and return the next `byte[]` chunk of the stream.
     #
     # + return - A `record` of `byte[]`s when the stream is available,
-    #            `()` if the stream has reached the end or else an `io:Error`
-    public isolated function next() returns record {|byte[] & readonly value;|}|io:Error? {
-        return externGetContentStreamEntry(self.iteratorHandle);
+    #            `()` if the stream has reached the end or else an `error`
+    public isolated function next() returns record {|byte[] value;|}|error? {
+        return externGetContentStreamEntry(self);
     }
 
     # Closes the stream. The primary usage of this function is to close the stream without reaching the end.
     # If the stream reaches the end, the `contentByteStream.next` will automatically close the stream.
     #
-    # + return - Returns `()` when the closing was successful or an `io:Error`
-    public isolated function close() returns io:Error? {
+    # + return - Returns `()` when the closing was successful or an `error`
+    public isolated function close() returns error? {
         if !self.isClosed {
-            var closeResult = externCloseContentStream(self.iteratorHandle);
+            var closeResult = externCloseContentStream(self);
             if closeResult is () {
                 self.isClosed = true;
             }
@@ -62,13 +58,13 @@ public class ContentByteStream {
     }
 }
 
-isolated function externGetContentStreamEntry(handle iteratorHandle)
-        returns record {|byte[] & readonly value;|}|io:Error? = @java:Method {
-    'class: "io.ballerina.stdlib.ftp.server.ContentByteStreamIterator",
+isolated function externGetContentStreamEntry(ContentByteStream iterator)
+        returns record {|byte[] value;|}|error? = @java:Method {
+    'class: "io.ballerina.stdlib.ftp.ContentByteStreamIteratorUtils",
     name: "next"
 } external;
 
-isolated function externCloseContentStream(handle iteratorHandle) returns io:Error? = @java:Method {
-    'class: "io.ballerina.stdlib.ftp.server.ContentByteStreamIterator",
+isolated function externCloseContentStream(ContentByteStream iterator) returns error? = @java:Method {
+    'class: "io.ballerina.stdlib.ftp.ContentByteStreamIteratorUtils",
     name: "close"
 } external;

@@ -20,8 +20,12 @@ package io.ballerina.stdlib.ftp.client;
 
 import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Module;
+import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.PredefinedTypes;
+import io.ballerina.runtime.api.types.StreamType;
+import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BMap;
@@ -35,6 +39,7 @@ import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
 import io.ballerina.stdlib.ftp.util.BufferHolder;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
+import io.ballerina.stdlib.ftp.util.ModuleUtils;
 import io.ballerina.stdlib.io.channels.base.Channel;
 import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
@@ -93,6 +98,48 @@ class FtpClientHelper {
             }
         } catch (IOException e) {
             log.error("Error occurred while reading stream: ", e);
+        }
+        return true;
+    }
+
+    static boolean executeStreamingAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
+                                          CompletableFuture<Object> balFuture, Type streamValueType) {
+        try {
+            if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
+                final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
+                ByteChannel byteChannel = new FtpByteChannel(in);
+                Channel channel = new FtpChannel(byteChannel);
+                InputStream inputStream = channel.getInputStream();
+                Object streamEntry = createStreamWithContent(inputStream, streamValueType);
+                balFuture.complete(streamEntry);
+            }
+        } catch (IOException e) {
+            log.error("Error occurred while reading stream: ", e);
+        }
+        return true;
+    }
+
+    private static Object createStreamWithContent(InputStream content, Type streamValueType) {
+        try {
+            BObject contentByteStreamObject = ValueCreator.createObjectValue(
+                    ModuleUtils.getModule(), "ContentByteStream", null, null
+            );
+            contentByteStreamObject.addNativeData("Input_Stream", content);
+            StreamType streamType = TypeCreator.createStreamType(streamValueType, PredefinedTypes.TYPE_NULL);
+            return ValueCreator.createStreamValue(streamType, contentByteStreamObject);
+        } catch (Exception e) {
+            log.error("Failed to create stream with content", e);
+            // Fallback to returning byte array if stream creation fails
+            return ErrorCreator.createError(StringUtils.fromString("Unable to create stream"), e);
+        }
+    }
+
+
+    static boolean executeGetAllAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
+                                    CompletableFuture<Object> balFuture) {
+        if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
+            byte[] content = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getBytesArray();
+            balFuture.complete(content);
         }
         return true;
     }
@@ -167,7 +214,7 @@ class FtpClientHelper {
 
                 final BMap<BString, Object> ballerinaFileInfo = ValueCreator.createRecordValue(
                         new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
-                                FtpUtil.getFtpPackage().getMajorVersion()), FtpConstants.FTP_FILE_INFO, fileInfoParams);
+                                getFtpPackage().getMajorVersion()), FtpConstants.FTP_FILE_INFO, fileInfoParams);
                 arrayValue.add(i++, ballerinaFileInfo);
             }
             balFuture.complete(arrayValue);

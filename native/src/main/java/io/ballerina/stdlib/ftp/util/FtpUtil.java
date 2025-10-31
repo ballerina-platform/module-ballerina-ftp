@@ -75,7 +75,11 @@ public class FtpUtil {
 
     public static String createUrl(BObject clientConnector, String filePath) throws BallerinaFtpException {
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
-        String password = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASS_KEY);
+        String password = null;
+        Object storedPW = clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PASS_KEY);
+        if (storedPW != null) {
+            password = (String) storedPW;
+        }
         String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
         int port = (Integer) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
         String protocol = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
@@ -92,8 +96,8 @@ public class FtpUtil {
         int port = extractPortValue(config.getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
-        String username = null;
-        String password = null;
+        String username = FTP_ANONYMOUS_USERNAME;
+        String password = protocol.equals(FtpConstants.SCHEME_FTP) ? FTP_ANONYMOUS_PASSWORD : null;
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
@@ -103,8 +107,11 @@ public class FtpUtil {
                 if (username.isBlank()) {
                     throw new BallerinaFtpException("Username cannot be empty");
                 }
-                password = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
-                        .getValue();
+                BString tempPassword = credentials.getStringValue(
+                        StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY));
+                if (tempPassword != null) {
+                    password = tempPassword.getValue();
+                }
             }
         }
         return createUrl(protocol, host, port, username, password, filePath);
@@ -112,7 +119,10 @@ public class FtpUtil {
 
     private static String createUrl(String protocol, String host, int port, String username, String password,
                                     String filePath) throws BallerinaFtpException {
-        String userInfo = username + ":" + password;
+        String userInfo = username;
+        if (password != null) {
+            userInfo = username + ":" + password;
+        }
         final String normalizedPath = normalizeFtpPath(filePath);
         try {
             URI uri = new URI(protocol, userInfo, host, port, normalizedPath, null, null);
@@ -134,18 +144,25 @@ public class FtpUtil {
     }
 
     public static Map<String, String> getAuthMap(BMap config) {
+        return getAuthMap(config, FtpConstants.SCHEME_FTP);
+    }
+
+    public static Map<String, String> getAuthMap(BMap config, String protocol) {
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = FTP_ANONYMOUS_USERNAME;
-        String password = FTP_ANONYMOUS_PASSWORD;
+        String password = protocol.equals(FtpConstants.SCHEME_FTP) ? FTP_ANONYMOUS_PASSWORD : null;
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
             if (credentials != null) {
                 username = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_USERNAME)))
                         .getValue();
-                password = (credentials.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY)))
-                        .getValue();
+                BString tempPassword = credentials.getStringValue(
+                        StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY));
+                if (tempPassword != null) {
+                    password = tempPassword.getValue();
+                }
             }
         }
         Map<String, String> authMap = new HashMap<>();
