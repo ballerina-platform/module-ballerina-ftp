@@ -179,9 +179,8 @@ public final class FileTransportUtils {
         if (options.get(FtpConstants.SFTP_SESSION_TIMEOUT) != null) {
             try {
                 double sessionTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.SFTP_SESSION_TIMEOUT));
-                // Convert to integer milliseconds for session timeout
-                Integer sessionTimeoutMillis = (int) (sessionTimeoutSeconds * 1000);
-                configBuilder.setTimeout(opts, sessionTimeoutMillis);
+                Duration sessionTimeoutMillis = Duration.ofMillis((long) (sessionTimeoutSeconds * 1000));
+                configBuilder.setSessionTimeout(opts, sessionTimeoutMillis);
                 log.debug("SFTP sessionTimeout set to {} seconds", sessionTimeoutSeconds);
             } catch (NumberFormatException e) {
                 throw new RemoteFileSystemConnectorException("Invalid sftpSessionTimeout value: " +
