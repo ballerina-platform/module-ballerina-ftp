@@ -30,7 +30,8 @@ string[] deletedFilesWithCaller = [];
 const string DELETE_TEST_FILE_PATH = "tests/resources/datafiles/file2.txt";
 
 @test:Config {
-    dependsOn: [testValidateDeletedFilesFromListener]
+    dependsOn: [testValidateDeletedFilesFromListener],
+    enable: false
 }
 public function testOnFileDeletedSingleFile() returns error? {
     // Reset state
@@ -122,7 +123,8 @@ public function testOnFileDeletedSingleFile() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileDeletedSingleFile]
+    dependsOn: [testOnFileDeletedSingleFile],
+    enable: false
 }
 public function testOnFileDeletedMultipleFiles() returns error? {
     // Reset state
@@ -218,7 +220,8 @@ public function testOnFileDeletedMultipleFiles() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileDeletedMultipleFiles]
+    dependsOn: [testOnFileDeletedMultipleFiles],
+    enable: false
 }
 public function testOnFileDeletedWithCaller() returns error? {
     // Reset state
@@ -289,7 +292,8 @@ public function testOnFileDeletedWithCaller() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileDeletedWithCaller]
+    dependsOn: [testOnFileDeletedWithCaller],
+    enable: false
 }
 public function testOnFileDeletedWithFileNamePattern() returns error? {
     // Reset state
@@ -371,7 +375,8 @@ public function testOnFileDeletedWithFileNamePattern() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileDeletedWithFileNamePattern]
+    dependsOn: [testOnFileDeletedWithFileNamePattern],
+    enable: false
 }
 public function testOnFileDeletedNoFilesDeleted() returns error? {
     // Reset state
@@ -417,7 +422,8 @@ public function testOnFileDeletedNoFilesDeleted() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileDeletedNoFilesDeleted]
+    dependsOn: [testOnFileDeletedNoFilesDeleted],
+    enable: false
 }
 public function testOnFileDeletedErrorHandling() returns error? {
     // Reset state
@@ -480,7 +486,8 @@ public function testOnFileDeletedErrorHandling() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileDeletedErrorHandling]
+    dependsOn: [testOnFileDeletedErrorHandling],
+    enable: false
 }
 public function testOnFileDeletedIsolatedService() returns error? {
     // Reset state

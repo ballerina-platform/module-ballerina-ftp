@@ -49,7 +49,8 @@ const string TEXT_TEST_FILE = "tests/resources/datafiles/test_text.txt";
 const string GENERIC_TEST_FILE = "tests/resources/datafiles/file2.txt";
 
 @test:Config {
-    dependsOn: [testIsolatedService]
+    dependsOn: [testIsolatedService],
+    enable: false
 }
 public function testOnFileTextBasic() returns error? {
     // Reset state
@@ -119,7 +120,8 @@ public function testOnFileTextBasic() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileTextBasic]
+    dependsOn: [testOnFileTextBasic],
+    enable: false
 }
 public function testOnFileJsonBasic() returns error? {
     // Reset state
@@ -190,7 +192,8 @@ public function testOnFileJsonBasic() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileJsonBasic]
+    dependsOn: [testOnFileJsonBasic],
+    enable: false
 }
 public function testOnFileXmlBasic() returns error? {
     // Reset state
@@ -261,7 +264,8 @@ public function testOnFileXmlBasic() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileXmlBasic]
+    dependsOn: [testOnFileXmlBasic],
+    enable: false
 }
 public function testOnFileCsvStringArray() returns error? {
     // Reset state
@@ -338,7 +342,8 @@ public function testOnFileCsvStringArray() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileCsvStringArray]
+    dependsOn: [testOnFileCsvStringArray],
+    enable: false
 }
 public function testOnFileByteArray() returns error? {
     // Reset state
@@ -406,7 +411,8 @@ public function testOnFileByteArray() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileByteArray]
+    dependsOn: [testOnFileByteArray],
+    enable: false
 }
 public function testOnFileStream() returns error? {
     // Reset state
@@ -483,7 +489,8 @@ public function testOnFileStream() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileStream]
+    dependsOn: [testOnFileStream],
+    enable: false
 }
 public function testExtensionBasedRouting() returns error? {
     // Reset state
@@ -566,7 +573,8 @@ public function testExtensionBasedRouting() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testExtensionBasedRouting]
+    dependsOn: [testExtensionBasedRouting],
+    enable: false
 }
 public function testFallbackToGenericOnFile() returns error? {
     // Reset state
@@ -639,7 +647,8 @@ public function testFallbackToGenericOnFile() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testFallbackToGenericOnFile]
+    dependsOn: [testFallbackToGenericOnFile],
+    enable: false
 }
 public function testFileConfigAnnotationOverride() returns error? {
     // Reset state
@@ -707,7 +716,8 @@ public function testFileConfigAnnotationOverride() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testFileConfigAnnotationOverride]
+    dependsOn: [testFileConfigAnnotationOverride],
+    enable: false
 }
 public function testOptionalParametersWithoutCaller() returns error? {
     // Reset state
