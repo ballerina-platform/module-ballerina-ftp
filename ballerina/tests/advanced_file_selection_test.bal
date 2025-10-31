@@ -28,37 +28,6 @@ isolated boolean ageEventReceived = false;
 isolated boolean dependencyEventReceived = false;
 isolated string dependencyMatchedFile = "";
 
-@test:BeforeSuite
-function initAdvancedSelectionTests() returns error? {
-    ftpClientCache = check new ({
-        protocol: FTP,
-        host: "127.0.0.1",
-        port: 21212,
-        auth: {
-            credentials: {
-                username: "wso2",
-                password: "wso2123"
-            }
-        }
-    });
-
-    Client? ftpClient = getClient();
-    check ensureDirectory((<Client>ftpClient), "/home/in/advanced");
-    check ensureDirectory((<Client>ftpClient), "/home/in/advanced/cron");
-    check ensureDirectory((<Client>ftpClient), "/home/in/advanced/age");
-    check ensureDirectory((<Client>ftpClient), "/home/in/advanced/dependency");
-}
-
-@test:AfterSuite
-function cleanupAdvancedSelectionTests() returns error? {
-    Client? ftpClient = getClient();
-    check removeIfExists((<Client>ftpClient), "/home/in/advanced/cron/cron-schedule.txt");
-    check removeIfExists((<Client>ftpClient), "/home/in/advanced/age/age-filter.txt");
-    check removeIfExists((<Client>ftpClient), "/home/in/advanced/dependency/invoice_pending.xml");
-    check removeIfExists((<Client>ftpClient), "/home/in/advanced/dependency/invoice_pending.csv");
-    check removeIfExists((<Client>ftpClient), "/home/in/advanced/dependency/invoice_pending.checksum");
-}
-
 @test:Config {
     enable: false
 }
