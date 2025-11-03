@@ -41,8 +41,8 @@ import java.util.regex.Pattern;
 public class ContentMethodRouter {
 
     private static final Logger log = LoggerFactory.getLogger(ContentMethodRouter.class);
-    private static final String FILE_CONFIG_ANNOTATION = "FileConfig";
-    private static final String ANNOTATION_PATTERN_FIELD = "pattern";
+    private static final String FUNCTION_CONFIG_ANNOTATION = "FunctionConfig";
+    private static final String ANNOTATION_PATTERN_FIELD = "fileNamePattern";
 
     private final BObject service;
     private final Map<String, MethodType> annotationPatternToMethod;
@@ -155,7 +155,7 @@ public class ContentMethodRouter {
             if (annotations != null) {
                 for (BString key : annotations.getKeys()) {
                     String keyStr = key.getValue();
-                    if (keyStr.endsWith(FILE_CONFIG_ANNOTATION)) {
+                    if (keyStr.endsWith(FUNCTION_CONFIG_ANNOTATION)) {
                         Object annotationValue = annotations.get(key);
                         if (annotationValue instanceof BMap) {
                             return Optional.of((BMap<BString, Object>) annotationValue);
