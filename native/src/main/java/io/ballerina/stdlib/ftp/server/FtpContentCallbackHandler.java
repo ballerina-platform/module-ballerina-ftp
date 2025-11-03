@@ -186,12 +186,10 @@ public class FtpContentCallbackHandler {
         if (firstParamTypeTag == ARRAY_TAG) {
             // Return as byte[]
             return FtpContentConverter.convertToBallerinaByteArray(fileContent);
-        } else if (firstParamTypeTag == STREAM_TAG) {
-            // Return as stream<byte[], error?>
-            // Create a byte stream from the content
-            return createByteStreamFromContent(fileContent);
         }
-        return FtpContentConverter.convertToBallerinaByteArray(fileContent);
+        // Return as stream<byte[], error?>
+        // Create a byte stream from the content
+        return createByteStreamFromContent(fileContent);
     }
 
     /**

@@ -14,9 +14,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Annotation to override default file extension routing for content methods.
-# Use this to specify which file patterns should be handled by a particular content method.
+# Configuration for FTP service remote functions.
+# Use this to override default file extension routing for content methods.
 #
-# + pattern - File name pattern (regex) that should be routed to this method.
-#             Must be a subset of the listener's `fileNamePattern`.
-public annotation record {| string pattern; |} FileConfig on function;
+# + fileNamePattern - File name pattern (regex) that should be routed to this method.
+#                     Must be a subset of the listener's `fileNamePattern`.
+public type FtpFunctionConfig record {|
+    string fileNamePattern;
+|};
+
+# Annotation to configure FTP service remote functions.
+# This can be used to specify which file patterns should be handled by a particular content method.
+public annotation FtpFunctionConfig FunctionConfig on service remote function;
