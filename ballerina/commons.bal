@@ -96,13 +96,13 @@ public enum AgeCalculationMode {
 # Configuration for file age filtering.
 #
 # + minAge - Minimum age of file in seconds since last modification/creation (inclusive).
-#            Files younger than this will be skipped. -1 or absence means no minimum age requirement.
+#            Files younger than this will be skipped. If not specified, no minimum age requirement.
 # + maxAge - Maximum age of file in seconds since last modification/creation (inclusive).
-#            Files older than this will be skipped. -1 or absence means no maximum age requirement.
+#            Files older than this will be skipped. If not specified, no maximum age requirement.
 # + ageCalculationMode - Whether to calculate age based on last modified time or creation time
 public type FileAgeFilter record {|
-    decimal minAge = -1;
-    decimal maxAge = -1;
+    decimal minAge?;
+    decimal maxAge?;
     AgeCalculationMode ageCalculationMode = LAST_MODIFIED;
 |};
 
