@@ -46,7 +46,7 @@ path = "./lib/commons-lang3-3.18.0.jar"
 groupId = "io.ballerina.stdlib"
 artifactId = "ftp-native"
 version = "2.15.0"
-path = "../native/build/libs/ftp-native-2.15.0-SNAPSHOT.jar"
+path = "../native/build/libs/ftp-native-2.15.0.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib"
