@@ -114,15 +114,20 @@ public class FtpFileDeletedValidator {
         }
 
         RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        Node parameterTypeNode = requiredParameterNode.typeName();
         SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
+        Optional<Symbol> paramSymbolOpt = semanticModel.symbol(requiredParameterNode);
 
-        if (paramSymbol.isEmpty()) {
+        if (paramSymbolOpt.isEmpty()) {
             return false;
         }
 
-        TypeSymbol typeSymbol = ((ParameterSymbol) paramSymbol.get()).typeDescriptor();
+        Symbol symbol = paramSymbolOpt.get();
+        if (!(symbol instanceof ParameterSymbol)) {
+            return false;
+        }
+
+        ParameterSymbol parameterSymbol = (ParameterSymbol) symbol;
+        TypeSymbol typeSymbol = parameterSymbol.typeDescriptor();
         if (typeSymbol == null) {
             return false;
         }

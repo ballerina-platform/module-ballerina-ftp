@@ -79,6 +79,15 @@ dependencies {
     externalJars(group: 'commons-io', name: 'commons-io', version: "${commonsIoVersion}") {
         transitive = false
     }
+    externalJars(group: 'io.ballerina.lib', name: 'data.jsondata-native', version: "${stdlibDataJsonDataVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'io.ballerina.lib', name: 'data.xmldata-native', version: "${stdlibDataXmlDataVersion}") {
+        transitive = false
+    }
+    externalJars(group: 'io.ballerina.lib', name: 'data.csv-native', version: "${stdlibDataCsvVersion}") {
+        transitive = false
+    }
 }
 
 task updateTomlFiles {
@@ -110,6 +119,9 @@ task updateTomlFiles {
         newConfig = newConfig.replace("@jcl.slf4j.version@", stdlibDependentJclSlf4jVersion)
         newConfig = newConfig.replace("@commons.io.version@", stdlibDependentCommonsIoVersion)
         newConfig = newConfig.replace("@commons.lang3.version@", stdlibDependentCommonsLang3Version)
+        newConfig = newConfig.replace("@data.jsondata.version@", stdlibDataJsonDataVersion)
+        newConfig = newConfig.replace("@data.xmldata.version@", stdlibDataXmlDataVersion)
+        newConfig = newConfig.replace("@data.csv.version@", stdlibDataCsvVersion)
 
         ballerinaTomlFile.text = newConfig
 
