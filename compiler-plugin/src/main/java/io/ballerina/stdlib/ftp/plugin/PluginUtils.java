@@ -23,9 +23,15 @@ import io.ballerina.compiler.api.symbols.MethodSymbol;
 import io.ballerina.compiler.api.symbols.ModuleSymbol;
 import io.ballerina.compiler.api.symbols.Qualifier;
 import io.ballerina.compiler.api.symbols.Symbol;
+import io.ballerina.compiler.api.symbols.TypeDescKind;
+import io.ballerina.compiler.api.symbols.TypeSymbol;
+import io.ballerina.compiler.api.symbols.UnionTypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
+import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NonTerminalNode;
+import io.ballerina.compiler.syntax.tree.ParameterNode;
+import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 import io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors;
@@ -38,7 +44,14 @@ import io.ballerina.tools.text.LineRange;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextRange;
 
+import java.util.List;
 import java.util.Optional;
+
+import static io.ballerina.compiler.api.symbols.TypeDescKind.TYPE_REFERENCE;
+import static io.ballerina.compiler.syntax.tree.SyntaxKind.QUALIFIED_NAME_REFERENCE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CALLER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.FILE_INFO;
 
 /**
  * Util class for the compiler plugin.
@@ -97,5 +110,123 @@ public final class PluginUtils {
         int start = textDocument.textPositionFrom(lineRange.startLine());
         int end = textDocument.textPositionFrom(lineRange.endLine());
         return ((ModulePartNode) syntaxTree.rootNode()).findNode(TextRange.from(start, end - start), true);
+    }
+
+    /**
+     * Validates that a parameter is of type ftp:FileInfo.
+     *
+     * @param parameterNode The parameter node to validate
+     * @param context The syntax node analysis context
+     * @return true if the parameter is ftp:FileInfo, false otherwise
+     */
+    public static boolean validateFileInfoParameter(ParameterNode parameterNode,
+                                                      SyntaxNodeAnalysisContext context) {
+        if (!(parameterNode instanceof RequiredParameterNode)) {
+            return false;
+        }
+
+        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
+        if (requiredParameterNode.typeName().kind() != QUALIFIED_NAME_REFERENCE) {
+            return false;
+        }
+
+        Node parameterTypeNode = requiredParameterNode.typeName();
+        SemanticModel semanticModel = context.semanticModel();
+        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
+
+        if (paramSymbol.isPresent()) {
+            Optional<ModuleSymbol> moduleSymbol = paramSymbol.get().getModule();
+            if (moduleSymbol.isPresent()) {
+                String paramName = paramSymbol.get().getName().orElse("");
+                return validateModuleId(moduleSymbol.get()) && paramName.equals(FILE_INFO);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Validates that a parameter is of type ftp:Caller.
+     *
+     * @param parameterNode The parameter node to validate
+     * @param context The syntax node analysis context
+     * @return true if the parameter is ftp:Caller, false otherwise
+     */
+    public static boolean validateCallerParameter(ParameterNode parameterNode,
+                                                    SyntaxNodeAnalysisContext context) {
+        if (!(parameterNode instanceof RequiredParameterNode)) {
+            return false;
+        }
+
+        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
+        if (requiredParameterNode.typeName().kind() != QUALIFIED_NAME_REFERENCE) {
+            return false;
+        }
+
+        Node parameterTypeNode = requiredParameterNode.typeName();
+        SemanticModel semanticModel = context.semanticModel();
+        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
+
+        if (paramSymbol.isPresent()) {
+            Optional<ModuleSymbol> moduleSymbol = paramSymbol.get().getModule();
+            if (moduleSymbol.isPresent()) {
+                String paramName = paramSymbol.get().getName().orElse("");
+                return validateModuleId(moduleSymbol.get()) && paramName.equals(CALLER);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Validates that the return type of a function is error? or nil.
+     * Reports a diagnostic error if the return type is invalid.
+     *
+     * @param functionDefinitionNode The function definition node to validate
+     * @param context The syntax node analysis context
+     */
+    public static void validateReturnTypeErrorOrNil(FunctionDefinitionNode functionDefinitionNode,
+                                                     SyntaxNodeAnalysisContext context) {
+        MethodSymbol methodSymbol = getMethodSymbol(context, functionDefinitionNode);
+        if (methodSymbol == null) {
+            return;
+        }
+
+        Optional<TypeSymbol> returnTypeDesc = methodSymbol.typeDescriptor().returnTypeDescriptor();
+        if (returnTypeDesc.isEmpty()) {
+            return;
+        }
+
+        TypeDescKind returnTypeKind = returnTypeDesc.get().typeKind();
+
+        if (returnTypeKind == TypeDescKind.NIL) {
+            return;
+        }
+
+        if (returnTypeKind == TypeDescKind.UNION) {
+            List<TypeSymbol> returnTypeMembers =
+                    ((UnionTypeSymbol) returnTypeDesc.get()).memberTypeDescriptors();
+            for (TypeSymbol returnType : returnTypeMembers) {
+                if (returnType.typeKind() != TypeDescKind.NIL) {
+                    if (returnType.typeKind() == TYPE_REFERENCE) {
+                        if (!returnType.signature().equals(PluginConstants.ERROR) &&
+                                returnType.getModule().isPresent() &&
+                                !validateModuleId(returnType.getModule().get())) {
+                            context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
+                                    DiagnosticSeverity.ERROR,
+                                    functionDefinitionNode.functionSignature().location()));
+                            return;
+                        }
+                    } else if (returnType.typeKind() != TypeDescKind.ERROR) {
+                        context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
+                                DiagnosticSeverity.ERROR,
+                                functionDefinitionNode.functionSignature().location()));
+                        return;
+                    }
+                }
+            }
+        } else {
+            context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
+                    DiagnosticSeverity.ERROR,
+                    functionDefinitionNode.functionSignature().location()));
+        }
     }
 }
