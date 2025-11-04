@@ -40,7 +40,7 @@ public type PrivateKey record {|
 # + password - Password of the user
 public type Credentials record {|
     string username;
-    string password;
+    string password?;
 |};
 
 # Configurations for facilitating secure communication with a remote

@@ -9,9 +9,35 @@ distribution-version = "2201.12.0"
 
 [[package]]
 org = "ballerina"
-name = "ftp"
-version = "2.14.1"
+name = "data.jsondata"
+version = "1.1.2"
 dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "lang.object"}
+]
+modules = [
+	{org = "ballerina", packageName = "data.jsondata", moduleName = "data.jsondata"}
+]
+
+[[package]]
+org = "ballerina"
+name = "data.xmldata"
+version = "1.5.2"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "lang.object"}
+]
+modules = [
+	{org = "ballerina", packageName = "data.xmldata", moduleName = "data.xmldata"}
+]
+
+[[package]]
+org = "ballerina"
+name = "ftp"
+version = "2.15.0"
+dependencies = [
+	{org = "ballerina", name = "data.jsondata"},
+	{org = "ballerina", name = "data.xmldata"},
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.runtime"},
@@ -77,7 +103,6 @@ dependencies = [
 org = "ballerina"
 name = "lang.object"
 version = "0.0.0"
-scope = "testOnly"
 
 [[package]]
 org = "ballerina"
@@ -138,7 +163,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "observe"
-version = "1.5.1"
+version = "1.5.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]

@@ -21,6 +21,7 @@ package io.ballerina.stdlib.ftp.server;
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.Runtime;
 import io.ballerina.runtime.api.concurrent.StrandMetadata;
+import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.ArrayType;
@@ -30,6 +31,7 @@ import io.ballerina.runtime.api.types.Parameter;
 import io.ballerina.runtime.api.types.PredefinedTypes;
 import io.ballerina.runtime.api.types.StreamType;
 import io.ballerina.runtime.api.types.Type;
+import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
@@ -40,12 +42,14 @@ import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpContentConverter;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
+import io.ballerina.stdlib.ftp.util.ModuleUtils;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
@@ -197,31 +201,18 @@ public class FtpContentCallbackHandler {
      */
     private Object createByteStreamFromContent(byte[] content) {
         try {
-            // Create the native iterator that will provide chunks of bytes
-            ContentByteStreamIterator iterator = new ContentByteStreamIterator(content);
-
-            // Get the ContentByteStream type from the FTP module
-            Module ftpModule = new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,
-                    FtpUtil.getFtpPackage().getMajorVersion());
-
-            // Create a ContentByteStream object with the iterator handle
             BObject contentByteStreamObject = ValueCreator.createObjectValue(
-                    ftpModule,
-                    "ContentByteStream",
-                    iterator
+                    ModuleUtils.getModule(), "ContentByteStream", null, null
             );
-
-            // Create the stream type: stream<byte[], error?>
+            InputStream inputStream = new ByteArrayInputStream(content);
+            contentByteStreamObject.addNativeData("Input_Stream", inputStream);
             ArrayType byteArrayType = TypeCreator.createArrayType(PredefinedTypes.TYPE_BYTE);
-            StreamType streamType = TypeCreator.createStreamType(byteArrayType, PredefinedTypes.TYPE_ERROR);
-
-            // Create and return the stream object
+            StreamType streamType = TypeCreator.createStreamType(byteArrayType, PredefinedTypes.TYPE_NULL);
             return ValueCreator.createStreamValue(streamType, contentByteStreamObject);
-
         } catch (Exception e) {
-            log.error("Failed to create byte stream from content", e);
+            log.error("Failed to create stream with content", e);
             // Fallback to returning byte array if stream creation fails
-            return FtpContentConverter.convertToBallerinaByteArray(content);
+            return ErrorCreator.createError(StringUtils.fromString("Unable to create stream"), e);
         }
     }
 

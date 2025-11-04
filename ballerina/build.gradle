@@ -79,6 +79,7 @@ dependencies {
     externalJars(group: 'commons-io', name: 'commons-io', version: "${commonsIoVersion}") {
         transitive = false
     }
+
     externalJars(group: 'io.ballerina.lib', name: 'data.jsondata-native', version: "${stdlibDataJsonDataVersion}") {
         transitive = false
     }
