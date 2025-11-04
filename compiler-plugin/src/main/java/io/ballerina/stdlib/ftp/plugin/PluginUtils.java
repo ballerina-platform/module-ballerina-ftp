@@ -21,6 +21,7 @@ package io.ballerina.stdlib.ftp.plugin;
 import io.ballerina.compiler.api.SemanticModel;
 import io.ballerina.compiler.api.symbols.MethodSymbol;
 import io.ballerina.compiler.api.symbols.ModuleSymbol;
+import io.ballerina.compiler.api.symbols.ParameterSymbol;
 import io.ballerina.compiler.api.symbols.Qualifier;
 import io.ballerina.compiler.api.symbols.Symbol;
 import io.ballerina.compiler.api.symbols.TypeDescKind;
@@ -174,6 +175,28 @@ public final class PluginUtils {
             }
         }
         return false;
+    }
+
+    public static Optional<TypeSymbol> getParameterTypeSymbol(ParameterNode parameterNode,
+                                                              SyntaxNodeAnalysisContext context) {
+        if (!(parameterNode instanceof RequiredParameterNode requiredParameterNode)) {
+            return Optional.empty();
+        }
+
+        SemanticModel semanticModel = context.semanticModel();
+        Optional<Symbol> symbol = semanticModel.symbol(requiredParameterNode);
+        if (symbol.isEmpty() || !(symbol.get() instanceof ParameterSymbol parameterSymbol)) {
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(parameterSymbol.typeDescriptor());
+    }
+
+    public static String getParameterTypeSignature(ParameterNode parameterNode,
+                                                   SyntaxNodeAnalysisContext context) {
+        return getParameterTypeSymbol(parameterNode, context)
+                .map(TypeSymbol::signature)
+                .orElse("unknown");
     }
 
     /**

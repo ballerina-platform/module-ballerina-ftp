@@ -18,20 +18,14 @@
 
 package io.ballerina.stdlib.ftp.plugin;
 
-import io.ballerina.compiler.api.SemanticModel;
-import io.ballerina.compiler.api.symbols.ParameterSymbol;
-import io.ballerina.compiler.api.symbols.Symbol;
-import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
-import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 import io.ballerina.tools.diagnostics.Location;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import static io.ballerina.compiler.api.symbols.TypeDescKind.ARRAY;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_FILE_DELETED_CALLER_PARAMETER;
@@ -98,31 +92,9 @@ public class FtpFileDeletedValidator {
     }
 
     private boolean validateStringArrayParameter(ParameterNode parameterNode) {
-        if (!(parameterNode instanceof RequiredParameterNode)) {
-            return false;
-        }
-
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbolOpt = semanticModel.symbol(requiredParameterNode);
-
-        if (paramSymbolOpt.isEmpty()) {
-            return false;
-        }
-
-        Symbol symbol = paramSymbolOpt.get();
-        if (!(symbol instanceof ParameterSymbol)) {
-            return false;
-        }
-
-        ParameterSymbol parameterSymbol = (ParameterSymbol) symbol;
-        TypeSymbol typeSymbol = parameterSymbol.typeDescriptor();
-        if (typeSymbol == null) {
-            return false;
-        }
-
-        // Check if it's string[]
-        return typeSymbol.typeKind() == ARRAY && typeSymbol.signature().equals("string[]");
+        return PluginUtils.getParameterTypeSymbol(parameterNode, syntaxNodeAnalysisContext)
+                .map(typeSymbol -> typeSymbol.typeKind() == ARRAY &&
+                        typeSymbol.signature().equals("string[]")).orElse(false);
     }
 
     private void validateReturnTypeErrorOrNil(FunctionDefinitionNode functionDefinitionNode) {

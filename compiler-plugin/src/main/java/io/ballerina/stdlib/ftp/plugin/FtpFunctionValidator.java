@@ -20,13 +20,9 @@ package io.ballerina.stdlib.ftp.plugin;
 
 import io.ballerina.compiler.api.SemanticModel;
 import io.ballerina.compiler.api.symbols.IntersectionTypeSymbol;
-import io.ballerina.compiler.api.symbols.MethodSymbol;
 import io.ballerina.compiler.api.symbols.ModuleSymbol;
 import io.ballerina.compiler.api.symbols.ParameterSymbol;
 import io.ballerina.compiler.api.symbols.Symbol;
-import io.ballerina.compiler.api.symbols.TypeDescKind;
-import io.ballerina.compiler.api.symbols.TypeSymbol;
-import io.ballerina.compiler.api.symbols.UnionTypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
@@ -37,7 +33,6 @@ import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 import io.ballerina.tools.diagnostics.Location;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -46,7 +41,6 @@ import static io.ballerina.compiler.syntax.tree.SyntaxKind.QUALIFIED_NAME_REFERE
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CALLER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_CALLER_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_PARAMETERS;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_WATCHEVENT_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.METHOD_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MUST_HAVE_WATCHEVENT;
@@ -54,7 +48,6 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.N
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ONLY_PARAMS_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.WATCHEVENT;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getDiagnostic;
-import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getMethodSymbol;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isRemoteFunction;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.validateModuleId;
 import static io.ballerina.tools.diagnostics.DiagnosticSeverity.ERROR;
@@ -83,7 +76,7 @@ public class FtpFunctionValidator {
             }
             SeparatedNodeList<ParameterNode> parameters = onFileChange.functionSignature().parameters();
             validateFunctionArguments(parameters, onFileChange);
-            validateReturnTypeErrorOrNil(onFileChange);
+            PluginUtils.validateReturnTypeErrorOrNil(onFileChange, context);
         }
     }
 
@@ -258,39 +251,6 @@ public class FtpFunctionValidator {
             }
         }
         return false;
-    }
-
-    private void validateReturnTypeErrorOrNil(FunctionDefinitionNode functionDefinitionNode) {
-        MethodSymbol methodSymbol = getMethodSymbol(context, functionDefinitionNode);
-        if (methodSymbol != null) {
-            Optional<TypeSymbol> returnTypeDesc = methodSymbol.typeDescriptor().returnTypeDescriptor();
-            if (returnTypeDesc.isPresent()) {
-                if (returnTypeDesc.get().typeKind() == TypeDescKind.NIL) {
-                    return;
-                }
-                if (returnTypeDesc.get().typeKind() == TypeDescKind.UNION) {
-                    List<TypeSymbol> returnTypeMembers =
-                            ((UnionTypeSymbol) returnTypeDesc.get()).memberTypeDescriptors();
-                    for (TypeSymbol returnType : returnTypeMembers) {
-                        if (returnType.typeKind() != TypeDescKind.NIL) {
-                            if (returnType.typeKind() == TypeDescKind.TYPE_REFERENCE) {
-                                if (!returnType.signature().equals(PluginConstants.ERROR) &&
-                                        !validateModuleId(returnType.getModule().get())) {
-                                    reportErrorDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                            functionDefinitionNode.functionSignature().location());
-                                }
-                            } else if (returnType.typeKind() != TypeDescKind.ERROR) {
-                                reportErrorDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                        functionDefinitionNode.functionSignature().location());
-                            }
-                        }
-                    }
-                } else {
-                    reportErrorDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                            functionDefinitionNode.functionSignature().location());
-                }
-            }
-        }
     }
 
     public void reportErrorDiagnostic(PluginConstants.CompilationErrors error, Location location) {
