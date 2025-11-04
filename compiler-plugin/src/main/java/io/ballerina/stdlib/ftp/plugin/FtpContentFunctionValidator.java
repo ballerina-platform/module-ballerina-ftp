@@ -18,14 +18,10 @@
 
 package io.ballerina.stdlib.ftp.plugin;
 
-import io.ballerina.compiler.api.SemanticModel;
-import io.ballerina.compiler.api.symbols.ParameterSymbol;
-import io.ballerina.compiler.api.symbols.Symbol;
 import io.ballerina.compiler.api.symbols.TypeDescKind;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
-import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
@@ -135,25 +131,13 @@ public class FtpContentFunctionValidator {
     }
 
     private boolean validateContentParameter(ParameterNode parameterNode) {
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbolOpt = semanticModel.symbol(requiredParameterNode);
-
-        if (paramSymbolOpt.isEmpty()) {
+        Optional<TypeSymbol> typeSymbolOpt = PluginUtils.getParameterTypeSymbol(parameterNode,
+                syntaxNodeAnalysisContext);
+        if (typeSymbolOpt.isEmpty()) {
             return false;
         }
 
-        Symbol symbol = paramSymbolOpt.get();
-        if (!(symbol instanceof ParameterSymbol)) {
-            return false;
-        }
-
-        ParameterSymbol parameterSymbol = (ParameterSymbol) symbol;
-        TypeSymbol typeSymbol = parameterSymbol.typeDescriptor();
-        if (typeSymbol == null) {
-            return false;
-        }
-
+        TypeSymbol typeSymbol = typeSymbolOpt.get();
         TypeDescKind typeKind = typeSymbol.typeKind();
 
         switch (contentMethodName) {
@@ -237,29 +221,7 @@ public class FtpContentFunctionValidator {
     }
 
     private String getActualParameterType(ParameterNode parameterNode) {
-        if (!(parameterNode instanceof RequiredParameterNode)) {
-            return "unknown";
-        }
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbolOpt = semanticModel.symbol(requiredParameterNode);
-
-        if (paramSymbolOpt.isEmpty()) {
-            return "unknown";
-        }
-
-        Symbol symbol = paramSymbolOpt.get();
-        if (!(symbol instanceof ParameterSymbol)) {
-            return "unknown";
-        }
-
-        ParameterSymbol parameterSymbol = (ParameterSymbol) symbol;
-        TypeSymbol typeSymbol = parameterSymbol.typeDescriptor();
-        if (typeSymbol == null) {
-            return "unknown";
-        }
-
-        return typeSymbol.signature();
+        return PluginUtils.getParameterTypeSignature(parameterNode, syntaxNodeAnalysisContext);
     }
 
     public void reportErrorDiagnostic(PluginConstants.CompilationErrors error, Location location) {
