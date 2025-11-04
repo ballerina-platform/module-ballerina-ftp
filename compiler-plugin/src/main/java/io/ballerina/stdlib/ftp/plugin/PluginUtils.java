@@ -29,7 +29,6 @@ import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.api.symbols.UnionTypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
-import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NonTerminalNode;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
@@ -122,27 +121,7 @@ public final class PluginUtils {
      */
     public static boolean validateFileInfoParameter(ParameterNode parameterNode,
                                                       SyntaxNodeAnalysisContext context) {
-        if (!(parameterNode instanceof RequiredParameterNode)) {
-            return false;
-        }
-
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        if (requiredParameterNode.typeName().kind() != QUALIFIED_NAME_REFERENCE) {
-            return false;
-        }
-
-        Node parameterTypeNode = requiredParameterNode.typeName();
-        SemanticModel semanticModel = context.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
-
-        if (paramSymbol.isPresent()) {
-            Optional<ModuleSymbol> moduleSymbol = paramSymbol.get().getModule();
-            if (moduleSymbol.isPresent()) {
-                String paramName = paramSymbol.get().getName().orElse("");
-                return validateModuleId(moduleSymbol.get()) && paramName.equals(FILE_INFO);
-            }
-        }
-        return false;
+        return validateQualifiedFtpParameter(parameterNode, context, FILE_INFO);
     }
 
     /**
@@ -154,27 +133,27 @@ public final class PluginUtils {
      */
     public static boolean validateCallerParameter(ParameterNode parameterNode,
                                                     SyntaxNodeAnalysisContext context) {
-        if (!(parameterNode instanceof RequiredParameterNode)) {
+        return validateQualifiedFtpParameter(parameterNode, context, CALLER);
+    }
+
+    private static boolean validateQualifiedFtpParameter(ParameterNode parameterNode,
+                                                         SyntaxNodeAnalysisContext context,
+                                                         String expectedTypeName) {
+        if (!(parameterNode instanceof RequiredParameterNode requiredParameterNode)) {
             return false;
         }
-
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
         if (requiredParameterNode.typeName().kind() != QUALIFIED_NAME_REFERENCE) {
             return false;
         }
-
-        Node parameterTypeNode = requiredParameterNode.typeName();
-        SemanticModel semanticModel = context.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
-
-        if (paramSymbol.isPresent()) {
-            Optional<ModuleSymbol> moduleSymbol = paramSymbol.get().getModule();
-            if (moduleSymbol.isPresent()) {
-                String paramName = paramSymbol.get().getName().orElse("");
-                return validateModuleId(moduleSymbol.get()) && paramName.equals(CALLER);
-            }
+        Optional<TypeSymbol> typeSymbol = getParameterTypeSymbol(parameterNode, context);
+        if (typeSymbol.isEmpty()) {
+            return false;
         }
-        return false;
+        Optional<ModuleSymbol> moduleSymbol = typeSymbol.get().getModule();
+        if (moduleSymbol.isEmpty() || !validateModuleId(moduleSymbol.get())) {
+            return false;
+        }
+        return typeSymbol.get().getName().map(expectedTypeName::equals).orElse(false);
     }
 
     public static Optional<TypeSymbol> getParameterTypeSymbol(ParameterNode parameterNode,
