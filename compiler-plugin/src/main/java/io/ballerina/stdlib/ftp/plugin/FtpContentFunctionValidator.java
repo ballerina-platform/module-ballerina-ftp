@@ -18,24 +18,15 @@
 
 package io.ballerina.stdlib.ftp.plugin;
 
-import io.ballerina.compiler.api.SemanticModel;
-import io.ballerina.compiler.api.symbols.MethodSymbol;
-import io.ballerina.compiler.api.symbols.ModuleSymbol;
-import io.ballerina.compiler.api.symbols.ParameterSymbol;
-import io.ballerina.compiler.api.symbols.Symbol;
 import io.ballerina.compiler.api.symbols.TypeDescKind;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
-import io.ballerina.compiler.api.symbols.UnionTypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
-import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
-import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 import io.ballerina.tools.diagnostics.Location;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -46,24 +37,18 @@ import static io.ballerina.compiler.api.symbols.TypeDescKind.STREAM;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.STRING;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.TYPE_REFERENCE;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.XML;
-import static io.ballerina.compiler.syntax.tree.SyntaxKind.QUALIFIED_NAME_REFERENCE;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CALLER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.CONTENT_METHOD_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_CALLER_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_CONTENT_PARAMETER_TYPE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_FILEINFO_PARAMETER;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.FILE_INFO;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CSV_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_JSON_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_TEXT_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_XML_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getDiagnostic;
-import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getMethodSymbol;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isRemoteFunction;
-import static io.ballerina.stdlib.ftp.plugin.PluginUtils.validateModuleId;
 
 /**
  * FTP content function validator.
@@ -88,7 +73,8 @@ public class FtpContentFunctionValidator {
         }
 
         if (!isRemoteFunction(syntaxNodeAnalysisContext, contentFunctionDefinitionNode)) {
-            reportErrorDiagnostic(CONTENT_METHOD_MUST_BE_REMOTE, contentFunctionDefinitionNode.location());
+            reportErrorDiagnostic(CONTENT_METHOD_MUST_BE_REMOTE, contentFunctionDefinitionNode.location(),
+                    contentMethodName);
         }
 
         SeparatedNodeList<ParameterNode> parameters = contentFunctionDefinitionNode.functionSignature().parameters();
@@ -99,61 +85,59 @@ public class FtpContentFunctionValidator {
     private void validateContentFunctionParameters(SeparatedNodeList<ParameterNode> parameters,
                                                     FunctionDefinitionNode functionDefinitionNode) {
         if (parameters.isEmpty()) {
-            reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, functionDefinitionNode.location());
+            String expectedType = getExpectedContentType();
+            reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, functionDefinitionNode.location(),
+                    contentMethodName, expectedType, "none");
             return;
         }
 
         if (parameters.size() > 3) {
-            reportErrorDiagnostic(TOO_MANY_PARAMETERS, functionDefinitionNode.location());
+            reportErrorDiagnostic(TOO_MANY_PARAMETERS, functionDefinitionNode.location(), contentMethodName);
             return;
         }
 
         // First parameter must be content parameter
         ParameterNode firstParameter = parameters.get(0);
         if (!validateContentParameter(firstParameter)) {
-            reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, firstParameter.location());
+            String expectedType = getExpectedContentType();
+            String actualType = getActualParameterType(firstParameter);
+            reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, firstParameter.location(),
+                    contentMethodName, expectedType, actualType);
         }
 
         // Second parameter (if exists) can be FileInfo or Caller
         if (parameters.size() >= 2) {
             ParameterNode secondParameter = parameters.get(1);
-            boolean isFileInfo = validateFileInfoParameter(secondParameter);
-            boolean isCaller = validateCallerParameter(secondParameter);
+            boolean isFileInfo = PluginUtils.validateFileInfoParameter(secondParameter, syntaxNodeAnalysisContext);
+            boolean isCaller = PluginUtils.validateCallerParameter(secondParameter, syntaxNodeAnalysisContext);
 
             if (!isFileInfo && !isCaller) {
-                reportErrorDiagnostic(INVALID_FILEINFO_PARAMETER, secondParameter.location());
+                reportErrorDiagnostic(INVALID_FILEINFO_PARAMETER, secondParameter.location(), contentMethodName);
             }
 
             // Third parameter (if exists) must be Caller if second was FileInfo, or validation error
             if (parameters.size() == 3) {
                 ParameterNode thirdParameter = parameters.get(2);
                 if (isFileInfo) {
-                    if (!validateCallerParameter(thirdParameter)) {
+                    if (!PluginUtils.validateCallerParameter(thirdParameter, syntaxNodeAnalysisContext)) {
                         reportErrorDiagnostic(INVALID_CALLER_PARAMETER, thirdParameter.location());
                     }
                 } else {
                     // Second was Caller, third is invalid
-                    reportErrorDiagnostic(TOO_MANY_PARAMETERS, thirdParameter.location());
+                    reportErrorDiagnostic(TOO_MANY_PARAMETERS, thirdParameter.location(), contentMethodName);
                 }
             }
         }
     }
 
     private boolean validateContentParameter(ParameterNode parameterNode) {
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        Node parameterTypeNode = requiredParameterNode.typeName();
-        SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
-
-        if (paramSymbol.isEmpty()) {
+        Optional<TypeSymbol> typeSymbolOpt = PluginUtils.getParameterTypeSymbol(parameterNode,
+                syntaxNodeAnalysisContext);
+        if (typeSymbolOpt.isEmpty()) {
             return false;
         }
 
-        TypeSymbol typeSymbol = ((ParameterSymbol) paramSymbol.get()).typeDescriptor();
-        if (typeSymbol == null) {
-            return false;
-        }
-
+        TypeSymbol typeSymbol = typeSymbolOpt.get();
         TypeDescKind typeKind = typeSymbol.typeKind();
 
         switch (contentMethodName) {
@@ -221,99 +205,32 @@ public class FtpContentFunctionValidator {
         return false;
     }
 
-    private boolean validateFileInfoParameter(ParameterNode parameterNode) {
-        if (!(parameterNode instanceof RequiredParameterNode)) {
-            return false;
-        }
-
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        if (requiredParameterNode.typeName().kind() != QUALIFIED_NAME_REFERENCE) {
-            return false;
-        }
-
-        Node parameterTypeNode = requiredParameterNode.typeName();
-        SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
-
-        if (paramSymbol.isPresent()) {
-            Optional<ModuleSymbol> moduleSymbol = paramSymbol.get().getModule();
-            if (moduleSymbol.isPresent()) {
-                String paramName = paramSymbol.get().getName().orElse("");
-                return validateModuleId(moduleSymbol.get()) && paramName.equals(FILE_INFO);
-            }
-        }
-        return false;
-    }
-
-    private boolean validateCallerParameter(ParameterNode parameterNode) {
-        if (!(parameterNode instanceof RequiredParameterNode)) {
-            return false;
-        }
-
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        if (requiredParameterNode.typeName().kind() != QUALIFIED_NAME_REFERENCE) {
-            return false;
-        }
-
-        Node parameterTypeNode = requiredParameterNode.typeName();
-        SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
-
-        if (paramSymbol.isPresent()) {
-            Optional<ModuleSymbol> moduleSymbol = paramSymbol.get().getModule();
-            if (moduleSymbol.isPresent()) {
-                String paramName = paramSymbol.get().getName().orElse("");
-                return validateModuleId(moduleSymbol.get()) && paramName.equals(CALLER);
-            }
-        }
-        return false;
-    }
-
     private void validateReturnTypeErrorOrNil(FunctionDefinitionNode functionDefinitionNode) {
-        MethodSymbol methodSymbol = getMethodSymbol(syntaxNodeAnalysisContext, functionDefinitionNode);
-        if (methodSymbol == null) {
-            return;
-        }
+        PluginUtils.validateReturnTypeErrorOrNil(functionDefinitionNode, syntaxNodeAnalysisContext);
+    }
 
-        Optional<TypeSymbol> returnTypeDesc = methodSymbol.typeDescriptor().returnTypeDescriptor();
-        if (returnTypeDesc.isEmpty()) {
-            return;
-        }
+    private String getExpectedContentType() {
+        return switch (contentMethodName) {
+            case ON_FILE_FUNC -> "byte[] or stream<byte[], error?>";
+            case ON_FILE_TEXT_FUNC -> "string";
+            case ON_FILE_JSON_FUNC -> "json or record type";
+            case ON_FILE_XML_FUNC -> "xml or record type";
+            case ON_FILE_CSV_FUNC -> "string[][], record{}[], or stream<byte[], error?>";
+            default -> "unknown";
+        };
+    }
 
-        TypeDescKind returnTypeKind = returnTypeDesc.get().typeKind();
-
-        if (returnTypeKind == TypeDescKind.NIL) {
-            return;
-        }
-
-        if (returnTypeKind == TypeDescKind.UNION) {
-            List<TypeSymbol> returnTypeMembers =
-                    ((UnionTypeSymbol) returnTypeDesc.get()).memberTypeDescriptors();
-            for (TypeSymbol returnType : returnTypeMembers) {
-                if (returnType.typeKind() != TypeDescKind.NIL) {
-                    if (returnType.typeKind() == TYPE_REFERENCE) {
-                        if (!returnType.signature().equals(PluginConstants.ERROR) &&
-                                returnType.getModule().isPresent() &&
-                                !validateModuleId(returnType.getModule().get())) {
-                            reportErrorDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                    functionDefinitionNode.functionSignature().location());
-                            return;
-                        }
-                    } else if (returnType.typeKind() != TypeDescKind.ERROR) {
-                        reportErrorDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                functionDefinitionNode.functionSignature().location());
-                        return;
-                    }
-                }
-            }
-        } else {
-            reportErrorDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                    functionDefinitionNode.functionSignature().location());
-        }
+    private String getActualParameterType(ParameterNode parameterNode) {
+        return PluginUtils.getParameterTypeSignature(parameterNode, syntaxNodeAnalysisContext);
     }
 
     public void reportErrorDiagnostic(PluginConstants.CompilationErrors error, Location location) {
         syntaxNodeAnalysisContext.reportDiagnostic(getDiagnostic(error,
                 DiagnosticSeverity.ERROR, location));
+    }
+
+    public void reportErrorDiagnostic(PluginConstants.CompilationErrors error, Location location, Object... args) {
+        syntaxNodeAnalysisContext.reportDiagnostic(getDiagnostic(error,
+                DiagnosticSeverity.ERROR, location, args));
     }
 }
