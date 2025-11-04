@@ -54,6 +54,15 @@ public final class PluginUtils {
         return DiagnosticFactory.createDiagnostic(diagnosticInfo, location);
     }
 
+    public static Diagnostic getDiagnostic(CompilationErrors error, DiagnosticSeverity severity, Location location,
+                                           Object... args) {
+        String errorTemplate = error.getError();
+        String errorMessage = String.format(errorTemplate, args);
+        String diagnosticCode = error.getErrorCode();
+        DiagnosticInfo diagnosticInfo = new DiagnosticInfo(diagnosticCode, errorMessage, severity);
+        return DiagnosticFactory.createDiagnostic(diagnosticInfo, location);
+    }
+
     public static boolean validateModuleId(ModuleSymbol moduleSymbol) {
         if (moduleSymbol != null) {
             String moduleName = moduleSymbol.id().moduleName();

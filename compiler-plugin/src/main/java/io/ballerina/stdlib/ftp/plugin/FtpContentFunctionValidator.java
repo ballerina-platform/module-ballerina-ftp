@@ -88,7 +88,8 @@ public class FtpContentFunctionValidator {
         }
 
         if (!isRemoteFunction(syntaxNodeAnalysisContext, contentFunctionDefinitionNode)) {
-            reportErrorDiagnostic(CONTENT_METHOD_MUST_BE_REMOTE, contentFunctionDefinitionNode.location());
+            reportErrorDiagnostic(CONTENT_METHOD_MUST_BE_REMOTE, contentFunctionDefinitionNode.location(),
+                    contentMethodName);
         }
 
         SeparatedNodeList<ParameterNode> parameters = contentFunctionDefinitionNode.functionSignature().parameters();
@@ -99,19 +100,24 @@ public class FtpContentFunctionValidator {
     private void validateContentFunctionParameters(SeparatedNodeList<ParameterNode> parameters,
                                                     FunctionDefinitionNode functionDefinitionNode) {
         if (parameters.isEmpty()) {
-            reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, functionDefinitionNode.location());
+            String expectedType = getExpectedContentType();
+            reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, functionDefinitionNode.location(),
+                    contentMethodName, expectedType, "none");
             return;
         }
 
         if (parameters.size() > 3) {
-            reportErrorDiagnostic(TOO_MANY_PARAMETERS, functionDefinitionNode.location());
+            reportErrorDiagnostic(TOO_MANY_PARAMETERS, functionDefinitionNode.location(), contentMethodName);
             return;
         }
 
         // First parameter must be content parameter
         ParameterNode firstParameter = parameters.get(0);
         if (!validateContentParameter(firstParameter)) {
-            reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, firstParameter.location());
+            String expectedType = getExpectedContentType();
+            String actualType = getActualParameterType(firstParameter);
+            reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, firstParameter.location(),
+                    contentMethodName, expectedType, actualType);
         }
 
         // Second parameter (if exists) can be FileInfo or Caller
@@ -121,7 +127,7 @@ public class FtpContentFunctionValidator {
             boolean isCaller = validateCallerParameter(secondParameter);
 
             if (!isFileInfo && !isCaller) {
-                reportErrorDiagnostic(INVALID_FILEINFO_PARAMETER, secondParameter.location());
+                reportErrorDiagnostic(INVALID_FILEINFO_PARAMETER, secondParameter.location(), contentMethodName);
             }
 
             // Third parameter (if exists) must be Caller if second was FileInfo, or validation error
@@ -133,7 +139,7 @@ public class FtpContentFunctionValidator {
                     }
                 } else {
                     // Second was Caller, third is invalid
-                    reportErrorDiagnostic(TOO_MANY_PARAMETERS, thirdParameter.location());
+                    reportErrorDiagnostic(TOO_MANY_PARAMETERS, thirdParameter.location(), contentMethodName);
                 }
             }
         }
@@ -141,15 +147,20 @@ public class FtpContentFunctionValidator {
 
     private boolean validateContentParameter(ParameterNode parameterNode) {
         RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        Node parameterTypeNode = requiredParameterNode.typeName();
         SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
+        Optional<Symbol> paramSymbolOpt = semanticModel.symbol(requiredParameterNode);
 
-        if (paramSymbol.isEmpty()) {
+        if (paramSymbolOpt.isEmpty()) {
             return false;
         }
 
-        TypeSymbol typeSymbol = ((ParameterSymbol) paramSymbol.get()).typeDescriptor();
+        Symbol symbol = paramSymbolOpt.get();
+        if (!(symbol instanceof ParameterSymbol)) {
+            return false;
+        }
+
+        ParameterSymbol parameterSymbol = (ParameterSymbol) symbol;
+        TypeSymbol typeSymbol = parameterSymbol.typeDescriptor();
         if (typeSymbol == null) {
             return false;
         }
@@ -312,8 +323,50 @@ public class FtpContentFunctionValidator {
         }
     }
 
+    private String getExpectedContentType() {
+        return switch (contentMethodName) {
+            case ON_FILE_FUNC -> "byte[] or stream<byte[], error?>";
+            case ON_FILE_TEXT_FUNC -> "string";
+            case ON_FILE_JSON_FUNC -> "json or record type";
+            case ON_FILE_XML_FUNC -> "xml or record type";
+            case ON_FILE_CSV_FUNC -> "string[][], record{}[], or stream<byte[], error?>";
+            default -> "unknown";
+        };
+    }
+
+    private String getActualParameterType(ParameterNode parameterNode) {
+        if (!(parameterNode instanceof RequiredParameterNode)) {
+            return "unknown";
+        }
+        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
+        SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
+        Optional<Symbol> paramSymbolOpt = semanticModel.symbol(requiredParameterNode);
+
+        if (paramSymbolOpt.isEmpty()) {
+            return "unknown";
+        }
+
+        Symbol symbol = paramSymbolOpt.get();
+        if (!(symbol instanceof ParameterSymbol)) {
+            return "unknown";
+        }
+
+        ParameterSymbol parameterSymbol = (ParameterSymbol) symbol;
+        TypeSymbol typeSymbol = parameterSymbol.typeDescriptor();
+        if (typeSymbol == null) {
+            return "unknown";
+        }
+
+        return typeSymbol.signature();
+    }
+
     public void reportErrorDiagnostic(PluginConstants.CompilationErrors error, Location location) {
         syntaxNodeAnalysisContext.reportDiagnostic(getDiagnostic(error,
                 DiagnosticSeverity.ERROR, location));
+    }
+
+    public void reportErrorDiagnostic(PluginConstants.CompilationErrors error, Location location, Object... args) {
+        syntaxNodeAnalysisContext.reportDiagnostic(getDiagnostic(error,
+                DiagnosticSeverity.ERROR, location, args));
     }
 }
