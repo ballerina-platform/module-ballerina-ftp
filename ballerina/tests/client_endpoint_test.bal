@@ -349,6 +349,8 @@ public function testPutCsvStringAndReadAllAndStream() returns error? {
         do {
             actual.push(row);
         };
+    // Code coverage
+    check str.close();
     test:assertEquals(actual, csvData.slice(1), msg = "CSV stream content mismatch when reading as stream");
 }
 
@@ -380,6 +382,8 @@ public function testPutCsvFromRecordsAndReadAllAndStream() returns error? {
         do {
             actual.push(row);
         };
+    // Code coverage
+    check str.close();
     test:assertEquals(actual, records, msg = "CSV stream content mismatch when reading as stream");
 }
 
@@ -639,6 +643,16 @@ type XPersonLax record {|
     int age;
 |};
 
+type CsvPersonStrict record {|
+    string name;
+    int age;
+|};
+
+type CsvPersonLax record {|
+    string name;
+    int? age;
+|};
+
 // Strict vs lax data binding for XML
 @test:Config {dependsOn: [testJsonTypedBinding_strict_and_lax]}
 function testXmlTypedBinding_strict_and_lax() returns error? {
@@ -653,7 +667,71 @@ function testXmlTypedBinding_strict_and_lax() returns error? {
     test:assertEquals(laxVal.name, "Alice");
 }
 
+// Strict vs lax data binding for CSV
 @test:Config {dependsOn: [testXmlTypedBinding_strict_and_lax]}
+function testCsvTypedBinding_strict_and_lax() returns error? {
+    string csvPath = "/home/in/csv-typed-projection.csv";
+    // Write CSV with missing age field for second row
+    string[][] csvData = [
+        ["name", "age"],
+        ["Alice", "25"],
+        ["Bob", ""]  // Missing age value
+    ];
+    check (<Client>clientEp)->putCsv(csvPath, csvData, OVERWRITE);
+
+    // Strict binding should fail when required field is absent
+    CsvPersonStrict[]|Error strictRes = (<Client>clientEp)->getCsv(csvPath);
+    test:assertTrue(strictRes is Error, msg = "Strict CSV binding should fail when required field absent");
+
+    // Lax binding should succeed with nil for missing field
+    CsvPersonLax[] laxVal = check (<Client>clientEpLaxDataBinding)->getCsv(csvPath);
+    test:assertEquals(laxVal.length(), 2, msg = "Should have 2 records");
+    test:assertEquals(laxVal[0].name, "Alice");
+    test:assertEquals(laxVal[0].age, 25);
+    test:assertEquals(laxVal[1].name, "Bob");
+    test:assertEquals(laxVal[1].age is (), true, msg = "Lax binding should map empty/absent field to nil");
+}
+
+// Strict vs lax data binding for CSV with streaming
+@test:Config {dependsOn: [testCsvTypedBinding_strict_and_lax]}
+function testCsvStreamTypedBinding_strict_and_lax() returns error? {
+    string csvPath = "/home/in/csv-stream-typed-projection.csv";
+    // Write CSV with missing age field
+    string[][] csvData = [
+        ["name", "age"],
+        ["Charlie", "30"],
+        ["Diana", ""]  // Missing age
+    ];
+    check (<Client>clientEp)->putCsv(csvPath, csvData, OVERWRITE);
+
+    // Strict streaming should fail
+    stream<CsvPersonStrict, error?>|Error strictStreamRes = (<Client>clientEp)->getCsvAsStream(csvPath);
+    if strictStreamRes is stream<CsvPersonStrict, error?> {
+        // Try to consume the stream - should error when hitting the row with missing age
+        CsvPersonStrict[]|error consumed = from CsvPersonStrict row in strictStreamRes
+            select row;
+        test:assertTrue(consumed is error, msg = "Strict CSV stream should error on missing required field");
+    } else {
+        // Also acceptable if the stream creation itself fails
+        test:assertTrue(true, msg = "Strict CSV stream failed at creation, which is acceptable");
+    }
+
+    // Lax streaming should succeed
+    stream<CsvPersonLax, error?> laxStream = check (<Client>clientEpLaxDataBinding)->getCsvAsStream(csvPath);
+    CsvPersonLax[] laxRecords = [];
+    check from CsvPersonLax row in laxStream
+        do {
+            laxRecords.push(row);
+        };
+    
+    test:assertEquals(laxRecords.length(), 2, msg = "Should have 2 records in lax stream");
+    test:assertEquals(laxRecords[0].name, "Charlie");
+    test:assertEquals(laxRecords[0].age, 30);
+    test:assertEquals(laxRecords[1].name, "Diana");
+    test:assertEquals(laxRecords[1].age is (), true, msg = "Lax stream binding should map empty field to nil");
+}
+
+@test:Config {dependsOn: [testCsvStreamTypedBinding_strict_and_lax]}
 function testPutTextWithAppendOption() returns error? {
     string path = "/home/in/append-option.txt";
     check (<Client>clientEp)->putText(path, "Hello", OVERWRITE);
