@@ -81,6 +81,7 @@ subprojects {
 
         ballerinaStdLibs "io.ballerina.lib:data.jsondata-ballerina:${stdlibDataJsonDataVersion}"
         ballerinaStdLibs "io.ballerina.lib:data.xmldata-ballerina:${stdlibDataXmlDataVersion}"
+        ballerinaStdLibs "io.ballerina.lib:data.csv-ballerina:${stdlibDataCsvVersion}"
     }
 }
 
