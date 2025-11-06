@@ -308,7 +308,18 @@ function testPutXml() returns error? {
 
     // Compare string representations for stability
     test:assertEquals(got.toString(), x.toString(), msg = "XML content mismatch");
-    return;
+}
+
+@test:Config {dependsOn: [testPutFileContent]}
+function testPutXmlFailure() returns error? {
+    string txt = "hello text content";
+    string path = "/home/in/putXml.txt";
+
+    check (<Client>clientEp)->putText(path, txt);
+    xml|Error got = (<Client>clientEp)->getXml(path);
+
+    // Compare string representations for stability
+    test:assertTrue(got is Error, msg = "XML content binding should have failed for non-XML content");
 }
 
 @test:Config {dependsOn: [testPutFileContent]}
@@ -320,7 +331,6 @@ function testPutText() returns error? {
     string got = check (<Client>clientEp)->getText(path);
 
     test:assertEquals(got, txt, msg = "Text content mismatch");
-    return;
 }
 
 @test:Config {dependsOn: [testPutFileContent]}
