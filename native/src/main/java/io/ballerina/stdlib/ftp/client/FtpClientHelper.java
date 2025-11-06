@@ -65,6 +65,7 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.BYTE_STREAM_CLOSE_FUNC;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.BYTE_STREAM_NEXT_FUNC;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FIELD_VALUE;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.STREAM_ENTRY_RECORD;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getFtpPackage;
@@ -100,7 +101,7 @@ class FtpClientHelper {
             }
         } catch (IOException e) {
             log.error("{}", FtpConstants.ERR_READING_STREAM, e);
-            balFuture.complete(FtpUtil.createError(FtpConstants.ERR_READING_STREAM, e, "Error"));
+            balFuture.complete(FtpUtil.createError(FtpConstants.ERR_READING_STREAM, e, FTP_ERROR));
         }
         return true;
     }
@@ -119,7 +120,7 @@ class FtpClientHelper {
             }
         } catch (IOException e) {
             log.error("{}", FtpConstants.ERR_READING_STREAM, e);
-            balFuture.complete(FtpUtil.createError(FtpConstants.ERR_READING_STREAM, e, "Error"));
+            balFuture.complete(FtpUtil.createError(FtpConstants.ERR_READING_STREAM, e, FTP_ERROR));
         }
         return true;
     }
@@ -149,7 +150,7 @@ class FtpClientHelper {
             return ValueCreator.createStreamValue(streamType, contentByteStreamObject);
         } catch (Exception e) {
             log.error("Failed to create stream with content", e);
-            return FtpUtil.createError(FtpConstants.ERR_CREATE_STREAM, e, "Error");
+            return FtpUtil.createError(FtpConstants.ERR_CREATE_STREAM, e, FTP_ERROR);
         }
     }
 
@@ -314,8 +315,8 @@ class FtpClientHelper {
             handleStreamEnd(entity, bufferHolder);
             return;
         }
-        BMap<BString, Object> record = (BMap<BString, Object>) result;
-        BArray arrayValue = record.getArrayValue(FIELD_VALUE);
+        BMap<BString, Object> recordVal = (BMap<BString, Object>) result;
+        BArray arrayValue = recordVal.getArrayValue(FIELD_VALUE);
         if (arrayValue == null) {
             handleStreamEnd(entity, bufferHolder);
             return;

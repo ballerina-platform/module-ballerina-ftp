@@ -45,7 +45,7 @@ public class CSVUtils {
                 csvBuilder.append(convertArrayToCsvRow(row));
                 csvBuilder.append(lineSeparator);
             }
-        } else if (firstElement instanceof BMap) {
+        } else {
             // Handle record[] - array of records
             BMap<BString, Object> firstRecord = (BMap<BString, Object>) firstElement;
             BString[] keys = firstRecord.getKeys();
@@ -58,14 +58,10 @@ public class CSVUtils {
 
             // Add data rows
             for (int i = 0; i < inputContent.size(); i++) {
-                BMap<BString, Object> record = (BMap<BString, Object>) inputContent.get(i);
-                csvBuilder.append(recordToCsvRow(record, keys));
+                BMap<BString, Object> recordVal = (BMap<BString, Object>) inputContent.get(i);
+                csvBuilder.append(recordToCsvRow(recordVal, keys));
                 csvBuilder.append(lineSeparator);
             }
-        } else {
-            // Handle simple array of primitives (string[], int[], etc.)
-            csvBuilder.append(convertArrayToCsvRow(inputContent));
-            csvBuilder.append(lineSeparator);
         }
 
         return csvBuilder.toString();
@@ -74,12 +70,12 @@ public class CSVUtils {
     /**
      * Converts a BMap (record) to a CSV row with optional header (public method for streaming).
      *
-     * @param record        The record to convert
+     * @param balRecord        The record to convert
      * @param includeHeader If true and this is the first row, includes header row
      * @return CSV formatted string
      */
-    public static String convertRecordToCsvRow(BMap<BString, Object> record, boolean includeHeader) {
-        BString[] keys = record.getKeys();
+    public static String convertRecordToCsvRow(BMap<BString, Object> balRecord, boolean includeHeader) {
+        BString[] keys = balRecord.getKeys();
         StringBuilder result = new StringBuilder();
 
         if (includeHeader) {
@@ -87,7 +83,7 @@ public class CSVUtils {
             result.append(System.lineSeparator());
         }
 
-        result.append(recordToCsvRow(record, keys));
+        result.append(recordToCsvRow(balRecord, keys));
         return result.toString();
     }
 
@@ -123,10 +119,10 @@ public class CSVUtils {
     /**
      * Converts a BMap (record) to a CSV row using the specified key order.
      */
-    private static String recordToCsvRow(BMap<BString, Object> record, BString[] keys) {
+    private static String recordToCsvRow(BMap<BString, Object> balRecord, BString[] keys) {
         StringBuilder row = new StringBuilder();
         for (int i = 0; i < keys.length; i++) {
-            Object value = record.get(keys[i]);
+            Object value = balRecord.get(keys[i]);
             row.append(escapeCsvValue(valueToString(value)));
             if (i < keys.length - 1) {
                 row.append(",");

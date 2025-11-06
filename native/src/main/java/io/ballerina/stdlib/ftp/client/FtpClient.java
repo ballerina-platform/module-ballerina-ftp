@@ -58,6 +58,7 @@ import java.io.SequenceInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
@@ -475,73 +476,114 @@ public class FtpClient {
     /**
      * Creates an InputStream from a Ballerina iterator using SequenceInputStream.
      */
-    private static InputStream createInputStreamFromIterator(Environment environment, BObject iterator)
-            throws Exception {
-        Enumeration<InputStream> enumeration = new Enumeration<InputStream>() {
-            private InputStream nextStream = null;
-            private boolean hasChecked = false;
-            private boolean isFirstRow = true;
+    private static InputStream createInputStreamFromIterator(Environment environment, BObject iterator) {
+        IteratorToInputStream streamIterator = new IteratorToInputStream(environment, iterator);
+        return new SequenceInputStream(asEnumeration(streamIterator));
+    }
 
+    /**
+     * Converts an Iterator to an Enumeration for compatibility with SequenceInputStream.
+     */
+    private static <T> Enumeration<T> asEnumeration(Iterator<T> iterator) {
+        return new Enumeration<T>() {
             @Override
             public boolean hasMoreElements() {
-                if (!hasChecked) {
-                    try {
-                        Object next = environment.getRuntime().callMethod(iterator, "next", null);
-                        
-                        if (next == null) {
-                            nextStream = null;
-                        } else if (next instanceof BError) {
-                            throw new RuntimeException("Iterator error: " + ((BError) next).getMessage());
-                        } else {
-                            byte[] bytes = extractBytes(next);
-                            nextStream = bytes.length > 0 ? new ByteArrayInputStream(bytes) : null;
-                            if (nextStream != null) {
-                                isFirstRow = false;
-                            }
-                        }
-                        hasChecked = true;
-                    } catch (Exception e) {
-                        throw new RuntimeException("Failed to read iterator", e);
-                    }
-                }
-                return nextStream != null;
+                return iterator.hasNext();
             }
 
             @Override
-            public InputStream nextElement() {
-                if (!hasChecked) {
-                    hasMoreElements();
-                }
-                hasChecked = false;
-                if (nextStream == null) {
-                    throw new NoSuchElementException();
-                }
-                return nextStream;
-            }
-
-            private byte[] extractBytes(Object value) {
-                BMap<BString, Object> streamRecord = (BMap<BString, Object>) value;
-                Object val = streamRecord.get(FtpConstants.FIELD_VALUE);
-
-                if (val instanceof BArray array) {
-                    // Check if it's a byte array or CSV data (string[]/streamRecord)
-                    if (array.getElementType().getTag() == io.ballerina.runtime.api.types.TypeTags.BYTE_TAG) {
-                        // Byte array - return as is
-                        return array.getBytes();
-                    } else {
-                        // CSV data (string[] ) - convert to CSV format
-                        String csvRow = CSVUtils.convertArrayToCsvRow(array) + System.lineSeparator();
-                        return csvRow.getBytes(StandardCharsets.UTF_8);
-                    }
-                } else {
-                    // Single streamRecord - convert to CSV format
-                    String csvRow = CSVUtils.convertRecordToCsvRow((BMap<BString, Object>) val, isFirstRow);
-                    csvRow += System.lineSeparator();
-                    return csvRow.getBytes(StandardCharsets.UTF_8);
-                }
+            public T nextElement() {
+                return iterator.next();
             }
         };
-        return new SequenceInputStream(enumeration);
+    }
+
+    /**
+     * Lightweight adapter that turns a Ballerina iterator into a sequence of InputStreams.
+     * Keeps state minimal to reduce nesting and cognitive complexity in the outer method.
+     */
+    private static final class IteratorToInputStream implements Iterator<InputStream> {
+        private final Environment env;
+        private final BObject iterator;
+        private InputStream nextStream;
+        private boolean hasChecked;
+        private boolean isFirstRow = true;
+
+        IteratorToInputStream(Environment env, BObject iterator) {
+            this.env = env;
+            this.iterator = iterator;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (hasChecked) {
+                return nextStream != null;
+            }
+            nextStream = fetchNextStream();
+            hasChecked = true;
+            return nextStream != null;
+        }
+
+        @Override
+        public InputStream next() {
+            if (!hasChecked && !hasNext()) {
+                throw new NoSuchElementException();
+            }
+            hasChecked = false;
+            InputStream result = nextStream;
+            nextStream = null;
+            return result;
+        }
+
+        private InputStream fetchNextStream() {
+            final Object next;
+            try {
+                next = env.getRuntime().callMethod(iterator, "next", null);
+            } catch (Exception e) {
+                throw FtpUtil.createError("Failed to read iterator", e, FTP_ERROR);
+            }
+            if (next == null) {
+                return null;
+            }
+            if (next instanceof BError err) {
+                throw FtpUtil.createError("Iterator error: " + err.getMessage(), FTP_ERROR);
+            }
+
+            byte[] bytes = toBytes(next);
+            if (bytes.length == 0) {
+                return null;
+            }
+            isFirstRow = false;
+            return new ByteArrayInputStream(bytes);
+        }
+
+        private byte[] toBytes(Object value) {
+            // Each element is a record with a 'value' field.
+            @SuppressWarnings("unchecked")
+            BMap<BString, Object> streamRecord = (BMap<BString, Object>) value;
+            Object val = streamRecord.get(FtpConstants.FIELD_VALUE);
+
+            if (val instanceof BArray array) {
+                return bytesFromArray(array);
+            }
+            @SuppressWarnings("unchecked")
+            BMap<BString, Object> recordValue = (BMap<BString, Object>) val;
+            return bytesFromRecord(recordValue, isFirstRow);
+        }
+
+        private static byte[] bytesFromArray(BArray array) {
+            // If it's a byte[] just return it; else it's CSV row from string[]
+            if (array.getElementType().getTag() == io.ballerina.runtime.api.types.TypeTags.BYTE_TAG) {
+                return array.getBytes();
+            }
+            String csvRow = CSVUtils.convertArrayToCsvRow(array) + System.lineSeparator();
+            return csvRow.getBytes(StandardCharsets.UTF_8);
+        }
+
+        private static byte[] bytesFromRecord(BMap<BString, Object> balRecord, boolean includeHeader) {
+            String csvRow = CSVUtils.convertRecordToCsvRow(balRecord, includeHeader) + System.lineSeparator();
+            return csvRow.getBytes(StandardCharsets.UTF_8);
+        }
     }
 
     private static Object putGenericAction(Environment env, BObject clientConnector, BString path, BString options,
