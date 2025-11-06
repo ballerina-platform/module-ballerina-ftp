@@ -214,12 +214,11 @@ public class FtpClient {
         }
 
         if (typeDesc.getDescribingType().getQualifiedName().equals("xml")) {
-            Object bXml = XmlUtils.parse(StringUtils.fromString(new String((byte[]) content,
-                    StandardCharsets.UTF_8)));
-            if (bXml instanceof BError) {
-                return FtpUtil.createError(((BError) bXml).getErrorMessage().getValue(), FTP_ERROR);
+            try {
+                return XmlUtils.parse(StringUtils.fromString(new String((byte[]) content, StandardCharsets.UTF_8)));
+            } catch (BError e) {
+                return FtpUtil.createError(e.getErrorMessage().getValue(), FTP_ERROR);
             }
-            return bXml;
         }
 
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
