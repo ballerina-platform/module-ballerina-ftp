@@ -443,7 +443,7 @@ public class FtpClient {
 
     public static Object putCsv(Environment env, BObject clientConnector, BString path, BArray inputContent,
                                 BString options) {
-        boolean addHeader = !options.getValue().equals("APPEND");
+        boolean addHeader = !options.getValue().equals(FtpConstants.WRITE_OPTION_APPEND);
         String convertToCsv = CSVUtils.convertToCsv(inputContent, addHeader);
         InputStream stream = new ByteArrayInputStream(convertToCsv.getBytes(StandardCharsets.UTF_8));
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
