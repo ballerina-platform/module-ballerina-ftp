@@ -20,12 +20,13 @@ package io.ballerina.stdlib.ftp.client;
 
 import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Module;
-import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.ArrayType;
 import io.ballerina.runtime.api.types.PredefinedTypes;
 import io.ballerina.runtime.api.types.StreamType;
 import io.ballerina.runtime.api.types.Type;
+import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BMap;
@@ -53,6 +54,7 @@ import java.nio.channels.ByteChannel;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -97,46 +99,63 @@ class FtpClientHelper {
                 balFuture.complete(streamEntry);
             }
         } catch (IOException e) {
-            log.error("Error occurred while reading stream: ", e);
+            log.error("{}", FtpConstants.ERR_READING_STREAM, e);
+            balFuture.complete(FtpUtil.createError(FtpConstants.ERR_READING_STREAM, e, "Error"));
         }
         return true;
     }
 
     static boolean executeStreamingAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
-                                          CompletableFuture<Object> balFuture, Type streamValueType) {
+                                          CompletableFuture<Object> balFuture, Type streamValueType,
+                                          boolean laxDataBinding) {
         try {
             if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
                 final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
                 ByteChannel byteChannel = new FtpByteChannel(in);
                 Channel channel = new FtpChannel(byteChannel);
                 InputStream inputStream = channel.getInputStream();
-                Object streamEntry = createStreamWithContent(inputStream, streamValueType);
+                Object streamEntry = createStreamWithContent(inputStream, streamValueType, laxDataBinding);
                 balFuture.complete(streamEntry);
             }
         } catch (IOException e) {
-            log.error("Error occurred while reading stream: ", e);
+            log.error("{}", FtpConstants.ERR_READING_STREAM, e);
+            balFuture.complete(FtpUtil.createError(FtpConstants.ERR_READING_STREAM, e, "Error"));
         }
         return true;
     }
 
-    private static Object createStreamWithContent(InputStream content, Type streamValueType) {
+    private static Object createStreamWithContent(InputStream content, Type streamValueType,
+                                                  boolean laxDataBinding) {
         try {
+            String streamName = "";
+            if (streamValueType.getTag() == TypeTags.ARRAY_TAG) {
+                if (((ArrayType) streamValueType).getElementType().getTag() == TypeTags.BYTE_TAG) {
+                    streamName = "ContentByteStream";
+                } else {
+                    streamName = "ContentCsvStringArrayStream";
+                }
+            } else {
+                streamName = "ContentCsvRecordStream";
+            }
+
             BObject contentByteStreamObject = ValueCreator.createObjectValue(
-                    ModuleUtils.getModule(), "ContentByteStream", null, null
+                    ModuleUtils.getModule(), streamName, null, null
             );
-            contentByteStreamObject.addNativeData("Input_Stream", content);
-            StreamType streamType = TypeCreator.createStreamType(streamValueType, PredefinedTypes.TYPE_NULL);
+            contentByteStreamObject.addNativeData(FtpConstants.NATIVE_INPUT_STREAM, content);
+            contentByteStreamObject.addNativeData(FtpConstants.NATIVE_LAX_DATABINDING, laxDataBinding);
+            contentByteStreamObject.addNativeData(FtpConstants.NATIVE_STREAM_VALUE_TYPE, streamValueType);
+            StreamType streamType = TypeCreator.createStreamType(streamValueType,
+                    TypeCreator.createUnionType(PredefinedTypes.TYPE_ERROR, PredefinedTypes.TYPE_NULL));
             return ValueCreator.createStreamValue(streamType, contentByteStreamObject);
         } catch (Exception e) {
             log.error("Failed to create stream with content", e);
-            // Fallback to returning byte array if stream creation fails
-            return ErrorCreator.createError(StringUtils.fromString("Unable to create stream"), e);
+            return FtpUtil.createError(FtpConstants.ERR_CREATE_STREAM, e, "Error");
         }
     }
 
 
     static boolean executeGetAllAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
-                                    CompletableFuture<Object> balFuture) {
+                                       CompletableFuture<Object> balFuture) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             byte[] content = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getBytesArray();
             balFuture.complete(content);
@@ -283,10 +302,11 @@ class FtpClientHelper {
         } else {
             String textContent = (inputContent.getStringValue(StringUtils.fromString(
                     FtpConstants.INPUT_CONTENT_TEXT_CONTENT_KEY))).getValue();
-            return new ByteArrayInputStream(textContent.getBytes());
+            return new ByteArrayInputStream(textContent.getBytes(StandardCharsets.UTF_8));
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static void callStreamNext(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj) {
         Object result = env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_NEXT_FUNC, null);
@@ -294,7 +314,8 @@ class FtpClientHelper {
             handleStreamEnd(entity, bufferHolder);
             return;
         }
-        BArray arrayValue = ((BMap) result).getArrayValue(FIELD_VALUE);
+        BMap<BString, Object> record = (BMap<BString, Object>) result;
+        BArray arrayValue = record.getArrayValue(FIELD_VALUE);
         if (arrayValue == null) {
             handleStreamEnd(entity, bufferHolder);
             return;

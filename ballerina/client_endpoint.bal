@@ -16,10 +16,11 @@
 
 import ballerina/io;
 import ballerina/jballerina.java;
+import ballerina/data.csv as _;
 import ballerina/data.jsondata as _;
 import ballerina/data.xmldata;
 
-# Represents an FTP client that intracts with an FTP server
+# Represents an FTP client that interacts with an FTP server
 public isolated client class Client {
     private final readonly & ClientConfiguration config;
 
@@ -36,11 +37,10 @@ public isolated client class Client {
     }
 
     # Retrieves the file content from a remote resource.
+    # Deprecated: Use `getText`, `getJson`, `getXml`, `getCsv`, `getBytes`, or the streaming variants `getBytesAsStream`/`getCsvAsStream` instead.
     # ```ballerina
     # stream<byte[] & readonly, io:Error?>|ftp:Error channel = client->get(path);
     # ```
-    #
-    # Deprecated: Use `getText` or `getJson` instead for retrieving file content.
     #
     # + path - The resource path
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
@@ -132,16 +132,29 @@ public isolated client class Client {
         'class: "io.ballerina.stdlib.ftp.client.FtpClient"
     } external;
 
+    # Retrieves the file content as a CSV stream from a remote resource.
+    # ```ballerina
+    # stream<string[], error?> response = check client->getCsvAsStream(path);
+    # ```
+    #
+    # + path - The path to the file on the FTP server
+    # + targetType - The target element type of the stream (e.g., `string[]` or `record {}`)
+    # + return - A stream from which the file can be read or `ftp:Error` in case of errors
+    remote isolated function getCsvAsStream(string path, typedesc<string[]|record{}> targetType = <>) returns stream<targetType, error?>|Error = @java:Method {
+        name: "getCsvAsStream",
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+    } external;
+
     # Appends the content to an existing file in an FTP server.
     # ```ballerina
     # ftp:Error? response = client->append(path, channel);
     # ```
-    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvFromStream`
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
+    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvAsStream` with option `APPEND`.
     @deprecated
     remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content)
             returns Error? {
@@ -152,7 +165,6 @@ public isolated client class Client {
     # ```ballerina
     # ftp:Error? response = client->put(path, channel);
     # ```
-    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvFromStream`
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
@@ -161,6 +173,7 @@ public isolated client class Client {
     #                     uploading
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
+    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvAsStream`.
     @deprecated
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
             |string|xml|json content, Compression compressionType = NONE) returns Error? {
@@ -209,8 +222,7 @@ public isolated client class Client {
     # + option - To indicate whether to overwrite or append the given content
     # + return - `()` or else an `ftp:Error` if failed to write
     remote isolated function putJson(string path, json|record{} content, FileWriteOption option = OVERWRITE) returns Error? {
-        string jsonVal = content is json ? content.toJsonString() : content.toJsonString();
-        return putJson(self, path, jsonVal, option);
+        return putJson(self, path, content.toJsonString(), option);
     }
 
     # Adds a file to an FTP server with the specified write option.
@@ -229,6 +241,47 @@ public isolated client class Client {
         }
         return putXml(self, path, xmldata, option);
     }
+
+    # Adds a CSV file to an FTP server with the specified write option.
+    # ```ballerina
+    # ftp:Error? response = client->putCsv(path, content, option);
+    # ```
+    # 
+    # + path - The resource path
+    # + content - Content to be written to the file in server
+    # + option - To indicate whether to overwrite or append the given content
+    # + return - `()` or else an `ftp:Error` if failed to write
+    remote isolated function putCsv(string path, string[][]|record{}[] content, FileWriteOption option = OVERWRITE) returns Error? {
+        return putCsv(self, path, content, option);
+    }
+
+    # Adds a byte[] stream as a file to an FTP server with the specified write option.
+    # ```ballerina
+    # ftp:Error? response = client->putBytesAsStream(path, content, option);
+    # ```
+    # 
+    # + path - The resource path
+    # + content - Content to be written to the file in server
+    # + option - To indicate whether to overwrite or append the given content
+    # + return - `()` or else an `ftp:Error` if failed to write
+    remote isolated function putBytesAsStream(string path, stream<byte[], error?> content, FileWriteOption option = OVERWRITE) returns Error? = @java:Method {
+        name: "putBytesAsStream",
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+    } external;
+
+    # Adds a CSV file from string[][] or record{}[] elements as a file to an FTP server with the specified write option.
+    # ```ballerina
+    # ftp:Error? response = client->putCsvAsStream(path, content, option);
+    # ```
+    # 
+    # + path - The resource path
+    # + content - Content to be written to the file in server
+    # + option - To indicate whether to overwrite or append the given content
+    # + return - `()` or else an `ftp:Error` if failed to write
+    remote isolated function putCsvAsStream(string path, stream<string[]|record {}, error?> content, FileWriteOption option = OVERWRITE) returns Error? = @java:Method {
+        name: "putCsvAsStream",
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+    } external;
 
     # Creates a new directory in an FTP server.
     # ```ballerina
