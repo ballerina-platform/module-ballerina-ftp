@@ -349,8 +349,6 @@ public function testPutCsvStringAndReadAllAndStream() returns error? {
         do {
             actual.push(row);
         };
-    // Code coverage
-    check str.close();
     test:assertEquals(actual, csvData.slice(1), msg = "CSV stream content mismatch when reading as stream");
 }
 
@@ -382,9 +380,23 @@ public function testPutCsvFromRecordsAndReadAllAndStream() returns error? {
         do {
             actual.push(row);
         };
-    // Code coverage
-    check str.close();
     test:assertEquals(actual, records, msg = "CSV stream content mismatch when reading as stream");
+}
+
+@test:Config {
+    dependsOn: [testPutCsvFromRecordsAndReadAllAndStream]
+}
+public function testStreamClose() returns error? {
+    string csvPath = "/home/in/test-csv-records.csv";
+    stream<record {|string name; int age;|}, error?> str = check (<Client>clientEp)->getCsvAsStream(csvPath);
+    check str.close();
+
+    stream<string[], error?> str1 = check (<Client>clientEp)->getCsvAsStream(csvPath);
+    check str1.close();
+
+    string path = "/home/in/put-bytes.txt";
+    stream<byte[], error?> got = check (<Client>clientEp)->getBytesAsStream(path);
+    check got.close();
 }
 
 @test:Config {}
