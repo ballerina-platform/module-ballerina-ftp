@@ -36,6 +36,9 @@ import java.io.InputStream;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FIELD_VALUE;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.NATIVE_INPUT_STREAM;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.NATIVE_LAX_DATABINDING;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.NATIVE_STREAM_VALUE_TYPE;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getFtpPackage;
 
 /**
@@ -49,10 +52,7 @@ public class ContentCsvStreamIteratorUtils {
     }
 
     // Native data keys
-    private static final String KEY_TYPE = "Type";
     private static final String KEY_INDEX = "index";
-    private static final String KEY_INPUT_STREAM = "Input_Stream";
-    private static final String KEY_LAX_DATA_BINDING = "Lax_Data_Binding";
     private static final String KEY_DATA = "data";
     private static final String KEY_LENGTH = "length";
 
@@ -63,7 +63,7 @@ public class ContentCsvStreamIteratorUtils {
     private static final BString PROP_IS_CLOSED = StringUtils.fromString("isClosed");
 
     public static Object next(BObject recordIterator) {
-        final Type elementType = (Type) recordIterator.getNativeData(KEY_TYPE);
+        final Type elementType = (Type) recordIterator.getNativeData(NATIVE_STREAM_VALUE_TYPE);
         final String recordTypeName = resolveRecordTypeName(elementType);
         final BMap<BString, Object> streamEntry =
                 ValueCreator.createRecordValue(getFtpPackage(), recordTypeName);
@@ -71,7 +71,7 @@ public class ContentCsvStreamIteratorUtils {
         Object dataIndex = recordIterator.getNativeData(KEY_INDEX);
         if (dataIndex == null) {
             // First access: parse entire stream into memory (behavior preserved)
-            final InputStream inputStream = (InputStream) recordIterator.getNativeData(KEY_INPUT_STREAM);
+            final InputStream inputStream = (InputStream) recordIterator.getNativeData(NATIVE_INPUT_STREAM);
             if (inputStream == null) {
                 recordIterator.set(PROP_IS_CLOSED, true);
                 return FtpUtil.createError("Input stream is not available", FTP_ERROR);
@@ -80,7 +80,7 @@ public class ContentCsvStreamIteratorUtils {
             try {
                 byte[] bytes = inputStream.readAllBytes();
                 inputStream.close();
-                final boolean laxDataBinding = getBoolean(recordIterator.getNativeData(KEY_LAX_DATA_BINDING));
+                final boolean laxDataBinding = getBoolean(recordIterator.getNativeData(NATIVE_LAX_DATABINDING));
 
                 // Build ParseOptions record
                 BMap<BString, Object> parseOptions =
@@ -148,7 +148,7 @@ public class ContentCsvStreamIteratorUtils {
     }
 
     public static Object close(BObject recordIterator) {
-        InputStream inputStream = (InputStream) recordIterator.getNativeData(KEY_INPUT_STREAM);
+        InputStream inputStream = (InputStream) recordIterator.getNativeData(NATIVE_INPUT_STREAM);
         if (inputStream == null) {
             return null;
         }
@@ -177,8 +177,6 @@ public class ContentCsvStreamIteratorUtils {
     private static long toLong(Object value) {
         if (value instanceof Long) {
             return (Long) value;
-        } else if (value instanceof Integer) {
-            return ((Integer) value).longValue();
         }
         return 0L;
     }
