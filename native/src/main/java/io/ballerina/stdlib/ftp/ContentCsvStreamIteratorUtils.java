@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FIELD_VALUE;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getFtpPackage;
 
 /**
@@ -42,6 +43,10 @@ import static io.ballerina.stdlib.ftp.util.FtpUtil.getFtpPackage;
  * Parses the CSV once into a BArray on first access and iterates entries subsequently.
  */
 public class ContentCsvStreamIteratorUtils {
+
+    private ContentCsvStreamIteratorUtils() {
+        // private constructor
+    }
 
     // Native data keys
     private static final String KEY_TYPE = "Type";
@@ -69,7 +74,7 @@ public class ContentCsvStreamIteratorUtils {
             final InputStream inputStream = (InputStream) recordIterator.getNativeData(KEY_INPUT_STREAM);
             if (inputStream == null) {
                 recordIterator.set(PROP_IS_CLOSED, true);
-                return FtpUtil.createError("Input stream is not available", "Error");
+                return FtpUtil.createError("Input stream is not available", FTP_ERROR);
             }
 
             try {
@@ -90,12 +95,12 @@ public class ContentCsvStreamIteratorUtils {
 
                 if (parsed instanceof BError) {
                     recordIterator.set(PROP_IS_CLOSED, true);
-                    return FtpUtil.createError(((BError) parsed).getErrorMessage().getValue(), "Error");
+                    return FtpUtil.createError(((BError) parsed).getErrorMessage().getValue(), FTP_ERROR);
                 }
 
                 if (!(parsed instanceof BArray dataArray)) {
                     recordIterator.set(PROP_IS_CLOSED, true);
-                    return FtpUtil.createError("Unexpected parse result type", "Error");
+                    return FtpUtil.createError("Unexpected parse result type", FTP_ERROR);
                 }
 
                 long length = dataArray.getLength();
@@ -115,11 +120,11 @@ public class ContentCsvStreamIteratorUtils {
             } catch (IOException e) {
                 recordIterator.set(PROP_IS_CLOSED, true);
                 return FtpUtil.createError("Unable to read input stream: " + e.getMessage(), e,
-                        "Error");
+                        FTP_ERROR);
             } catch (Throwable t) {
                 recordIterator.set(PROP_IS_CLOSED, true);
                 return FtpUtil.createError("CSV parsing failed: " + t.getMessage(), t,
-                        "Error");
+                        FTP_ERROR);
             }
         }
 
@@ -134,7 +139,7 @@ public class ContentCsvStreamIteratorUtils {
         BArray dataArray = (BArray) recordIterator.getNativeData(KEY_DATA);
         if (dataArray == null) {
             recordIterator.set(PROP_IS_CLOSED, true);
-            return FtpUtil.createError("Iterator state corrupted: data is missing", "Error");
+            return FtpUtil.createError("Iterator state corrupted: data is missing", FTP_ERROR);
         }
 
         recordIterator.addNativeData(KEY_INDEX, index + 1);
@@ -150,7 +155,7 @@ public class ContentCsvStreamIteratorUtils {
         try {
             inputStream.close();
         } catch (IOException e) {
-            return FtpUtil.createError("Unable to clean input stream", e, "Error");
+            return FtpUtil.createError("Unable to clean input stream", e, FTP_ERROR);
         } finally {
             recordIterator.set(PROP_IS_CLOSED, true);
         }

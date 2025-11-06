@@ -23,6 +23,10 @@ import io.ballerina.runtime.api.values.BString;
 
 public class CSVUtils {
 
+    private CSVUtils() {
+        // private constructor
+    }
+
     public static String convertToCsv(BArray inputContent, boolean addHeader) {
         if (inputContent.isEmpty()) {
             return "";

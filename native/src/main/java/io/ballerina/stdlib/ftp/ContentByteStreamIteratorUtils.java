@@ -30,9 +30,14 @@ import java.util.Arrays;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ARRAY_SIZE;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FIELD_VALUE;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getFtpPackage;
 
 public class ContentByteStreamIteratorUtils {
+
+    private ContentByteStreamIteratorUtils() {
+        // private constructor
+    }
 
     /**
      * Gets the next chunk of bytes from the stream.
@@ -60,7 +65,7 @@ public class ContentByteStreamIteratorUtils {
             streamEntry.put(FIELD_VALUE, ValueCreator.createArrayValue(returnArray));
             return streamEntry;
         } catch (IOException e) {
-            return FtpUtil.createError("Unable to parse value", e, "Error");
+            return FtpUtil.createError("Unable to parse value", e, FTP_ERROR);
         }
     }
 
@@ -74,7 +79,7 @@ public class ContentByteStreamIteratorUtils {
         try {
             inputStream.close();
         } catch (IOException e) {
-            return FtpUtil.createError("Unable to clean input stream value", e, "Error");
+            return FtpUtil.createError("Unable to clean input stream value", e, FTP_ERROR);
         }
         return null;
     }

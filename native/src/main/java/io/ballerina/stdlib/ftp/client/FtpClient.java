@@ -64,6 +64,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.VFS_CLIENT_CONNECTOR;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
@@ -139,7 +140,7 @@ public class FtpClient {
     }
 
     /**
-     * Deprecated: use typed getters like getBytes/getText/getJson/getXml/getCsv or their streaming variants.
+     * @deprecated : use typed getters like getBytes/getText/getJson/getXml/getCsv or their streaming variants.
      */
     @Deprecated
     public static Object getFirst(Environment env, BObject clientConnector, BString filePath) {
@@ -158,7 +159,7 @@ public class FtpClient {
     }
 
     /**
-     * Deprecated: use getBytesAsStream or getCsvAsStream instead of this legacy accessor.
+     * @deprecated : use getBytesAsStream or getCsvAsStream instead of this legacy accessor.
      */
     @Deprecated
     public static Object get(BObject clientConnector) {
@@ -200,7 +201,7 @@ public class FtpClient {
         }
         Object bJson = Native.parseBytes(ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
         if (bJson instanceof BError) {
-            return FtpUtil.createError(((BError) bJson).getErrorMessage().getValue(), "Error");
+            return FtpUtil.createError(((BError) bJson).getErrorMessage().getValue(), FTP_ERROR);
         }
         return bJson;
     }
@@ -215,7 +216,7 @@ public class FtpClient {
             Object bXml = XmlUtils.parse(StringUtils.fromString(new String((byte[]) content,
                     StandardCharsets.UTF_8)));
             if (bXml instanceof BError) {
-                return FtpUtil.createError(((BError) bXml).getErrorMessage().getValue(), "Error");
+                return FtpUtil.createError(((BError) bXml).getErrorMessage().getValue(), FTP_ERROR);
             }
             return bXml;
         }
@@ -229,7 +230,7 @@ public class FtpClient {
         Object bXml = io.ballerina.lib.data.xmldata.xml.Native.parseBytes(
                 ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
         if (bXml instanceof BError) {
-            return FtpUtil.createError(((BError) bXml).getErrorMessage().getValue(), "Error");
+            return FtpUtil.createError(((BError) bXml).getErrorMessage().getValue(), FTP_ERROR);
         }
         return bXml;
     }
@@ -255,7 +256,7 @@ public class FtpClient {
         Object csv = io.ballerina.lib.data.csvdata.csv.Native.parseBytes(
                 ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
         if (csv instanceof BError) {
-            return FtpUtil.createError(((BError) csv).getErrorMessage().getValue(), "Error");
+            return FtpUtil.createError(((BError) csv).getErrorMessage().getValue(), FTP_ERROR);
         }
         return csv;
     }
@@ -324,7 +325,7 @@ public class FtpClient {
     }
 
     /**
-     * Deprecated: use putBytes/putText/putJson/putXml/putCsv or the streaming variants with APPEND option.
+     * @deprecated : use putBytes/putText/putJson/putXml/putCsv or the streaming variants with APPEND option.
      */
     @Deprecated
     public static Object append(Environment env, BObject clientConnector, BMap<Object, Object> inputContent) {
@@ -354,7 +355,7 @@ public class FtpClient {
     }
 
     /**
-     * Deprecated: use typed put methods (putBytes/putText/putJson/putXml/putCsv) instead.
+     * @deprecated : use typed put methods (putBytes/putText/putJson/putXml/putCsv) instead.
      */
     @Deprecated
     public static Object put(Environment env, BObject clientConnector, BMap<Object, Object> inputContent) {
@@ -456,7 +457,7 @@ public class FtpClient {
             RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
             return putGenericAction(env, clientConnector, path, options, message);
         } catch (Exception e) {
-            return FtpUtil.createError(e.getMessage(), "Error");
+            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
         }
     }
 
@@ -467,7 +468,7 @@ public class FtpClient {
             RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
             return putGenericAction(env, clientConnector, path, options, message);
         } catch (Exception e) {
-            return FtpUtil.createError(e.getMessage(), "Error");
+            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
         }
     }
 
@@ -515,16 +516,15 @@ public class FtpClient {
                 if (nextStream == null) {
                     throw new NoSuchElementException();
                 }
-                InputStream result = nextStream;
-                return result;
+                return nextStream;
             }
 
             private byte[] extractBytes(Object value) {
-                BMap<BString, Object> record = (BMap<BString, Object>) value;
-                Object val = record.get(FtpConstants.FIELD_VALUE);
+                BMap<BString, Object> streamRecord = (BMap<BString, Object>) value;
+                Object val = streamRecord.get(FtpConstants.FIELD_VALUE);
 
                 if (val instanceof BArray array) {
-                    // Check if it's a byte array or CSV data (string[]/record)
+                    // Check if it's a byte array or CSV data (string[]/streamRecord)
                     if (array.getElementType().getTag() == io.ballerina.runtime.api.types.TypeTags.BYTE_TAG) {
                         // Byte array - return as is
                         return array.getBytes();
@@ -534,7 +534,7 @@ public class FtpClient {
                         return csvRow.getBytes(StandardCharsets.UTF_8);
                     }
                 } else {
-                    // Single record - convert to CSV format
+                    // Single streamRecord - convert to CSV format
                     String csvRow = CSVUtils.convertRecordToCsvRow((BMap<BString, Object>) val, isFirstRow);
                     csvRow += System.lineSeparator();
                     return csvRow.getBytes(StandardCharsets.UTF_8);

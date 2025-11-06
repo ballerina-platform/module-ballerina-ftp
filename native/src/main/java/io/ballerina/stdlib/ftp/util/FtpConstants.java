@@ -56,6 +56,7 @@ public class FtpConstants {
     public static final BString FIELD_VALUE = StringUtils.fromString("value");
     public static final String FTP_CALLER = "Caller";
     public static final String FTP_CLIENT = "Client";
+    public static final String FTP_ERROR = "Error";
 
     public static final String FTP_SERVER_EVENT = "WatchEvent";
     public static final String FTP_WATCHEVENT_ADDED_FILES = "addedFiles";
