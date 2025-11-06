@@ -18,9 +18,9 @@ import ballerina/jballerina.java;
 
 # Represents the type of the record which returned from the contentByteStream.next() call.
 #
-# + value - The array of byte
+# + value - The record
 public type ContentCsvRecordStreamEntry record {|
-    record{} value;
+    record {} value;
 |};
 
 # `ContentCsvRecordStream` used to initialize a stream of type string[] for content callbacks.
@@ -35,9 +35,9 @@ public class ContentCsvRecordStream {
 
     # Reads and return the next CSV record as `record{}`.
     #
-    # + return - A `record{}`s when the stream is available,
+    # + return - A record containing a `record{}` value when the stream is available,
     #            `()` if the stream has reached the end or else an `error`
-    public isolated function next() returns record {|record{} value;|}|error? {
+    public isolated function next() returns record {|record {} value;|}|error? {
         return externGetContentCsvRecordStreamEntry(self);
     }
 
@@ -58,7 +58,7 @@ public class ContentCsvRecordStream {
 }
 
 isolated function externGetContentCsvRecordStreamEntry(ContentCsvRecordStream iterator)
-        returns record {|record{} value;|}|error? = @java:Method {
+        returns record {|record {} value;|}|error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.ContentCsvStreamIteratorUtils",
     name: "next"
 } external;

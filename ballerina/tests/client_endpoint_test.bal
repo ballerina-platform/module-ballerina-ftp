@@ -15,10 +15,10 @@
 // under the License.
 
 import ballerina/io;
-import ballerina/test;
-import ballerina/lang.runtime as runtime;
 import ballerina/lang.'string as strings;
+import ballerina/lang.runtime as runtime;
 import ballerina/log;
+import ballerina/test;
 
 string filePath = "/home/in/test1.txt";
 string nonFittingFilePath = "/home/in/test4.txt";
@@ -59,7 +59,7 @@ ClientConfiguration ftpUserHomeRootConfig = {
     protocol: FTP,
     host: "127.0.0.1",
     port: 21212,
-    auth: { credentials: { username: "wso2", password: "wso2123" } },
+    auth: {credentials: {username: "wso2", password: "wso2123"}},
     userDirIsRoot: true
 };
 
@@ -254,7 +254,7 @@ public function testPutCompressedFileContent() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testPutFileContent]}
+@test:Config {dependsOn: [testPutFileContent]}
 function testPutBytes() returns error? {
     byte[] content = "hello-bytes".toBytes();
     string path = "/home/in/put-bytes.txt";
@@ -268,7 +268,7 @@ function testPutBytes() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testPutFileContent]}
+@test:Config {dependsOn: [testPutFileContent]}
 function testGetBytesAsStream() returns error? {
     byte[] content = "hello-bytes".toBytes();
     string path = "/home/in/put-bytes.txt";
@@ -276,10 +276,10 @@ function testGetBytesAsStream() returns error? {
     check (<Client>clientEp)->putBytes(path, content);
     stream<byte[], error?> got = check (<Client>clientEp)->getBytesAsStream(path);
     byte[] accumulatedBytes = [];
-    check from byte[] byteChunk in got 
-    do {
-        accumulatedBytes.push(...byteChunk);
-    };
+    check from byte[] byteChunk in got
+        do {
+            accumulatedBytes.push(...byteChunk);
+        };
 
     test:assertEquals(accumulatedBytes.length(), content.length(), msg = "Byte length mismatch");
     foreach int i in 0 ..< content.length() {
@@ -287,9 +287,9 @@ function testGetBytesAsStream() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testPutFileContent]}
+@test:Config {dependsOn: [testPutFileContent]}
 function testPutJson() returns error? {
-    json j = { name: "wso2", count: 2, ok: true };
+    json j = {name: "wso2", count: 2, ok: true};
     string path = "/home/in/put.json";
 
     check (<Client>clientEp)->putJson(path, j);
@@ -298,9 +298,9 @@ function testPutJson() returns error? {
     test:assertEquals(got, j, msg = "JSON content mismatch");
 }
 
-@test:Config { dependsOn: [testPutFileContent]}
+@test:Config {dependsOn: [testPutFileContent]}
 function testPutXml() returns error? {
-    xml x = xml`<root><item k="v">42</item></root>`;
+    xml x = xml `<root><item k="v">42</item></root>`;
     string path = "/home/in/put.xml";
 
     check (<Client>clientEp)->putXml(path, x);
@@ -311,7 +311,7 @@ function testPutXml() returns error? {
     return;
 }
 
-@test:Config { dependsOn: [testPutFileContent]}
+@test:Config {dependsOn: [testPutFileContent]}
 function testPutText() returns error? {
     string txt = "hello text content";
     string path = "/home/in/put.txt";
@@ -323,7 +323,7 @@ function testPutText() returns error? {
     return;
 }
 
-@test:Config { dependsOn: [testPutFileContent]}
+@test:Config {dependsOn: [testPutFileContent]}
 public function testPutCsvStringAndReadAllAndStream() returns error? {
     string csvPath = "/home/in/test-csv-string.csv";
     string[][] csvData = [
@@ -343,12 +343,12 @@ public function testPutCsvStringAndReadAllAndStream() returns error? {
     string[][] gotAll = check (<Client>clientEp)->getCsv(csvPath);
     test:assertEquals(gotAll, csvData.slice(1), msg = "CSV text mismatch when reading all at once");
 
-    stream<string[], error?> str = check(<Client>clientEp)->getCsvAsStream(csvPath);
+    stream<string[], error?> str = check (<Client>clientEp)->getCsvAsStream(csvPath);
     string[][] actual = [];
     check from string[] row in str
-    do {
-        actual.push(row);
-    };
+        do {
+            actual.push(row);
+        };
     test:assertEquals(actual, csvData.slice(1), msg = "CSV stream content mismatch when reading as stream");
 }
 
@@ -358,10 +358,10 @@ public function testPutCsvStringAndReadAllAndStream() returns error? {
 public function testPutCsvFromRecordsAndReadAllAndStream() returns error? {
     string csvPath = "/home/in/test-csv-records.csv";
 
-    record {| string name; int age; |}[] records = [
-        { name: "Charlie", age: 22 },
-        { name: "Dana", age: 28 },
-        { name: "Eve", age: 35 }
+    record {|string name; int age;|}[] records = [
+        {name: "Charlie", age: 22},
+        {name: "Dana", age: 28},
+        {name: "Eve", age: 35}
     ];
 
     Error? resp = (<Client>clientEp)->putCsv(csvPath, records);
@@ -371,15 +371,15 @@ public function testPutCsvFromRecordsAndReadAllAndStream() returns error? {
         log:printInfo("Executed `put` operation for CSV string");
     }
 
-    record {| string name; int age; |}[] gotAll = check (<Client>clientEp)->getCsv(csvPath);
+    record {|string name; int age;|}[] gotAll = check (<Client>clientEp)->getCsv(csvPath);
     test:assertEquals(gotAll, records, msg = "CSV text mismatch when reading all at once");
 
-    stream<record {| string name; int age; |}, error?> str = check(<Client>clientEp)->getCsvAsStream(csvPath);
-    record {| string name; int age; |}[] actual = [];
-    check from record {| string name; int age; |} row in str
-    do {
-        actual.push(row);
-    };
+    stream<record {|string name; int age;|}, error?> str = check (<Client>clientEp)->getCsvAsStream(csvPath);
+    record {|string name; int age;|}[] actual = [];
+    check from record {|string name; int age;|} row in str
+        do {
+            actual.push(row);
+        };
     test:assertEquals(actual, records, msg = "CSV stream content mismatch when reading as stream");
 }
 
@@ -527,13 +527,15 @@ function testPutBytesAsStreamNew() returns error? {
     stream<byte[] & readonly, io:Error?> s = chunks.toStream();
 
     Error? resp = (<Client>clientEp)->putBytesAsStream(path, s);
-    if resp is Error { test:assertFail("putBytesAsStream failed: " + resp.message()); }
+    if resp is Error {
+        test:assertFail("putBytesAsStream failed: " + resp.message());
+    }
 
     string got = check (<Client>clientEp)->getText(path);
     test:assertEquals(got, "hello-world", msg = "putBytesAsStream content mismatch");
 }
 
-@test:Config { dependsOn: [testPutBytesAsStreamNew] }
+@test:Config {dependsOn: [testPutBytesAsStreamNew]}
 function testPutCsvAsStreamWithStringRows() returns error? {
     string csvPath = "/home/in/csv-stream-rows.csv";
     string[][] rows = [
@@ -544,7 +546,9 @@ function testPutCsvAsStreamWithStringRows() returns error? {
     stream<string[], error?> s = rows.toStream();
 
     Error? resp = (<Client>clientEp)->putCsvAsStream(csvPath, s);
-    if resp is Error { test:assertFail("putCsvAsStream (string[]) failed: " + resp.message()); }
+    if resp is Error {
+        test:assertFail("putCsvAsStream (string[]) failed: " + resp.message());
+    }
 
     // getCsv should return only data rows when targetType is string[][]
     string[][] gotAll = check (<Client>clientEp)->getCsv(csvPath);
@@ -552,36 +556,55 @@ function testPutCsvAsStreamWithStringRows() returns error? {
 
     stream<string[], error?> str = check (<Client>clientEp)->getCsvAsStream(csvPath);
     string[][] actual = [];
-    check from string[] row in str do { actual.push(row); };
+    check from string[] row in str
+        do {
+            actual.push(row);
+        };
     test:assertEquals(actual, rows.slice(1), msg = "CSV stream rows mismatch (get stream)");
 }
 
-type Rec record {| string name; int age; |};
-type PersonStrict record {| string name; int age; |};
-type PersonLax record {| string name; int? age; |};
+type Rec record {|
+    string name;
+    int age;
+|};
 
-@test:Config { dependsOn: [testPutCsvAsStreamWithStringRows] }
+type PersonStrict record {|
+    string name;
+    int age;
+|};
+
+type PersonLax record {|
+    string name;
+    int? age;
+|};
+
+@test:Config {dependsOn: [testPutCsvAsStreamWithStringRows]}
 function testPutCsvAsStreamWithRecords() returns error? {
     string csvPath = "/home/in/csv-stream-records.csv";
     Rec[] records = [
-        { name: "Charlie", age: 22 },
-        { name: "Dana", age: 28 }
+        {name: "Charlie", age: 22},
+        {name: "Dana", age: 28}
     ];
 
     stream<Rec, error?> s = records.toStream();
     Error? resp = (<Client>clientEp)->putCsvAsStream(csvPath, s);
-    if resp is Error { test:assertFail("putCsvAsStream (records) failed: " + resp.message()); }
+    if resp is Error {
+        test:assertFail("putCsvAsStream (records) failed: " + resp.message());
+    }
 
     Rec[] gotAll = check (<Client>clientEp)->getCsv(csvPath);
     test:assertEquals(gotAll, records, msg = "CSV record stream mismatch (get all)");
 
     stream<Rec, error?> str = check (<Client>clientEp)->getCsvAsStream(csvPath);
     Rec[] actual = [];
-    check from Rec row in str do { actual.push(row); };
+    check from Rec row in str
+        do {
+            actual.push(row);
+        };
     test:assertEquals(actual, records, msg = "CSV record stream mismatch (get stream)");
 }
 
-@test:Config { dependsOn: [testPutCsvAsStreamWithRecords] }
+@test:Config {dependsOn: [testPutCsvAsStreamWithRecords]}
 function testGetBytesAndTextNonExistent() returns error? {
     string missing = "/home/in/does-not-exist.txt";
     var r1 = (<Client>clientEp)->getBytes(missing);
@@ -592,10 +615,10 @@ function testGetBytesAndTextNonExistent() returns error? {
 }
 
 // Strict vs lax data binding for JSON
-@test:Config { dependsOn: [testGetBytesAndTextNonExistent] }
+@test:Config {dependsOn: [testGetBytesAndTextNonExistent]}
 function testJsonTypedBinding_strict_and_lax() returns error? {
     string path = "/home/in/json-typed-projection.json";
-    json content = { name: "Alice" }; // missing age
+    json content = {name: "Alice"}; // missing age
     check (<Client>clientEp)->putJson(path, content);
 
     PersonStrict|Error strictRes = (<Client>clientEp)->getJson(path);
@@ -606,15 +629,21 @@ function testJsonTypedBinding_strict_and_lax() returns error? {
     test:assertEquals(laxVal.age is (), true, msg = "Lax binding should map absent field to nil");
 }
 
+type XPersonStrict record {|
+    string name;
+    int age;
+|};
 
-type XPersonStrict record {| string name; int age;|};
-type XPersonLax record {| string name; int age; |};
+type XPersonLax record {|
+    string name;
+    int age;
+|};
 
 // Strict vs lax data binding for XML
-@test:Config { dependsOn: [testJsonTypedBinding_strict_and_lax] }
+@test:Config {dependsOn: [testJsonTypedBinding_strict_and_lax]}
 function testXmlTypedBinding_strict_and_lax() returns error? {
     string path = "/home/in/xml-typed-projection.xml";
-    xml x = xml`<person><name>Alice</name><age>32</age><address>12132131</address></person>`; // missing age
+    xml x = xml `<person><name>Alice</name><age>32</age><address>12132131</address></person>`;
     check (<Client>clientEp)->putXml(path, x);
 
     var strictRes = (<Client>clientEp)->getXml(path, XPersonStrict);
@@ -624,7 +653,7 @@ function testXmlTypedBinding_strict_and_lax() returns error? {
     test:assertEquals(laxVal.name, "Alice");
 }
 
-@test:Config { dependsOn: [testXmlTypedBinding_strict_and_lax] }
+@test:Config {dependsOn: [testXmlTypedBinding_strict_and_lax]}
 function testPutTextWithAppendOption() returns error? {
     string path = "/home/in/append-option.txt";
     check (<Client>clientEp)->putText(path, "Hello", OVERWRITE);
@@ -633,7 +662,7 @@ function testPutTextWithAppendOption() returns error? {
     test:assertEquals(got, "Hello + world", msg = "APPEND option should append content");
 }
 
-@test:Config { dependsOn: [testPutTextWithAppendOption] }
+@test:Config {dependsOn: [testPutTextWithAppendOption]}
 function testPutCsvWithAppendOption() returns error? {
     string path = "/home/in/csv-append.csv";
     string[][] first = [
@@ -641,16 +670,20 @@ function testPutCsvWithAppendOption() returns error? {
         ["1", "Alpha"]
     ];
     Error? r1 = (<Client>clientEp)->putCsv(path, first, OVERWRITE);
-    if r1 is Error { test:assertFail("putCsv overwrite failed: " + r1.message()); }
+    if r1 is Error {
+        test:assertFail("putCsv overwrite failed: " + r1.message());
+    }
 
     // Append data rows (no header)
-    string[][] more = [ ["2", "Beta"], ["3", "Gamma"] ];
+    string[][] more = [["2", "Beta"], ["3", "Gamma"]];
     Error? r2 = (<Client>clientEp)->putCsv(path, more, APPEND);
-    if r2 is Error { test:assertFail("putCsv append failed: " + r2.message()); }
+    if r2 is Error {
+        test:assertFail("putCsv append failed: " + r2.message());
+    }
 
     string[][] gotAll = check (<Client>clientEp)->getCsv(path);
-    test:assertEquals(gotAll, [["1","Alpha"],["2","Beta"],["3","Gamma"]],
-        msg = "CSV append should not duplicate header and should add rows");
+    test:assertEquals(gotAll, [["1", "Alpha"], ["2", "Beta"], ["3", "Gamma"]],
+            msg = "CSV append should not duplicate header and should add rows");
 }
 
 isolated function matchStreamContent(stream<byte[] & readonly, io:Error?> binaryStream, string matchedString) returns boolean|error {

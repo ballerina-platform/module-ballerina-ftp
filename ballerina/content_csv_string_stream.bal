@@ -18,7 +18,7 @@ import ballerina/jballerina.java;
 
 # Represents the type of the record which returned from the contentByteStream.next() call.
 #
-# + value - The array of byte
+# + value - The array of strings
 public type ContentCsvStringArrayStreamEntry record {|
     string[] value;
 |};
@@ -35,7 +35,7 @@ public class ContentCsvStringArrayStream {
 
     # Reads and return the next CSV record as `string[]`.
     #
-    # + return - A `record` of `string[]`s when the stream is available,
+    # + return - A record containing a string array when the stream is available,  
     #            `()` if the stream has reached the end or else an `error`
     public isolated function next() returns record {|string[] value;|}|error? {
         return externGetContentCsvStreamEntry(self);
