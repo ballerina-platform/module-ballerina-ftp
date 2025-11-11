@@ -78,8 +78,8 @@ public final class PluginConstants {
                 "(content, fileInfo?, caller?).", "FTP_118"),
         NO_VALID_REMOTE_METHOD("No valid remote method found. Service must have either onFileChange or content " +
                 "handler methods (onFile, onFileText, onFileJson, onFileXml, onFileCsv) or onFileDeleted.", "FTP_119"),
-        ANNOTATION_PATTERN_NOT_SUBSET("@ftp:FunctionConfig annotation's fileNamePattern must be a subset of listener's " +
-                "fileNamePattern.", "FTP_120"),
+        ANNOTATION_PATTERN_NOT_SUBSET("@ftp:FunctionConfig annotation's fileNamePattern must be a subset of " +
+                "listener's fileNamePattern.", "FTP_120"),
         OVERLAPPING_ANNOTATION_PATTERNS("Multiple methods have overlapping @ftp:FunctionConfig annotation patterns.",
                 "FTP_121"),
         INVALID_ANNOTATION_USAGE("@ftp:FunctionConfig annotation can only be used on content handler methods " +
