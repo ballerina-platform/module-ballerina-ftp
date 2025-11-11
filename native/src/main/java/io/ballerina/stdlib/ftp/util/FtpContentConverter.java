@@ -103,13 +103,11 @@ public final class FtpContentConverter {
             Object result = io.ballerina.lib.data.xmldata.xml.Native.parseBytes(byteArray, options, typedesc);
 
             if (result instanceof BError) {
-                log.error("Failed to parse XML content: {}", ((BError) result).getMessage());
                 return result;
             }
 
             return result;
         } catch (Exception e) {
-            log.error("Error converting bytes to XML", e);
             return FtpUtil.createError("Failed to parse XML content: " + e.getMessage(), Error.errorType());
         }
     }
@@ -150,9 +148,19 @@ public final class FtpContentConverter {
      * @return BMap containing parse options
      */
     private static BMap<BString, Object> createJsonParseOptions() {
-        BMap<BString, Object> options = ValueCreator.createMapValue();
-        // Enable flexible data projection
-        options.put(ALLOW_DATA_PROJECTION, true);
+        BMap<BString, Object> options = ValueCreator.createRecordValue(
+                io.ballerina.lib.data.ModuleUtils.getModule(), "Options");
+
+        Object allowDataProjectionObj = options.get(ALLOW_DATA_PROJECTION);
+        if (allowDataProjectionObj instanceof BMap) {
+            BMap<BString, Object> allowDataProjection = (BMap<BString, Object>) allowDataProjectionObj;
+            allowDataProjection.put(StringUtils.fromString("nilAsOptionalField"), Boolean.TRUE);
+            allowDataProjection.put(StringUtils.fromString("absentAsNilableType"), Boolean.TRUE);
+            options.put(ALLOW_DATA_PROJECTION, allowDataProjection);
+        } else {
+            options.put(ALLOW_DATA_PROJECTION, Boolean.FALSE);
+        }
+
         return options;
     }
 
@@ -164,7 +172,6 @@ public final class FtpContentConverter {
      */
     private static BMap<BString, Object> createXmlParseOptions() {
         BMap<BString, Object> options = ValueCreator.createMapValue();
-        // Enable flexible data projection
         options.put(ALLOW_DATA_PROJECTION, true);
         return options;
     }
@@ -177,7 +184,6 @@ public final class FtpContentConverter {
      */
     private static BMap<BString, Object> createCsvParseOptions() {
         BMap<BString, Object> options = ValueCreator.createMapValue();
-        // Enable flexible data projection
         options.put(ALLOW_DATA_PROJECTION, true);
         return options;
     }
