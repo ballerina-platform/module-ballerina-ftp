@@ -21,6 +21,16 @@ isolated function initEndpoint(Client clientEndpoint, map<anydata> config) retur
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
+isolated function getBytes(Client clientEndpoint, string path) returns byte[]|Error = @java:Method {
+    name: "getBytes",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
+isolated function getText(Client clientEndpoint, string path) returns string|Error = @java:Method {
+    name: "getText",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
 isolated function delete(Client clientEndpoint, string path) returns Error? = @java:Method {
     name: "delete",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
@@ -34,6 +44,21 @@ isolated function append(Client clientEndpoint, InputContent inputContent) retur
 isolated function put(Client clientEndpoint, InputContent inputContent) returns Error? = @java:Method {
     name: "put",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
+isolated function putJson(Client clientEndpoint, string path, string content, FileWriteOption option) returns Error? = @java:Method {
+    name: "putJson",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
+} external;
+
+isolated function putXml(Client clientEndpoint, string path, xml content, FileWriteOption option) returns Error? = @java:Method {
+    name: "putXml",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
+} external;
+
+isolated function putCsv(Client clientEndpoint, string path, string[][]|record {}[] content, FileWriteOption option) returns Error? = @java:Method {
+    name: "putCsv",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
 } external;
 
 isolated function mkdir(Client clientEndpoint, string path) returns Error? = @java:Method {

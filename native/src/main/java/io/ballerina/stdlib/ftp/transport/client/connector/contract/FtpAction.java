@@ -22,5 +22,5 @@ package io.ballerina.stdlib.ftp.transport.client.connector.contract;
  * {@link VfsClientConnector} supported FTP actions.
  */
 public enum FtpAction {
-    APPEND, MKDIR, RMDIR, PUT, GET, DELETE, RENAME, SIZE, LIST, ISDIR, COPY, EXISTS
+    APPEND, MKDIR, RMDIR, PUT, GET, GET_ALL, DELETE, RENAME, SIZE, LIST, ISDIR, COPY, EXISTS
 }

@@ -52,6 +52,8 @@ public class RemoteFileSystemConsumer {
     private String listeningDirURI;
     private FileObject listeningDir;
     private String fileNamePattern = null;
+    private FileSystemManager fileSystemManager;
+    private FileSystemOptions fileSystemOptions;
 
     private List<String> processed = new ArrayList<>();
     private List<String> current;
@@ -69,9 +71,9 @@ public class RemoteFileSystemConsumer {
         this.remoteFileSystemListener = listener;
         listeningDirURI = fileProperties.get(FtpConstants.URI);
         try {
-            FileSystemManager fsManager = VFS.getManager();
-            FileSystemOptions fso = FileTransportUtils.attachFileSystemOptions(fileProperties);
-            listeningDir = fsManager.resolveFile(listeningDirURI, fso);
+            this.fileSystemManager = VFS.getManager();
+            this.fileSystemOptions = FileTransportUtils.attachFileSystemOptions(fileProperties);
+            listeningDir = fileSystemManager.resolveFile(listeningDirURI, fileSystemOptions);
             FileType fileType = listeningDir.getType();
             if (fileType != FileType.FOLDER) {
                 String errorMsg = "File system server connector is used to "
@@ -172,6 +174,24 @@ public class RemoteFileSystemConsumer {
      */
     public FtpListener getFtpListener() {
         return (FtpListener) remoteFileSystemListener;
+    }
+
+    /**
+     * Get the FileSystemManager instance.
+     *
+     * @return The FileSystemManager
+     */
+    public FileSystemManager getFileSystemManager() {
+        return fileSystemManager;
+    }
+
+    /**
+     * Get the FileSystemOptions instance.
+     *
+     * @return The FileSystemOptions
+     */
+    public FileSystemOptions getFileSystemOptions() {
+        return fileSystemOptions;
     }
 
     private void closeDirectories() {
