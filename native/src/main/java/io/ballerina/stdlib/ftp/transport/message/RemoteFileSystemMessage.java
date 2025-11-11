@@ -33,6 +33,7 @@ public class RemoteFileSystemMessage extends RemoteFileSystemBaseMessage {
     private String text;
     private long size;
     private boolean directory;
+    private boolean fileExists;
     private Map<String, FileInfo> childrenInfo;
 
     public RemoteFileSystemMessage(final Map<String, FileInfo> childrenInfo) {
@@ -57,6 +58,14 @@ public class RemoteFileSystemMessage extends RemoteFileSystemBaseMessage {
 
     public RemoteFileSystemMessage(boolean isDirectory) {
         this.directory = isDirectory;
+    }
+
+    public RemoteFileSystemMessage(boolean value, boolean isExistsCheck) {
+        if (isExistsCheck) {
+            this.fileExists = value;
+        } else {
+            this.directory = value;
+        }
     }
 
     public ByteBuffer getBytes() {
@@ -85,5 +94,9 @@ public class RemoteFileSystemMessage extends RemoteFileSystemBaseMessage {
 
     public boolean isDirectory() {
         return directory;
+    }
+
+    public boolean exists() {
+        return fileExists;
     }
 }

@@ -552,6 +552,154 @@ public function testRenameDirectory() {
 @test:Config {
     dependsOn: [testRenameDirectory]
 }
+public function testMoveFile() {
+    string sourcePath = "/home/in/test_move_source.txt";
+    string destinationPath = "/home/in/test_move_dest.txt";
+    
+    // First, create a test file
+    string testContent = "Test content for move operation";
+    Error? putResponse = (<Client>clientEp)->put(sourcePath, testContent);
+    if putResponse is Error {
+        test:assertFail(msg = "Error while creating test file for `move` operation" + putResponse.message());
+    }
+    
+    // Now move the file
+    Error? moveResponse = (<Client>clientEp)->move(sourcePath, destinationPath);
+    if moveResponse is Error {
+        test:assertFail(msg = "Error while invoking `move` operation" + moveResponse.message());
+    } else {
+        log:printInfo("Executed `move` operation");
+    }
+
+    // Verify source file no longer exists
+    stream<byte[] & readonly, io:Error?>|Error sourceCheck = (<Client>clientEp)->get(sourcePath);
+    if sourceCheck is Error {
+        log:printInfo("Source file correctly removed after move: " + sourcePath);
+    } else {
+        test:assertFail(msg = "Source file still exists after `move` operation");
+    }
+
+    // Verify destination file exists and has correct content
+    stream<byte[] & readonly, io:Error?>|Error destCheck = (<Client>clientEp)->get(destinationPath);
+    if destCheck is stream<byte[] & readonly, io:Error?> {
+        record {|byte[] & readonly value;|}|io:Error? nextResult = destCheck.next();
+        if nextResult is record {|byte[] & readonly value;|} {
+            string|error readContent = strings:fromBytes(nextResult.value);
+            if readContent is string {
+                test:assertEquals(readContent, testContent, msg = "Content mismatch after `move` operation");
+                log:printInfo("Destination file correctly created with expected content");
+            } else {
+                test:assertFail(msg = "Error reading moved file content");
+            }
+        } else {
+            test:assertFail(msg = "Error reading moved file stream");
+        }
+    } else {
+        test:assertFail(msg = "Destination file not found after `move` operation" + destCheck.message());
+    }
+    
+    // Cleanup
+    Error? deleteResponse = (<Client>clientEp)->delete(destinationPath);
+    if deleteResponse is Error {
+        log:printWarn("Failed to cleanup moved file: " + deleteResponse.message());
+    }
+}
+
+@test:Config {
+    dependsOn: [testMoveFile]
+}
+public function testCopyFile() {
+    string sourcePath = "/home/in/test1.txt";
+    string destinationPath = "/home/in/copied.txt";
+    
+    // Verify source file exists first
+    boolean|Error sourceExists = (<Client>clientEp)->exists(sourcePath);
+    if sourceExists is boolean {
+        test:assertTrue(sourceExists, msg = "Source file should exist before copy");
+    } else {
+        test:assertFail(msg = "Error checking source file existence: " + sourceExists.message());
+    }
+    
+    // Copy the file
+    Error? copyResponse = (<Client>clientEp)->copy(sourcePath, destinationPath);
+    if copyResponse is Error {
+        test:assertFail(msg = "Error while invoking `copy` operation" + copyResponse.message());
+    } else {
+        log:printInfo("Executed `copy` operation");
+    }
+
+    // Verify source file still exists
+    boolean|Error sourceStillExists = (<Client>clientEp)->exists(sourcePath);
+    if sourceStillExists is boolean {
+        test:assertTrue(sourceStillExists, msg = "Source file should still exist after copy");
+    } else {
+        test:assertFail(msg = "Error checking source file existence after copy: " + sourceStillExists.message());
+    }
+
+    // Verify destination file exists
+    boolean|Error destExists = (<Client>clientEp)->exists(destinationPath);
+    if destExists is boolean {
+        test:assertTrue(destExists, msg = "Destination file should exist after copy");
+        log:printInfo("Destination file correctly created after copy");
+    } else {
+        test:assertFail(msg = "Error checking destination file existence: " + destExists.message());
+    }
+    
+    // Verify destination file has content
+    stream<byte[] & readonly, io:Error?>|Error destCheck = (<Client>clientEp)->get(destinationPath);
+    if destCheck is stream<byte[] & readonly, io:Error?> {
+        record {|byte[] & readonly value;|}|io:Error? nextResult = destCheck.next();
+        if nextResult is record {|byte[] & readonly value;|} {
+            string|error readContent = strings:fromBytes(nextResult.value);
+            if readContent is string {
+                test:assertTrue(readContent.length() > 0, msg = "Copied file should have content");
+                log:printInfo("Destination file has content after copy");
+            } else {
+                test:assertFail(msg = "Error reading copied file content");
+            }
+        } else {
+            test:assertFail(msg = "Error reading copied file stream");
+        }
+    } else {
+        test:assertFail(msg = "Destination file not found after `copy` operation" + destCheck.message());
+    }
+    
+    // Cleanup
+    Error? deleteResponse = (<Client>clientEp)->delete(destinationPath);
+    if deleteResponse is Error {
+        log:printWarn("Failed to cleanup copied file: " + deleteResponse.message());
+    }
+}
+
+@test:Config {
+    dependsOn: [testCopyFile]
+}
+public function testExistsFile() {
+    string existingPath = "/home/in/test1.txt";
+    string nonExistingPath = "/home/in/nonexistent.txt";
+    
+    // Test with existing file
+    boolean|Error existsResult = (<Client>clientEp)->exists(existingPath);
+    if existsResult is boolean {
+        test:assertTrue(existsResult, msg = "Exists should return true for existing file");
+        log:printInfo("Executed `exists` operation for existing file - returned true");
+    } else {
+        test:assertFail(msg = "Error while invoking `exists` operation for existing file: " + existsResult.message());
+    }
+    
+    // Test with non-existing file
+    boolean|Error notExistsResult = (<Client>clientEp)->exists(nonExistingPath);
+    if notExistsResult is boolean {
+        test:assertFalse(notExistsResult, msg = "Exists should return false for non-existing file");
+        log:printInfo("Executed `exists` operation for non-existing file - returned false");
+    } else {
+        test:assertFail(msg = "Error while invoking `exists` operation for non-existing file: " + notExistsResult.message());
+    }
+}
+
+@test:Config {
+    dependsOn: [testExistsFile]
+}
 public function testGetFileSize() {
     int|Error response = (<Client>clientEp)->size(filePath);
     log:printInfo("Executed `size` operation.");

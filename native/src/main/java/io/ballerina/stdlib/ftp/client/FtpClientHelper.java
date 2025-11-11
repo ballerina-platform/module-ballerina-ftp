@@ -128,6 +128,14 @@ class FtpClientHelper {
         return true;
     }
 
+    static boolean executeExistsAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
+                                       CompletableFuture<Object> balFuture) {
+        if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
+            balFuture.complete(((RemoteFileSystemMessage) remoteFileSystemBaseMessage).exists());
+        }
+        return true;
+    }
+
     static boolean executeListAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
                                      CompletableFuture<Object> balFuture) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
