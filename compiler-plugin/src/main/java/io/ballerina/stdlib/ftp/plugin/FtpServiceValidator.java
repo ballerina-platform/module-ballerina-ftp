@@ -36,7 +36,8 @@ import java.util.Optional;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_CONTENT_METHODS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_GENERIC_CONTENT_METHODS;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_ON_FILE_CHANGE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_VALID_REMOTE_METHOD;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_CHANGE_DEPRECATED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CHANGE_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CSV_FUNC;
@@ -106,7 +107,8 @@ public class FtpServiceValidator {
 
         // Validate parameters based on which method type is present
         if (onFileChange != null && contentMethods.isEmpty() && onFileDeleted == null) {
-            // Traditional onFileChange validation only
+            context.reportDiagnostic(getDiagnostic(ON_FILE_CHANGE_DEPRECATED,
+                    DiagnosticSeverity.WARNING, onFileChange.location()));
             new FtpFunctionValidator(context, onFileChange).validate();
         } else if (onFileChange == null && (!contentMethods.isEmpty() || onFileDeleted != null)) {
             // New content method validation
@@ -121,7 +123,7 @@ public class FtpServiceValidator {
             }
         } else if (onFileChange == null && contentMethods.isEmpty() && onFileDeleted == null) {
             // No valid method found - maintain backward compatibility by reporting NO_ON_FILE_CHANGE
-            context.reportDiagnostic(getDiagnostic(NO_ON_FILE_CHANGE,
+            context.reportDiagnostic(getDiagnostic(NO_VALID_REMOTE_METHOD,
                     DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
         }
     }

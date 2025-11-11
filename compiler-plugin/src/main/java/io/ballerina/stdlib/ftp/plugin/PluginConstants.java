@@ -56,7 +56,6 @@ public final class PluginConstants {
                 "(onFile, onFileText, onFileJson, onFileXml, onFileCsv), or onFileDeleted are allowed.", "FTP_101"),
         METHOD_MUST_BE_REMOTE("onFileChange method must be remote.", "FTP_102"),
         RESOURCE_FUNCTION_NOT_ALLOWED("Resource functions are not allowed for ftp services.", "FTP_103"),
-        NO_ON_FILE_CHANGE("onFileChange method not found.", "FTP_104"),
         MUST_HAVE_WATCHEVENT("Must have the required parameter ftp:WatchEvent & readonly or ftp:WatchEvent.",
                 "FTP_105"),
         ONLY_PARAMS_ALLOWED("Invalid method parameter count. Only ftp:WatchEvent & readonly " +
@@ -68,8 +67,6 @@ public final class PluginConstants {
                 "ftp:Caller is allowed.", "FTP_109"),
         INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_110"),
         TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_111"),
-
-        // Content listener validation errors
         MULTIPLE_CONTENT_METHODS("Only one content handling strategy is allowed. Cannot mix onFileChange with " +
                 "content methods (onFile, onFileText, onFileJson, onFileXml, onFileCsv) or onFileDeleted.", "FTP_112"),
         MULTIPLE_GENERIC_CONTENT_METHODS("Only one generic onFile method is allowed in a service.", "FTP_113"),
@@ -81,21 +78,21 @@ public final class PluginConstants {
                 "(content, fileInfo?, caller?).", "FTP_118"),
         NO_VALID_REMOTE_METHOD("No valid remote method found. Service must have either onFileChange or content " +
                 "handler methods (onFile, onFileText, onFileJson, onFileXml, onFileCsv) or onFileDeleted.", "FTP_119"),
-        ANNOTATION_PATTERN_NOT_SUBSET("FunctionConfig annotation fileNamePattern must be a subset of listener's " +
+        ANNOTATION_PATTERN_NOT_SUBSET("@ftp:FunctionConfig annotation's fileNamePattern must be a subset of listener's " +
                 "fileNamePattern.", "FTP_120"),
-        OVERLAPPING_ANNOTATION_PATTERNS("Multiple methods have overlapping FunctionConfig annotation patterns.",
+        OVERLAPPING_ANNOTATION_PATTERNS("Multiple methods have overlapping @ftp:FunctionConfig annotation patterns.",
                 "FTP_121"),
-        INVALID_ANNOTATION_USAGE("FunctionConfig annotation can only be used on content handler methods " +
+        INVALID_ANNOTATION_USAGE("@ftp:FunctionConfig annotation can only be used on content handler methods " +
                 "(onFile, onFileText, onFileJson, onFileXml, onFileCsv).", "FTP_122"),
-
-        // onFileDeleted validation errors
         ON_FILE_DELETED_MUST_BE_REMOTE("onFileDeleted method must be remote.", "FTP_123"),
         INVALID_ON_FILE_DELETED_PARAMETER("Invalid parameter for onFileDeleted. First parameter must be string[].",
                 "FTP_124"),
         INVALID_ON_FILE_DELETED_CALLER_PARAMETER("Invalid second parameter for onFileDeleted. " +
                 "Only ftp:Caller is allowed.", "FTP_125"),
         TOO_MANY_PARAMETERS_ON_FILE_DELETED("Too many parameters. onFileDeleted accepts at most 2 parameters: " +
-                "(deletedFiles, caller?).", "FTP_126");
+                "(deletedFiles, caller?).", "FTP_126"),
+        ON_FILE_CHANGE_DEPRECATED("onFileChange method is deprecated. Use content handler methods or onFileDeleted.",
+                                          "FTP_127");
         private final String error;
         private final String errorCode;
 
