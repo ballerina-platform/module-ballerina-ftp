@@ -674,8 +674,7 @@ public class FtpClient {
     }
 
     /**
-     * Helper method to execute single-path FTP actions (delete, mkdir, rmdir, isDirectory, list, size, exists).
-     * Eliminates code duplication by centralizing the common pattern of creating a future, listener, and connector.
+     * Helper method to execute single-path FTP actions.
      *
      * @param env The Ballerina runtime environment
      * @param clientConnector The FTP client connector object
@@ -706,8 +705,7 @@ public class FtpClient {
     }
 
     /**
-     * Helper method to execute two-path FTP actions (rename, move, copy).
-     * Eliminates code duplication by centralizing URL creation and connector setup.
+     * Helper method to execute two-path FTP actions.
      *
      * @param env The Ballerina runtime environment
      * @param clientConnector The FTP client connector object
@@ -718,13 +716,8 @@ public class FtpClient {
      */
     private static Object executeTwoPathAction(Environment env, BObject clientConnector, BString sourcePath,
                                                 BString destinationPath, FtpAction action) {
-        Map<String, String> propertyMap = new HashMap<>(
-                (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
         String destinationUrl;
         try {
-            propertyMap.put(FtpConstants.URI, FtpUtil.createUrl(clientConnector, sourcePath.getValue()));
-            propertyMap.put(FtpConstants.DESTINATION, FtpUtil.createUrl(clientConnector,
-                    destinationPath.getValue()));
             destinationUrl = FtpUtil.createUrl(clientConnector, destinationPath.getValue());
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
