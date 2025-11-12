@@ -220,3 +220,84 @@ public function testMutableWatchEventWithCaller() returns error? {
     test:assertEquals(addedFile, filename);
     check (<Client>sftpClientEp)->delete("/in/" + filename);
 }
+
+boolean fileMoved = false;
+boolean fileCopied = false;
+boolean fileExists = false;
+
+@test:Config {
+    dependsOn: [testMutableWatchEventWithCaller]
+}
+public function testFileMoveWithCaller() returns error? {
+    string sourceName = "moveSource.caller";
+    string destName = "moveDestination.txt";
+    Service moveService = service object {
+        remote function onFileChange(WatchEvent event, Caller caller) returns error? {
+            foreach FileInfo fileInfo in event.addedFiles {
+                if fileInfo.name == sourceName {
+                    check caller->move("/in/" + sourceName, "/in/" + destName);
+                    fileMoved = true;
+                }
+            }
+        }
+    };
+    Listener 'listener = check new (callerListenerConfig);
+    check 'listener.attach(moveService);
+    check 'listener.start();
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>sftpClientEp)->put("/in/" + sourceName, bStream);
+    runtime:sleep(3);
+    test:assertTrue(fileMoved);
+    check (<Client>sftpClientEp)->delete("/in/" + destName);
+}
+
+@test:Config {
+    dependsOn: [testFileMoveWithCaller]
+}
+public function testFileCopyWithCaller() returns error? {
+    string sourceName = "copySource.caller";
+    string destName = "copyDestination.txt";
+    Service copyService = service object {
+        remote function onFileChange(WatchEvent event, Caller caller) returns error? {
+            foreach FileInfo fileInfo in event.addedFiles {
+                if fileInfo.name == sourceName {
+                    check caller->copy("/in/" + sourceName, "/in/" + destName);
+                    fileCopied = true;
+                }
+            }
+        }
+    };
+    Listener 'listener = check new (callerListenerConfig);
+    check 'listener.attach(copyService);
+    check 'listener.start();
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>sftpClientEp)->put("/in/" + sourceName, bStream);
+    runtime:sleep(3);
+    test:assertTrue(fileCopied);
+    check (<Client>sftpClientEp)->delete("/in/" + sourceName);
+    check (<Client>sftpClientEp)->delete("/in/" + destName);
+}
+
+@test:Config {
+    dependsOn: [testFileCopyWithCaller]
+}
+public function testFileExistsWithCaller() returns error? {
+    string checkName = "existsCheck.caller";
+    Service existsService = service object {
+        remote function onFileChange(WatchEvent event, Caller caller) returns error? {
+            foreach FileInfo fileInfo in event.addedFiles {
+                if fileInfo.name == checkName {
+                    fileExists = check caller->exists("/in/" + checkName);
+                }
+            }
+        }
+    };
+    Listener 'listener = check new (callerListenerConfig);
+    check 'listener.attach(existsService);
+    check 'listener.start();
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>sftpClientEp)->put("/in/" + checkName, bStream);
+    runtime:sleep(3);
+    test:assertTrue(fileExists);
+    check (<Client>sftpClientEp)->delete("/in/" + checkName);
+}
