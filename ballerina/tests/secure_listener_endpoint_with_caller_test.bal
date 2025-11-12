@@ -486,7 +486,7 @@ public function testPutCsvTypedWithCaller() returns error? {
     string[][]|Error csvContent = (<Client>sftpClientEp)->getCsv("/out/putcsv.result.caller");
     if csvContent is string[][] {
         test:assertTrue(putCsvContentOk, msg = "Listener did not mark putCsv operation executed");
-        test:assertEquals(csvContent.length(), 2, msg = "Expected 3 rows in CSV");
+        test:assertEquals(csvContent.length(), 2, msg = "Expected 2 rows in CSV");
         test:assertEquals(csvContent[0], ["Alice", "30", "NYC"]);
         test:assertEquals(csvContent[1], ["Bob", "25", "LA"]);
         // Trigger append
@@ -494,7 +494,7 @@ public function testPutCsvTypedWithCaller() returns error? {
         runtime:sleep(5);
         string[][]|Error appendedCsv = (<Client>sftpClientEp)->getCsv("/out/putcsv.result.caller");
         if appendedCsv is string[][] {
-            test:assertEquals(appendedCsv.length(), 3, msg = "Expected 4 rows after append");
+            test:assertEquals(appendedCsv.length(), 3, msg = "Expected 3 rows after append");
             test:assertEquals(appendedCsv[2], ["Charlie", "35", "SF"]);
         } else {
             test:assertFail("Failed to read appended CSV: " + appendedCsv.message());
@@ -544,7 +544,7 @@ public function testPutCsvAsStreamTypedWithCaller() returns error? {
     if csvStream is stream<string[], error?> {
         test:assertTrue(putCsvAsStreamContentOk, msg = "Listener did not mark putCsvAsStream operation executed");
         string[][] rows = check from string[] row in csvStream select row;
-        test:assertEquals(rows.length(), 2, msg = "Expected 3 rows");
+        test:assertEquals(rows.length(), 2, msg = "Expected 2 rows");
         test:assertEquals(rows[0], ["Widget", "10.50"]);
         test:assertEquals(rows[1], ["Gadget", "25.00"]);
         // Trigger append
@@ -578,7 +578,7 @@ public function testGetCsvTypedWithCaller() returns error? {
     check (<Client>sftpClientEp)->putText("/in/getcsv.caller", "trigger", OVERWRITE);
     runtime:sleep(5);
     test:assertTrue(getCsvContentOk, msg = "Listener did not mark getCsv operation executed");
-    test:assertEquals(retrievedCsvData.length(), 2, msg = "Expected 3 rows from getCsv");
+    test:assertEquals(retrievedCsvData.length(), 2, msg = "Expected 2 rows from getCsv (excluding header row)");
     test:assertEquals(retrievedCsvData[0], ["1", "Alice", "Active"]);
     test:assertEquals(retrievedCsvData[1], ["2", "Bob", "Inactive"]);
     // Cleanup
@@ -614,7 +614,7 @@ public function testGetCsvAsStreamTypedWithCaller() returns error? {
     check (<Client>sftpClientEp)->putText("/in/getcsvasstream.caller", "trigger", OVERWRITE);
     runtime:sleep(5);
     test:assertTrue(getCsvAsStreamContentOk, msg = "Listener did not mark getCsvAsStream operation executed");
-    test:assertEquals(retrievedCsvStreamData.length(), 3, msg = "Expected 3 rows from getCsvAsStream");
+    test:assertEquals(retrievedCsvStreamData.length(), 3, msg = "Expected 3 data rows from getCsvAsStream (excluding header)");
     test:assertEquals(retrievedCsvStreamData[0], ["A100", "Widget"]);
     test:assertEquals(retrievedCsvStreamData[1], ["B200", "Gadget"]);
     test:assertEquals(retrievedCsvStreamData[2], ["C300", "Tool"]);
