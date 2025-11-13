@@ -465,4 +465,14 @@ public class FtpServiceValidationTest {
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, TOO_MANY_PARAMETERS_ON_FILE_DELETED);
     }
+
+    @Test(description = "Validation when onFileJson has invalid return type")
+    public void testInvalidContentService11() {
+        Package currentPackage = loadPackage("invalid_content_service_11");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_RETURN_TYPE_ERROR_OR_NIL);
+    }
 }

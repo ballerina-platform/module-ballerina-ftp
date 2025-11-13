@@ -57,35 +57,35 @@ public final class PluginConstants {
         METHOD_MUST_BE_REMOTE("onFileChange method must be remote.", "FTP_102"),
         RESOURCE_FUNCTION_NOT_ALLOWED("Resource functions are not allowed for ftp services.", "FTP_103"),
         MUST_HAVE_WATCHEVENT("Must have the required parameter ftp:WatchEvent & readonly or ftp:WatchEvent.",
-                "FTP_105"),
+                "FTP_104"),
         ONLY_PARAMS_ALLOWED("Invalid method parameter count. Only ftp:WatchEvent & readonly " +
-                "or ftp:WatchEvent is allowed.", "FTP_106"),
+                "or ftp:WatchEvent is allowed.", "FTP_105"),
         INVALID_WATCHEVENT_PARAMETER("Invalid method parameter. Only ftp:WatchEvent & readonly or " +
-                "ftp:WatchEvent is allowed.", "FTP_107"),
-        INVALID_CALLER_PARAMETER("Invalid method parameter. Only ftp:Caller is allowed", "FTP_108"),
+                "ftp:WatchEvent is allowed.", "FTP_106"),
+        INVALID_CALLER_PARAMETER("Invalid method parameter. Only ftp:Caller is allowed", "FTP_107"),
         INVALID_PARAMETERS("Invalid method parameters. Only ftp:WatchEvent & readonly or ftp:WatchEvent and " +
-                "ftp:Caller is allowed.", "FTP_109"),
-        INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_110"),
-        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_111"),
+                "ftp:Caller is allowed.", "FTP_108"),
+        INVALID_RETURN_TYPE_ERROR_OR_NIL("Invalid return type. Only error? or ftp:Error? is allowed.", "FTP_109"),
+        TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_110"),
         MULTIPLE_CONTENT_METHODS("Only one content handling strategy is allowed. Cannot mix onFileChange with " +
-                "content methods (onFile, onFileText, onFileJson, onFileXml, onFileCsv) or onFileDeleted.", "FTP_112"),
-        CONTENT_METHOD_MUST_BE_REMOTE("Content handler method '%s' must be remote.", "FTP_115"),
+                "content methods (onFile, onFileText, onFileJson, onFileXml, onFileCsv) or onFileDeleted.", "FTP_111"),
+        CONTENT_METHOD_MUST_BE_REMOTE("Content handler method '%s' must be remote.", "FTP_112"),
         INVALID_CONTENT_PARAMETER_TYPE("Invalid first parameter type for '%s'. Expected '%s', found '%s'.",
-                "FTP_116"),
-        INVALID_FILEINFO_PARAMETER("Invalid fileInfo parameter for '%s'. Only ftp:FileInfo is allowed.", "FTP_117"),
+                "FTP_113"),
+        INVALID_FILEINFO_PARAMETER("Invalid fileInfo parameter for '%s'. Only ftp:FileInfo is allowed.", "FTP_114"),
         TOO_MANY_PARAMETERS("Too many parameters for '%s'. Content methods accept at most 3 parameters: " +
-                "(content, fileInfo?, caller?).", "FTP_118"),
+                "(content, fileInfo?, caller?).", "FTP_115"),
         NO_VALID_REMOTE_METHOD("No valid remote method found. Service must have either onFileChange or content " +
-                "handler methods (onFile, onFileText, onFileJson, onFileXml, onFileCsv) or onFileDeleted.", "FTP_119"),
-        ON_FILE_DELETED_MUST_BE_REMOTE("onFileDeleted method must be remote.", "FTP_123"),
+                "handler methods (onFile, onFileText, onFileJson, onFileXml, onFileCsv) or onFileDeleted.", "FTP_116"),
+        ON_FILE_DELETED_MUST_BE_REMOTE("onFileDeleted method must be remote.", "FTP_117"),
         INVALID_ON_FILE_DELETED_PARAMETER("Invalid parameter for onFileDeleted. First parameter must be string[].",
-                "FTP_124"),
+                "FTP_118"),
         INVALID_ON_FILE_DELETED_CALLER_PARAMETER("Invalid second parameter for onFileDeleted. " +
-                "Only ftp:Caller is allowed.", "FTP_125"),
+                "Only ftp:Caller is allowed.", "FTP_119"),
         TOO_MANY_PARAMETERS_ON_FILE_DELETED("Too many parameters. onFileDeleted accepts at most 2 parameters: " +
-                "(deletedFiles, caller?).", "FTP_126"),
+                "(deletedFiles, caller?).", "FTP_120"),
         ON_FILE_CHANGE_DEPRECATED("onFileChange method is deprecated. Use content handler methods or onFileDeleted.",
-                                          "FTP_127");
+                "FTP_121");
         private final String error;
         private final String errorCode;
 
