@@ -35,7 +35,6 @@ import java.util.Optional;
 
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_CONTENT_METHODS;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_GENERIC_CONTENT_METHODS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_VALID_REMOTE_METHOD;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_CHANGE_DEPRECATED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
@@ -83,16 +82,27 @@ public class FtpServiceValidator {
                 Optional<String> functionName = methodSymbol.getName();
                 if (functionName.isPresent()) {
                     String funcName = functionName.get();
-                    if (funcName.equals(ON_FILE_CHANGE_FUNC)) {
-                        onFileChange = functionDefinitionNode;
-                    } else if (funcName.equals(ON_FILE_DELETED_FUNC)) {
-                        onFileDeleted = functionDefinitionNode;
-                    } else if (isContentMethod(funcName)) {
-                        contentMethods.add(functionDefinitionNode);
-                        contentMethodNames.add(funcName);
-                    } else if (isRemoteFunction(context, functionDefinitionNode)) {
-                        context.reportDiagnostic(getDiagnostic(INVALID_REMOTE_FUNCTION,
-                                DiagnosticSeverity.ERROR, functionDefinitionNode.location()));
+                    switch (funcName) {
+                        case ON_FILE_CHANGE_FUNC:
+                            onFileChange = functionDefinitionNode;
+                            break;
+                        case ON_FILE_DELETED_FUNC:
+                            onFileDeleted = functionDefinitionNode;
+                            break;
+                        case ON_FILE_FUNC:
+                        case ON_FILE_TEXT_FUNC:
+                        case ON_FILE_JSON_FUNC:
+                        case ON_FILE_XML_FUNC:
+                        case ON_FILE_CSV_FUNC:
+                            contentMethods.add(functionDefinitionNode);
+                            contentMethodNames.add(funcName);
+                            break;
+                        default:
+                            if (isRemoteFunction(context, functionDefinitionNode)) {
+                                context.reportDiagnostic(getDiagnostic(INVALID_REMOTE_FUNCTION,
+                                        DiagnosticSeverity.ERROR, functionDefinitionNode.location()));
+                            }
+                            break;
                     }
                 }
             } else if (node.kind() == SyntaxKind.RESOURCE_ACCESSOR_DEFINITION) {
@@ -101,64 +111,35 @@ public class FtpServiceValidator {
             }
         }
 
-        // Validate method exclusivity rules
-        validateMethodExclusivity(context, serviceDeclarationNode, onFileChange, onFileDeleted,
-                contentMethods, contentMethodNames);
-
-        // Validate parameters based on which method type is present
-        if (onFileChange != null && contentMethods.isEmpty() && onFileDeleted == null) {
-            context.reportDiagnostic(getDiagnostic(ON_FILE_CHANGE_DEPRECATED,
-                    DiagnosticSeverity.WARNING, onFileChange.location()));
-            new FtpFunctionValidator(context, onFileChange).validate();
-        } else if (onFileChange == null && (!contentMethods.isEmpty() || onFileDeleted != null)) {
-            // New content method validation
-            for (int i = 0; i < contentMethods.size(); i++) {
-                new FtpContentFunctionValidator(context, contentMethods.get(i),
-                        contentMethodNames.get(i)).validate();
-            }
-
-            // Validate onFileDeleted if present
-            if (onFileDeleted != null) {
-                new FtpFileDeletedValidator(context, onFileDeleted).validate();
-            }
-        } else if (onFileChange == null && contentMethods.isEmpty() && onFileDeleted == null) {
-            // No valid method found - maintain backward compatibility by reporting NO_ON_FILE_CHANGE
-            context.reportDiagnostic(getDiagnostic(NO_VALID_REMOTE_METHOD,
-                    DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
+        // No valid service methods
+        if (onFileChange == null && contentMethods.isEmpty() && onFileDeleted == null) {
+            context.reportDiagnostic(getDiagnostic(NO_VALID_REMOTE_METHOD, DiagnosticSeverity.ERROR,
+                    serviceDeclarationNode.location()));
+            return;
         }
-    }
 
-    private boolean isContentMethod(String methodName) {
-        return methodName.equals(ON_FILE_FUNC) ||
-                methodName.equals(ON_FILE_TEXT_FUNC) ||
-                methodName.equals(ON_FILE_JSON_FUNC) ||
-                methodName.equals(ON_FILE_XML_FUNC) ||
-                methodName.equals(ON_FILE_CSV_FUNC);
-    }
-
-    private void validateMethodExclusivity(SyntaxNodeAnalysisContext context,
-                                           ServiceDeclarationNode serviceDeclarationNode,
-                                           FunctionDefinitionNode onFileChange,
-                                           FunctionDefinitionNode onFileDeleted,
-                                           List<FunctionDefinitionNode> contentMethods,
-                                           List<String> contentMethodNames) {
-        // Rule 1: Cannot mix onFileChange with content methods or onFileDeleted
+        // Validate method exclusivity
         if (onFileChange != null && (!contentMethods.isEmpty() || onFileDeleted != null)) {
             context.reportDiagnostic(getDiagnostic(MULTIPLE_CONTENT_METHODS,
                     DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
             return;
         }
 
-        // Rule 2: If using content methods, validate strategy
-        if (!contentMethods.isEmpty()) {
-            // Cannot have multiple generic onFile methods
-            long onFileCount = contentMethodNames.stream().filter(name -> name.equals(ON_FILE_FUNC)).count();
-            if (onFileCount > 1) {
-                context.reportDiagnostic(getDiagnostic(MULTIPLE_GENERIC_CONTENT_METHODS,
-                        DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
-            }
+        // Validate parameters based on which method type is present
+        if (onFileChange != null) {
+            context.reportDiagnostic(getDiagnostic(ON_FILE_CHANGE_DEPRECATED,
+                    DiagnosticSeverity.WARNING, onFileChange.location()));
+            new FtpFunctionValidator(context, onFileChange).validate();
+            return;
+        }
 
-            // Note: The onFile method will serve as a fallback for unmatched file extensions
+        for (int i = 0; i < contentMethods.size(); i++) {
+            new FtpContentFunctionValidator(context, contentMethods.get(i),
+                    contentMethodNames.get(i)).validate();
+        }
+
+        if (onFileDeleted != null) {
+            new FtpFileDeletedValidator(context, onFileDeleted).validate();
         }
     }
 }

@@ -18,13 +18,18 @@
 
 package io.ballerina.stdlib.ftp.util;
 
+import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.ArrayType;
+import io.ballerina.runtime.api.types.PredefinedTypes;
+import io.ballerina.runtime.api.types.StreamType;
 import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
+import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.runtime.api.values.BTypedesc;
 import org.slf4j.Logger;
@@ -215,5 +220,49 @@ public final class FtpContentConverter {
      */
     public static BArray convertToBallerinaByteArray(byte[] content) {
         return ValueCreator.createArrayValue(content);
+    }
+
+    /**
+     * Creates a Ballerina CSV stream (stream<string[], error?>) from byte array content.
+     * First parses the CSV content to string[][] using csvdata module, then wraps in a stream.
+     *
+     * @param content The byte array content
+     * @return Ballerina stream object of type stream<string[], error?> or BError
+     */
+    public static Object createCsvStreamFromContent(byte[] content) {
+        try {
+            BArray byteArray = ValueCreator.createArrayValue(content);
+            BMap<BString, Object> options = createCsvParseOptions();
+
+            // Create typedesc for string[][]
+            Type stringArrayArrayType = TypeCreator.createArrayType(
+                    TypeCreator.createArrayType(PredefinedTypes.TYPE_STRING));
+            BTypedesc typedesc = ValueCreator.createTypedescValue(stringArrayArrayType);
+
+            Object result = io.ballerina.lib.data.csvdata.csv.Native.parseBytes(byteArray, options, typedesc);
+
+            if (result instanceof BError) {
+                log.error("Failed to parse CSV content for stream: {}", ((BError) result).getMessage());
+                return result;
+            }
+
+            // Create ContentCsvStream object and initialize with parsed data
+            BObject contentCsvStreamObject = ValueCreator.createObjectValue(
+                    io.ballerina.stdlib.ftp.util.ModuleUtils.getModule(), "ContentCsvStream", null, null
+            );
+
+            contentCsvStreamObject.addNativeData("CSV_Data", result);
+            contentCsvStreamObject.addNativeData("Current_Index", 0);
+
+            // Create stream type: stream<string[], error?>
+            ArrayType stringArrayType = TypeCreator.createArrayType(PredefinedTypes.TYPE_STRING);
+            StreamType streamType = TypeCreator.createStreamType(stringArrayType,
+                    PredefinedTypes.TYPE_ERROR);
+
+            return ValueCreator.createStreamValue(streamType, contentCsvStreamObject);
+        } catch (Exception e) {
+            log.error("Failed to create CSV stream", e);
+            return FtpUtil.createError("Failed to create CSV stream: " + e.getMessage(), Error.errorType());
+        }
     }
 }
