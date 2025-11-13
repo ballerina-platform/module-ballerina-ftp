@@ -56,6 +56,11 @@ isolated function putXml(Client clientEndpoint, string path, xml content, FileWr
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
 } external;
 
+isolated function putCsv(Client clientEndpoint, string path, string[][]|record {}[] content, FileWriteOption option) returns Error? = @java:Method {
+    name: "putCsv",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
+} external;
+
 isolated function mkdir(Client clientEndpoint, string path) returns Error? = @java:Method {
     name: "mkdir",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
