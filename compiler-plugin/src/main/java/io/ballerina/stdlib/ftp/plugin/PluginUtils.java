@@ -196,32 +196,32 @@ public final class PluginUtils {
             return;
         }
 
-        TypeDescKind returnTypeKind = returnTypeDesc.get().typeKind();
+        TypeSymbol returnType = returnTypeDesc.get();
+        TypeDescKind kind = returnType.typeKind();
 
-        if (returnTypeKind == TypeDescKind.NIL) {
+        if (kind == TypeDescKind.NIL) {
             return;
         }
 
-        if (returnTypeKind != TypeDescKind.UNION) {
+        if (kind == TypeDescKind.ERROR ||
+                (kind == TYPE_REFERENCE && isValidErrorTypeReference(returnType))) {
             return;
         }
 
-        UnionTypeSymbol unionTypeSymbol = (UnionTypeSymbol) returnTypeDesc.get();
-        for (TypeSymbol memberType : unionTypeSymbol.memberTypeDescriptors()) {
-            TypeDescKind memberKind = memberType.typeKind();
-            if (memberKind == TypeDescKind.NIL) {
-                continue;
+        if (kind == TypeDescKind.UNION && returnType instanceof UnionTypeSymbol unionTypeSymbol) {
+            for (TypeSymbol memberType : unionTypeSymbol.memberTypeDescriptors()) {
+                TypeDescKind memberKind = memberType.typeKind();
+                if (!(memberKind == TypeDescKind.NIL || memberKind == TypeDescKind.ERROR ||
+                        (memberKind == TYPE_REFERENCE && isValidErrorTypeReference(memberType)))) {
+                    context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL, DiagnosticSeverity.ERROR,
+                            functionDefinitionNode.functionSignature().location()));
+                    return;
+                }
             }
-            if (memberKind == TypeDescKind.ERROR) {
-                continue;
-            }
-            if (memberKind == TYPE_REFERENCE && isValidErrorTypeReference(memberType)) {
-                continue;
-            }
-            context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL, DiagnosticSeverity.ERROR,
-                    functionDefinitionNode.functionSignature().location()));
             return;
         }
+        context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL, DiagnosticSeverity.ERROR,
+                functionDefinitionNode.functionSignature().location()));
     }
 
     private static boolean isValidErrorTypeReference(TypeSymbol typeSymbol) {

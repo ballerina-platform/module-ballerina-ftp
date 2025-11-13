@@ -103,7 +103,7 @@ public class FtpContentFunctionValidator {
         ParameterNode firstParameter = parameters.get(0);
         if (!validateContentParameter(firstParameter)) {
             String expectedType = getExpectedContentType();
-            String actualType = PluginUtils.getParameterTypeSignature(firstParameter, syntaxNodeAnalysisContext);;
+            String actualType = PluginUtils.getParameterTypeSignature(firstParameter, syntaxNodeAnalysisContext);
             reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, firstParameter.location(),
                     contentMethodName, expectedType, actualType);
         }
