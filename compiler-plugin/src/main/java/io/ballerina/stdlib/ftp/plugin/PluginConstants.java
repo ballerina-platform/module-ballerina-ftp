@@ -69,7 +69,6 @@ public final class PluginConstants {
         TEMPLATE_CODE_GENERATION_HINT("Template generation for empty service", "FTP_111"),
         MULTIPLE_CONTENT_METHODS("Only one content handling strategy is allowed. Cannot mix onFileChange with " +
                 "content methods (onFile, onFileText, onFileJson, onFileXml, onFileCsv) or onFileDeleted.", "FTP_112"),
-        MULTIPLE_GENERIC_CONTENT_METHODS("Only one generic onFile method is allowed in a service.", "FTP_113"),
         CONTENT_METHOD_MUST_BE_REMOTE("Content handler method '%s' must be remote.", "FTP_115"),
         INVALID_CONTENT_PARAMETER_TYPE("Invalid first parameter type for '%s'. Expected '%s', found '%s'.",
                 "FTP_116"),
@@ -78,12 +77,6 @@ public final class PluginConstants {
                 "(content, fileInfo?, caller?).", "FTP_118"),
         NO_VALID_REMOTE_METHOD("No valid remote method found. Service must have either onFileChange or content " +
                 "handler methods (onFile, onFileText, onFileJson, onFileXml, onFileCsv) or onFileDeleted.", "FTP_119"),
-        ANNOTATION_PATTERN_NOT_SUBSET("@ftp:FunctionConfig annotation's fileNamePattern must be a subset of " +
-                "listener's fileNamePattern.", "FTP_120"),
-        OVERLAPPING_ANNOTATION_PATTERNS("Multiple methods have overlapping @ftp:FunctionConfig annotation patterns.",
-                "FTP_121"),
-        INVALID_ANNOTATION_USAGE("@ftp:FunctionConfig annotation can only be used on content handler methods " +
-                "(onFile, onFileText, onFileJson, onFileXml, onFileCsv).", "FTP_122"),
         ON_FILE_DELETED_MUST_BE_REMOTE("onFileDeleted method must be remote.", "FTP_123"),
         INVALID_ON_FILE_DELETED_PARAMETER("Invalid parameter for onFileDeleted. First parameter must be string[].",
                 "FTP_124"),

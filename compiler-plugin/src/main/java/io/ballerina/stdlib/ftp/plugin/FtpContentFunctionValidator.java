@@ -18,6 +18,8 @@
 
 package io.ballerina.stdlib.ftp.plugin;
 
+import io.ballerina.compiler.api.symbols.ArrayTypeSymbol;
+import io.ballerina.compiler.api.symbols.StreamTypeSymbol;
 import io.ballerina.compiler.api.symbols.TypeDescKind;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
@@ -31,6 +33,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static io.ballerina.compiler.api.symbols.TypeDescKind.ARRAY;
+import static io.ballerina.compiler.api.symbols.TypeDescKind.BYTE;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.JSON;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.RECORD;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.STREAM;
@@ -79,7 +82,7 @@ public class FtpContentFunctionValidator {
 
         SeparatedNodeList<ParameterNode> parameters = contentFunctionDefinitionNode.functionSignature().parameters();
         validateContentFunctionParameters(parameters, contentFunctionDefinitionNode);
-        validateReturnTypeErrorOrNil(contentFunctionDefinitionNode);
+        PluginUtils.validateReturnTypeErrorOrNil(contentFunctionDefinitionNode, syntaxNodeAnalysisContext);
     }
 
     private void validateContentFunctionParameters(SeparatedNodeList<ParameterNode> parameters,
@@ -100,33 +103,33 @@ public class FtpContentFunctionValidator {
         ParameterNode firstParameter = parameters.get(0);
         if (!validateContentParameter(firstParameter)) {
             String expectedType = getExpectedContentType();
-            String actualType = getActualParameterType(firstParameter);
+            String actualType = PluginUtils.getParameterTypeSignature(firstParameter, syntaxNodeAnalysisContext);;
             reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, firstParameter.location(),
                     contentMethodName, expectedType, actualType);
         }
 
-        // Second parameter (if exists) can be FileInfo or Caller
-        if (parameters.size() >= 2) {
-            ParameterNode secondParameter = parameters.get(1);
-            boolean isFileInfo = PluginUtils.validateFileInfoParameter(secondParameter, syntaxNodeAnalysisContext);
-            boolean isCaller = PluginUtils.validateCallerParameter(secondParameter, syntaxNodeAnalysisContext);
+        if (parameters.size() == 1) {
+            return;
+        }
+
+        if (parameters.size() == 2) {
+            boolean isFileInfo = PluginUtils.validateFileInfoParameter(parameters.get(1), syntaxNodeAnalysisContext);
+            boolean isCaller = PluginUtils.validateCallerParameter(parameters.get(1), syntaxNodeAnalysisContext);
 
             if (!isFileInfo && !isCaller) {
-                reportErrorDiagnostic(INVALID_FILEINFO_PARAMETER, secondParameter.location(), contentMethodName);
+                reportErrorDiagnostic(INVALID_FILEINFO_PARAMETER, parameters.get(1).location(), contentMethodName);
             }
+            return;
+        }
 
-            // Third parameter (if exists) must be Caller if second was FileInfo, or validation error
-            if (parameters.size() == 3) {
-                ParameterNode thirdParameter = parameters.get(2);
-                if (isFileInfo) {
-                    if (!PluginUtils.validateCallerParameter(thirdParameter, syntaxNodeAnalysisContext)) {
-                        reportErrorDiagnostic(INVALID_CALLER_PARAMETER, thirdParameter.location());
-                    }
-                } else {
-                    // Second was Caller, third is invalid
-                    reportErrorDiagnostic(TOO_MANY_PARAMETERS, thirdParameter.location(), contentMethodName);
-                }
-            }
+        // parameters.size() == 3
+        if (!PluginUtils.validateFileInfoParameter(parameters.get(1), syntaxNodeAnalysisContext)) {
+            reportErrorDiagnostic(INVALID_FILEINFO_PARAMETER, parameters.get(1).location(), contentMethodName);
+            return;
+        }
+
+        if (!PluginUtils.validateCallerParameter(parameters.get(2), syntaxNodeAnalysisContext)) {
+            reportErrorDiagnostic(INVALID_CALLER_PARAMETER, parameters.get(2).location());
         }
     }
 
@@ -140,20 +143,14 @@ public class FtpContentFunctionValidator {
         TypeSymbol typeSymbol = typeSymbolOpt.get();
         TypeDescKind typeKind = typeSymbol.typeKind();
 
-        switch (contentMethodName) {
-            case ON_FILE_FUNC:
-                return validateOnFileContentType(typeKind, typeSymbol);
-            case ON_FILE_TEXT_FUNC:
-                return typeKind == STRING;
-            case ON_FILE_JSON_FUNC:
-                return typeKind == JSON || typeKind == RECORD || isRecordTypeReference(typeSymbol);
-            case ON_FILE_XML_FUNC:
-                return typeKind == XML || typeKind == RECORD || isRecordTypeReference(typeSymbol);
-            case ON_FILE_CSV_FUNC:
-                return validateOnFileCsvContentType(typeKind, typeSymbol);
-            default:
-                return false;
-        }
+        return switch (contentMethodName) {
+            case ON_FILE_FUNC -> validateOnFileContentType(typeKind, typeSymbol);
+            case ON_FILE_TEXT_FUNC -> typeKind == STRING;
+            case ON_FILE_JSON_FUNC -> typeKind == JSON || typeKind == RECORD || isRecordTypeReference(typeSymbol);
+            case ON_FILE_XML_FUNC -> typeKind == XML || typeKind == RECORD || isRecordTypeReference(typeSymbol);
+            case ON_FILE_CSV_FUNC -> validateOnFileCsvContentType(typeKind, typeSymbol);
+            default -> false;
+        };
     }
 
     private boolean validateOnFileContentType(TypeDescKind typeKind, TypeSymbol typeSymbol) {
@@ -169,30 +166,68 @@ public class FtpContentFunctionValidator {
     }
 
     private boolean validateOnFileCsvContentType(TypeDescKind typeKind, TypeSymbol typeSymbol) {
-        // onFileCsv accepts: string[][], record{}[], or stream<byte[], error?>
+        // onFileCsv accepts: string[][], record{}[], or stream<string[], error?>
         if (typeKind == ARRAY) {
             return isStringArrayArray(typeSymbol) || isRecordArray(typeSymbol);
         } else if (typeKind == STREAM) {
-            return isByteStream(typeSymbol);
+            return isStringArrayStream(typeSymbol);
         }
         return false;
     }
 
     private boolean isByteArray(TypeSymbol typeSymbol) {
-        return typeSymbol.signature().equals("byte[]");
+        if (typeSymbol instanceof ArrayTypeSymbol arrayType) {
+            TypeSymbol memberType = arrayType.memberTypeDescriptor();
+            return memberType.typeKind() == BYTE;
+        }
+        return false;
     }
+
 
     private boolean isByteStream(TypeSymbol typeSymbol) {
-        return typeSymbol.signature().contains("stream<byte[]");
+        if (typeSymbol.typeKind() != STREAM || !(typeSymbol instanceof StreamTypeSymbol streamType)) {
+            return false;
+        }
+        TypeSymbol itemType = streamType.typeParameter();
+        if (!(itemType instanceof ArrayTypeSymbol arrayType)) {
+            return false;
+        }
+        TypeSymbol memberType = arrayType.memberTypeDescriptor();
+        return memberType.typeKind() == BYTE;
     }
 
+    private boolean isStringArrayStream(TypeSymbol typeSymbol) {
+        if (typeSymbol.typeKind() != STREAM || !(typeSymbol instanceof StreamTypeSymbol streamType)) {
+            return false;
+        }
+        TypeSymbol itemType = streamType.typeParameter();
+        if (!(itemType instanceof ArrayTypeSymbol arrayType)) {
+            return false;
+        }
+        TypeSymbol memberType = arrayType.memberTypeDescriptor();
+        return memberType.typeKind() == STRING;
+    }
+
+
     private boolean isStringArrayArray(TypeSymbol typeSymbol) {
-        return typeSymbol.signature().equals("string[][]");
+        if (!(typeSymbol instanceof ArrayTypeSymbol outerArray)) {
+            return false;
+        }
+        TypeSymbol outerMember = outerArray.memberTypeDescriptor();
+
+        if (!(outerMember instanceof ArrayTypeSymbol innerArray)) {
+            return false;
+        }
+        TypeSymbol innerMember = innerArray.memberTypeDescriptor();
+        return innerMember.typeKind() == STRING;
     }
 
     private boolean isRecordArray(TypeSymbol typeSymbol) {
-        String signature = typeSymbol.signature();
-        return signature.contains("record") && signature.endsWith("[]");
+        if (typeSymbol instanceof ArrayTypeSymbol arrayType) {
+            TypeSymbol memberType = arrayType.memberTypeDescriptor();
+            return memberType.typeKind() == RECORD;
+        }
+        return false;
     }
 
     private boolean isRecordTypeReference(TypeSymbol typeSymbol) {
@@ -205,23 +240,15 @@ public class FtpContentFunctionValidator {
         return false;
     }
 
-    private void validateReturnTypeErrorOrNil(FunctionDefinitionNode functionDefinitionNode) {
-        PluginUtils.validateReturnTypeErrorOrNil(functionDefinitionNode, syntaxNodeAnalysisContext);
-    }
-
     private String getExpectedContentType() {
         return switch (contentMethodName) {
             case ON_FILE_FUNC -> "byte[] or stream<byte[], error?>";
             case ON_FILE_TEXT_FUNC -> "string";
             case ON_FILE_JSON_FUNC -> "json or record type";
             case ON_FILE_XML_FUNC -> "xml or record type";
-            case ON_FILE_CSV_FUNC -> "string[][], record{}[], or stream<byte[], error?>";
+            case ON_FILE_CSV_FUNC -> "string[][], record{}[], or stream<string[], error?>";
             default -> "unknown";
         };
-    }
-
-    private String getActualParameterType(ParameterNode parameterNode) {
-        return PluginUtils.getParameterTypeSignature(parameterNode, syntaxNodeAnalysisContext);
     }
 
     public void reportErrorDiagnostic(PluginConstants.CompilationErrors error, Location location) {

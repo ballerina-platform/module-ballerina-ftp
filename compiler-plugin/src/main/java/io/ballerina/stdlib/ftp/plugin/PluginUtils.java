@@ -44,7 +44,6 @@ import io.ballerina.tools.text.LineRange;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextRange;
 
-import java.util.List;
 import java.util.Optional;
 
 import static io.ballerina.compiler.api.symbols.TypeDescKind.TYPE_REFERENCE;
@@ -203,32 +202,36 @@ public final class PluginUtils {
             return;
         }
 
-        if (returnTypeKind == TypeDescKind.UNION) {
-            List<TypeSymbol> returnTypeMembers =
-                    ((UnionTypeSymbol) returnTypeDesc.get()).memberTypeDescriptors();
-            for (TypeSymbol returnType : returnTypeMembers) {
-                if (returnType.typeKind() != TypeDescKind.NIL) {
-                    if (returnType.typeKind() == TYPE_REFERENCE) {
-                        if (!returnType.signature().equals(PluginConstants.ERROR) &&
-                                returnType.getModule().isPresent() &&
-                                !validateModuleId(returnType.getModule().get())) {
-                            context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                    DiagnosticSeverity.ERROR,
-                                    functionDefinitionNode.functionSignature().location()));
-                            return;
-                        }
-                    } else if (returnType.typeKind() != TypeDescKind.ERROR) {
-                        context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                DiagnosticSeverity.ERROR,
-                                functionDefinitionNode.functionSignature().location()));
-                        return;
-                    }
-                }
-            }
-        } else {
-            context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                    DiagnosticSeverity.ERROR,
-                    functionDefinitionNode.functionSignature().location()));
+        if (returnTypeKind != TypeDescKind.UNION) {
+            return;
         }
+
+        UnionTypeSymbol unionTypeSymbol = (UnionTypeSymbol) returnTypeDesc.get();
+        for (TypeSymbol memberType : unionTypeSymbol.memberTypeDescriptors()) {
+            TypeDescKind memberKind = memberType.typeKind();
+            if (memberKind == TypeDescKind.NIL) {
+                continue;
+            }
+            if (memberKind == TypeDescKind.ERROR) {
+                continue;
+            }
+            if (memberKind == TYPE_REFERENCE && isValidErrorTypeReference(memberType)) {
+                continue;
+            }
+            context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL, DiagnosticSeverity.ERROR,
+                    functionDefinitionNode.functionSignature().location()));
+            return;
+        }
+    }
+
+    private static boolean isValidErrorTypeReference(TypeSymbol typeSymbol) {
+        if (typeSymbol.typeKind() != TYPE_REFERENCE) {
+            return false;
+        }
+        if (typeSymbol.signature().equals(PluginConstants.ERROR)) {
+            return true;
+        }
+        Optional<ModuleSymbol> module = typeSymbol.getModule();
+        return module.map(PluginUtils::validateModuleId).orElse(true);
     }
 }
