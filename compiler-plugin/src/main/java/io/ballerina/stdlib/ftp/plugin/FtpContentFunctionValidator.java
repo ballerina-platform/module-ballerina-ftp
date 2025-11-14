@@ -223,11 +223,12 @@ public class FtpContentFunctionValidator {
     }
 
     private boolean isRecordArray(TypeSymbol typeSymbol) {
-        if (typeSymbol instanceof ArrayTypeSymbol arrayType) {
-            TypeSymbol memberType = arrayType.memberTypeDescriptor();
-            return memberType.typeKind() == RECORD;
+        if (!(typeSymbol instanceof ArrayTypeSymbol arrayType)) {
+            return false;
         }
-        return false;
+        TypeSymbol memberType = arrayType.memberTypeDescriptor();
+        TypeDescKind memberKind = arrayType.memberTypeDescriptor().typeKind();
+        return memberKind == RECORD || isRecordTypeReference(memberType);
     }
 
     private boolean isRecordTypeReference(TypeSymbol typeSymbol) {
