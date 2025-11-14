@@ -146,6 +146,14 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
+    @Test(description = "Validation with onFile byte[], xml content, and inline record array content handlers")
+    public void testValidContentService5() {
+        Package currentPackage = loadPackage("valid_content_service_5");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
     @Test(description = "Validation when no valid remote function is defined")
     public void testInvalidService1() {
         Package currentPackage = loadPackage("invalid_service_1");
@@ -514,5 +522,47 @@ public class FtpServiceValidationTest {
         assertDiagnostic(diagnostic, INVALID_CONTENT_PARAMETER_TYPE,
                 "Invalid first parameter type for onFileCsv. Expected string[][], record{}[], " +
                         "or stream<string[], error?>, found stream<int[], error?>.");
+    }
+
+    @Test(description = "Validation when a content handler omits the required content parameter")
+    public void testInvalidContentService14() {
+        Package currentPackage = loadPackage("invalid_content_service_14");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_CONTENT_PARAMETER_TYPE,
+                "Invalid first parameter type for onFileText. Expected string, found none.");
+    }
+
+    @Test(description = "Validation when a three-parameter content handler uses an invalid fileInfo parameter")
+    public void testInvalidContentService15() {
+        Package currentPackage = loadPackage("invalid_content_service_15");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_FILEINFO_PARAMETER,
+                "Invalid fileInfo parameter for onFileText. Only ftp:FileInfo is allowed.");
+    }
+
+    @Test(description = "Validation when onFileDeleted does not define any parameters")
+    public void testInvalidContentService16() {
+        Package currentPackage = loadPackage("invalid_content_service_16");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_ON_FILE_DELETED_PARAMETER);
+    }
+
+    @Test(description = "Validation when onFileChange and onFileDeleted are mixed in the same service")
+    public void testInvalidContentService17() {
+        Package currentPackage = loadPackage("invalid_content_service_17");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, MULTIPLE_CONTENT_METHODS);
     }
 }
