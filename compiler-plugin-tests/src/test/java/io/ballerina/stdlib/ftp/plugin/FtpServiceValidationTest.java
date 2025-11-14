@@ -130,6 +130,22 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
+    @Test(description = "Validation with onFileCsv using record array (Employee[])")
+    public void testValidContentService3() {
+        Package currentPackage = loadPackage("valid_content_service_3");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
+    @Test(description = "Validation with onFileCsv using stream<string[], error?>")
+    public void testValidContentService4() {
+        Package currentPackage = loadPackage("valid_content_service_4");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
     @Test(description = "Validation when no valid remote function is defined")
     public void testInvalidService1() {
         Package currentPackage = loadPackage("invalid_service_1");
@@ -474,5 +490,29 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, INVALID_RETURN_TYPE_ERROR_OR_NIL);
+    }
+
+    @Test(description = "Validation when onFileCsv uses stream<byte[], error?> instead of stream<string[], error?>")
+    public void testInvalidContentService12() {
+        Package currentPackage = loadPackage("invalid_content_service_12");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_CONTENT_PARAMETER_TYPE,
+                "Invalid first parameter type for onFileCsv. Expected string[][], record{}[], " +
+                        "or stream<string[], error?>, found stream<byte[], error?>.");
+    }
+
+    @Test(description = "Validation when onFileCsv uses stream<int[], error?> instead of stream<string[], error?>")
+    public void testInvalidContentService13() {
+        Package currentPackage = loadPackage("invalid_content_service_13");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_CONTENT_PARAMETER_TYPE,
+                "Invalid first parameter type for onFileCsv. Expected string[][], record{}[], " +
+                        "or stream<string[], error?>, found stream<int[], error?>.");
     }
 }
