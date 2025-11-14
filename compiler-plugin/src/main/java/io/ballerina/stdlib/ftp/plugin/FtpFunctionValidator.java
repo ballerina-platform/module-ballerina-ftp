@@ -44,7 +44,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.I
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_WATCHEVENT_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.METHOD_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MUST_HAVE_WATCHEVENT;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_ON_FILE_CHANGE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_VALID_REMOTE_METHOD;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ONLY_PARAMS_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.WATCHEVENT;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getDiagnostic;
@@ -69,7 +69,7 @@ public class FtpFunctionValidator {
 
     public void validate() {
         if (Objects.isNull(onFileChange)) {
-            reportErrorDiagnostic(NO_ON_FILE_CHANGE, serviceDeclarationNode.location());
+            reportErrorDiagnostic(NO_VALID_REMOTE_METHOD, serviceDeclarationNode.location());
         } else {
             if (!isRemoteFunction(context, onFileChange)) {
                 reportErrorDiagnostic(METHOD_MUST_BE_REMOTE, onFileChange.location());

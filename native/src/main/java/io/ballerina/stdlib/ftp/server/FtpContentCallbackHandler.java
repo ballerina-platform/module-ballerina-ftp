@@ -173,7 +173,7 @@ public class FtpContentCallbackHandler {
             case ON_FILE_XML_REMOTE_FUNCTION:
                 return FtpContentConverter.convertBytesToXml(fileContent, firstParamType);
             case ON_FILE_CSV_REMOTE_FUNCTION:
-                return FtpContentConverter.convertBytesToCsv(fileContent, firstParamType);
+                return convertOnFileCsvContent(fileContent, firstParamType);
             default:
                 throw new IllegalArgumentException("Unknown content method: " + methodName);
         }
@@ -190,6 +190,20 @@ public class FtpContentCallbackHandler {
         // Return as stream<byte[], error?>
         // Create a byte stream from the content
         return createByteStreamFromContent(fileContent);
+    }
+
+    /**
+     * Converts content for onFileCsv method (string[][], record array, or stream<string[], error?>).
+     */
+    private Object convertOnFileCsvContent(byte[] fileContent, Type firstParamType) throws Exception {
+        int firstParamTypeTag = firstParamType.getTag();
+
+        if (firstParamTypeTag == ARRAY_TAG) {
+            // string[][] or record array
+            return FtpContentConverter.convertBytesToCsv(fileContent, firstParamType);
+        }
+        // stream<string[], error?>
+        return FtpContentConverter.createCsvStreamFromContent(fileContent);
     }
 
 

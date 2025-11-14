@@ -73,4 +73,10 @@ public final class CompilerPluginTestUtils {
         Assert.assertEquals(diagnostic.diagnosticInfo().code(), error.getErrorCode());
         Assert.assertEquals(diagnostic.diagnosticInfo().messageFormat(), error.getError());
     }
+
+    public static void assertDiagnostic(Diagnostic diagnostic, PluginConstants.CompilationErrors error,
+                                        String expectedMessage) {
+        Assert.assertEquals(diagnostic.diagnosticInfo().code(), error.getErrorCode());
+        Assert.assertEquals(diagnostic.message(), expectedMessage);
+    }
 }

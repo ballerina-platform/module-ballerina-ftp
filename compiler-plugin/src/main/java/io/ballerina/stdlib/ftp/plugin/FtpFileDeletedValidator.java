@@ -18,6 +18,7 @@
 
 package io.ballerina.stdlib.ftp.plugin;
 
+import io.ballerina.compiler.api.symbols.ArrayTypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
@@ -25,9 +26,7 @@ import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 import io.ballerina.tools.diagnostics.Location;
 
-import java.util.Objects;
-
-import static io.ballerina.compiler.api.symbols.TypeDescKind.ARRAY;
+import static io.ballerina.compiler.api.symbols.TypeDescKind.STRING;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_FILE_DELETED_CALLER_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_FILE_DELETED_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_DELETED_MUST_BE_REMOTE;
@@ -50,10 +49,6 @@ public class FtpFileDeletedValidator {
     }
 
     public void validate() {
-        if (Objects.isNull(onFileDeletedFunctionDefinitionNode)) {
-            return;
-        }
-
         if (!isRemoteFunction(syntaxNodeAnalysisContext, onFileDeletedFunctionDefinitionNode)) {
             reportErrorDiagnostic(ON_FILE_DELETED_MUST_BE_REMOTE, onFileDeletedFunctionDefinitionNode.location());
         }
@@ -61,7 +56,7 @@ public class FtpFileDeletedValidator {
         SeparatedNodeList<ParameterNode> parameters =
                 onFileDeletedFunctionDefinitionNode.functionSignature().parameters();
         validateOnFileDeletedParameters(parameters, onFileDeletedFunctionDefinitionNode);
-        validateReturnTypeErrorOrNil(onFileDeletedFunctionDefinitionNode);
+        PluginUtils.validateReturnTypeErrorOrNil(onFileDeletedFunctionDefinitionNode, syntaxNodeAnalysisContext);
     }
 
     private void validateOnFileDeletedParameters(SeparatedNodeList<ParameterNode> parameters,
@@ -93,12 +88,13 @@ public class FtpFileDeletedValidator {
 
     private boolean validateStringArrayParameter(ParameterNode parameterNode) {
         return PluginUtils.getParameterTypeSymbol(parameterNode, syntaxNodeAnalysisContext)
-                .map(typeSymbol -> typeSymbol.typeKind() == ARRAY &&
-                        typeSymbol.signature().equals("string[]")).orElse(false);
-    }
-
-    private void validateReturnTypeErrorOrNil(FunctionDefinitionNode functionDefinitionNode) {
-        PluginUtils.validateReturnTypeErrorOrNil(functionDefinitionNode, syntaxNodeAnalysisContext);
+                .map(typeSymbol -> {
+                    if (!(typeSymbol instanceof ArrayTypeSymbol arrayTypeSymbol)) {
+                        return false;
+                    }
+                    return arrayTypeSymbol.memberTypeDescriptor().typeKind() == STRING;
+                })
+                .orElse(false);
     }
 
     public void reportErrorDiagnostic(PluginConstants.CompilationErrors error, Location location) {
