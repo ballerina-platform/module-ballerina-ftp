@@ -63,6 +63,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
@@ -686,14 +687,12 @@ public class FtpClient {
      */
     private static Object executeSinglePathAction(Environment env, BObject clientConnector, BString filePath,
                                                    FtpAction action, boolean closeInput,
-                                                   java.util.function.Function<CompletableFuture<Object>,
-                                                           java.util.function.Function<
-                                                                   RemoteFileSystemBaseMessage,
-                                                                   Boolean>>
+                                                   Function<CompletableFuture<Object>,
+                                                           Function<RemoteFileSystemBaseMessage, Boolean>>
                                                            messageHandlerFactory) {
         return env.yieldAndRun(() -> {
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
-            java.util.function.Function<RemoteFileSystemBaseMessage, Boolean> messageHandler =
+            Function<RemoteFileSystemBaseMessage, Boolean> messageHandler =
                     messageHandlerFactory.apply(balFuture);
             FtpClientListener connectorListener = new FtpClientListener(balFuture, closeInput, messageHandler);
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.

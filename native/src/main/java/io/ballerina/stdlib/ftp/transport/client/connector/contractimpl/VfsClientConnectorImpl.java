@@ -241,7 +241,8 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                     }
                     break;
                 case EXISTS:
-                    remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.exists(), true));
+                    remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.exists(), 
+                            RemoteFileSystemMessage.ValueType.EXISTS_CHECK));
                     break;
                 default:
                     break;

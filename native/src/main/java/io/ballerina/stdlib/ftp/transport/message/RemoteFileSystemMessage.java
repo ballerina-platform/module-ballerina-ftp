@@ -28,6 +28,14 @@ import java.util.Map;
  */
 public class RemoteFileSystemMessage extends RemoteFileSystemBaseMessage {
 
+    /**
+     * Enum to specify the type of value being set in the constructor.
+     */
+    public enum ValueType {
+        EXISTS_CHECK,
+        IS_DIRECTORY
+    }
+
     private byte[] bytesArray;
     private ByteBuffer bytes;
     private InputStream inputStream;
@@ -65,8 +73,8 @@ public class RemoteFileSystemMessage extends RemoteFileSystemBaseMessage {
         this.directory = isDirectory;
     }
 
-    public RemoteFileSystemMessage(boolean value, boolean isExistsCheck) {
-        if (isExistsCheck) {
+    public RemoteFileSystemMessage(boolean value, ValueType valueType) {
+        if (valueType == ValueType.EXISTS_CHECK) {
             this.fileExists = value;
         } else {
             this.directory = value;

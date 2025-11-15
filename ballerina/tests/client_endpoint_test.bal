@@ -965,13 +965,13 @@ public function testMoveFile() {
     string testContent = "Test content for move operation";
     Error? putResponse = (<Client>clientEp)->put(sourcePath, testContent);
     if putResponse is Error {
-        test:assertFail(msg = "Error while creating test file for `move` operation" + putResponse.message());
+        test:assertFail(msg = "Error while creating test file for `move` operation: " + putResponse.message());
     }
     
     // Now move the file
     Error? moveResponse = (<Client>clientEp)->move(sourcePath, destinationPath);
     if moveResponse is Error {
-        test:assertFail(msg = "Error while invoking `move` operation" + moveResponse.message());
+        test:assertFail(msg = "Error while invoking `move` operation: " + moveResponse.message());
     } else {
         log:printInfo("Executed `move` operation");
     }
@@ -1000,7 +1000,7 @@ public function testMoveFile() {
             test:assertFail(msg = "Error reading moved file stream");
         }
     } else {
-        test:assertFail(msg = "Destination file not found after `move` operation" + destCheck.message());
+        test:assertFail(msg = "Destination file not found after `move` operation: " + destCheck.message());
     }
     
     // Cleanup
@@ -1028,7 +1028,7 @@ public function testCopyFile() {
     // Copy the file
     Error? copyResponse = (<Client>clientEp)->copy(sourcePath, destinationPath);
     if copyResponse is Error {
-        test:assertFail(msg = "Error while invoking `copy` operation" + copyResponse.message());
+        test:assertFail(msg = "Error while invoking `copy` operation: " + copyResponse.message());
     } else {
         log:printInfo("Executed `copy` operation");
     }
@@ -1066,7 +1066,7 @@ public function testCopyFile() {
             test:assertFail(msg = "Error reading copied file stream");
         }
     } else {
-        test:assertFail(msg = "Destination file not found after `copy` operation" + destCheck.message());
+        test:assertFail(msg = "Destination file not found after `copy` operation: " + destCheck.message());
     }
     
     // Cleanup
