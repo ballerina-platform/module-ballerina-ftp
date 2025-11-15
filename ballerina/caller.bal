@@ -295,6 +295,47 @@ public isolated client class Caller {
         return self.'client->rename(origin, destination);
     }
 
+    # Moves a file from one location to another within
+    # the same FTP server.
+    # ```ballerina
+    # ftp:Error? response = caller->move(sourcePath, destinationPath);
+    # ```
+    #
+    # + sourcePath - The source file location
+    # + destinationPath - The destination file location
+    # + return - `()` or else an `ftp:Error` if failed to establish
+    #            the communication with the FTP server
+    remote isolated function move(string sourcePath, string destinationPath) returns Error? {
+        return self.'client->move(sourcePath, destinationPath);
+    }
+
+    # Copies a file from one location to another within
+    # the same FTP server.
+    # ```ballerina
+    # ftp:Error? response = caller->copy(sourcePath, destinationPath);
+    # ```
+    #
+    # + sourcePath - The source file location
+    # + destinationPath - The destination file location
+    # + return - `()` or else an `ftp:Error` if failed to establish
+    #            the communication with the FTP server
+    remote isolated function copy(string sourcePath, string destinationPath) returns Error? {
+        return self.'client->copy(sourcePath, destinationPath);
+    }
+
+    # Checks if a file or directory exists in the FTP server.
+    # ```ballerina
+    # boolean|ftp:Error response = caller->exists(path);
+    # ```
+    #
+    # + path - The resource path
+    # + return - `true` if the file or directory exists, `false` otherwise,
+    #            or an `ftp:Error` if failed to establish the communication
+    #            with the FTP server
+    remote isolated function exists(string path) returns boolean|Error {
+        return self.'client->exists(path);
+    }
+
     # Gets the size of a file resource.
     # ```ballerina
     # int|ftp:Error response = caller->size(path);
