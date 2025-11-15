@@ -146,6 +146,7 @@ public isolated client class Client {
     } external;
 
     # Appends the content to an existing file in an FTP server.
+    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvAsStream` with option `APPEND`.
     # ```ballerina
     # ftp:Error? response = client->append(path, channel);
     # ```
@@ -154,7 +155,6 @@ public isolated client class Client {
     # + content - Content to be written to the file in server
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
-    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvAsStream` with option `APPEND`.
     @deprecated
     remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content)
             returns Error? {
@@ -162,6 +162,7 @@ public isolated client class Client {
     }
 
     # Adds a file to an FTP server.
+    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvAsStream`.
     # ```ballerina
     # ftp:Error? response = client->put(path, channel);
     # ```
@@ -173,7 +174,6 @@ public isolated client class Client {
     #                     uploading
     # + return - `()` or else an `ftp:Error` if failed to establish
     #            the communication with the FTP server
-    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvAsStream`.
     @deprecated
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
             |string|xml|json content, Compression compressionType = NONE) returns Error? {
