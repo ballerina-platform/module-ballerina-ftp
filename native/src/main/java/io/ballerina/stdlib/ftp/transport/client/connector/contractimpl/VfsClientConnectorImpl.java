@@ -219,6 +219,31 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                     }
                     remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.isFolder()));
                     break;
+                case COPY:
+                    if (fileObject.exists()) {
+                        try (FileObject destinationFile = fsManager.resolveFile(destination, opts);
+                                FileObject parent = destinationFile.getParent()) {
+                            if (parent != null && !parent.exists()) {
+                                parent.createFolder();
+                            }
+                            if (!destinationFile.exists()) {
+                                destinationFile.copyFrom(fileObject, Selectors.SELECT_SELF);
+                            } else {
+                                throw new RemoteFileSystemConnectorException(
+                                        "The file at " + maskUrlPassword(destinationFile.getURL().toString())
+                                                + " already exists");
+                            }
+                        }
+                    } else {
+                        throw new RemoteFileSystemConnectorException(
+                                "Failed to copy file: " + maskUrlPassword(fileObject.getName().getURI())
+                                        + " not found");
+                    }
+                    break;
+                case EXISTS:
+                    remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.exists(), 
+                            RemoteFileSystemMessage.ValueType.EXISTS_CHECK));
+                    break;
                 default:
                     break;
             }
