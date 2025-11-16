@@ -31,8 +31,11 @@ import java.util.List;
 import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.BALLERINA_SOURCES;
 import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.EXPECTED_SOURCES;
 import static io.ballerina.stdlib.ftp.plugin.CompilerPluginTestUtils.RESOURCE_DIRECTORY;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CODE_TEMPLATE_NAME_WITHOUT_CALLER;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CODE_TEMPLATE_NAME_WITH_CALLER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CODE_TEMPLATE_CSV;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CODE_TEMPLATE_GENERIC;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CODE_TEMPLATE_JSON;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CODE_TEMPLATE_TEXT;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CODE_TEMPLATE_XML;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.NODE_LOCATION;
 
 /**
@@ -41,8 +44,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.NODE_LOCATION;
 public class CodeSnippetGenerationCodeActionTest extends AbstractCodeActionTest {
 
     @Test
-    public void testEmptyServiceCodeActionWithoutCaller()
-            throws IOException {
+    public void testOnFileHandler() throws IOException {
         Path filePath = RESOURCE_DIRECTORY.resolve(BALLERINA_SOURCES)
                 .resolve("snippet_gen_service_1")
                 .resolve("service.bal");
@@ -50,13 +52,12 @@ public class CodeSnippetGenerationCodeActionTest extends AbstractCodeActionTest 
                 .resolve("service_1")
                 .resolve("result.bal");
         performTest(filePath, LinePosition.from(34, 0),
-                getExpectedCodeAction("service.bal", 35, 1, "Insert service template " +
-                                "without caller", CODE_TEMPLATE_NAME_WITHOUT_CALLER), resultPath);
+                getExpectedCodeAction("service.bal", 35, 1, "Add onFile (generic) handler",
+                                CODE_TEMPLATE_GENERIC), resultPath);
     }
 
     @Test
-    public void testServiceWithVariablesCodeActionWithoutCaller()
-            throws IOException {
+    public void testOnFileCsvHandler() throws IOException {
         Path filePath = RESOURCE_DIRECTORY.resolve(BALLERINA_SOURCES)
                 .resolve("snippet_gen_service_2")
                 .resolve("service.bal");
@@ -64,13 +65,12 @@ public class CodeSnippetGenerationCodeActionTest extends AbstractCodeActionTest 
                 .resolve("service_2")
                 .resolve("result.bal");
         performTest(filePath, LinePosition.from(34, 0),
-                getExpectedCodeAction("service.bal", 37, 1, "Insert service template " +
-                                "without caller", CODE_TEMPLATE_NAME_WITHOUT_CALLER), resultPath);
+                getExpectedCodeAction("service.bal", 37, 1, "Add onFileCsv handler",
+                                CODE_TEMPLATE_CSV), resultPath);
     }
 
     @Test
-    public void testEmptyServiceCodeActionWithCaller()
-            throws IOException {
+    public void testOnFileTextHandler() throws IOException {
         Path filePath = RESOURCE_DIRECTORY.resolve(BALLERINA_SOURCES)
                 .resolve("snippet_gen_service_1")
                 .resolve("service.bal");
@@ -78,13 +78,12 @@ public class CodeSnippetGenerationCodeActionTest extends AbstractCodeActionTest 
                 .resolve("service_3")
                 .resolve("result.bal");
         performTest(filePath, LinePosition.from(34, 0),
-                getExpectedCodeAction("service.bal", 35, 1, "Insert service template " +
-                                "with caller", CODE_TEMPLATE_NAME_WITH_CALLER), resultPath);
+                getExpectedCodeAction("service.bal", 37, 1, "Add onFileText handler",
+                        CODE_TEMPLATE_TEXT), resultPath);
     }
 
     @Test
-    public void testServiceWithVariablesCodeActionWithCaller()
-            throws IOException {
+    public void testOnFileJsonHandler() throws IOException {
         Path filePath = RESOURCE_DIRECTORY.resolve(BALLERINA_SOURCES)
                 .resolve("snippet_gen_service_2")
                 .resolve("service.bal");
@@ -92,8 +91,21 @@ public class CodeSnippetGenerationCodeActionTest extends AbstractCodeActionTest 
                 .resolve("service_4")
                 .resolve("result.bal");
         performTest(filePath, LinePosition.from(34, 0),
-                getExpectedCodeAction("service.bal", 37, 1, "Insert service template " +
-                                "with caller", CODE_TEMPLATE_NAME_WITH_CALLER), resultPath);
+                getExpectedCodeAction("service.bal", 37, 1, "Add onFileJson handler",
+                        CODE_TEMPLATE_JSON), resultPath);
+    }
+
+    @Test
+    public void testOnFileXmlHandler() throws IOException {
+        Path filePath = RESOURCE_DIRECTORY.resolve(BALLERINA_SOURCES)
+                .resolve("snippet_gen_service_2")
+                .resolve("service.bal");
+        Path resultPath = RESOURCE_DIRECTORY.resolve(EXPECTED_SOURCES)
+                .resolve("service_5")
+                .resolve("result.bal");
+        performTest(filePath, LinePosition.from(34, 0),
+                getExpectedCodeAction("service.bal", 37, 1, "Add onFileXml handler",
+                        CODE_TEMPLATE_XML), resultPath);
     }
 
     private CodeActionInfo getExpectedCodeAction(String filePath, int line, int offset,
