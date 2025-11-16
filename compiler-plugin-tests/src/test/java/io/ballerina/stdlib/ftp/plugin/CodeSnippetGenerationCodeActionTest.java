@@ -78,7 +78,7 @@ public class CodeSnippetGenerationCodeActionTest extends AbstractCodeActionTest 
                 .resolve("service_3")
                 .resolve("result.bal");
         performTest(filePath, LinePosition.from(34, 0),
-                getExpectedCodeAction("service.bal", 37, 1, "Add onFileText handler",
+                getExpectedCodeAction("service.bal", 35, 1, "Add onFileText handler",
                         CODE_TEMPLATE_TEXT), resultPath);
     }
 
