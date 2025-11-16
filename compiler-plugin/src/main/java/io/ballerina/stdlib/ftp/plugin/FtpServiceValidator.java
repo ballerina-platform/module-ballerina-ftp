@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static io.ballerina.compiler.syntax.tree.SyntaxKind.RESOURCE_ACCESSOR_DEFINITION;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_CONTENT_METHODS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_VALID_REMOTE_METHOD;
@@ -76,68 +77,77 @@ public class FtpServiceValidator {
         List<String> contentMethodNames = new ArrayList<>();
 
         for (Node node : memberNodes) {
-            if (node.kind() == SyntaxKind.OBJECT_METHOD_DEFINITION) {
-                FunctionDefinitionNode functionDefinitionNode = (FunctionDefinitionNode) node;
-                MethodSymbol methodSymbol = PluginUtils.getMethodSymbol(context, functionDefinitionNode);
-                Optional<String> functionName = methodSymbol.getName();
-                if (functionName.isPresent()) {
-                    String funcName = functionName.get();
-                    switch (funcName) {
-                        case ON_FILE_CHANGE_FUNC:
-                            onFileChange = functionDefinitionNode;
-                            break;
-                        case ON_FILE_DELETED_FUNC:
-                            onFileDeleted = functionDefinitionNode;
-                            break;
-                        case ON_FILE_FUNC:
-                        case ON_FILE_TEXT_FUNC:
-                        case ON_FILE_JSON_FUNC:
-                        case ON_FILE_XML_FUNC:
-                        case ON_FILE_CSV_FUNC:
-                            contentMethods.add(functionDefinitionNode);
-                            contentMethodNames.add(funcName);
-                            break;
-                        default:
-                            if (isRemoteFunction(context, functionDefinitionNode)) {
-                                context.reportDiagnostic(getDiagnostic(INVALID_REMOTE_FUNCTION,
-                                        DiagnosticSeverity.ERROR, functionDefinitionNode.location()));
-                            }
-                            break;
-                    }
-                }
-            } else if (node.kind() == SyntaxKind.RESOURCE_ACCESSOR_DEFINITION) {
+            if (node.kind() == RESOURCE_ACCESSOR_DEFINITION) {
                 context.reportDiagnostic(PluginUtils.getDiagnostic(RESOURCE_FUNCTION_NOT_ALLOWED,
                         DiagnosticSeverity.ERROR, node.location()));
+                continue;
+            }
+
+            if (node.kind() != SyntaxKind.OBJECT_METHOD_DEFINITION) {
+                continue;
+            }
+
+            FunctionDefinitionNode functionDefinitionNode = (FunctionDefinitionNode) node;
+            MethodSymbol methodSymbol = PluginUtils.getMethodSymbol(context, functionDefinitionNode);
+            Optional<String> functionName = methodSymbol.getName();
+            if (functionName.isEmpty()) {
+                continue;
+            }
+
+            String funcName = functionName.get();
+            switch (funcName) {
+                case ON_FILE_CHANGE_FUNC:
+                    onFileChange = functionDefinitionNode;
+                    break;
+                case ON_FILE_DELETED_FUNC:
+                    onFileDeleted = functionDefinitionNode;
+                    break;
+                case ON_FILE_FUNC:
+                case ON_FILE_TEXT_FUNC:
+                case ON_FILE_JSON_FUNC:
+                case ON_FILE_XML_FUNC:
+                case ON_FILE_CSV_FUNC:
+                    contentMethods.add(functionDefinitionNode);
+                    contentMethodNames.add(funcName);
+                    break;
+                default:
+                    // Invalid remote function name
+                    if (isRemoteFunction(context, functionDefinitionNode)) {
+                        context.reportDiagnostic(getDiagnostic(INVALID_REMOTE_FUNCTION,
+                                DiagnosticSeverity.ERROR, functionDefinitionNode.location()));
+                    }
+                    break;
             }
         }
 
-        // No valid service methods
-        if (onFileChange == null && contentMethods.isEmpty() && onFileDeleted == null) {
+        // Validate method exclusivity
+        if (onFileChange != null) {
+            if (!contentMethods.isEmpty() || onFileDeleted != null) {
+                context.reportDiagnostic(getDiagnostic(MULTIPLE_CONTENT_METHODS,
+                        DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
+                return;
+            }
+            context.reportDiagnostic(getDiagnostic(ON_FILE_CHANGE_DEPRECATED, DiagnosticSeverity.WARNING,
+                    onFileChange.location()));
+            new FtpFunctionValidator(context, onFileChange).validate();
+            return;
+        }
+
+        if (contentMethods.isEmpty() && onFileDeleted == null) {
             context.reportDiagnostic(getDiagnostic(NO_VALID_REMOTE_METHOD, DiagnosticSeverity.ERROR,
                     serviceDeclarationNode.location()));
             return;
         }
 
-        // Validate method exclusivity
-        if (onFileChange != null && (!contentMethods.isEmpty() || onFileDeleted != null)) {
-            context.reportDiagnostic(getDiagnostic(MULTIPLE_CONTENT_METHODS,
-                    DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
-            return;
+        // Validate format-specific handlers
+        if (!contentMethods.isEmpty()) {
+            for (int i = 0; i < contentMethods.size(); i++) {
+                new FtpContentFunctionValidator(context, contentMethods.get(i),
+                        contentMethodNames.get(i)).validate();
+            }
         }
 
-        // Validate parameters based on which method type is present
-        if (onFileChange != null) {
-            context.reportDiagnostic(getDiagnostic(ON_FILE_CHANGE_DEPRECATED,
-                    DiagnosticSeverity.WARNING, onFileChange.location()));
-            new FtpFunctionValidator(context, onFileChange).validate();
-            return;
-        }
-
-        for (int i = 0; i < contentMethods.size(); i++) {
-            new FtpContentFunctionValidator(context, contentMethods.get(i),
-                    contentMethodNames.get(i)).validate();
-        }
-
+        // Validate deletion handler
         if (onFileDeleted != null) {
             new FtpFileDeletedValidator(context, onFileDeleted).validate();
         }

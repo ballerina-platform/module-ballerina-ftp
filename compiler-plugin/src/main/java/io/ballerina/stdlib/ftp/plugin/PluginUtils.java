@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.plugin;
 
 import io.ballerina.compiler.api.SemanticModel;
+import io.ballerina.compiler.api.symbols.ArrayTypeSymbol;
 import io.ballerina.compiler.api.symbols.MethodSymbol;
 import io.ballerina.compiler.api.symbols.ModuleSymbol;
 import io.ballerina.compiler.api.symbols.ParameterSymbol;
@@ -58,6 +59,16 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.FILE_INFO;
 public final class PluginUtils {
 
     private PluginUtils() {}
+
+    public static void reportErrorDiagnostic(SyntaxNodeAnalysisContext context, PluginConstants.CompilationErrors error,
+                                      Location location) {
+        context.reportDiagnostic(getDiagnostic(error, DiagnosticSeverity.ERROR, location));
+    }
+
+    public static void reportErrorDiagnostic(SyntaxNodeAnalysisContext context, PluginConstants.CompilationErrors error,
+                                      Location location, Object... args) {
+        context.reportDiagnostic(getDiagnostic(error, DiagnosticSeverity.ERROR, location, args));
+    }
 
     public static Diagnostic getDiagnostic(CompilationErrors error, DiagnosticSeverity severity, Location location) {
         String errorMessage = error.getError();
@@ -135,6 +146,18 @@ public final class PluginUtils {
         return validateQualifiedFtpParameter(parameterNode, context, CALLER);
     }
 
+    public static boolean isStringArrayType(ParameterNode parameterNode,
+                                             SyntaxNodeAnalysisContext context) {
+        return getParameterTypeSymbol(parameterNode, context)
+                .map(typeSymbol -> {
+                    if (!(typeSymbol instanceof ArrayTypeSymbol arrayType)) {
+                        return false;
+                    }
+                    return arrayType.memberTypeDescriptor().typeKind() == TypeDescKind.STRING;
+                })
+                .orElse(false);
+    }
+
     private static boolean validateQualifiedFtpParameter(ParameterNode parameterNode,
                                                          SyntaxNodeAnalysisContext context,
                                                          String expectedTypeName) {
@@ -203,8 +226,7 @@ public final class PluginUtils {
             return;
         }
 
-        if (kind == TypeDescKind.ERROR ||
-                (kind == TYPE_REFERENCE && isValidErrorTypeReference(returnType))) {
+        if (kind == TypeDescKind.ERROR || (kind == TYPE_REFERENCE && isValidErrorTypeReference(returnType))) {
             return;
         }
 

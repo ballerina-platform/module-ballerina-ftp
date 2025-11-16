@@ -44,7 +44,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.N
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ONLY_PARAMS_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_CHANGE_DEPRECATED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_DELETED_MUST_BE_REMOTE;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ONLY_REMOTE_FUNCTION_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS_ON_FILE_DELETED;
 
@@ -154,6 +154,14 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
+    @Test(description = "Validation with onFileCsv using stream<record[], error?>")
+    public void testValidContentService6() {
+        Package currentPackage = loadPackage("valid_content_service_6");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
     @Test(description = "Validation when no valid remote function is defined")
     public void testInvalidService1() {
         Package currentPackage = loadPackage("invalid_service_1");
@@ -193,7 +201,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
 
         Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
-        assertDiagnostic(diagnostic1, RESOURCE_FUNCTION_NOT_ALLOWED);
+        assertDiagnostic(diagnostic1, ONLY_REMOTE_FUNCTION_ALLOWED);
         Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
         assertDiagnostic(diagnostic2, NO_VALID_REMOTE_METHOD);
     }
@@ -205,7 +213,7 @@ public class FtpServiceValidationTest {
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
-        assertDiagnostic(diagnostic, RESOURCE_FUNCTION_NOT_ALLOWED);
+        assertDiagnostic(diagnostic, ONLY_REMOTE_FUNCTION_ALLOWED);
     }
 
     @Test(description = "Validation when invalid method qualifiers are added " +
@@ -218,7 +226,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
 
         Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
-        assertDiagnostic(diagnostic1, RESOURCE_FUNCTION_NOT_ALLOWED);
+        assertDiagnostic(diagnostic1, ONLY_REMOTE_FUNCTION_ALLOWED);
         Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
         assertDiagnostic(diagnostic2, INVALID_REMOTE_FUNCTION);
         Diagnostic diagnostic3 = (Diagnostic) diagnostics[2];
@@ -234,7 +242,7 @@ public class FtpServiceValidationTest {
         Object[] diagnostics = diagnosticResult.errors().toArray();
 
         Diagnostic diagnostic1 = (Diagnostic) diagnostics[0];
-        assertDiagnostic(diagnostic1, RESOURCE_FUNCTION_NOT_ALLOWED);
+        assertDiagnostic(diagnostic1, ONLY_REMOTE_FUNCTION_ALLOWED);
         Diagnostic diagnostic2 = (Diagnostic) diagnostics[1];
         assertDiagnostic(diagnostic2, INVALID_REMOTE_FUNCTION);
         Diagnostic diagnostic3 = (Diagnostic) diagnostics[2];
@@ -393,7 +401,7 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, CONTENT_METHOD_MUST_BE_REMOTE,
-                "Content handler method onFileText must be remote.");
+                "Format-specific handler 'onFileText' must be declared as remote.");
     }
 
     @Test(description = "Validation when content method has invalid first parameter type")
@@ -426,7 +434,7 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, TOO_MANY_PARAMETERS,
-                "Too many parameters for onFileCsv. Content methods accept at most 3 parameters: " +
+                "Too many parameters for 'onFileCsv'. Format-specific handlers accept at most 3 parameters: " +
                 "(content, fileInfo?, caller?).");
     }
 
@@ -564,5 +572,26 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 1);
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, MULTIPLE_CONTENT_METHODS);
+    }
+
+    @Test(description = "Validation when onFileCsv uses stream<record[], error?> with valid record type")
+    public void testValidContentService7() {
+        Package currentPackage = loadPackage("valid_content_service_7");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
+    @Test(description = "Validation when onFileCsv uses stream<record[], error?> with invalid stream item type")
+    public void testInvalidContentService18() {
+        Package currentPackage = loadPackage("invalid_content_service_18");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_CONTENT_PARAMETER_TYPE,
+                "Invalid parameter type for format-specific handler 'onFileCsv'. " +
+                "Expected string[][], record type array, stream<string[], error?>, or stream<record[], error?>, " +
+                "found stream<int[], error?>.");
     }
 }
