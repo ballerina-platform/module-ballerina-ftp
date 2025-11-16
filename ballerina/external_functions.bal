@@ -76,6 +76,21 @@ isolated function rename(Client clientEndpoint, string origin, string destinatio
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 
+isolated function move(Client clientEndpoint, string sourcePath, string destinationPath) returns Error? = @java:Method {
+    name: "move",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
+isolated function copy(Client clientEndpoint, string sourcePath, string destinationPath) returns Error? = @java:Method {
+    name: "copy",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
+isolated function exists(Client clientEndpoint, string path) returns boolean|Error = @java:Method {
+    name: "exists",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
 isolated function size(Client clientEndpoint, string path) returns int|Error = @java:Method {
     name: "size",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
