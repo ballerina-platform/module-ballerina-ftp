@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.plugin;
 
 import io.ballerina.compiler.api.SemanticModel;
+import io.ballerina.compiler.api.symbols.ArrayTypeSymbol;
 import io.ballerina.compiler.api.symbols.MethodSymbol;
 import io.ballerina.compiler.api.symbols.ModuleSymbol;
 import io.ballerina.compiler.api.symbols.ParameterSymbol;
@@ -44,7 +45,6 @@ import io.ballerina.tools.text.LineRange;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextRange;
 
-import java.util.List;
 import java.util.Optional;
 
 import static io.ballerina.compiler.api.symbols.TypeDescKind.TYPE_REFERENCE;
@@ -59,6 +59,16 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.FILE_INFO;
 public final class PluginUtils {
 
     private PluginUtils() {}
+
+    public static void reportErrorDiagnostic(SyntaxNodeAnalysisContext context, PluginConstants.CompilationErrors error,
+                                      Location location) {
+        context.reportDiagnostic(getDiagnostic(error, DiagnosticSeverity.ERROR, location));
+    }
+
+    public static void reportErrorDiagnostic(SyntaxNodeAnalysisContext context, PluginConstants.CompilationErrors error,
+                                      Location location, Object... args) {
+        context.reportDiagnostic(getDiagnostic(error, DiagnosticSeverity.ERROR, location, args));
+    }
 
     public static Diagnostic getDiagnostic(CompilationErrors error, DiagnosticSeverity severity, Location location) {
         String errorMessage = error.getError();
@@ -136,6 +146,18 @@ public final class PluginUtils {
         return validateQualifiedFtpParameter(parameterNode, context, CALLER);
     }
 
+    public static boolean isStringArrayType(ParameterNode parameterNode,
+                                             SyntaxNodeAnalysisContext context) {
+        return getParameterTypeSymbol(parameterNode, context)
+                .map(typeSymbol -> {
+                    if (!(typeSymbol instanceof ArrayTypeSymbol arrayType)) {
+                        return false;
+                    }
+                    return arrayType.memberTypeDescriptor().typeKind() == TypeDescKind.STRING;
+                })
+                .orElse(false);
+    }
+
     private static boolean validateQualifiedFtpParameter(ParameterNode parameterNode,
                                                          SyntaxNodeAnalysisContext context,
                                                          String expectedTypeName) {
@@ -197,38 +219,41 @@ public final class PluginUtils {
             return;
         }
 
-        TypeDescKind returnTypeKind = returnTypeDesc.get().typeKind();
+        TypeSymbol returnType = returnTypeDesc.get();
+        TypeDescKind kind = returnType.typeKind();
 
-        if (returnTypeKind == TypeDescKind.NIL) {
+        if (kind == TypeDescKind.NIL) {
             return;
         }
 
-        if (returnTypeKind == TypeDescKind.UNION) {
-            List<TypeSymbol> returnTypeMembers =
-                    ((UnionTypeSymbol) returnTypeDesc.get()).memberTypeDescriptors();
-            for (TypeSymbol returnType : returnTypeMembers) {
-                if (returnType.typeKind() != TypeDescKind.NIL) {
-                    if (returnType.typeKind() == TYPE_REFERENCE) {
-                        if (!returnType.signature().equals(PluginConstants.ERROR) &&
-                                returnType.getModule().isPresent() &&
-                                !validateModuleId(returnType.getModule().get())) {
-                            context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                    DiagnosticSeverity.ERROR,
-                                    functionDefinitionNode.functionSignature().location()));
-                            return;
-                        }
-                    } else if (returnType.typeKind() != TypeDescKind.ERROR) {
-                        context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                DiagnosticSeverity.ERROR,
-                                functionDefinitionNode.functionSignature().location()));
-                        return;
-                    }
+        if (kind == TypeDescKind.ERROR || (kind == TYPE_REFERENCE && isValidErrorTypeReference(returnType))) {
+            return;
+        }
+
+        if (kind == TypeDescKind.UNION && returnType instanceof UnionTypeSymbol unionTypeSymbol) {
+            for (TypeSymbol memberType : unionTypeSymbol.memberTypeDescriptors()) {
+                TypeDescKind memberKind = memberType.typeKind();
+                if (!(memberKind == TypeDescKind.NIL || memberKind == TypeDescKind.ERROR ||
+                        (memberKind == TYPE_REFERENCE && isValidErrorTypeReference(memberType)))) {
+                    context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL, DiagnosticSeverity.ERROR,
+                            functionDefinitionNode.functionSignature().location()));
+                    return;
                 }
             }
-        } else {
-            context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                    DiagnosticSeverity.ERROR,
-                    functionDefinitionNode.functionSignature().location()));
+            return;
         }
+        context.reportDiagnostic(getDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL, DiagnosticSeverity.ERROR,
+                functionDefinitionNode.functionSignature().location()));
+    }
+
+    private static boolean isValidErrorTypeReference(TypeSymbol typeSymbol) {
+        if (typeSymbol.typeKind() != TYPE_REFERENCE) {
+            return false;
+        }
+        if (typeSymbol.signature().equals(PluginConstants.ERROR)) {
+            return true;
+        }
+        Optional<ModuleSymbol> module = typeSymbol.getModule();
+        return module.map(PluginUtils::validateModuleId).orElse(true);
     }
 }

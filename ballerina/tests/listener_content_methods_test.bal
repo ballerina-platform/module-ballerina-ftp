@@ -48,9 +48,30 @@ const string CSV_TEST_FILE = "tests/resources/datafiles/test_data.csv";
 const string TEXT_TEST_FILE = "tests/resources/datafiles/test_text.txt";
 const string GENERIC_TEST_FILE = "tests/resources/datafiles/file2.txt";
 
+// Isolated directory for content listener tests to avoid interfering with testListFiles
+const string CONTENT_TEST_DIR = "/home/in/content-methods";
+
+// Setup: Create isolated directory for content tests
+@test:BeforeSuite
+function setupContentTestDirectory() returns error? {
+    Error? mkdirResult = (<Client>clientEp)->mkdir(CONTENT_TEST_DIR);
+    if mkdirResult is Error {
+        // Directory might already exist, that's okay
+        log:printInfo("Content test directory setup: " + mkdirResult.message());
+    }
+}
+
+// Teardown: Remove isolated directory after all content tests
+@test:AfterSuite
+function cleanupContentTestDirectory() returns error? {
+    Error? rmdirResult = (<Client>clientEp)->rmdir(CONTENT_TEST_DIR);
+    if rmdirResult is Error {
+        log:printWarn("Failed to cleanup content test directory: " + rmdirResult.message());
+    }
+}
+
 @test:Config {
-    dependsOn: [testIsolatedService],
-    enable: false
+    dependsOn: [testIsolatedService]
 }
 public function testOnFileTextBasic() returns error? {
     // Reset state
@@ -69,24 +90,24 @@ public function testOnFileTextBasic() returns error? {
         }
     };
 
-    // Create listener for .txt files
+    // Create listener for .txt files (only contentTest.txt to avoid touching test fixtures)
     Listener textListener = check new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
-        path: "/home/in",
+        path: CONTENT_TEST_DIR,
         pollingInterval: 1,
-        fileNamePattern: "(.*).txt"
+        fileNamePattern: "contentTest.*\\.txt"
     });
 
     check textListener.attach(textService);
     check textListener.'start();
     runtime:registerListener(textListener);
 
-    // Upload text file
+    // Upload text file to isolated directory
     stream<io:Block, io:Error?> textStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/contentTest.txt", textStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/contentTest.txt", textStream);
     runtime:sleep(3);
 
     // Wait for processing
@@ -120,8 +141,7 @@ public function testOnFileTextBasic() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileTextBasic],
-    enable: false
+    dependsOn: [testOnFileTextBasic]
 }
 public function testOnFileJsonBasic() returns error? {
     // Reset state
@@ -146,9 +166,9 @@ public function testOnFileJsonBasic() returns error? {
         host: "127.0.0.1",
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
-        path: "/home/in",
+        path: CONTENT_TEST_DIR,
         pollingInterval: 1,
-        fileNamePattern: "(.*).json"
+        fileNamePattern: "contentTest.*\\.json"
     });
 
     check jsonListener.attach(jsonService);
@@ -157,7 +177,7 @@ public function testOnFileJsonBasic() returns error? {
 
     // Upload JSON file
     stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/contentTest.json", jsonStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/contentTest.json", jsonStream);
     runtime:sleep(3);
 
     // Wait for processing
@@ -218,9 +238,9 @@ public function testOnFileXmlBasic() returns error? {
         host: "127.0.0.1",
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
-        path: "/home/in",
+        path: CONTENT_TEST_DIR,
         pollingInterval: 1,
-        fileNamePattern: "(.*).xml"
+        fileNamePattern: "contentTest.*\\.xml"
     });
 
     check xmlListener.attach(xmlService);
@@ -229,7 +249,7 @@ public function testOnFileXmlBasic() returns error? {
 
     // Upload XML file
     stream<io:Block, io:Error?> xmlStream = check io:fileReadBlocksAsStream(XML_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/contentTest.xml", xmlStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/contentTest.xml", xmlStream);
     runtime:sleep(3);
 
     // Wait for processing
@@ -290,9 +310,9 @@ public function testOnFileCsvStringArray() returns error? {
         host: "127.0.0.1",
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
-        path: "/home/in",
+        path: CONTENT_TEST_DIR,
         pollingInterval: 1,
-        fileNamePattern: "(.*).csv"
+        fileNamePattern: "contentTest.*\\.csv"
     });
 
     check csvListener.attach(csvService);
@@ -301,7 +321,7 @@ public function testOnFileCsvStringArray() returns error? {
 
     // Upload CSV file
     stream<io:Block, io:Error?> csvStream = check io:fileReadBlocksAsStream(CSV_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/contentTest.csv", csvStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/contentTest.csv", csvStream);
     runtime:sleep(3);
 
     // Wait for processing
@@ -368,9 +388,9 @@ public function testOnFileByteArray() returns error? {
         host: "127.0.0.1",
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
-        path: "/home/in",
+        path: CONTENT_TEST_DIR,
         pollingInterval: 1,
-        fileNamePattern: "(.*).bin"
+        fileNamePattern: "contentTest.*\\.bin"
     });
 
     check genericListener.attach(genericService);
@@ -379,7 +399,7 @@ public function testOnFileByteArray() returns error? {
 
     // Upload generic binary file
     stream<io:Block, io:Error?> binStream = check io:fileReadBlocksAsStream(GENERIC_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/contentTest.bin", binStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/contentTest.bin", binStream);
     runtime:sleep(3);
 
     // Wait for processing
@@ -450,9 +470,9 @@ public function testOnFileStream() returns error? {
         host: "127.0.0.1",
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
-        path: "/home/in",
+        path: CONTENT_TEST_DIR,
         pollingInterval: 1,
-        fileNamePattern: "(.*).stream"
+        fileNamePattern: "streamTest.*\\.stream"
     });
 
     check streamListener.attach(streamService);
@@ -461,7 +481,7 @@ public function testOnFileStream() returns error? {
 
     // Upload file for stream processing
     stream<io:Block, io:Error?> testStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/streamTest.stream", testStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/streamTest.stream", testStream);
     runtime:sleep(3);
 
     // Wait for processing
@@ -526,9 +546,9 @@ public function testExtensionBasedRouting() returns error? {
         host: "127.0.0.1",
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
-        path: "/home/in",
+        path: CONTENT_TEST_DIR,
         pollingInterval: 1,
-        fileNamePattern: "routing.*"
+        fileNamePattern: "routing.*\\.(txt|json|xml)"
     });
 
     check multiListener.attach(multiFormatService);
@@ -537,13 +557,13 @@ public function testExtensionBasedRouting() returns error? {
 
     // Upload files of different types
     stream<io:Block, io:Error?> txtStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/routing1.txt", txtStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/routing1.txt", txtStream);
 
     stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/routing2.json", jsonStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/routing2.json", jsonStream);
 
     stream<io:Block, io:Error?> xmlStream = check io:fileReadBlocksAsStream(XML_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/routing3.xml", xmlStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/routing3.xml", xmlStream);
 
     runtime:sleep(5);
 
@@ -603,9 +623,9 @@ public function testFallbackToGenericOnFile() returns error? {
         host: "127.0.0.1",
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
-        path: "/home/in",
+        path: CONTENT_TEST_DIR,
         pollingInterval: 1,
-        fileNamePattern: "fallback.*"
+        fileNamePattern: "fallback.*\\.(json|txt)"
     });
 
     check fallbackListener.attach(fallbackService);
@@ -614,11 +634,11 @@ public function testFallbackToGenericOnFile() returns error? {
 
     // Upload JSON file (should use onFileJson)
     stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/fallback1.json", jsonStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/fallback1.json", jsonStream);
 
     // Upload TXT file (should fall back to onFile)
     stream<io:Block, io:Error?> txtStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/fallback2.txt", txtStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/fallback2.txt", txtStream);
 
     runtime:sleep(5);
 
@@ -657,7 +677,6 @@ public function testFileConfigAnnotationOverride() returns error? {
     // Service with annotation override
     Service annotationService = service object {
         // Override: treat .special files as JSON
-        // TODO: Enable when @FileConfig annotation is implemented
         // @FileConfig {pattern: "(.*).special"}
         remote function onFileJson(json content, FileInfo fileInfo, Caller caller) returns error? {
             log:printInfo(string `onFileJson (via annotation): ${fileInfo.name}`);
@@ -677,9 +696,9 @@ public function testFileConfigAnnotationOverride() returns error? {
         host: "127.0.0.1",
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
-        path: "/home/in",
+        path: CONTENT_TEST_DIR,
         pollingInterval: 1,
-        fileNamePattern: "(.*).special"
+        fileNamePattern: ".*\\.special"
     });
 
     check annotationListener.attach(annotationService);
@@ -688,7 +707,7 @@ public function testFileConfigAnnotationOverride() returns error? {
 
     // Upload JSON content with .special extension
     stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/override.special", jsonStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/override.special", jsonStream);
 
     runtime:sleep(3);
 
@@ -739,9 +758,9 @@ public function testOptionalParametersWithoutCaller() returns error? {
         host: "127.0.0.1",
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
-        path: "/home/in",
+        path: CONTENT_TEST_DIR,
         pollingInterval: 1,
-        fileNamePattern: "(.*).nocaller"
+        fileNamePattern: ".*\\.nocaller"
     });
 
     check nocallerListener.attach(nocallerService);
@@ -750,7 +769,7 @@ public function testOptionalParametersWithoutCaller() returns error? {
 
     // Upload file
     stream<io:Block, io:Error?> txtStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE, 5);
-    check (<Client>clientEp)->put("/home/in/nocallerTest.nocaller", txtStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/nocallerTest.nocaller", txtStream);
     runtime:sleep(3);
 
     // Wait for processing

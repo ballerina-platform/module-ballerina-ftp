@@ -22,87 +22,70 @@ import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
-import io.ballerina.tools.diagnostics.DiagnosticSeverity;
-import io.ballerina.tools.diagnostics.Location;
 
-import java.util.Objects;
-
-import static io.ballerina.compiler.api.symbols.TypeDescKind.ARRAY;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_FILE_DELETED_CALLER_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_FILE_DELETED_PARAMETER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MANDATORY_PARAMETER_NOT_FOUND;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_DELETED_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS_ON_FILE_DELETED;
-import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getDiagnostic;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isRemoteFunction;
+import static io.ballerina.stdlib.ftp.plugin.PluginUtils.reportErrorDiagnostic;
 
 /**
  * Validator for onFileDeleted function.
  */
 public class FtpFileDeletedValidator {
 
-    private final SyntaxNodeAnalysisContext syntaxNodeAnalysisContext;
-    private final FunctionDefinitionNode onFileDeletedFunctionDefinitionNode;
+    private final SyntaxNodeAnalysisContext context;
+    private final FunctionDefinitionNode functionDefinitionNode;
 
-    public FtpFileDeletedValidator(SyntaxNodeAnalysisContext syntaxNodeAnalysisContext,
-                                    FunctionDefinitionNode onFileDeletedFunctionDefinitionNode) {
-        this.syntaxNodeAnalysisContext = syntaxNodeAnalysisContext;
-        this.onFileDeletedFunctionDefinitionNode = onFileDeletedFunctionDefinitionNode;
+    public FtpFileDeletedValidator(SyntaxNodeAnalysisContext context,
+                                    FunctionDefinitionNode functionDefinitionNode) {
+        this.context = context;
+        this.functionDefinitionNode = functionDefinitionNode;
     }
 
     public void validate() {
-        if (Objects.isNull(onFileDeletedFunctionDefinitionNode)) {
-            return;
-        }
-
-        if (!isRemoteFunction(syntaxNodeAnalysisContext, onFileDeletedFunctionDefinitionNode)) {
-            reportErrorDiagnostic(ON_FILE_DELETED_MUST_BE_REMOTE, onFileDeletedFunctionDefinitionNode.location());
+        if (!isRemoteFunction(context, functionDefinitionNode)) {
+            reportErrorDiagnostic(context, ON_FILE_DELETED_MUST_BE_REMOTE, functionDefinitionNode.location());
         }
 
         SeparatedNodeList<ParameterNode> parameters =
-                onFileDeletedFunctionDefinitionNode.functionSignature().parameters();
-        validateOnFileDeletedParameters(parameters, onFileDeletedFunctionDefinitionNode);
-        validateReturnTypeErrorOrNil(onFileDeletedFunctionDefinitionNode);
+                functionDefinitionNode.functionSignature().parameters();
+        validateOnFileDeletedParameters(parameters, functionDefinitionNode);
+        PluginUtils.validateReturnTypeErrorOrNil(functionDefinitionNode, context);
     }
 
     private void validateOnFileDeletedParameters(SeparatedNodeList<ParameterNode> parameters,
-                                                  FunctionDefinitionNode functionDefinitionNode) {
+                                                 FunctionDefinitionNode functionDefinitionNode) {
         if (parameters.isEmpty()) {
-            reportErrorDiagnostic(INVALID_ON_FILE_DELETED_PARAMETER, functionDefinitionNode.location());
+            reportErrorDiagnostic(context, MANDATORY_PARAMETER_NOT_FOUND, functionDefinitionNode.location(),
+                    PluginConstants.ON_FILE_DELETED_FUNC, "string[]");
             return;
         }
 
         if (parameters.size() > 2) {
-            reportErrorDiagnostic(TOO_MANY_PARAMETERS_ON_FILE_DELETED, functionDefinitionNode.location());
+            reportErrorDiagnostic(context, TOO_MANY_PARAMETERS_ON_FILE_DELETED, functionDefinitionNode.location());
             return;
         }
 
         // First parameter must be string[]
         ParameterNode firstParameter = parameters.get(0);
         if (!validateStringArrayParameter(firstParameter)) {
-            reportErrorDiagnostic(INVALID_ON_FILE_DELETED_PARAMETER, firstParameter.location());
+            reportErrorDiagnostic(context, INVALID_ON_FILE_DELETED_PARAMETER, firstParameter.location());
         }
 
         // Second parameter (if exists) must be Caller
         if (parameters.size() == 2) {
             ParameterNode secondParameter = parameters.get(1);
-            if (!PluginUtils.validateCallerParameter(secondParameter, syntaxNodeAnalysisContext)) {
-                reportErrorDiagnostic(INVALID_ON_FILE_DELETED_CALLER_PARAMETER, secondParameter.location());
+            if (!PluginUtils.validateCallerParameter(secondParameter, context)) {
+                reportErrorDiagnostic(context, INVALID_ON_FILE_DELETED_CALLER_PARAMETER, secondParameter.location());
             }
         }
     }
 
     private boolean validateStringArrayParameter(ParameterNode parameterNode) {
-        return PluginUtils.getParameterTypeSymbol(parameterNode, syntaxNodeAnalysisContext)
-                .map(typeSymbol -> typeSymbol.typeKind() == ARRAY &&
-                        typeSymbol.signature().equals("string[]")).orElse(false);
+        return PluginUtils.isStringArrayType(parameterNode, context);
     }
 
-    private void validateReturnTypeErrorOrNil(FunctionDefinitionNode functionDefinitionNode) {
-        PluginUtils.validateReturnTypeErrorOrNil(functionDefinitionNode, syntaxNodeAnalysisContext);
-    }
-
-    public void reportErrorDiagnostic(PluginConstants.CompilationErrors error, Location location) {
-        syntaxNodeAnalysisContext.reportDiagnostic(getDiagnostic(error,
-                DiagnosticSeverity.ERROR, location));
-    }
 }

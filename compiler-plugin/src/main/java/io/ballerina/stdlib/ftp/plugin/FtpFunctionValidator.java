@@ -28,12 +28,10 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
-import io.ballerina.compiler.syntax.tree.ServiceDeclarationNode;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 import io.ballerina.tools.diagnostics.Location;
 
-import java.util.Objects;
 import java.util.Optional;
 
 import static io.ballerina.compiler.syntax.tree.SyntaxKind.INTERSECTION_TYPE_DESC;
@@ -44,7 +42,6 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.I
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_WATCHEVENT_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.METHOD_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MUST_HAVE_WATCHEVENT;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_ON_FILE_CHANGE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ONLY_PARAMS_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.WATCHEVENT;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getDiagnostic;
@@ -58,26 +55,20 @@ import static io.ballerina.tools.diagnostics.DiagnosticSeverity.ERROR;
 public class FtpFunctionValidator {
 
     private final SyntaxNodeAnalysisContext context;
-    private final ServiceDeclarationNode serviceDeclarationNode;
     FunctionDefinitionNode onFileChange;
 
     public FtpFunctionValidator(SyntaxNodeAnalysisContext context, FunctionDefinitionNode onFileChange) {
         this.context = context;
-        this.serviceDeclarationNode = (ServiceDeclarationNode) context.node();
         this.onFileChange = onFileChange;
     }
 
     public void validate() {
-        if (Objects.isNull(onFileChange)) {
-            reportErrorDiagnostic(NO_ON_FILE_CHANGE, serviceDeclarationNode.location());
-        } else {
-            if (!isRemoteFunction(context, onFileChange)) {
-                reportErrorDiagnostic(METHOD_MUST_BE_REMOTE, onFileChange.location());
-            }
-            SeparatedNodeList<ParameterNode> parameters = onFileChange.functionSignature().parameters();
-            validateFunctionArguments(parameters, onFileChange);
-            PluginUtils.validateReturnTypeErrorOrNil(onFileChange, context);
+        if (!isRemoteFunction(context, onFileChange)) {
+            reportErrorDiagnostic(METHOD_MUST_BE_REMOTE, onFileChange.location());
         }
+        SeparatedNodeList<ParameterNode> parameters = onFileChange.functionSignature().parameters();
+        validateFunctionArguments(parameters, onFileChange);
+        PluginUtils.validateReturnTypeErrorOrNil(onFileChange, context);
     }
 
     private void validateFunctionArguments(SeparatedNodeList<ParameterNode> parameters,
