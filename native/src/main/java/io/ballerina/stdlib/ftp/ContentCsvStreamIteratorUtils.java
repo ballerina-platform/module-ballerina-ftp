@@ -21,6 +21,8 @@ import io.ballerina.lib.data.csvdata.csv.Native;
 import io.ballerina.lib.data.csvdata.utils.ModuleUtils;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.PredefinedTypes;
+import io.ballerina.runtime.api.types.StreamType;
 import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -29,7 +31,9 @@ import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
+import org.apache.commons.vfs2.FileObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,6 +65,36 @@ public class ContentCsvStreamIteratorUtils {
     private static final String REC_RECORD_ENTRY = "ContentCsvRecordStreamEntry";
 
     private static final BString PROP_IS_CLOSED = StringUtils.fromString("isClosed");
+
+    public static Object createStringArrayStream(InputStream content, Type streamValueType, boolean laxDataBinding,
+                                                 FileObject fileObject) {
+        BObject contentCsvStreamObject = ValueCreator.createObjectValue(
+                io.ballerina.stdlib.ftp.util.ModuleUtils.getModule(), "ContentCsvStringArrayStream",
+                null, null
+        );
+        contentCsvStreamObject.addNativeData(NATIVE_INPUT_STREAM, content);
+        contentCsvStreamObject.addNativeData(NATIVE_LAX_DATABINDING, laxDataBinding);
+        contentCsvStreamObject.addNativeData(NATIVE_STREAM_VALUE_TYPE, streamValueType);
+        contentCsvStreamObject.addNativeData(FtpConstants.NATIVE_FILE_OBJECT, fileObject);
+        StreamType streamType = TypeCreator.createStreamType(streamValueType,
+                TypeCreator.createUnionType(PredefinedTypes.TYPE_ERROR, PredefinedTypes.TYPE_NULL));
+        return ValueCreator.createStreamValue(streamType, contentCsvStreamObject);
+    }
+
+    public static Object createRecordStream(InputStream content, Type streamValueType, boolean laxDataBinding,
+                                            FileObject fileObject) {
+        BObject contentCsvStreamObject = ValueCreator.createObjectValue(
+                io.ballerina.stdlib.ftp.util.ModuleUtils.getModule(), "ContentCsvRecordStream",
+                null, null
+        );
+        contentCsvStreamObject.addNativeData(NATIVE_INPUT_STREAM, content);
+        contentCsvStreamObject.addNativeData(NATIVE_LAX_DATABINDING, laxDataBinding);
+        contentCsvStreamObject.addNativeData(NATIVE_STREAM_VALUE_TYPE, streamValueType);
+        contentCsvStreamObject.addNativeData(FtpConstants.NATIVE_FILE_OBJECT, fileObject);
+        StreamType streamType = TypeCreator.createStreamType(streamValueType,
+                TypeCreator.createUnionType(PredefinedTypes.TYPE_ERROR, PredefinedTypes.TYPE_NULL));
+        return ValueCreator.createStreamValue(streamType, contentCsvStreamObject);
+    }
 
     public static Object next(BObject recordIterator) {
         final Type elementType = (Type) recordIterator.getNativeData(NATIVE_STREAM_VALUE_TYPE);
@@ -148,12 +182,15 @@ public class ContentCsvStreamIteratorUtils {
     }
 
     public static Object close(BObject recordIterator) {
-        InputStream inputStream = (InputStream) recordIterator.getNativeData(NATIVE_INPUT_STREAM);
-        if (inputStream == null) {
-            return null;
-        }
         try {
-            inputStream.close();
+            Object inputStream = recordIterator.getNativeData(NATIVE_INPUT_STREAM);
+            if (inputStream != null) {
+                ((InputStream) inputStream).close();
+            }
+            Object fileObject = recordIterator.getNativeData(FtpConstants.NATIVE_FILE_OBJECT);
+            if (fileObject != null) {
+                ((FileObject) fileObject).close();
+            }
         } catch (IOException e) {
             return FtpUtil.createError("Unable to clean input stream", e, FTP_ERROR);
         } finally {

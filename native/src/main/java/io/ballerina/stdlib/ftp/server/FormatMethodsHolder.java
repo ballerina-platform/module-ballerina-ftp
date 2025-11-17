@@ -38,9 +38,9 @@ import java.util.regex.Pattern;
 /**
  * Routes files to appropriate content handler methods based on file extension and annotations.
  */
-public class ContentMethodRouter {
+public class FormatMethodsHolder {
 
-    private static final Logger log = LoggerFactory.getLogger(ContentMethodRouter.class);
+    private static final Logger log = LoggerFactory.getLogger(FormatMethodsHolder.class);
     private static final String FUNCTION_CONFIG_ANNOTATION = "FunctionConfig";
     private static final String ANNOTATION_PATTERN_FIELD = "fileNamePattern";
 
@@ -48,7 +48,7 @@ public class ContentMethodRouter {
     private final Map<String, MethodType> annotationPatternToMethod;
     private final Map<String, MethodType> availableContentMethods;
 
-    public ContentMethodRouter(BObject service) {
+    public FormatMethodsHolder(BObject service) {
         this.service = service;
         this.annotationPatternToMethod = new HashMap<>();
         this.availableContentMethods = new HashMap<>();
@@ -87,7 +87,7 @@ public class ContentMethodRouter {
      * @param fileInfo The file information
      * @return Optional containing the MethodType to invoke, or empty if no suitable method found
      */
-    public Optional<MethodType> routeFile(FileInfo fileInfo) {
+    public Optional<MethodType> getMethod(FileInfo fileInfo) {
         String fileName = fileInfo.getFileName().getBaseName();
         String extension = fileInfo.getFileName().getExtension();
 

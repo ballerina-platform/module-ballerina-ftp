@@ -23,8 +23,6 @@ import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.ArrayType;
-import io.ballerina.runtime.api.types.PredefinedTypes;
-import io.ballerina.runtime.api.types.StreamType;
 import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -33,6 +31,8 @@ import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BStream;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.ContentByteStreamIteratorUtils;
+import io.ballerina.stdlib.ftp.ContentCsvStreamIteratorUtils;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemBaseMessage;
@@ -40,7 +40,6 @@ import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
 import io.ballerina.stdlib.ftp.util.BufferHolder;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
-import io.ballerina.stdlib.ftp.util.ModuleUtils;
 import io.ballerina.stdlib.io.channels.base.Channel;
 import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
@@ -109,18 +108,10 @@ class FtpClientHelper {
     static boolean executeStreamingAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
                                           CompletableFuture<Object> balFuture, Type streamValueType,
                                           boolean laxDataBinding) {
-        try {
-            if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
-                final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
-                ByteChannel byteChannel = new FtpByteChannel(in);
-                Channel channel = new FtpChannel(byteChannel);
-                InputStream inputStream = channel.getInputStream();
-                Object streamEntry = createStreamWithContent(inputStream, streamValueType, laxDataBinding);
-                balFuture.complete(streamEntry);
-            }
-        } catch (IOException e) {
-            log.error("{}", FtpConstants.ERR_READING_STREAM, e);
-            balFuture.complete(FtpUtil.createError(FtpConstants.ERR_READING_STREAM, e, FTP_ERROR));
+        if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
+            final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
+            Object streamEntry = createStreamWithContent(in, streamValueType, laxDataBinding);
+            balFuture.complete(streamEntry);
         }
         return true;
     }
@@ -128,32 +119,21 @@ class FtpClientHelper {
     private static Object createStreamWithContent(InputStream content, Type streamValueType,
                                                   boolean laxDataBinding) {
         try {
-            String streamName = "";
             if (streamValueType.getTag() == TypeTags.ARRAY_TAG) {
-                if (((ArrayType) streamValueType).getElementType().getTag() == TypeTags.BYTE_TAG) {
-                    streamName = "ContentByteStream";
-                } else {
-                    streamName = "ContentCsvStringArrayStream";
+                Type arrayElementType = ((ArrayType) streamValueType).getElementType();
+                if (arrayElementType.getTag() == TypeTags.BYTE_TAG) {
+                    return ContentByteStreamIteratorUtils.createStream(content, streamValueType, laxDataBinding, null);
                 }
-            } else {
-                streamName = "ContentCsvRecordStream";
+                return ContentCsvStreamIteratorUtils.createStringArrayStream(content, streamValueType,
+                        laxDataBinding, null);
             }
-
-            BObject contentByteStreamObject = ValueCreator.createObjectValue(
-                    ModuleUtils.getModule(), streamName, null, null
-            );
-            contentByteStreamObject.addNativeData(FtpConstants.NATIVE_INPUT_STREAM, content);
-            contentByteStreamObject.addNativeData(FtpConstants.NATIVE_LAX_DATABINDING, laxDataBinding);
-            contentByteStreamObject.addNativeData(FtpConstants.NATIVE_STREAM_VALUE_TYPE, streamValueType);
-            StreamType streamType = TypeCreator.createStreamType(streamValueType,
-                    TypeCreator.createUnionType(PredefinedTypes.TYPE_ERROR, PredefinedTypes.TYPE_NULL));
-            return ValueCreator.createStreamValue(streamType, contentByteStreamObject);
+            return ContentCsvStreamIteratorUtils.createRecordStream(content, streamValueType,
+                    laxDataBinding, null);
         } catch (Exception e) {
             log.error("Failed to create stream with content", e);
             return FtpUtil.createError(FtpConstants.ERR_CREATE_STREAM, e, FTP_ERROR);
         }
     }
-
 
     static boolean executeGetAllAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
                                        CompletableFuture<Object> balFuture) {
@@ -335,7 +315,7 @@ class FtpClientHelper {
     }
 
     private static void callStreamClose(Environment env, BObject entity, BufferHolder bufferHolder,
-                                       BObject iteratorObj) {
+                                        BObject iteratorObj) {
         try {
             env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_CLOSE_FUNC, null);
             handleStreamEnd(entity, bufferHolder);

@@ -17,12 +17,19 @@
  */
 package io.ballerina.stdlib.ftp;
 
+import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.PredefinedTypes;
+import io.ballerina.runtime.api.types.StreamType;
+import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
+import io.ballerina.stdlib.ftp.util.ModuleUtils;
+import org.apache.commons.vfs2.FileObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +46,20 @@ public class ContentByteStreamIteratorUtils {
         // private constructor
     }
 
+    public static Object createStream(InputStream content, Type streamValueType, boolean laxDataBinding,
+                                      FileObject fileObject) {
+        BObject contentByteStreamObject = ValueCreator.createObjectValue(
+                ModuleUtils.getModule(), "ContentByteStream", null, null
+        );
+        contentByteStreamObject.addNativeData(FtpConstants.NATIVE_INPUT_STREAM, content);
+        contentByteStreamObject.addNativeData(FtpConstants.NATIVE_LAX_DATABINDING, laxDataBinding);
+        contentByteStreamObject.addNativeData(FtpConstants.NATIVE_STREAM_VALUE_TYPE, streamValueType);
+        contentByteStreamObject.addNativeData(FtpConstants.NATIVE_FILE_OBJECT, fileObject);
+        StreamType streamType = TypeCreator.createStreamType(streamValueType,
+                TypeCreator.createUnionType(PredefinedTypes.TYPE_ERROR, PredefinedTypes.TYPE_NULL));
+        return ValueCreator.createStreamValue(streamType, contentByteStreamObject);
+    }
+
     /**
      * Gets the next chunk of bytes from the stream.
      * This method is called by Ballerina runtime when iterating the stream.
@@ -46,7 +67,7 @@ public class ContentByteStreamIteratorUtils {
      * @return The next record with byte array value, or null if stream is exhausted
      */
     public static Object next(BObject recordIterator) {
-        InputStream inputStream = (InputStream) recordIterator.getNativeData("Input_Stream");
+        InputStream inputStream = (InputStream) recordIterator.getNativeData(FtpConstants.NATIVE_INPUT_STREAM);
         BMap<BString, Object> streamEntry = ValueCreator.createRecordValue(getFtpPackage(), "ContentStreamEntry");
         try {
             byte[] buffer = new byte[ARRAY_SIZE];
@@ -75,9 +96,14 @@ public class ContentByteStreamIteratorUtils {
      * @return null (no error)
      */
     public static Object close(BObject recordIterator) {
-        InputStream inputStream = (InputStream) recordIterator.getNativeData("Input_Stream");
         try {
+            InputStream inputStream = (InputStream) recordIterator.getNativeData(FtpConstants.NATIVE_INPUT_STREAM);
             inputStream.close();
+
+            Object fileObject = recordIterator.getNativeData(FtpConstants.NATIVE_FILE_OBJECT);
+            if (fileObject != null) {
+                ((FileObject) fileObject).close();
+            }
         } catch (IOException e) {
             return FtpUtil.createError("Unable to clean input stream value", e, FTP_ERROR);
         }
