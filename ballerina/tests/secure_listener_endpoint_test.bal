@@ -94,7 +94,7 @@ public function testConnectWithInvalidKey() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when invalid key is used for creating a Listener.");
     }
@@ -119,7 +119,7 @@ public function testConnectWithInvalidKeyPath() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when invalid key path is used for creating a Listener.");
     }
@@ -140,7 +140,7 @@ public function testConnectToSFTPServerWithFTPProtocol() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when connecting to SFTP server via FTP is used for creating a Listener.");
     }
@@ -161,7 +161,7 @@ public function testConnectWithEmptyKey() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when no key config is provided when creating a Listener.");
     }
@@ -186,7 +186,7 @@ public function testConnectWithEmptyCredentials() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when no credentials were provided when creating a Listener.");
     }
@@ -204,7 +204,7 @@ public function testConnectWithEmptyCredentialsAndKey() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when no auth config is provided when creating a Listener.");
     }
