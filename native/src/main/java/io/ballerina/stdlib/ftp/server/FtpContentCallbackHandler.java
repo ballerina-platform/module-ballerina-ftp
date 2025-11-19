@@ -60,6 +60,11 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_JSON_REMOTE_FUNC
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_TEXT_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_XML_REMOTE_FUNCTION;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToCsv;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToJson;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToString;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToXml;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertToBallerinaByteArray;
 
 /**
  * Handles content-based callbacks for FTP listener.
@@ -157,8 +162,10 @@ public class FtpContentCallbackHandler {
         if (firstParamType.getTag() == TypeTags.STREAM_TAG) {
             Type constrainedType = ((StreamType) firstParamType).getConstrainedType();
             switch (methodName) {
-                case ON_FILE_REMOTE_FUNCTION -> ContentByteStreamIteratorUtils.createStream(inputStream,
-                        constrainedType, laxDataBinding, fileObject);
+                case ON_FILE_REMOTE_FUNCTION -> {
+                    return ContentByteStreamIteratorUtils.createStream(inputStream,
+                            constrainedType, laxDataBinding, fileObject);
+                }
                 case ON_FILE_CSV_REMOTE_FUNCTION -> {
                     if (constrainedType.getTag() == ARRAY_TAG) {
                         return ContentCsvStreamIteratorUtils.createStringArrayStream(inputStream,
@@ -169,17 +176,14 @@ public class FtpContentCallbackHandler {
                 }
                 default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
             }
-
-            return null;
         } else {
             byte[] fileContent = fetchAllFileContentFromRemote(fileObject, inputStream);
             return switch (methodName) {
-                case ON_FILE_REMOTE_FUNCTION -> FtpContentConverter.convertToBallerinaByteArray(fileContent);
-                case ON_FILE_TEXT_REMOTE_FUNCTION -> FtpContentConverter.convertBytesToString(fileContent);
-                case ON_FILE_JSON_REMOTE_FUNCTION ->
-                        FtpContentConverter.convertBytesToJson(fileContent, firstParamType);
-                case ON_FILE_XML_REMOTE_FUNCTION -> FtpContentConverter.convertBytesToXml(fileContent, firstParamType);
-                case ON_FILE_CSV_REMOTE_FUNCTION -> FtpContentConverter.convertBytesToCsv(fileContent, firstParamType);
+                case ON_FILE_REMOTE_FUNCTION -> convertToBallerinaByteArray(fileContent);
+                case ON_FILE_TEXT_REMOTE_FUNCTION -> convertBytesToString(fileContent);
+                case ON_FILE_JSON_REMOTE_FUNCTION -> convertBytesToJson(fileContent, firstParamType, laxDataBinding);
+                case ON_FILE_XML_REMOTE_FUNCTION -> convertBytesToXml(fileContent, firstParamType, laxDataBinding);
+                case ON_FILE_CSV_REMOTE_FUNCTION -> convertBytesToCsv(fileContent, firstParamType, laxDataBinding);
                 default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
             };
         }
