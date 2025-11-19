@@ -217,6 +217,50 @@ public function testSFTPConnectionToFTPServer() returns error? {
 }
 
 @test:Config {
+    dependsOn: [testReadBlockNonFittingContent]
+}
+public function testConnectionWithNonExistingServerDetailedError() returns error? {
+    ClientConfiguration nonExistingServerConfig = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21299,
+        auth: {credentials: {username: "wso2", password: "wso2123"}}
+    };
+    Client|Error nonExistingServerClientEp = new (nonExistingServerConfig);
+    if nonExistingServerClientEp is Error {
+        test:assertTrue(nonExistingServerClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error when tried to connect to a non existing server. " + nonExistingServerClientEp.message());
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(nonExistingServerClientEp.message().length() > "Error while connecting to the FTP server with URL: ftp://wso2:***@127.0.0.1:21299".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail(msg = "Found a non-error response when tried to connect to a non existing server.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testReadBlockNonFittingContent]
+}
+public function testConnectionWithInvalidHostDetailedError() returns error? {
+    ClientConfiguration invalidHostConfig = {
+        protocol: FTP,
+        host: "invalid.nonexistent.host.example",
+        port: 21,
+        auth: {credentials: {username: "wso2", password: "wso2123"}}
+    };
+    Client|Error invalidHostClientEp = new (invalidHostConfig);
+    if invalidHostClientEp is Error {
+        test:assertTrue(invalidHostClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error when tried to connect to an invalid host. " + invalidHostClientEp.message());
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(invalidHostClientEp.message().length() > "Error while connecting to the FTP server with URL: ".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail(msg = "Found a non-error response when tried to connect to an invalid host.");
+    }
+}
+
+@test:Config {
     dependsOn: [testMoveFile]
 }
 public function testMoveNonExistingFile() returns error? {

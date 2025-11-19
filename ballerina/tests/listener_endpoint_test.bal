@@ -293,6 +293,57 @@ public function testConnectToInvalidUrl() returns error? {
     }
 }
 
+@test:Config {}
+public function testServerRegisterFailureWithDetailedErrorMessage() returns error? {
+    Listener|Error invalidUrlServer = new ({
+        protocol: FTP,
+        host: "localhost",
+        port: 21219,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"}
+        },
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if invalidUrlServer is Error {
+        test:assertTrue(invalidUrlServer.message().startsWith("Failed to initialize File server connector."));
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(invalidUrlServer.message().length() > "Failed to initialize File server connector.".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail("Non-error result when trying to connect to an unreachable server.");
+    }
+}
+
+@test:Config {}
+public function testServerRegisterFailureInvalidCredentialsWithDetails() returns error? {
+    Listener|Error invalidCredsServer = new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {
+            credentials: {
+                username: "invaliduser123",
+                password: "invalidpass123"
+            }
+        },
+        port: 21212,
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if invalidCredsServer is Error {
+        test:assertTrue(invalidCredsServer.message().startsWith("Failed to initialize File server connector."));
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(invalidCredsServer.message().length() > "Failed to initialize File server connector.".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail("Non-error result when invalid credentials are used for creating a Listener.");
+    }
+}
+
 @test:Config {
     dependsOn: [testDeleteFile]
 }
