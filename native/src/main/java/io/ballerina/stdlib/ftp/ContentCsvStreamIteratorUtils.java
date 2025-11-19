@@ -51,20 +51,18 @@ import static io.ballerina.stdlib.ftp.util.FtpUtil.getFtpPackage;
  */
 public class ContentCsvStreamIteratorUtils {
 
-    private ContentCsvStreamIteratorUtils() {
-        // private constructor
-    }
-
     // Native data keys
     private static final String KEY_INDEX = "index";
     private static final String KEY_DATA = "data";
     private static final String KEY_LENGTH = "length";
-
     // Record names
     private static final String REC_STRING_ARRAY_ENTRY = "ContentCsvStringArrayStreamEntry";
     private static final String REC_RECORD_ENTRY = "ContentCsvRecordStreamEntry";
-
     private static final BString PROP_IS_CLOSED = StringUtils.fromString("isClosed");
+
+    private ContentCsvStreamIteratorUtils() {
+        // private constructor
+    }
 
     public static Object createStringArrayStream(InputStream content, Type streamValueType, boolean laxDataBinding,
                                                  FileObject fileObject) {
