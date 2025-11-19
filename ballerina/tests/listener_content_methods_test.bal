@@ -19,6 +19,19 @@ import ballerina/lang.runtime;
 import ballerina/log;
 import ballerina/test;
 
+// Record type definitions for custom deserialization testing
+type Employee record {
+    string name;
+    int age;
+};
+
+type PersonRecord record {
+    string name;
+    int age;
+    string city;
+    boolean? isActive;
+};
+
 // Global tracking variables for content method tests
 string textContentReceived = "";
 json jsonContentReceived = ();
@@ -40,6 +53,21 @@ int fallbackFilesProcessed = 0;
 
 // Global counter for annotation test
 int specialFilesProcessed = 0;
+
+// Global counters for CSV stream test
+int csvStreamRowsProcessed = 0;
+
+// Global counters for CSV record array test
+Employee[] csvRecordArrayReceived = [];
+int csvRecordFilesProcessed = 0;
+
+// Global counters for JSON record type test
+PersonRecord? jsonRecordTypeReceived = ();
+int jsonRecordFilesProcessed = 0;
+
+// Global counters for XML record type test
+PersonRecord? xmlRecordTypeReceived = ();
+int xmlRecordFilesProcessed = 0;
 
 // Test data file paths
 const string JSON_TEST_FILE = "tests/resources/datafiles/test_data.json";
@@ -592,4 +620,231 @@ public function testOptionalParametersWithoutCaller() returns error? {
 
     test:assertTrue(contentMethodInvoked, "Method should work without Caller parameter");
     test:assertTrue(textContentReceived.length() > 0, "Should have received content");
+}
+
+@test:Config {
+    dependsOn: [testOptionalParametersWithoutCaller]
+}
+public function testOnFileCsvStream() returns error? {
+    // Reset state
+    csvStreamRowsProcessed = 0;
+    lastFileInfo = ();
+    contentMethodInvoked = false;
+
+    // Service with onFileCsv (stream variant)
+    Service csvStreamService = service object {
+        remote function onFileCsv(stream<string[], error?> content, FileInfo fileInfo, Caller caller) returns error? {
+            log:printInfo(string `onFileCsv (stream) invoked for: ${fileInfo.name}`);
+            lastFileInfo = fileInfo;
+            contentMethodInvoked = true;
+
+            // Process stream
+            error? processStream = content.forEach(function(string[] row) {
+                csvStreamRowsProcessed += 1;
+                log:printInfo(string `Processing CSV row: ${row.length()} columns`);
+            });
+
+            if processStream is error {
+                log:printError("Error processing CSV stream", processStream);
+                return processStream;
+            }
+        }
+    };
+
+    // Create listener for .csvstream files
+    Listener csvStreamListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        port: 21212,
+        path: CONTENT_TEST_DIR,
+        pollingInterval: 4,
+        fileNamePattern: "csvstream.*\\.csv"
+    });
+
+    check csvStreamListener.attach(csvStreamService);
+    check csvStreamListener.'start();
+    runtime:registerListener(csvStreamListener);
+
+    // Upload CSV file for stream processing
+    stream<io:Block, io:Error?> csvStream = check io:fileReadBlocksAsStream(CSV_TEST_FILE, 5);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/csvstream.csv", csvStream);
+    runtime:sleep(15);
+
+    // Cleanup
+    runtime:deregisterListener(csvStreamListener);
+    check csvStreamListener.gracefulStop();
+
+    test:assertTrue(contentMethodInvoked, "onFileCsv (stream) should have been invoked");
+    test:assertTrue(csvStreamRowsProcessed > 0, string `Should have processed CSV rows, got ${csvStreamRowsProcessed}`);
+
+    FileInfo fileInfo = check lastFileInfo.ensureType();
+    test:assertTrue(fileInfo.name.endsWith(".csv"), "Should process .csvstream files");
+}
+
+@test:Config {
+    dependsOn: [testOnFileCsvStream]
+}
+public function testOnFileCsvRecordArray() returns error? {
+    // Reset state
+    csvRecordArrayReceived = [];
+    csvRecordFilesProcessed = 0;
+    lastFileInfo = ();
+    contentMethodInvoked = false;
+
+    // Service with onFileCsv (record array variant)
+    Service csvRecordService = service object {
+        remote function onFileCsv(Employee[] content, FileInfo fileInfo, Caller caller) returns error? {
+            log:printInfo(string `onFileCsv (Employee[]) invoked for: ${fileInfo.name}, records: ${content.length()}`);
+            csvRecordArrayReceived = content;
+            lastFileInfo = fileInfo;
+            csvRecordFilesProcessed += 1;
+            contentMethodInvoked = true;
+        }
+    };
+
+    // Create listener for .csvrecord files
+    Listener csvRecordListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        port: 21212,
+        path: CONTENT_TEST_DIR,
+        pollingInterval: 4,
+        fileNamePattern: "csvrecord.*\\.csv"
+    });
+
+    check csvRecordListener.attach(csvRecordService);
+    check csvRecordListener.'start();
+    runtime:registerListener(csvRecordListener);
+
+    // Upload CSV file for record deserialization
+    stream<io:Block, io:Error?> csvStream = check io:fileReadBlocksAsStream(CSV_TEST_FILE, 5);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/csvrecord.csv", csvStream);
+    runtime:sleep(15);
+
+    // Cleanup
+    runtime:deregisterListener(csvRecordListener);
+    check csvRecordListener.gracefulStop();
+
+    test:assertTrue(contentMethodInvoked, "onFileCsv (record array) should have been invoked");
+    test:assertTrue(csvRecordArrayReceived.length() >= 3,
+        string `Should have deserialized at least 3 Employee records, got ${csvRecordArrayReceived.length()}`);
+
+    // Verify first record
+    Employee firstEmployee = csvRecordArrayReceived[0];
+    test:assertEquals(firstEmployee.name, "Alice Johnson", "First employee's name should match");
+    test:assertEquals(firstEmployee.age, 25, "First employee's age should match");
+}
+
+@test:Config {
+    dependsOn: [testOnFileCsvRecordArray]
+}
+public function testOnFileJsonWithRecordType() returns error? {
+    // Reset state
+    jsonRecordTypeReceived = ();
+    jsonRecordFilesProcessed = 0;
+    lastFileInfo = ();
+    contentMethodInvoked = false;
+
+    // Service with onFileJson (record type variant)
+    Service jsonRecordService = service object {
+        remote function onFileJson(PersonRecord content, FileInfo fileInfo, Caller caller) returns error? {
+            log:printInfo(string `onFileJson (PersonRecord) invoked for: ${fileInfo.name}`);
+            jsonRecordTypeReceived = content;
+            lastFileInfo = fileInfo;
+            jsonRecordFilesProcessed += 1;
+            contentMethodInvoked = true;
+
+            log:printInfo(string `Received person: ${content.name}, age: ${content.age}, city: ${content.city}`);
+        }
+    };
+
+    // Create listener for .jsonrecord files
+    Listener jsonRecordListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        port: 21212,
+        path: CONTENT_TEST_DIR,
+        pollingInterval: 4,
+        fileNamePattern: "jsonrecord.*\\.json"
+    });
+
+    check jsonRecordListener.attach(jsonRecordService);
+    check jsonRecordListener.'start();
+    runtime:registerListener(jsonRecordListener);
+
+    // Upload JSON file for record deserialization
+    stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/jsonrecord.json", jsonStream);
+    runtime:sleep(10);
+
+    // Cleanup
+    runtime:deregisterListener(jsonRecordListener);
+    check jsonRecordListener.gracefulStop();
+
+    test:assertTrue(contentMethodInvoked, "onFileJson (record type) should have been invoked");
+    test:assertFalse(jsonRecordTypeReceived is (), "Should have received PersonRecord");
+
+    PersonRecord person = check jsonRecordTypeReceived.ensureType();
+    test:assertEquals(person.name, "John Doe", "Person's name should match");
+    test:assertEquals(person.age, 30, "Person's age should match");
+    test:assertEquals(person.city, "New York", "Person's city should match");
+    test:assertEquals(person.isActive, true, "Person's isActive should match");
+}
+
+@test:Config {
+    dependsOn: [testOnFileJsonWithRecordType]
+}
+public function testOnFileXmlWithRecordType() returns error? {
+    // Reset state
+    xmlRecordTypeReceived = ();
+    xmlRecordFilesProcessed = 0;
+    lastFileInfo = ();
+    contentMethodInvoked = false;
+
+    // Service with onFileXml (record type variant)
+    Service xmlRecordService = service object {
+        remote function onFileXml(PersonRecord content, FileInfo fileInfo, Caller caller) returns error? {
+            log:printInfo(string `onFileXml (PersonRecord) invoked for: ${fileInfo.name}`);
+            xmlRecordTypeReceived = content;
+            lastFileInfo = fileInfo;
+            xmlRecordFilesProcessed += 1;
+            contentMethodInvoked = true;
+
+            log:printInfo(string `Received XML person: ${content.name}, age: ${content.age}`);
+        }
+    };
+
+    // Create listener for .xmlrecord files
+    Listener xmlRecordListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        port: 21212,
+        path: CONTENT_TEST_DIR,
+        pollingInterval: 4,
+        fileNamePattern: "xmlrecord.*\\.xml"
+    });
+
+    check xmlRecordListener.attach(xmlRecordService);
+    check xmlRecordListener.'start();
+    runtime:registerListener(xmlRecordListener);
+
+    // Upload XML file for record deserialization
+    stream<io:Block, io:Error?> xmlStream = check io:fileReadBlocksAsStream(XML_TEST_FILE);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/xmlrecord.xml", xmlStream);
+    runtime:sleep(10);
+
+    // Cleanup
+    runtime:deregisterListener(xmlRecordListener);
+    check xmlRecordListener.gracefulStop();
+
+    test:assertTrue(contentMethodInvoked, "onFileXml (record type) should have been invoked");
+    test:assertFalse(xmlRecordTypeReceived is (), "Should have received PersonRecord from XML");
+
+    PersonRecord person = check xmlRecordTypeReceived.ensureType();
+    test:assertEquals(person.name, "Jane Smith", "XML person's name should match");
+    test:assertEquals(person.age, 28, "XML person's age should match");
 }
