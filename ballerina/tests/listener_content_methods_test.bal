@@ -51,27 +51,7 @@ const string GENERIC_TEST_FILE = "tests/resources/datafiles/file2.txt";
 // Isolated directory for content listener tests to avoid interfering with testListFiles
 const string CONTENT_TEST_DIR = "/home/in/content-methods";
 
-// Setup: Create isolated directory for content tests
-@test:BeforeSuite
-function setupContentTestDirectory() returns error? {
-    Error? mkdirResult = (<Client>clientEp)->mkdir(CONTENT_TEST_DIR);
-    if mkdirResult is Error {
-        // Directory might already exist, that's okay
-        log:printInfo("Content test directory setup: " + mkdirResult.message());
-    }
-}
-
-// Teardown: Remove isolated directory after all content tests
-@test:AfterSuite
-function cleanupContentTestDirectory() returns error? {
-    Error? rmdirResult = (<Client>clientEp)->rmdir(CONTENT_TEST_DIR);
-    if rmdirResult is Error {
-        log:printWarn("Failed to cleanup content test directory: " + rmdirResult.message());
-    }
-}
-
 @test:Config {
-    dependsOn: [testIsolatedService]
 }
 public function testOnFileTextBasic() returns error? {
     // Reset state
@@ -86,7 +66,6 @@ public function testOnFileTextBasic() returns error? {
             textContentReceived = content;
             lastFileInfo = fileInfo;
             contentMethodInvoked = true;
-            check caller->delete(fileInfo.path);
         }
     };
 
@@ -97,7 +76,7 @@ public function testOnFileTextBasic() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
         path: CONTENT_TEST_DIR,
-        pollingInterval: 1,
+        pollingInterval: 4,
         fileNamePattern: "contentTest.*\\.txt"
     });
 
@@ -108,27 +87,12 @@ public function testOnFileTextBasic() returns error? {
     // Upload text file to isolated directory
     stream<io:Block, io:Error?> textStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE, 5);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/contentTest.txt", textStream);
-    runtime:sleep(3);
-
-    // Wait for processing
-    int timeoutInSeconds = 60;
-    while timeoutInSeconds > 0 {
-        if contentMethodInvoked {
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
+    // Wait longer to ensure file is fully uploaded and listener has detected it
+    runtime:sleep(10);
 
     // Cleanup
     runtime:deregisterListener(textListener);
     check textListener.gracefulStop();
-
-    // Assertions
-    if timeoutInSeconds == 0 {
-        test:assertFail("Timeout: onFileText was not invoked");
-    }
 
     test:assertTrue(contentMethodInvoked, "onFileText should have been invoked");
     test:assertTrue(textContentReceived.length() > 0, "Should have received text content");
@@ -156,7 +120,6 @@ public function testOnFileJsonBasic() returns error? {
             jsonContentReceived = content;
             lastFileInfo = fileInfo;
             contentMethodInvoked = true;
-            check caller->delete(fileInfo.path);
         }
     };
 
@@ -167,7 +130,7 @@ public function testOnFileJsonBasic() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
         path: CONTENT_TEST_DIR,
-        pollingInterval: 1,
+        pollingInterval: 4,
         fileNamePattern: "contentTest.*\\.json"
     });
 
@@ -176,29 +139,13 @@ public function testOnFileJsonBasic() returns error? {
     runtime:registerListener(jsonListener);
 
     // Upload JSON file
-    stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE, 5);
+    stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/contentTest.json", jsonStream);
-    runtime:sleep(3);
-
-    // Wait for processing
-    int timeoutInSeconds = 60;
-    while timeoutInSeconds > 0 {
-        if contentMethodInvoked {
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
+    runtime:sleep(10);
 
     // Cleanup
     runtime:deregisterListener(jsonListener);
     check jsonListener.gracefulStop();
-
-    // Assertions
-    if timeoutInSeconds == 0 {
-        test:assertFail("Timeout: onFileJson was not invoked");
-    }
 
     test:assertTrue(contentMethodInvoked, "onFileJson should have been invoked");
     test:assertTrue(jsonContentReceived != (), "Should have received JSON content");
@@ -212,8 +159,7 @@ public function testOnFileJsonBasic() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileJsonBasic],
-    enable: false
+    dependsOn: [testOnFileJsonBasic]
 }
 public function testOnFileXmlBasic() returns error? {
     // Reset state
@@ -225,10 +171,10 @@ public function testOnFileXmlBasic() returns error? {
     Service xmlService = service object {
         remote function onFileXml(xml content, FileInfo fileInfo, Caller caller) returns error? {
             log:printInfo(string `onFileXml invoked for: ${fileInfo.name}`);
+            log:printInfo(content.toString());
             xmlContentReceived = content;
             lastFileInfo = fileInfo;
             contentMethodInvoked = true;
-            check caller->delete(fileInfo.path);
         }
     };
 
@@ -239,7 +185,7 @@ public function testOnFileXmlBasic() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
         path: CONTENT_TEST_DIR,
-        pollingInterval: 1,
+        pollingInterval: 4,
         fileNamePattern: "contentTest.*\\.xml"
     });
 
@@ -248,29 +194,14 @@ public function testOnFileXmlBasic() returns error? {
     runtime:registerListener(xmlListener);
 
     // Upload XML file
-    stream<io:Block, io:Error?> xmlStream = check io:fileReadBlocksAsStream(XML_TEST_FILE, 5);
+    stream<io:Block, io:Error?> xmlStream = check io:fileReadBlocksAsStream(XML_TEST_FILE);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/contentTest.xml", xmlStream);
-    runtime:sleep(3);
-
-    // Wait for processing
-    int timeoutInSeconds = 60;
-    while timeoutInSeconds > 0 {
-        if contentMethodInvoked {
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
+    // Wait longer to ensure file is fully uploaded and listener has detected it
+    runtime:sleep(10);
 
     // Cleanup
     runtime:deregisterListener(xmlListener);
     check xmlListener.gracefulStop();
-
-    // Assertions
-    if timeoutInSeconds == 0 {
-        test:assertFail("Timeout: onFileXml was not invoked");
-    }
 
     test:assertTrue(contentMethodInvoked, "onFileXml should have been invoked");
     test:assertFalse(xmlContentReceived is (), "Should have received XML content");
@@ -284,8 +215,7 @@ public function testOnFileXmlBasic() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileXmlBasic],
-    enable: false
+    dependsOn: [testOnFileXmlBasic]
 }
 public function testOnFileCsvStringArray() returns error? {
     // Reset state
@@ -300,7 +230,6 @@ public function testOnFileCsvStringArray() returns error? {
             csvContentReceived = content;
             lastFileInfo = fileInfo;
             contentMethodInvoked = true;
-            check caller->delete(fileInfo.path);
         }
     };
 
@@ -311,7 +240,7 @@ public function testOnFileCsvStringArray() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
         path: CONTENT_TEST_DIR,
-        pollingInterval: 1,
+        pollingInterval: 4,
         fileNamePattern: "contentTest.*\\.csv"
     });
 
@@ -322,48 +251,24 @@ public function testOnFileCsvStringArray() returns error? {
     // Upload CSV file
     stream<io:Block, io:Error?> csvStream = check io:fileReadBlocksAsStream(CSV_TEST_FILE, 5);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/contentTest.csv", csvStream);
-    runtime:sleep(3);
-
-    // Wait for processing
-    int timeoutInSeconds = 60;
-    while timeoutInSeconds > 0 {
-        if contentMethodInvoked {
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
+    runtime:sleep(10);
 
     // Cleanup
     runtime:deregisterListener(csvListener);
     check csvListener.gracefulStop();
 
-    // Assertions
-    if timeoutInSeconds == 0 {
-        test:assertFail("Timeout: onFileCsv was not invoked");
-    }
-
     test:assertTrue(contentMethodInvoked, "onFileCsv should have been invoked");
-    test:assertTrue(csvContentReceived.length() >= 4,
-        string `Should have at least 4 rows (header + 3 data), got ${csvContentReceived.length()}`);
-
-    // Verify CSV header
-    string[] headerRow = csvContentReceived[0];
-    test:assertEquals(headerRow[0], "name", "First column should be 'name'");
-    test:assertEquals(headerRow[1], "age", "Second column should be 'age'");
-    test:assertEquals(headerRow[2], "city", "Third column should be 'city'");
-    test:assertEquals(headerRow[3], "salary", "Fourth column should be 'salary'");
+    test:assertTrue(csvContentReceived.length() >= 3,
+        string `Should have at least 3 rows (3 data), got ${csvContentReceived.length()}`);
 
     // Verify first data row
-    string[] firstDataRow = csvContentReceived[1];
+    string[] firstDataRow = csvContentReceived[0];
     test:assertEquals(firstDataRow[0], "Alice Johnson", "First person's name should match");
     test:assertEquals(firstDataRow[1], "25", "First person's age should match");
 }
 
 @test:Config {
-    dependsOn: [testOnFileCsvStringArray],
-    enable: false
+    dependsOn: [testOnFileCsvStringArray]
 }
 public function testOnFileByteArray() returns error? {
     // Reset state
@@ -378,7 +283,6 @@ public function testOnFileByteArray() returns error? {
             byteContentReceived = content;
             lastFileInfo = fileInfo;
             contentMethodInvoked = true;
-            check caller->delete(fileInfo.path);
         }
     };
 
@@ -389,7 +293,7 @@ public function testOnFileByteArray() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
         path: CONTENT_TEST_DIR,
-        pollingInterval: 1,
+        pollingInterval: 4,
         fileNamePattern: "contentTest.*\\.bin"
     });
 
@@ -398,29 +302,13 @@ public function testOnFileByteArray() returns error? {
     runtime:registerListener(genericListener);
 
     // Upload generic binary file
-    stream<io:Block, io:Error?> binStream = check io:fileReadBlocksAsStream(GENERIC_TEST_FILE, 5);
+    stream<io:Block, io:Error?> binStream = check io:fileReadBlocksAsStream(GENERIC_TEST_FILE);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/contentTest.bin", binStream);
-    runtime:sleep(3);
-
-    // Wait for processing
-    int timeoutInSeconds = 60;
-    while timeoutInSeconds > 0 {
-        if contentMethodInvoked {
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
+    runtime:sleep(15);
 
     // Cleanup
     runtime:deregisterListener(genericListener);
     check genericListener.gracefulStop();
-
-    // Assertions
-    if timeoutInSeconds == 0 {
-        test:assertFail("Timeout: onFile was not invoked");
-    }
 
     test:assertTrue(contentMethodInvoked, "onFile should have been invoked");
     test:assertTrue(byteContentReceived.length() > 0, "Should have received byte content");
@@ -431,8 +319,7 @@ public function testOnFileByteArray() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOnFileByteArray],
-    enable: false
+    dependsOn: [testOnFileByteArray]
 }
 public function testOnFileStream() returns error? {
     // Reset state
@@ -442,7 +329,7 @@ public function testOnFileStream() returns error? {
 
     // Service with onFile (stream variant)
     Service streamService = service object {
-        remote function onFile(stream<byte[], error> content, FileInfo fileInfo, Caller caller) returns error? {
+        remote function onFile(stream<byte[], error?> content, FileInfo fileInfo, Caller caller) returns error? {
             log:printInfo(string `onFile (stream) invoked for: ${fileInfo.name}`);
             lastFileInfo = fileInfo;
             contentMethodInvoked = true;
@@ -460,7 +347,6 @@ public function testOnFileStream() returns error? {
 
             streamByteCount = totalBytes;
             log:printInfo(string `Processed ${totalBytes} bytes from stream`);
-            check caller->delete(fileInfo.path);
         }
     };
 
@@ -471,8 +357,8 @@ public function testOnFileStream() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
         path: CONTENT_TEST_DIR,
-        pollingInterval: 1,
-        fileNamePattern: "streamTest.*\\.stream"
+        pollingInterval: 4,
+        fileNamePattern: "streamTest.*\\.stream1"
     });
 
     check streamListener.attach(streamService);
@@ -480,37 +366,22 @@ public function testOnFileStream() returns error? {
     runtime:registerListener(streamListener);
 
     // Upload file for stream processing
-    stream<io:Block, io:Error?> testStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE, 5);
+    stream<io:Block, io:Error?> testStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/streamTest.stream", testStream);
-    runtime:sleep(3);
-
-    // Wait for processing
-    int timeoutInSeconds = 60;
-    while timeoutInSeconds > 0 {
-        if contentMethodInvoked {
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
+    check (<Client>clientEp)->rename(CONTENT_TEST_DIR + "/streamTest.stream",
+                                     CONTENT_TEST_DIR + "/streamTest.stream1");
+    runtime:sleep(10);
 
     // Cleanup
     runtime:deregisterListener(streamListener);
     check streamListener.gracefulStop();
-
-    // Assertions
-    if timeoutInSeconds == 0 {
-        test:assertFail("Timeout: onFile (stream) was not invoked");
-    }
 
     test:assertTrue(contentMethodInvoked, "onFile (stream) should have been invoked");
     test:assertTrue(streamByteCount > 0, string `Should have processed bytes, got ${streamByteCount}`);
 }
 
 @test:Config {
-    dependsOn: [testOnFileStream],
-    enable: false
+    dependsOn: [testOnFileStream]
 }
 public function testExtensionBasedRouting() returns error? {
     // Reset state
@@ -523,19 +394,16 @@ public function testExtensionBasedRouting() returns error? {
         remote function onFileText(string content, FileInfo fileInfo, Caller caller) returns error? {
             log:printInfo(string `onFileText: ${fileInfo.name}`);
             txtFilesProcessed += 1;
-            check caller->delete(fileInfo.path);
         }
 
         remote function onFileJson(json content, FileInfo fileInfo, Caller caller) returns error? {
             log:printInfo(string `onFileJson: ${fileInfo.name}`);
             jsonFilesProcessed += 1;
-            check caller->delete(fileInfo.path);
         }
 
         remote function onFileXml(xml content, FileInfo fileInfo, Caller caller) returns error? {
             log:printInfo(string `onFileXml: ${fileInfo.name}`);
             xmlFilesProcessed += 1;
-            check caller->delete(fileInfo.path);
         }
     };
 
@@ -547,7 +415,7 @@ public function testExtensionBasedRouting() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
         path: CONTENT_TEST_DIR,
-        pollingInterval: 1,
+        pollingInterval: 4,
         fileNamePattern: "routing.*\\.(txt|json|xml)"
     });
 
@@ -556,36 +424,20 @@ public function testExtensionBasedRouting() returns error? {
     runtime:registerListener(multiListener);
 
     // Upload files of different types
-    stream<io:Block, io:Error?> txtStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE, 5);
+    stream<io:Block, io:Error?> txtStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/routing1.txt", txtStream);
 
-    stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE, 5);
+    stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/routing2.json", jsonStream);
 
-    stream<io:Block, io:Error?> xmlStream = check io:fileReadBlocksAsStream(XML_TEST_FILE, 5);
+    stream<io:Block, io:Error?> xmlStream = check io:fileReadBlocksAsStream(XML_TEST_FILE);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/routing3.xml", xmlStream);
 
-    runtime:sleep(5);
-
-    // Wait for all files to be processed
-    int timeoutInSeconds = 60;
-    while timeoutInSeconds > 0 {
-        if txtFilesProcessed >= 1 && jsonFilesProcessed >= 1 && xmlFilesProcessed >= 1 {
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
+    runtime:sleep(15);
 
     // Cleanup
     runtime:deregisterListener(multiListener);
     check multiListener.gracefulStop();
-
-    // Assertions
-    if timeoutInSeconds == 0 {
-        test:assertFail(string `Timeout: Not all files processed. TXT: ${txtFilesProcessed}, JSON: ${jsonFilesProcessed}, XML: ${xmlFilesProcessed}`);
-    }
 
     test:assertTrue(txtFilesProcessed >= 1, "Should have processed at least 1 TXT file");
     test:assertTrue(jsonFilesProcessed >= 1, "Should have processed at least 1 JSON file");
@@ -593,8 +445,7 @@ public function testExtensionBasedRouting() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testExtensionBasedRouting],
-    enable: false
+    dependsOn: [testExtensionBasedRouting]
 }
 public function testFallbackToGenericOnFile() returns error? {
     // Reset state
@@ -606,14 +457,12 @@ public function testFallbackToGenericOnFile() returns error? {
         remote function onFileJson(json content, FileInfo fileInfo, Caller caller) returns error? {
             log:printInfo(string `onFileJson: ${fileInfo.name}`);
             fallbackJsonFilesProcessed += 1;
-            check caller->delete(fileInfo.path);
         }
 
         // Fallback for other file types
         remote function onFile(byte[] content, FileInfo fileInfo, Caller caller) returns error? {
             log:printInfo(string `onFile (fallback): ${fileInfo.name}`);
             fallbackFilesProcessed += 1;
-            check caller->delete(fileInfo.path);
         }
     };
 
@@ -624,7 +473,7 @@ public function testFallbackToGenericOnFile() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
         path: CONTENT_TEST_DIR,
-        pollingInterval: 1,
+        pollingInterval: 4,
         fileNamePattern: "fallback.*\\.(json|txt)"
     });
 
@@ -640,35 +489,18 @@ public function testFallbackToGenericOnFile() returns error? {
     stream<io:Block, io:Error?> txtStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE, 5);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/fallback2.txt", txtStream);
 
-    runtime:sleep(5);
-
-    // Wait for processing
-    int timeoutInSeconds = 60;
-    while timeoutInSeconds > 0 {
-        if fallbackJsonFilesProcessed >= 1 && fallbackFilesProcessed >= 1 {
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
+    runtime:sleep(15);
 
     // Cleanup
     runtime:deregisterListener(fallbackListener);
     check fallbackListener.gracefulStop();
-
-    // Assertions
-    if timeoutInSeconds == 0 {
-        test:assertFail(string `Timeout: JSON: ${fallbackJsonFilesProcessed}, Fallback: ${fallbackFilesProcessed}`);
-    }
 
     test:assertTrue(fallbackJsonFilesProcessed >= 1, "JSON file should use onFileJson");
     test:assertTrue(fallbackFilesProcessed >= 1, "TXT file should fall back to onFile");
 }
 
 @test:Config {
-    dependsOn: [testFallbackToGenericOnFile],
-    enable: false
+    dependsOn: [testFallbackToGenericOnFile]
 }
 public function testFileConfigAnnotationOverride() returns error? {
     // Reset state
@@ -677,7 +509,7 @@ public function testFileConfigAnnotationOverride() returns error? {
     // Service with annotation override
     Service annotationService = service object {
         // Override: treat .special files as JSON
-        // @FileConfig {pattern: "(.*).special"}
+        @FunctionConfig {fileNamePattern: "(.*).special"}
         remote function onFileJson(json content, FileInfo fileInfo, Caller caller) returns error? {
             log:printInfo(string `onFileJson (via annotation): ${fileInfo.name}`);
             specialFilesProcessed += 1;
@@ -685,8 +517,6 @@ public function testFileConfigAnnotationOverride() returns error? {
             // Verify it's actually JSON
             map<json> data = check content.ensureType();
             test:assertTrue(data.hasKey("name"), "Should have 'name' field");
-
-            check caller->delete(fileInfo.path);
         }
     };
 
@@ -697,7 +527,7 @@ public function testFileConfigAnnotationOverride() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
         path: CONTENT_TEST_DIR,
-        pollingInterval: 1,
+        pollingInterval: 4,
         fileNamePattern: ".*\\.special"
     });
 
@@ -706,37 +536,20 @@ public function testFileConfigAnnotationOverride() returns error? {
     runtime:registerListener(annotationListener);
 
     // Upload JSON content with .special extension
-    stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE, 5);
+    stream<io:Block, io:Error?> jsonStream = check io:fileReadBlocksAsStream(JSON_TEST_FILE);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/override.special", jsonStream);
 
-    runtime:sleep(3);
-
-    // Wait for processing
-    int timeoutInSeconds = 60;
-    while timeoutInSeconds > 0 {
-        if specialFilesProcessed >= 1 {
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
+    runtime:sleep(10);
 
     // Cleanup
     runtime:deregisterListener(annotationListener);
     check annotationListener.gracefulStop();
 
-    // Assertions
-    if timeoutInSeconds == 0 {
-        test:assertFail("Timeout: Annotation override did not work");
-    }
-
     test:assertTrue(specialFilesProcessed >= 1, "Should have processed .special file as JSON");
 }
 
 @test:Config {
-    dependsOn: [testFileConfigAnnotationOverride],
-    enable: false
+    dependsOn: [testFileConfigAnnotationOverride]
 }
 public function testOptionalParametersWithoutCaller() returns error? {
     // Reset state
@@ -745,6 +558,7 @@ public function testOptionalParametersWithoutCaller() returns error? {
 
     // Service without Caller parameter
     Service nocallerService = service object {
+        @FunctionConfig {fileNamePattern: "(.*).nocaller"}
         remote function onFileText(string content, FileInfo fileInfo) returns error? {
             log:printInfo(string `onFileText (no caller): ${fileInfo.name}`);
             textContentReceived = content;
@@ -759,7 +573,7 @@ public function testOptionalParametersWithoutCaller() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         port: 21212,
         path: CONTENT_TEST_DIR,
-        pollingInterval: 1,
+        pollingInterval: 4,
         fileNamePattern: ".*\\.nocaller"
     });
 
@@ -768,32 +582,13 @@ public function testOptionalParametersWithoutCaller() returns error? {
     runtime:registerListener(nocallerListener);
 
     // Upload file
-    stream<io:Block, io:Error?> txtStream = check io:fileReadBlocksAsStream(TEXT_TEST_FILE, 5);
-    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/nocallerTest.nocaller", txtStream);
-    runtime:sleep(3);
-
-    // Wait for processing
-    int timeoutInSeconds = 60;
-    while timeoutInSeconds > 0 {
-        if contentMethodInvoked {
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
+    string txtStream = check io:fileReadString(TEXT_TEST_FILE);
+    check (<Client>clientEp)->putText(CONTENT_TEST_DIR + "/nocallerTest.nocaller", txtStream);
+    runtime:sleep(10);
 
     // Cleanup
     runtime:deregisterListener(nocallerListener);
     check nocallerListener.gracefulStop();
-
-    // Delete file manually since we don't have Caller
-    check (<Client>clientEp)->delete("/home/in/nocallerTest.nocaller");
-
-    // Assertions
-    if timeoutInSeconds == 0 {
-        test:assertFail("Timeout: onFileText without Caller was not invoked");
-    }
 
     test:assertTrue(contentMethodInvoked, "Method should work without Caller parameter");
     test:assertTrue(textContentReceived.length() > 0, "Should have received content");
