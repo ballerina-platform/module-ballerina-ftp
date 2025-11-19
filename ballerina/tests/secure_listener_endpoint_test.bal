@@ -94,7 +94,7 @@ public function testConnectWithInvalidKey() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when invalid key is used for creating a Listener.");
     }
@@ -119,7 +119,7 @@ public function testConnectWithInvalidKeyPath() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when invalid key path is used for creating a Listener.");
     }
@@ -140,7 +140,7 @@ public function testConnectToSFTPServerWithFTPProtocol() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when connecting to SFTP server via FTP is used for creating a Listener.");
     }
@@ -161,7 +161,7 @@ public function testConnectWithEmptyKey() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when no key config is provided when creating a Listener.");
     }
@@ -186,7 +186,7 @@ public function testConnectWithEmptyCredentials() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when no credentials were provided when creating a Listener.");
     }
@@ -204,7 +204,7 @@ public function testConnectWithEmptyCredentialsAndKey() returns error? {
     });
 
     if sftpServer is Error {
-        test:assertEquals(sftpServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when no auth config is provided when creating a Listener.");
     }
@@ -257,5 +257,65 @@ public function testConnectWithEmptyKeyPath() returns error? {
         test:assertEquals(result.message(), "Private key path cannot be empty");
     } else {
         test:assertFail("Non-error result when empty key string is provided when creating a Listener.");
+    }
+}
+
+@test:Config {}
+public function testSFTPServerConnectWithInvalidHostWithDetails() returns error? {
+    Listener|Error sftpServer = new ({
+        protocol: SFTP,
+        host: "nonexistent.invalid.host",
+        port: 21213,
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: "wso2123"
+            },
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        },
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if sftpServer is Error {
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(sftpServer.message().length() > "Failed to initialize File server connector.".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail("Non-error result when invalid host is used for creating an SFTP Listener.");
+    }
+}
+
+@test:Config {}
+public function testSFTPServerConnectWithInvalidPortWithDetails() returns error? {
+    Listener|Error sftpServer = new ({
+        protocol: SFTP,
+        host: "127.0.0.1",
+        port: 21299,
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: "wso2123"
+            },
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        },
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if sftpServer is Error {
+        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(sftpServer.message().length() > "Failed to initialize File server connector.".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail("Non-error result when invalid port is used for creating an SFTP Listener.");
     }
 }

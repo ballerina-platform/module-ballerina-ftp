@@ -194,7 +194,7 @@ public function testServerRegisterFailureEmptyPassword() returns error? {
     });
 
     if emptyPasswordServer is Error {
-        test:assertEquals(emptyPasswordServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(emptyPasswordServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when empty password is used for creating a Listener.");
     }
@@ -242,7 +242,7 @@ public function testServerRegisterFailureInvalidUsername() returns error? {
     );
 
     if invalidUsernameServer is Error {
-        test:assertEquals(invalidUsernameServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(invalidUsernameServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when invalid username is used for creating a Listener.");
     }
@@ -266,7 +266,7 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
     });
 
     if invalidPasswordServer is Error {
-        test:assertEquals(invalidPasswordServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(invalidPasswordServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when invalid password is used for creating a Listener.");
     }
@@ -287,9 +287,60 @@ public function testConnectToInvalidUrl() returns error? {
     });
 
     if invalidUrlServer is Error {
-        test:assertEquals(invalidUrlServer.message(), "Failed to initialize File server connector.");
+        test:assertTrue(invalidUrlServer.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when trying to connect to an invalid url.");
+    }
+}
+
+@test:Config {}
+public function testServerRegisterFailureWithDetailedErrorMessage() returns error? {
+    Listener|Error invalidUrlServer = new ({
+        protocol: FTP,
+        host: "localhost",
+        port: 21219,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"}
+        },
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if invalidUrlServer is Error {
+        test:assertTrue(invalidUrlServer.message().startsWith("Failed to initialize File server connector."));
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(invalidUrlServer.message().length() > "Failed to initialize File server connector.".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail("Non-error result when trying to connect to an unreachable server.");
+    }
+}
+
+@test:Config {}
+public function testServerRegisterFailureInvalidCredentialsWithDetails() returns error? {
+    Listener|Error invalidCredsServer = new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {
+            credentials: {
+                username: "invaliduser123",
+                password: "invalidpass123"
+            }
+        },
+        port: 21212,
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "(.*).txt"
+    });
+
+    if invalidCredsServer is Error {
+        test:assertTrue(invalidCredsServer.message().startsWith("Failed to initialize File server connector."));
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(invalidCredsServer.message().length() > "Failed to initialize File server connector.".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail("Non-error result when invalid credentials are used for creating a Listener.");
     }
 }
 

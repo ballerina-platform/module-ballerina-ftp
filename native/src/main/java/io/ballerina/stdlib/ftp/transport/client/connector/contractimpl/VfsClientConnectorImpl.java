@@ -71,8 +71,10 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             path = fsManager.resolveFile(fileURI, opts);
         } catch (FileSystemException e) {
             String safeUri = maskUrlPassword(fileURI);
+            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null) 
+                    ? e.getCause().getMessage() : e.getMessage();
             throw new RemoteFileSystemConnectorException("Error while connecting to the FTP server with URL: "
-                    + (safeUri != null ? safeUri : ""), e.getCause());
+                    + (safeUri != null ? safeUri : "") + ". " + rootCauseMessage, e.getCause());
         }
     }
 

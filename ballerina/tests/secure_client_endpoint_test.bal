@@ -263,6 +263,62 @@ public function testSecureConnectWithInvalidKeyPath() returns error? {
 @test:Config {
     dependsOn: [testSecureGetFileContent]
 }
+public function testSecureConnectWithInvalidPortDetailedError() returns error? {
+    ClientConfiguration sftpConfig = {
+        protocol: SFTP,
+        host: "127.0.0.1",
+        port: 21299,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+    Client|Error sftpClientEp = new (sftpConfig);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with an invalid port. " + sftpClientEp.message());
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(sftpClientEp.message().length() > "Error while connecting to the FTP server with URL: sftp://wso2:***@127.0.0.1:21299".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid port.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecureConnectWithInvalidHostDetailedError() returns error? {
+    ClientConfiguration sftpConfig = {
+        protocol: SFTP,
+        host: "nonexistent.invalid.host.example",
+        port: 22,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+    Client|Error sftpClientEp = new (sftpConfig);
+    if sftpClientEp is Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with an invalid host. " + sftpClientEp.message());
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(sftpClientEp.message().length() > "Error while connecting to the FTP server with URL: ".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid host.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
 public function testSecurePutFileContent() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
