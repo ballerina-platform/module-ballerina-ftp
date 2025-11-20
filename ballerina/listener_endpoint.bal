@@ -18,7 +18,7 @@ import ballerina/jballerina.java;
 import ballerina/log;
 import ballerina/task;
 
-# Represents a service listener that monitors the FTP location.
+# Listener for monitoring FTP/SFTP servers and triggering service functions when files are added or deleted.
 public isolated class Listener {
 
     private handle EMPTY_JAVA_STRING = java:fromString("");
@@ -36,7 +36,7 @@ public isolated class Listener {
         }
     }
 
-    # Starts the `ftp:Listener`.
+    # Starts the FTP listener.
     # ```ballerina
     # error? response = listener.'start();
     # ```
@@ -46,21 +46,21 @@ public isolated class Listener {
         return self.internalStart();
     }
 
-    # Binds a service to the `ftp:Listener`.
+    # Attaches a service to the FTP listener.
     # ```ballerina
     # error? response = listener.attach(service1);
     # ```
     #
-    # + ftpService - Service to be detached from the listener
-    # + name - Name of the service to be detached from the listener
-    # + return - `()` or else an `error` upon failure to register the listener
+    # + ftpService - Service to be attached to the listener
+    # + name - Optional name for the service
+    # + return - `()` or else an `error` upon failure to attach the service
     public isolated function attach(Service ftpService, string[]|string? name = ()) returns error? {
         if name is string? {
             return self.register(ftpService, name);
         }
     }
 
-    # Stops consuming messages and detaches the service from the `ftp:Listener`.
+    # Stops the FTP listener and detaches the service.
     # ```ballerina
     # error? response = listener.detach(service1);
     # ```
@@ -72,7 +72,7 @@ public isolated class Listener {
         return deregister(self, ftpService);
     }
 
-    # Stops the `ftp:Listener` forcefully.
+    # Stops the FTP listener immediately.
     # ```ballerina
     # error? response = listener.immediateStop();
     # ```
@@ -82,7 +82,7 @@ public isolated class Listener {
         check self.stop();
     }
 
-    # Stops the `ftp:Listener` gracefully.
+    # Stops the FTP listener gracefully.
     # ```ballerina
     # error? response = listener.gracefulStop();
     # ```
@@ -107,27 +107,24 @@ public isolated class Listener {
         }
     }
 
-    # Poll new files from a FTP server.
+    # Polls the FTP server for new or deleted files.
     # ```ballerina
     # error? response = listener.poll();
     # ```
     #
-    # + return - An `error` if failed to establish communication with the FTP
-    #            server
+    # + return - An `error` if failed to establish communication with the FTP server
     public isolated function poll() returns error? {
         return poll(self);
     }
 
-    # Register a FTP service in an FTP listener
-    # server.
+    # Registers an FTP service with the listener.
     # ```ballerina
     # error? response = listener.register(ftpService, name);
     # ```
     #
-    # + ftpService - The FTP service
-    # + name - Name of the FTP service
-    # + return - An `error` if failed to establish communication with the FTP
-    #            server
+    # + ftpService - The FTP service to register
+    # + name - Optional name of the service
+    # + return - An `error` if failed to establish communication with the FTP server
     public isolated function register(Service ftpService, string? name) returns error? {
         return register(self, ftpService);
     }
@@ -152,16 +149,16 @@ class Job {
 
 # Configuration for FTP listener.
 #
-# + protocol - Supported FTP protocols
-# + host - Target service url
+# + protocol - Protocol to use for the connection: FTP (unsecure) or SFTP (over SSH)
+# + host - Target server hostname or IP address
 # + port - Port number of the remote service
-# + auth - Authentication options
-# + path - Remote FTP directory location
-# + fileNamePattern - File name pattern that event need to trigger
-# + pollingInterval - Periodic time interval to check new update
-# + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and 
-#                   prevents the underlying VFS from attempting to change to the actual server root. 
-#                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command 
+# + auth - Authentication options for connecting to the server
+# + path - Directory path on the FTP server to monitor for file changes
+# + fileNamePattern - File name pattern (regex) to filter which files trigger events
+# + pollingInterval - Polling interval in seconds for checking file changes
+# + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and
+#                   prevents the underlying VFS from attempting to change to the actual server root.
+#                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command
 #                   that can fail on servers restricting root access (e.g., chrooted environments).
 # + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
 #                    null values in JSON/XML are allowed to be mapped to optional fields
@@ -178,6 +175,6 @@ public type ListenerConfiguration record {|
     boolean laxDataBinding = false;
 |};
 
-# Represents a FTP service.
+# FTP service for handling file system change events.
 public type Service distinct service object {
 };

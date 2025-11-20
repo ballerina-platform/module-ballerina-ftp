@@ -16,38 +16,36 @@
 
 import ballerina/io;
 
-# Represents the set of protocols supported by the FTP listener and client.
-#
-# + FTP - Unsecure File Transfer Protocol
-# + SFTP - FTP over SSH
+# Protocols supported by the FTP connector.
+# FTP - Unsecure File Transfer Protocol
+# SFTP - FTP over SSH
 public enum Protocol {
     FTP = "ftp",
     SFTP = "sftp"
 }
 
-# Configuration to read a privte key.
+# Configuration for a private key used in key-based authentication.
 #
 # + path - Path to the private key file
-# + password - Private key password
+# + password - Optional password for the private key
 public type PrivateKey record {|
     string path;
     string password?;
 |};
 
-# Username/password authentication related configurations.
+# Credentials for basic authentication using username and password.
 #
-# + username - Username of the user
-# + password - Password of the user
+# + username - Username for authentication
+# + password - Optional password for authentication
 public type Credentials record {|
     string username;
     string password?;
 |};
 
-# Configurations for facilitating secure communication with a remote
-# FTP server.
+# Configuration for authenticating with an FTP server.
 #
-# + credentials - Username and password to be used
-# + privateKey - Private key to be used
+# + credentials - Username and password for basic authentication
+# + privateKey - Private key and password for key-based authentication
 # + preferredMethods - Preferred authentication methods
 public type AuthConfiguration record {|
     Credentials credentials?;
@@ -55,12 +53,11 @@ public type AuthConfiguration record {|
     PreferredMethod[] preferredMethods = [PUBLICKEY, PASSWORD];
 |};
 
-# Authentication methods for the FTP listener.
-# 
+# Authentication methods supported by the FTP connector.
 # + KEYBOARD_INTERACTIVE - Keyboard interactive authentication
 # + GSSAPI_WITH_MIC - GSSAPI with MIC authentication
-# + PASSWORD - Password authentication
-# + PUBLICKEY - Public key authentication
+# + PASSWORD - Password-based authentication
+# + PUBLICKEY - Public key-based authentication
 public enum PreferredMethod {
     KEYBOARD_INTERACTIVE,
     GSSAPI_WITH_MIC,
@@ -68,14 +65,13 @@ public enum PreferredMethod {
     PUBLICKEY
 }
 
-# Configuration for the input given for `put` and `append` operations of
-# the FTP module.
+# Internal configuration for content to be written in put and append operations.
 #
 # + filePath - Path of the file to be created or appended
-# + isFile - `true` if the input type is a file
-# + fileContent - The content read from the input file, if the input is a file
-# + textContent - The input content, for other input types
-# + compressInput - If true, input will be compressed before uploading
+# + isFile - `true` if the input type is a file stream
+# + fileContent - The content read from the input file stream
+# + textContent - The input content as text
+# + compressInput - If `true`, input will be compressed before uploading
 public type InputContent record {|
     string filePath;
     boolean isFile = false;
