@@ -55,7 +55,7 @@ public isolated client class Client {
 
     }
 
-    # Read file content as bytes (raw binary data).
+    # Reads file content as bytes (raw binary data).
     # ```ballerina
     # byte[] content = check client->getBytes(path);
     # ```
@@ -66,7 +66,7 @@ public isolated client class Client {
         return getBytes(self, path);
     }
 
-    # Read file content as text.
+    # Reads file content as text.
     # ```ballerina
     # string content = check client->getText(path);
     # ```
@@ -77,7 +77,7 @@ public isolated client class Client {
         return getText(self, path);
     }
 
-    # Read a file as JSON data.
+    # Reads a file as JSON data.
     # ```ballerina
     # json content = check client->getJson(path);
     # ```
@@ -90,7 +90,7 @@ public isolated client class Client {
         'class: "io.ballerina.stdlib.ftp.client.FtpClient"
     } external;
 
-    # Read a file as XML data.
+    # Reads a file as XML data.
     # ```ballerina
     # xml content = check client->getXml(path);
     # ```
@@ -103,7 +103,7 @@ public isolated client class Client {
         'class: "io.ballerina.stdlib.ftp.client.FtpClient"
     } external;
 
-    # Read a CSV (comma-separated) file from the server.
+    # Reads a CSV (comma-separated) file from the server.
     # The first row of the CSV file should contain column names (headers).
     # ```ballerina
     # string[][] content = check client->getCsv(path);
@@ -117,7 +117,7 @@ public isolated client class Client {
         'class: "io.ballerina.stdlib.ftp.client.FtpClient"
     } external;
 
-    # Read file content as a stream of byte chunks.
+    # Reads file content as a stream of byte chunks.
     # Useful for processing large files without loading the entire file into memory.
     # ```ballerina
     # stream<byte[], error?> response = check client->getBytesAsStream(path);
@@ -130,7 +130,7 @@ public isolated client class Client {
         'class: "io.ballerina.stdlib.ftp.client.FtpClient"
     } external;
 
-    # Read a CSV file as a continuous stream of rows.
+    # Reads a CSV file as a continuous stream of rows.
     # Useful for processing very large files one row at a time.
     # The first row of the CSV file should contain column names (headers).
     # ```ballerina
@@ -160,7 +160,7 @@ public isolated client class Client {
         return append(self, getInputContent(path, content));
     }
 
-    # Write content to a file (with optional compression).
+    # Writes content to a file (with optional compression).
     # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvAsStream` instead.
     # ```ballerina
     # ftp:Error? response = client->put(path, channel);
@@ -180,7 +180,7 @@ public isolated client class Client {
         return put(self, getInputContent(path, content, compress));
     }
 
-    # Write bytes to a file.
+    # Writes bytes to a file.
     # ```ballerina
     # ftp:Error? response = client->putBytes(path, content, option);
     # ```
@@ -194,7 +194,7 @@ public isolated client class Client {
         'class: "io.ballerina.stdlib.ftp.client.FtpClient"
     } external;
 
-    # Write text to a file.
+    # Writes text to a file.
     # ```ballerina
     # ftp:Error? response = client->putText(path, content, option);
     # ```
@@ -208,7 +208,7 @@ public isolated client class Client {
         'class: "io.ballerina.stdlib.ftp.client.FtpClient"
     } external;
 
-    # Write JSON data to a file.
+    # Writes JSON data to a file.
     # ```ballerina
     # ftp:Error? response = client->putJson(path, content, option);
     # ```
@@ -221,7 +221,7 @@ public isolated client class Client {
         return putJson(self, path, content.toJsonString(), option);
     }
 
-    # Write XML data to a file.
+    # Writes XML data to a file.
     # ```ballerina
     # ftp:Error? response = client->putXml(path, content, option);
     # ```
@@ -238,7 +238,7 @@ public isolated client class Client {
         return putXml(self, path, xmldata, option);
     }
 
-    # Write CSV data to a file.
+    # Writes CSV data to a file.
     # ```ballerina
     # ftp:Error? response = client->putCsv(path, content, option);
     # ```
@@ -251,7 +251,7 @@ public isolated client class Client {
         return putCsv(self, path, content, option);
     }
 
-    # Write bytes from a stream to a file.
+    # Writes bytes from a stream to a file.
     # Useful for processing and uploading large files without loading everything into memory.
     # ```ballerina
     # ftp:Error? response = client->putBytesAsStream(path, content, option);
@@ -266,7 +266,7 @@ public isolated client class Client {
         'class: "io.ballerina.stdlib.ftp.client.FtpClient"
     } external;
 
-    # Write CSV data from a stream to a file.
+    # Writes CSV data from a stream to a file.
     # Useful for processing and uploading large CSV files without loading everything into memory.
     # ```ballerina
     # ftp:Error? response = client->putCsvAsStream(path, content, option);
@@ -315,7 +315,7 @@ public isolated client class Client {
         return rename(self, origin, destination);
     }
 
-    # Move a file to a different location on the file server.
+    # Moves a file to a different location on the file server.
     # ```ballerina
     # ftp:Error? response = client->move(sourcePath, destinationPath);
     # ```
@@ -327,7 +327,7 @@ public isolated client class Client {
         return move(self, sourcePath, destinationPath);
     }
 
-    # Copy a file to a different location on the file server.
+    # Copies a file to a different location on the file server.
     # ```ballerina
     # ftp:Error? response = client->copy(sourcePath, destinationPath);
     # ```
