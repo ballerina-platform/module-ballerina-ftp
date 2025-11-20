@@ -152,7 +152,7 @@ type User record {
     int age;
 };
 
-User userData = check ftpClient->getJson("<The file path>", targetType = User);
+User userData = check ftpClient->getJson("<The file path>");
 ```
 
 Read as XML or typed record:
@@ -166,7 +166,7 @@ type Config record {
     int timeout;
 };
 
-Config config = check ftpClient->getXml("<The file path>", targetType = Config);
+Config config = check ftpClient->getXml("<The file path>");
 ```
 
 Read as CSV (string arrays or typed records):
@@ -181,7 +181,7 @@ type CsvRecord record {
     string email;
 };
 
-CsvRecord[] records = check ftpClient->getCsv("<The file path>", targetType = CsvRecord);
+CsvRecord[] records = check ftpClient->getCsv("<The file path>");
 ```
 
 Read as bytes:
