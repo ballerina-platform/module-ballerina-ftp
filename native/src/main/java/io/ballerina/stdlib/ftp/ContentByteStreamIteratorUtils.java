@@ -17,12 +17,12 @@
  */
 package io.ballerina.stdlib.ftp;
 
-import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.util.FtpUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,9 +30,14 @@ import java.util.Arrays;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ARRAY_SIZE;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FIELD_VALUE;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getFtpPackage;
 
 public class ContentByteStreamIteratorUtils {
+
+    private ContentByteStreamIteratorUtils() {
+        // private constructor
+    }
 
     /**
      * Gets the next chunk of bytes from the stream.
@@ -58,10 +63,10 @@ public class ContentByteStreamIteratorUtils {
                 returnArray = buffer;
             }
             streamEntry.put(FIELD_VALUE, ValueCreator.createArrayValue(returnArray));
+            return streamEntry;
         } catch (IOException e) {
-            streamEntry.put(FIELD_VALUE, ErrorCreator.createError(StringUtils.fromString("Unable to parse value")));
+            return FtpUtil.createError("Unable to parse value", e, FTP_ERROR);
         }
-        return streamEntry;
     }
 
     /**
@@ -74,7 +79,7 @@ public class ContentByteStreamIteratorUtils {
         try {
             inputStream.close();
         } catch (IOException e) {
-            throw ErrorCreator.createError(StringUtils.fromString("Unable to clean input stream"), e);
+            return FtpUtil.createError("Unable to clean input stream value", e, FTP_ERROR);
         }
         return null;
     }

@@ -47,8 +47,10 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
         try {
             consumer = new RemoteFileSystemConsumer(properties, remoteFileSystemListener);
         } catch (RemoteFileSystemConnectorException e) {
+            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null) 
+                    ? e.getCause().getMessage() : e.getMessage();
             throw new RemoteFileSystemConnectorException(
-                    "Failed to initialize File server connector.", e);
+                    "Failed to initialize File server connector. " + rootCauseMessage, e);
         }
     }
 

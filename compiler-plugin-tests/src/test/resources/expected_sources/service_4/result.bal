@@ -35,7 +35,7 @@ listener ftp:Listener secureRemoteServer = check new ({
 service "Test" on secureRemoteServer {
 	int x = 5;
 	string y = "xx";
-	remote function onFileChange(ftp:Caller caller, ftp:WatchEvent & readonly event) returns ftp:Error? {
+	remote function onFileJson(record{} content) returns ftp:Error? {
 
 	}
 }

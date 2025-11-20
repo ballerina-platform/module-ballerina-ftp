@@ -180,6 +180,9 @@ class Job {
 #                   that can fail on servers restricting root access (e.g., chrooted environments).
 # + fileAgeFilter - Configuration for filtering files based on age (optional)
 # + fileDependencyConditions - Array of dependency conditions for conditional file processing (default: [])
+# + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
+#                    null values in JSON/XML are allowed to be mapped to optional fields
+#                    missing fields in JSON/XML are allowed to be mapped as null values
 public type ListenerConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -191,6 +194,7 @@ public type ListenerConfiguration record {|
     boolean userDirIsRoot = false;
     FileAgeFilter fileAgeFilter?;
     FileDependencyCondition[] fileDependencyConditions = [];
+    boolean laxDataBinding = false;
 |};
 
 # Represents a FTP service.

@@ -1,0 +1,4 @@
+[package]
+org = "ftp_test"
+name = "invalid_content_service_7"
+version = "0.1.0"

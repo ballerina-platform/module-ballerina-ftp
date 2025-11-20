@@ -93,8 +93,10 @@ public class RemoteFileSystemConsumer {
             }
         } catch (FileSystemException e) {
             remoteFileSystemListener.onError(e);
+            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null) 
+                    ? e.getCause().getMessage() : e.getMessage();
             throw new RemoteFileSystemConnectorException(
-                    "Unable to initialize the connection with the server.", e);
+                    "Unable to initialize the connection with the server. " + rootCauseMessage, e);
         }
         if (fileProperties.get(FtpConstants.FILE_NAME_PATTERN) != null) {
             fileNamePattern = fileProperties.get(FtpConstants.FILE_NAME_PATTERN);

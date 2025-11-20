@@ -71,8 +71,10 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             path = fsManager.resolveFile(fileURI, opts);
         } catch (FileSystemException e) {
             String safeUri = maskUrlPassword(fileURI);
+            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null) 
+                    ? e.getCause().getMessage() : e.getMessage();
             throw new RemoteFileSystemConnectorException("Error while connecting to the FTP server with URL: "
-                    + (safeUri != null ? safeUri : ""), e.getCause());
+                    + (safeUri != null ? safeUri : "") + ". " + rootCauseMessage, e.getCause());
         }
     }
 
@@ -218,6 +220,31 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         throw new BallerinaFtpException(filePath + " does not exists to check if it is a directory.");
                     }
                     remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.isFolder()));
+                    break;
+                case COPY:
+                    if (fileObject.exists()) {
+                        try (FileObject destinationFile = fsManager.resolveFile(destination, opts);
+                                FileObject parent = destinationFile.getParent()) {
+                            if (parent != null && !parent.exists()) {
+                                parent.createFolder();
+                            }
+                            if (!destinationFile.exists()) {
+                                destinationFile.copyFrom(fileObject, Selectors.SELECT_SELF);
+                            } else {
+                                throw new RemoteFileSystemConnectorException(
+                                        "The file at " + maskUrlPassword(destinationFile.getURL().toString())
+                                                + " already exists");
+                            }
+                        }
+                    } else {
+                        throw new RemoteFileSystemConnectorException(
+                                "Failed to copy file: " + maskUrlPassword(fileObject.getName().getURI())
+                                        + " not found");
+                    }
+                    break;
+                case EXISTS:
+                    remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.exists(), 
+                            RemoteFileSystemMessage.ValueType.EXISTS_CHECK));
                     break;
                 default:
                     break;

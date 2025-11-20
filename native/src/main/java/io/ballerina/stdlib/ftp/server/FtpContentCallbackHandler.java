@@ -59,7 +59,6 @@ import java.util.Optional;
 import static io.ballerina.runtime.api.types.TypeTags.ARRAY_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
-import static io.ballerina.runtime.api.types.TypeTags.STREAM_TAG;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CSV_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_JSON_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_REMOTE_FUNCTION;
@@ -161,7 +160,8 @@ public class FtpContentCallbackHandler {
     private Object convertFileContent(byte[] fileContent, MethodType methodType) throws Exception {
         String methodName = methodType.getName();
         Parameter firstParameter = methodType.getParameters()[0];
-        int firstParamTypeTag = TypeUtils.getReferredType(firstParameter.type).getTag();
+        Type firstParamType = TypeUtils.getReferredType(firstParameter.type);
+        int firstParamTypeTag = firstParamType.getTag();
 
         switch (methodName) {
             case ON_FILE_REMOTE_FUNCTION:
@@ -169,11 +169,11 @@ public class FtpContentCallbackHandler {
             case ON_FILE_TEXT_REMOTE_FUNCTION:
                 return FtpContentConverter.convertBytesToString(fileContent);
             case ON_FILE_JSON_REMOTE_FUNCTION:
-                return FtpContentConverter.convertBytesToJson(fileContent);
+                return FtpContentConverter.convertBytesToJson(fileContent, firstParamType);
             case ON_FILE_XML_REMOTE_FUNCTION:
-                return FtpContentConverter.convertBytesToXml(fileContent);
+                return FtpContentConverter.convertBytesToXml(fileContent, firstParamType);
             case ON_FILE_CSV_REMOTE_FUNCTION:
-                return convertOnFileCsvContent(fileContent, methodType);
+                return convertOnFileCsvContent(fileContent, firstParamType);
             default:
                 throw new IllegalArgumentException("Unknown content method: " + methodName);
         }
@@ -186,43 +186,26 @@ public class FtpContentCallbackHandler {
         if (firstParamTypeTag == ARRAY_TAG) {
             // Return as byte[]
             return FtpContentConverter.convertToBallerinaByteArray(fileContent);
-        } else if (firstParamTypeTag == STREAM_TAG) {
-            // Return as stream<byte[], error?>
-            // Create a byte stream from the content
-            return createByteStreamFromContent(fileContent);
         }
-        return FtpContentConverter.convertToBallerinaByteArray(fileContent);
+        // Return as stream<byte[], error?>
+        // Create a byte stream from the content
+        return createByteStreamFromContent(fileContent);
     }
 
     /**
-     * Converts content for onFileCsv method.
+     * Converts content for onFileCsv method (string[][], record array, or stream<string[], error?>).
      */
-    private Object convertOnFileCsvContent(byte[] fileContent, MethodType methodType) throws Exception {
-        Parameter firstParameter = methodType.getParameters()[0];
-        Type firstParamType = TypeUtils.getReferredType(firstParameter.type);
+    private Object convertOnFileCsvContent(byte[] fileContent, Type firstParamType) throws Exception {
         int firstParamTypeTag = firstParamType.getTag();
 
         if (firstParamTypeTag == ARRAY_TAG) {
-            // Check if it's string[][] or record{}[]
-            ArrayType arrayType = (ArrayType) firstParamType;
-            Type elementType = TypeUtils.getReferredType(arrayType.getElementType());
-
-            if (elementType.getTag() == ARRAY_TAG) {
-                // It's string[][] - 2D array
-                return FtpContentConverter.convertBytesToCsvStringArray(fileContent);
-            } else if (elementType.getTag() == RECORD_TYPE_TAG) {
-                // It's record{}[] - array of records
-                return FtpContentConverter.convertBytesToCsvRecordArray(fileContent, elementType);
-            } else {
-                // Default to string[][]
-                return FtpContentConverter.convertBytesToCsvStringArray(fileContent);
-            }
-        } else if (firstParamTypeTag == STREAM_TAG) {
-            // Return as stream for large CSV files
-            return createByteStreamFromContent(fileContent);
+            // string[][] or record array
+            return FtpContentConverter.convertBytesToCsv(fileContent, firstParamType);
         }
-        return FtpContentConverter.convertBytesToCsvStringArray(fileContent);
+        // stream<string[], error?>
+        return FtpContentConverter.createCsvStreamFromContent(fileContent);
     }
+
 
     /**
      * Creates a Ballerina byte stream from byte array content.

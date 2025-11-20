@@ -56,6 +56,11 @@ isolated function putXml(Client clientEndpoint, string path, xml content, FileWr
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
 } external;
 
+isolated function putCsv(Client clientEndpoint, string path, string[][]|record {}[] content, FileWriteOption option) returns Error? = @java:Method {
+    name: "putCsv",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"  
+} external;
+
 isolated function mkdir(Client clientEndpoint, string path) returns Error? = @java:Method {
     name: "mkdir",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
@@ -68,6 +73,21 @@ isolated function rmdir(Client clientEndpoint, string path) returns Error? = @ja
 
 isolated function rename(Client clientEndpoint, string origin, string destination) returns Error? = @java:Method {
     name: "rename",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
+isolated function move(Client clientEndpoint, string sourcePath, string destinationPath) returns Error? = @java:Method {
+    name: "move",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
+isolated function copy(Client clientEndpoint, string sourcePath, string destinationPath) returns Error? = @java:Method {
+    name: "copy",
+    'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+} external;
+
+isolated function exists(Client clientEndpoint, string path) returns boolean|Error = @java:Method {
+    name: "exists",
     'class: "io.ballerina.stdlib.ftp.client.FtpClient"
 } external;
 

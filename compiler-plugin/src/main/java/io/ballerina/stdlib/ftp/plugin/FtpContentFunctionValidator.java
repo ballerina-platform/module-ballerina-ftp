@@ -18,158 +18,145 @@
 
 package io.ballerina.stdlib.ftp.plugin;
 
-import io.ballerina.compiler.api.SemanticModel;
-import io.ballerina.compiler.api.symbols.MethodSymbol;
-import io.ballerina.compiler.api.symbols.ModuleSymbol;
-import io.ballerina.compiler.api.symbols.ParameterSymbol;
-import io.ballerina.compiler.api.symbols.Symbol;
+import io.ballerina.compiler.api.symbols.ArrayTypeSymbol;
+import io.ballerina.compiler.api.symbols.StreamTypeSymbol;
 import io.ballerina.compiler.api.symbols.TypeDescKind;
+import io.ballerina.compiler.api.symbols.TypeReferenceTypeSymbol;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
-import io.ballerina.compiler.api.symbols.UnionTypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
-import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
-import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
-import io.ballerina.tools.diagnostics.DiagnosticSeverity;
-import io.ballerina.tools.diagnostics.Location;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import static io.ballerina.compiler.api.symbols.TypeDescKind.ARRAY;
+import static io.ballerina.compiler.api.symbols.TypeDescKind.BYTE;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.JSON;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.RECORD;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.STREAM;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.STRING;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.TYPE_REFERENCE;
 import static io.ballerina.compiler.api.symbols.TypeDescKind.XML;
-import static io.ballerina.compiler.syntax.tree.SyntaxKind.QUALIFIED_NAME_REFERENCE;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CALLER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.CONTENT_METHOD_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_CALLER_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_CONTENT_PARAMETER_TYPE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_FILEINFO_PARAMETER;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_RETURN_TYPE_ERROR_OR_NIL;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MANDATORY_PARAMETER_NOT_FOUND;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.FILE_INFO;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CSV_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_JSON_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_TEXT_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_XML_FUNC;
-import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getDiagnostic;
-import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getMethodSymbol;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isRemoteFunction;
-import static io.ballerina.stdlib.ftp.plugin.PluginUtils.validateModuleId;
+import static io.ballerina.stdlib.ftp.plugin.PluginUtils.reportErrorDiagnostic;
 
 /**
  * FTP content function validator.
  */
 public class FtpContentFunctionValidator {
 
-    private final SyntaxNodeAnalysisContext syntaxNodeAnalysisContext;
-    private final FunctionDefinitionNode contentFunctionDefinitionNode;
+    private final SyntaxNodeAnalysisContext context;
+    private final FunctionDefinitionNode funcDefinitionNode;
     private final String contentMethodName;
 
-    public FtpContentFunctionValidator(SyntaxNodeAnalysisContext syntaxNodeAnalysisContext,
-                                       FunctionDefinitionNode contentFunctionDefinitionNode,
+    public FtpContentFunctionValidator(SyntaxNodeAnalysisContext context,
+                                       FunctionDefinitionNode funcDefinitionNode,
                                        String contentMethodName) {
-        this.syntaxNodeAnalysisContext = syntaxNodeAnalysisContext;
-        this.contentFunctionDefinitionNode = contentFunctionDefinitionNode;
+        this.context = context;
+        this.funcDefinitionNode = funcDefinitionNode;
         this.contentMethodName = contentMethodName;
     }
 
     public void validate() {
-        if (Objects.isNull(contentFunctionDefinitionNode)) {
+        if (Objects.isNull(funcDefinitionNode)) {
             return;
         }
 
-        if (!isRemoteFunction(syntaxNodeAnalysisContext, contentFunctionDefinitionNode)) {
-            reportErrorDiagnostic(CONTENT_METHOD_MUST_BE_REMOTE, contentFunctionDefinitionNode.location());
+        if (!isRemoteFunction(context, funcDefinitionNode)) {
+            reportErrorDiagnostic(context, CONTENT_METHOD_MUST_BE_REMOTE,
+                    funcDefinitionNode.location(), contentMethodName);
         }
 
-        SeparatedNodeList<ParameterNode> parameters = contentFunctionDefinitionNode.functionSignature().parameters();
-        validateContentFunctionParameters(parameters, contentFunctionDefinitionNode);
-        validateReturnTypeErrorOrNil(contentFunctionDefinitionNode);
+        SeparatedNodeList<ParameterNode> parameters = funcDefinitionNode.functionSignature().parameters();
+        validateContentFunctionParameters(parameters, funcDefinitionNode);
+        PluginUtils.validateReturnTypeErrorOrNil(funcDefinitionNode, context);
     }
 
     private void validateContentFunctionParameters(SeparatedNodeList<ParameterNode> parameters,
-                                                    FunctionDefinitionNode functionDefinitionNode) {
+                                                   FunctionDefinitionNode functionDefinitionNode) {
         if (parameters.isEmpty()) {
-            reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, functionDefinitionNode.location());
+            String expectedType = getExpectedContentType();
+            reportErrorDiagnostic(context, MANDATORY_PARAMETER_NOT_FOUND,
+                    functionDefinitionNode.location(),
+                    contentMethodName, expectedType);
             return;
         }
 
         if (parameters.size() > 3) {
-            reportErrorDiagnostic(TOO_MANY_PARAMETERS, functionDefinitionNode.location());
+            reportErrorDiagnostic(context, TOO_MANY_PARAMETERS, functionDefinitionNode.location(),
+                    contentMethodName);
             return;
         }
 
         // First parameter must be content parameter
         ParameterNode firstParameter = parameters.get(0);
         if (!validateContentParameter(firstParameter)) {
-            reportErrorDiagnostic(INVALID_CONTENT_PARAMETER_TYPE, firstParameter.location());
+            String expectedType = getExpectedContentType();
+            String actualType = PluginUtils.getParameterTypeSignature(firstParameter, context);
+            reportErrorDiagnostic(context, INVALID_CONTENT_PARAMETER_TYPE, firstParameter.location(),
+                    contentMethodName, expectedType, actualType);
         }
 
-        // Second parameter (if exists) can be FileInfo or Caller
-        if (parameters.size() >= 2) {
-            ParameterNode secondParameter = parameters.get(1);
-            boolean isFileInfo = validateFileInfoParameter(secondParameter);
-            boolean isCaller = validateCallerParameter(secondParameter);
+        if (parameters.size() == 1) {
+            return;
+        }
 
-            if (!isFileInfo && !isCaller) {
-                reportErrorDiagnostic(INVALID_FILEINFO_PARAMETER, secondParameter.location());
+        if (parameters.size() == 2) {
+            boolean isFileInfo = PluginUtils.validateFileInfoParameter(parameters.get(1), context);
+            if (isFileInfo) {
+                return;
             }
+            boolean isCaller = PluginUtils.validateCallerParameter(parameters.get(1), context);
+            if (!isCaller) {
+                reportErrorDiagnostic(context, INVALID_FILEINFO_PARAMETER,
+                        parameters.get(1).location(), contentMethodName);
+            }
+            return;
+        }
 
-            // Third parameter (if exists) must be Caller if second was FileInfo, or validation error
-            if (parameters.size() == 3) {
-                ParameterNode thirdParameter = parameters.get(2);
-                if (isFileInfo) {
-                    if (!validateCallerParameter(thirdParameter)) {
-                        reportErrorDiagnostic(INVALID_CALLER_PARAMETER, thirdParameter.location());
-                    }
-                } else {
-                    // Second was Caller, third is invalid
-                    reportErrorDiagnostic(TOO_MANY_PARAMETERS, thirdParameter.location());
-                }
-            }
+        // parameters.size() == 3
+        if (!PluginUtils.validateFileInfoParameter(parameters.get(1), context)) {
+            reportErrorDiagnostic(context, INVALID_FILEINFO_PARAMETER, parameters.get(1).location(),
+                    contentMethodName);
+            return;
+        }
+
+        if (!PluginUtils.validateCallerParameter(parameters.get(2), context)) {
+            reportErrorDiagnostic(context, INVALID_CALLER_PARAMETER, parameters.get(2).location());
         }
     }
 
     private boolean validateContentParameter(ParameterNode parameterNode) {
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        Node parameterTypeNode = requiredParameterNode.typeName();
-        SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
-
-        if (paramSymbol.isEmpty()) {
+        Optional<TypeSymbol> typeSymbolOpt = PluginUtils.getParameterTypeSymbol(parameterNode,
+                context);
+        if (typeSymbolOpt.isEmpty()) {
             return false;
         }
 
-        TypeSymbol typeSymbol = ((ParameterSymbol) paramSymbol.get()).typeDescriptor();
-        if (typeSymbol == null) {
-            return false;
-        }
-
+        TypeSymbol typeSymbol = typeSymbolOpt.get();
         TypeDescKind typeKind = typeSymbol.typeKind();
 
-        switch (contentMethodName) {
-            case ON_FILE_FUNC:
-                return validateOnFileContentType(typeKind, typeSymbol);
-            case ON_FILE_TEXT_FUNC:
-                return typeKind == STRING;
-            case ON_FILE_JSON_FUNC:
-                return typeKind == JSON || typeKind == RECORD || isRecordTypeReference(typeSymbol);
-            case ON_FILE_XML_FUNC:
-                return typeKind == XML || typeKind == RECORD || isRecordTypeReference(typeSymbol);
-            case ON_FILE_CSV_FUNC:
-                return validateOnFileCsvContentType(typeKind, typeSymbol);
-            default:
-                return false;
-        }
+        return switch (contentMethodName) {
+            case ON_FILE_FUNC -> validateOnFileContentType(typeKind, typeSymbol);
+            case ON_FILE_TEXT_FUNC -> typeKind == STRING;
+            case ON_FILE_JSON_FUNC -> typeKind == JSON || typeKind == RECORD || isRecordTypeReference(typeSymbol);
+            case ON_FILE_XML_FUNC -> typeKind == XML || typeKind == RECORD || isRecordTypeReference(typeSymbol);
+            case ON_FILE_CSV_FUNC -> validateOnFileCsvContentType(typeKind, typeSymbol);
+            default -> false;
+        };
     }
 
     private boolean validateOnFileContentType(TypeDescKind typeKind, TypeSymbol typeSymbol) {
@@ -185,135 +172,111 @@ public class FtpContentFunctionValidator {
     }
 
     private boolean validateOnFileCsvContentType(TypeDescKind typeKind, TypeSymbol typeSymbol) {
-        // onFileCsv accepts: string[][], record{}[], or stream<byte[], error?>
         if (typeKind == ARRAY) {
-            return isStringArrayArray(typeSymbol) || isRecordArray(typeSymbol);
+            // Array variant: string[][] or record[][]
+            ArrayTypeSymbol arrayTypeSymbol = (ArrayTypeSymbol) typeSymbol;
+            return isStringArrayArray(arrayTypeSymbol) || isRecordArray(arrayTypeSymbol);
         } else if (typeKind == STREAM) {
-            return isByteStream(typeSymbol);
+            // Stream variant: stream<string[], error?> or stream<record[], error?>
+            StreamTypeSymbol streamTypeSymbol = (StreamTypeSymbol) typeSymbol;
+            return isStringArrayStream(streamTypeSymbol) || isStreamRecordArray(streamTypeSymbol);
         }
         return false;
     }
 
-    private boolean isByteArray(TypeSymbol typeSymbol) {
-        return typeSymbol.signature().equals("byte[]");
+    private boolean isStreamRecordArray(StreamTypeSymbol streamType) {
+        // Get the stream's item type - should be record{}
+        TypeSymbol itemType = streamType.typeParameter();
+        return itemType.typeKind() == RECORD || isRecordTypeReference(itemType);
     }
+
+    /**
+     * Validates that a type symbol represents byte[] (byte array).
+     * This is the accepted parameter type for onFile handler.
+     *
+     * @param typeSymbol The type symbol to validate
+     * @return true if typeSymbol is exactly byte[], false otherwise
+     */
+    private boolean isByteArray(TypeSymbol typeSymbol) {
+        if (!(typeSymbol instanceof ArrayTypeSymbol arrayType)) {
+            return false;
+        }
+        TypeSymbol memberType = arrayType.memberTypeDescriptor();
+        // Ensure it's exactly byte, not nullable or union type
+        return memberType.typeKind() == BYTE;
+    }
+
 
     private boolean isByteStream(TypeSymbol typeSymbol) {
-        return typeSymbol.signature().contains("stream<byte[]");
+        // Must be a stream type
+        if (typeSymbol.typeKind() != STREAM || !(typeSymbol instanceof StreamTypeSymbol streamType)) {
+            return false;
+        }
+
+        // Get the stream's item type - should be byte[]
+        TypeSymbol itemType = streamType.typeParameter();
+        if (!(itemType instanceof ArrayTypeSymbol arrayType)) {
+            return false;
+        }
+
+        // Verify the array contains bytes
+        TypeSymbol memberType = arrayType.memberTypeDescriptor();
+        return memberType.typeKind() == BYTE;
     }
 
-    private boolean isStringArrayArray(TypeSymbol typeSymbol) {
-        return typeSymbol.signature().equals("string[][]");
+    private boolean isStringArrayStream(StreamTypeSymbol streamType) {
+        // Get the stream's item type - should be string[]
+        TypeSymbol itemType = streamType.typeParameter();
+        if (!(itemType instanceof ArrayTypeSymbol arrayType)) {
+            return false;
+        }
+
+        // Verify the array contains strings
+        TypeSymbol memberType = arrayType.memberTypeDescriptor();
+        return memberType.typeKind() == STRING;
     }
 
-    private boolean isRecordArray(TypeSymbol typeSymbol) {
-        String signature = typeSymbol.signature();
-        return signature.contains("record") && signature.endsWith("[]");
+    private boolean isStringArrayArray(ArrayTypeSymbol outerArray) {
+        TypeSymbol outerMember = outerArray.memberTypeDescriptor();
+        if (!(outerMember instanceof ArrayTypeSymbol innerArray)) {
+            return false;
+        }
+
+        TypeSymbol innerMember = innerArray.memberTypeDescriptor();
+        return innerMember.typeKind() == STRING;
+    }
+
+    private boolean isRecordArray(ArrayTypeSymbol arrayType) {
+        // Get the array's member type
+        TypeSymbol memberType = arrayType.memberTypeDescriptor();
+        TypeDescKind memberKind = memberType.typeKind();
+
+        // Accept both direct record types and type references to records
+        return memberKind == RECORD || isRecordTypeReference(memberType);
     }
 
     private boolean isRecordTypeReference(TypeSymbol typeSymbol) {
-        if (typeSymbol.typeKind() == TYPE_REFERENCE) {
-            // Get the referred type and check if it's a record
-            TypeSymbol referredType = ((io.ballerina.compiler.api.symbols.TypeReferenceTypeSymbol) typeSymbol)
-                    .typeDescriptor();
-            return referredType != null && referredType.typeKind() == RECORD;
-        }
-        return false;
-    }
-
-    private boolean validateFileInfoParameter(ParameterNode parameterNode) {
-        if (!(parameterNode instanceof RequiredParameterNode)) {
+        if (typeSymbol.typeKind() != TYPE_REFERENCE) {
             return false;
         }
 
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        if (requiredParameterNode.typeName().kind() != QUALIFIED_NAME_REFERENCE) {
-            return false;
-        }
+        // Cast to TypeReferenceTypeSymbol and get the referred type
+        TypeReferenceTypeSymbol typeRef = (TypeReferenceTypeSymbol) typeSymbol;
+        TypeSymbol referredType = typeRef.typeDescriptor();
 
-        Node parameterTypeNode = requiredParameterNode.typeName();
-        SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
-
-        if (paramSymbol.isPresent()) {
-            Optional<ModuleSymbol> moduleSymbol = paramSymbol.get().getModule();
-            if (moduleSymbol.isPresent()) {
-                String paramName = paramSymbol.get().getName().orElse("");
-                return validateModuleId(moduleSymbol.get()) && paramName.equals(FILE_INFO);
-            }
-        }
-        return false;
+        // Check if the referred type is a record
+        return referredType != null && referredType.typeKind() == RECORD;
     }
 
-    private boolean validateCallerParameter(ParameterNode parameterNode) {
-        if (!(parameterNode instanceof RequiredParameterNode)) {
-            return false;
-        }
-
-        RequiredParameterNode requiredParameterNode = (RequiredParameterNode) parameterNode;
-        if (requiredParameterNode.typeName().kind() != QUALIFIED_NAME_REFERENCE) {
-            return false;
-        }
-
-        Node parameterTypeNode = requiredParameterNode.typeName();
-        SemanticModel semanticModel = syntaxNodeAnalysisContext.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
-
-        if (paramSymbol.isPresent()) {
-            Optional<ModuleSymbol> moduleSymbol = paramSymbol.get().getModule();
-            if (moduleSymbol.isPresent()) {
-                String paramName = paramSymbol.get().getName().orElse("");
-                return validateModuleId(moduleSymbol.get()) && paramName.equals(CALLER);
-            }
-        }
-        return false;
-    }
-
-    private void validateReturnTypeErrorOrNil(FunctionDefinitionNode functionDefinitionNode) {
-        MethodSymbol methodSymbol = getMethodSymbol(syntaxNodeAnalysisContext, functionDefinitionNode);
-        if (methodSymbol == null) {
-            return;
-        }
-
-        Optional<TypeSymbol> returnTypeDesc = methodSymbol.typeDescriptor().returnTypeDescriptor();
-        if (returnTypeDesc.isEmpty()) {
-            return;
-        }
-
-        TypeDescKind returnTypeKind = returnTypeDesc.get().typeKind();
-
-        if (returnTypeKind == TypeDescKind.NIL) {
-            return;
-        }
-
-        if (returnTypeKind == TypeDescKind.UNION) {
-            List<TypeSymbol> returnTypeMembers =
-                    ((UnionTypeSymbol) returnTypeDesc.get()).memberTypeDescriptors();
-            for (TypeSymbol returnType : returnTypeMembers) {
-                if (returnType.typeKind() != TypeDescKind.NIL) {
-                    if (returnType.typeKind() == TYPE_REFERENCE) {
-                        if (!returnType.signature().equals(PluginConstants.ERROR) &&
-                                returnType.getModule().isPresent() &&
-                                !validateModuleId(returnType.getModule().get())) {
-                            reportErrorDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                    functionDefinitionNode.functionSignature().location());
-                            return;
-                        }
-                    } else if (returnType.typeKind() != TypeDescKind.ERROR) {
-                        reportErrorDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                                functionDefinitionNode.functionSignature().location());
-                        return;
-                    }
-                }
-            }
-        } else {
-            reportErrorDiagnostic(INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                    functionDefinitionNode.functionSignature().location());
-        }
-    }
-
-    public void reportErrorDiagnostic(PluginConstants.CompilationErrors error, Location location) {
-        syntaxNodeAnalysisContext.reportDiagnostic(getDiagnostic(error,
-                DiagnosticSeverity.ERROR, location));
+    private String getExpectedContentType() {
+        return switch (contentMethodName) {
+            case ON_FILE_FUNC -> "byte[] or stream<byte[], error?>";
+            case ON_FILE_TEXT_FUNC -> "string";
+            case ON_FILE_JSON_FUNC -> "json or record{}";
+            case ON_FILE_XML_FUNC -> "xml or record{}";
+            case ON_FILE_CSV_FUNC ->
+                    "string[][], record{}[], stream<string[], error?>, or stream<record{}, error?>";
+            default -> "unknown";
+        };
     }
 }

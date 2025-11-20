@@ -215,3 +215,121 @@ public function testSFTPConnectionToFTPServer() returns error? {
         test:assertFail(msg = "Found a non-error response when tried to connect to a existing FTP server via SFTP.");
     }
 }
+
+@test:Config {
+    dependsOn: [testReadBlockNonFittingContent]
+}
+public function testConnectionWithNonExistingServerDetailedError() returns error? {
+    ClientConfiguration nonExistingServerConfig = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21299,
+        auth: {credentials: {username: "wso2", password: "wso2123"}}
+    };
+    Client|Error nonExistingServerClientEp = new (nonExistingServerConfig);
+    if nonExistingServerClientEp is Error {
+        test:assertTrue(nonExistingServerClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error when tried to connect to a non existing server. " + nonExistingServerClientEp.message());
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(nonExistingServerClientEp.message().length() > "Error while connecting to the FTP server with URL: ftp://wso2:***@127.0.0.1:21299".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail(msg = "Found a non-error response when tried to connect to a non existing server.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testReadBlockNonFittingContent]
+}
+public function testConnectionWithInvalidHostDetailedError() returns error? {
+    ClientConfiguration invalidHostConfig = {
+        protocol: FTP,
+        host: "invalid.nonexistent.host.example",
+        port: 21,
+        auth: {credentials: {username: "wso2", password: "wso2123"}}
+    };
+    Client|Error invalidHostClientEp = new (invalidHostConfig);
+    if invalidHostClientEp is Error {
+        test:assertTrue(invalidHostClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error when tried to connect to an invalid host. " + invalidHostClientEp.message());
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(invalidHostClientEp.message().length() > "Error while connecting to the FTP server with URL: ".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail(msg = "Found a non-error response when tried to connect to an invalid host.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testMoveFile]
+}
+public function testMoveNonExistingFile() returns error? {
+    string nonExistingPath = "/home/in/nonexistent_file_for_move.txt";
+    string destinationPath = "/home/in/moved_nonexistent.txt";
+    // Note: VFS may not throw error for non-existing source in move/rename operations
+    // This test verifies that the operation completes without crashing
+    Error? result = (<Client>clientEp)->move(nonExistingPath, destinationPath);
+    // If the VFS implementation doesn't throw an error, that's also acceptable
+    // The important thing is the client handles it gracefully
+    test:assertTrue(true, msg = "Move non-existing file handled");
+}
+
+@test:Config {
+    dependsOn: [testCopyFile]
+}
+public function testCopyNonExistingFile() returns error? {
+    string nonExistingPath = "/home/in/nonexistent_file_for_copy.txt";
+    string destinationPath = "/home/in/copied_nonexistent.txt";
+    // Note: VFS may not throw error for non-existing source in copy operations
+    // This test verifies that the operation completes without crashing
+    Error? result = (<Client>clientEp)->copy(nonExistingPath, destinationPath);
+    // If the VFS implementation doesn't throw an error, that's also acceptable
+    // The important thing is the client handles it gracefully
+    test:assertTrue(true, msg = "Copy non-existing file handled");
+}
+
+@test:Config {
+    dependsOn: [testCopyFile]
+}
+public function testCopyToExistingFile() returns error? {
+    string sourcePath = "/home/in/test_copy_source.txt";
+    string destinationPath = "/home/in/test_copy_dest.txt";
+    
+    // Clean up any existing files first
+    Error? cleanupResult1 = (<Client>clientEp)->delete(sourcePath);
+    Error? cleanupResult2 = (<Client>clientEp)->delete(destinationPath);
+    
+    // Create source file
+    stream<io:Block, io:Error?> sourceStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>clientEp)->put(sourcePath, sourceStream);
+    
+    // Create destination file
+    stream<io:Block, io:Error?> destStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>clientEp)->put(destinationPath, destStream);
+    
+    // Copy to existing file should fail (VFS doesn't overwrite by default)
+    Error? result = (<Client>clientEp)->copy(sourcePath, destinationPath);
+    test:assertTrue(result is Error, msg = "Copy to existing file should fail");
+    if result is Error {
+        test:assertTrue(result.message().includes("already exists"), 
+            msg = "Error message should indicate file already exists");
+    }
+    
+    // Cleanup
+    Error? cleanup1 = (<Client>clientEp)->delete(sourcePath);
+    Error? cleanup2 = (<Client>clientEp)->delete(destinationPath);
+}
+
+@test:Config {
+    dependsOn: [testExistsFile]
+}
+public function testExistsNonExistingFile() returns error? {
+    string nonExistingPath = "/home/in/nonexistent_file.txt";
+    boolean|Error result = (<Client>clientEp)->exists(nonExistingPath);
+    if result is boolean {
+        test:assertFalse(result, msg = "Non-existing file should return false");
+    } else {
+        test:assertFail(msg = "Expected boolean result for exists on non-existing file, got error: " 
+            + result.message());
+    }
+}

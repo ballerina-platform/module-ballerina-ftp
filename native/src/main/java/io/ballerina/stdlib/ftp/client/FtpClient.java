@@ -31,6 +31,7 @@ import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
+import io.ballerina.runtime.api.values.BStream;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.runtime.api.values.BTypedesc;
 import io.ballerina.runtime.api.values.BXml;
@@ -41,8 +42,10 @@ import io.ballerina.stdlib.ftp.transport.client.connector.contract.FtpAction;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
 import io.ballerina.stdlib.ftp.transport.client.connector.contractimpl.VfsClientConnectorImpl;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
+import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemBaseMessage;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
 import io.ballerina.stdlib.ftp.util.BufferHolder;
+import io.ballerina.stdlib.ftp.util.CSVUtils;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.io.utils.IOUtils;
@@ -52,12 +55,19 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.VFS_CLIENT_CONNECTOR;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
@@ -132,6 +142,10 @@ public class FtpClient {
         return null;
     }
 
+    /**
+     * @deprecated : use typed getters like getBytes/getText/getJson/getXml/getCsv or their streaming variants.
+     */
+    @Deprecated
     public static Object getFirst(Environment env, BObject clientConnector, BString filePath) {
         clientConnector.addNativeData(ENTITY_BYTE_STREAM, null);
         return env.yieldAndRun(() -> {
@@ -147,6 +161,10 @@ public class FtpClient {
         });
     }
 
+    /**
+     * @deprecated : use getBytesAsStream or getCsvAsStream instead of this legacy accessor.
+     */
+    @Deprecated
     public static Object get(BObject clientConnector) {
         return FtpClientHelper.generateInputStreamEntry((InputStream) clientConnector.getNativeData(READ_INPUT_STREAM));
     }
@@ -154,7 +172,7 @@ public class FtpClient {
     public static Object getBytes(Environment env, BObject clientConnector, BString filePath) {
         Object content = getAllContent(env, clientConnector, filePath);
         if (!(content instanceof byte[])) {
-            throw (BError) content;
+            return content;
         }
         return ValueCreator.createArrayValue((byte[]) content);
     }
@@ -162,15 +180,15 @@ public class FtpClient {
     public static Object getText(Environment env, BObject clientConnector, BString filePath) {
         Object content = getAllContent(env, clientConnector, filePath);
         if (!(content instanceof byte[])) {
-            throw (BError) content;
+            return content;
         }
-        return StringUtils.fromString(new String((byte[]) content));
+        return StringUtils.fromString(new String((byte[]) content, StandardCharsets.UTF_8));
     }
 
     public static Object getJson(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
         Object content = getAllContent(env, clientConnector, filePath);
         if (!(content instanceof byte[])) {
-            throw (BError) content;
+            return content;
         }
 
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
@@ -186,7 +204,7 @@ public class FtpClient {
         }
         Object bJson = Native.parseBytes(ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
         if (bJson instanceof BError) {
-            throw ErrorCreator.createError(((BError) bJson).getErrorMessage());
+            return FtpUtil.createError(((BError) bJson).getErrorMessage().getValue(), FTP_ERROR);
         }
         return bJson;
     }
@@ -194,15 +212,15 @@ public class FtpClient {
     public static Object getXml(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
         Object content = getAllContent(env, clientConnector, filePath);
         if (!(content instanceof byte[])) {
-            throw (BError) content;
+            return content;
         }
 
         if (typeDesc.getDescribingType().getQualifiedName().equals("xml")) {
-            Object bXml = XmlUtils.parse(StringUtils.fromString(new String((byte[]) content)));
-            if (bXml instanceof BError) {
-                throw ErrorCreator.createError(((BError) bXml).getErrorMessage());
+            try {
+                return XmlUtils.parse(StringUtils.fromString(new String((byte[]) content, StandardCharsets.UTF_8)));
+            } catch (BError e) {
+                return FtpUtil.createError(e.getErrorMessage().getValue(), FTP_ERROR);
             }
-            return bXml;
         }
 
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
@@ -214,7 +232,7 @@ public class FtpClient {
         Object bXml = io.ballerina.lib.data.xmldata.xml.Native.parseBytes(
                 ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
         if (bXml instanceof BError) {
-            throw ErrorCreator.createError(((BError) bXml).getErrorMessage());
+            return FtpUtil.createError(((BError) bXml).getErrorMessage().getValue(), FTP_ERROR);
         }
         return bXml;
     }
@@ -222,29 +240,54 @@ public class FtpClient {
     public static Object getCsv(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
         Object content = getAllContent(env, clientConnector, filePath);
         if (!(content instanceof byte[])) {
-            throw (BError) content;
+            return content;
         }
 
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
         BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
                 io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(), "ParseOptions");
-        mapValue.put(StringUtils.fromString("allowDataProjection"), laxDataBinding);
+        if (laxDataBinding) {
+            BMap allowDataProjection = mapValue.getMapValue(StringUtils.fromString("allowDataProjection"));
+            allowDataProjection.put(StringUtils.fromString("nilAsOptionalField"), Boolean.TRUE);
+            allowDataProjection.put(StringUtils.fromString("absentAsNilableType"), Boolean.TRUE);
+            mapValue.put(StringUtils.fromString("allowDataProjection"), allowDataProjection);
+        } else {
+            mapValue.put(StringUtils.fromString("allowDataProjection"), Boolean.FALSE);
+        }
 
         Object csv = io.ballerina.lib.data.csvdata.csv.Native.parseBytes(
                 ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
         if (csv instanceof BError) {
-            throw ErrorCreator.createError(((BError) csv).getErrorMessage());
+            return FtpUtil.createError(((BError) csv).getErrorMessage().getValue(), FTP_ERROR);
         }
         return csv;
     }
 
     public static Object getBytesAsStream(Environment env, BObject clientConnector, BString filePath) {
+        boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
         return env.yieldAndRun(() -> {
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
             FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
                     remoteFileSystemBaseMessage ->
                             FtpClientHelper.executeStreamingAction(remoteFileSystemBaseMessage,
-                            balFuture, TypeCreator.createArrayType(PredefinedTypes.TYPE_BYTE)));
+                                    balFuture, TypeCreator.createArrayType(PredefinedTypes.TYPE_BYTE), laxDataBinding));
+            VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
+                    getNativeData(VFS_CLIENT_CONNECTOR);
+            connector.addListener(connectorListener);
+            connector.send(null, FtpAction.GET, filePath.getValue(), null);
+            return getResult(balFuture);
+        });
+    }
+
+    public static Object getCsvAsStream(Environment env, BObject clientConnector, BString filePath,
+                                        BTypedesc typeDesc) {
+        boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
+        return env.yieldAndRun(() -> {
+            CompletableFuture<Object> balFuture = new CompletableFuture<>();
+            FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
+                    remoteFileSystemBaseMessage ->
+                            FtpClientHelper.executeStreamingAction(remoteFileSystemBaseMessage,
+                                    balFuture, typeDesc.getDescribingType(), laxDataBinding));
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
@@ -283,6 +326,10 @@ public class FtpClient {
         }
     }
 
+    /**
+     * @deprecated : use putBytes/putText/putJson/putXml/putCsv or the streaming variants with APPEND option.
+     */
+    @Deprecated
     public static Object append(Environment env, BObject clientConnector, BMap<Object, Object> inputContent) {
         boolean isFile = inputContent.getBooleanValue(StringUtils.fromString(
                 FtpConstants.INPUT_CONTENT_IS_FILE_KEY));
@@ -309,6 +356,10 @@ public class FtpClient {
         });
     }
 
+    /**
+     * @deprecated : use typed put methods (putBytes/putText/putJson/putXml/putCsv) instead.
+     */
+    @Deprecated
     public static Object put(Environment env, BObject clientConnector, BMap<Object, Object> inputContent) {
         Map<String, String> propertyMap = new HashMap<>(
                 (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
@@ -372,24 +423,168 @@ public class FtpClient {
     }
 
     public static Object putText(Environment env, BObject clientConnector, BString path, BString inputContent,
-                                  BString options) {
-        InputStream stream = new ByteArrayInputStream(inputContent.getValue().getBytes());
+                                 BString options) {
+        InputStream stream = new ByteArrayInputStream(inputContent.getValue().getBytes(StandardCharsets.UTF_8));
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
         return putGenericAction(env, clientConnector, path, options, message);
     }
 
     public static Object putJson(Environment env, BObject clientConnector, BString path, BString inputContent,
                                  BString options) {
-        InputStream stream = new ByteArrayInputStream(inputContent.getValue().getBytes());
+        InputStream stream = new ByteArrayInputStream(inputContent.getValue().getBytes(StandardCharsets.UTF_8));
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
         return putGenericAction(env, clientConnector, path, options, message);
     }
 
     public static Object putXml(Environment env, BObject clientConnector, BString path, BXml inputContent,
-                                 BString options) {
-        InputStream stream = new ByteArrayInputStream(inputContent.toString().getBytes());
+                                BString options) {
+        InputStream stream = new ByteArrayInputStream(inputContent.toString().getBytes(StandardCharsets.UTF_8));
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
         return putGenericAction(env, clientConnector, path, options, message);
+    }
+
+    public static Object putCsv(Environment env, BObject clientConnector, BString path, BArray inputContent,
+                                BString options) {
+        boolean addHeader = !options.getValue().equals(FtpConstants.WRITE_OPTION_APPEND);
+        String convertToCsv = CSVUtils.convertToCsv(inputContent, addHeader);
+        InputStream stream = new ByteArrayInputStream(convertToCsv.getBytes(StandardCharsets.UTF_8));
+        RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
+        return putGenericAction(env, clientConnector, path, options, message);
+    }
+
+    public static Object putBytesAsStream(Environment env, BObject clientConnector, BString path, BStream inputContent,
+                                          BString options) {
+        try {
+            InputStream stream = createInputStreamFromIterator(env, inputContent.getIteratorObj());
+            RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
+            return putGenericAction(env, clientConnector, path, options, message);
+        } catch (Exception e) {
+            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+        }
+    }
+
+    public static Object putCsvAsStream(Environment env, BObject clientConnector, BString path, BStream inputContent,
+                                        BString options) {
+        try {
+            InputStream stream = createInputStreamFromIterator(env, inputContent.getIteratorObj());
+            RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
+            return putGenericAction(env, clientConnector, path, options, message);
+        } catch (Exception e) {
+            return FtpUtil.createError(e.getMessage(), FTP_ERROR);
+        }
+    }
+
+    /**
+     * Creates an InputStream from a Ballerina iterator using SequenceInputStream.
+     */
+    private static InputStream createInputStreamFromIterator(Environment environment, BObject iterator) {
+        IteratorToInputStream streamIterator = new IteratorToInputStream(environment, iterator);
+        return new SequenceInputStream(asEnumeration(streamIterator));
+    }
+
+    /**
+     * Converts an Iterator to an Enumeration for compatibility with SequenceInputStream.
+     */
+    private static <T> Enumeration<T> asEnumeration(Iterator<T> iterator) {
+        return new Enumeration<T>() {
+            @Override
+            public boolean hasMoreElements() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public T nextElement() {
+                return iterator.next();
+            }
+        };
+    }
+
+    /**
+     * Lightweight adapter that turns a Ballerina iterator into a sequence of InputStreams.
+     * Keeps state minimal to reduce nesting and cognitive complexity in the outer method.
+     */
+    private static final class IteratorToInputStream implements Iterator<InputStream> {
+        private final Environment env;
+        private final BObject iterator;
+        private InputStream nextStream;
+        private boolean hasChecked;
+        private boolean isFirstRow = true;
+
+        IteratorToInputStream(Environment env, BObject iterator) {
+            this.env = env;
+            this.iterator = iterator;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (hasChecked) {
+                return nextStream != null;
+            }
+            nextStream = fetchNextStream();
+            hasChecked = true;
+            return nextStream != null;
+        }
+
+        @Override
+        public InputStream next() {
+            if (!hasChecked && !hasNext()) {
+                throw new NoSuchElementException();
+            }
+            hasChecked = false;
+            InputStream result = nextStream;
+            nextStream = null;
+            return result;
+        }
+
+        private InputStream fetchNextStream() {
+            final Object next;
+            try {
+                next = env.getRuntime().callMethod(iterator, "next", null);
+            } catch (Exception e) {
+                throw FtpUtil.createError("Failed to read iterator", e, FTP_ERROR);
+            }
+            if (next == null) {
+                return null;
+            }
+            if (next instanceof BError err) {
+                throw FtpUtil.createError("Iterator error: " + err.getMessage(), FTP_ERROR);
+            }
+
+            byte[] bytes = toBytes(next);
+            if (bytes.length == 0) {
+                return null;
+            }
+            isFirstRow = false;
+            return new ByteArrayInputStream(bytes);
+        }
+
+        private byte[] toBytes(Object value) {
+            // Each element is a record with a 'value' field.
+            @SuppressWarnings("unchecked")
+            BMap<BString, Object> streamRecord = (BMap<BString, Object>) value;
+            Object val = streamRecord.get(FtpConstants.FIELD_VALUE);
+
+            if (val instanceof BArray array) {
+                return bytesFromArray(array);
+            }
+            @SuppressWarnings("unchecked")
+            BMap<BString, Object> recordValue = (BMap<BString, Object>) val;
+            return bytesFromRecord(recordValue, isFirstRow);
+        }
+
+        private static byte[] bytesFromArray(BArray array) {
+            // If it's a byte[] just return it; else it's CSV row from string[]
+            if (array.getElementType().getTag() == io.ballerina.runtime.api.types.TypeTags.BYTE_TAG) {
+                return array.getBytes();
+            }
+            String csvRow = CSVUtils.convertArrayToCsvRow(array) + System.lineSeparator();
+            return csvRow.getBytes(StandardCharsets.UTF_8);
+        }
+
+        private static byte[] bytesFromRecord(BMap<BString, Object> balRecord, boolean includeHeader) {
+            String csvRow = CSVUtils.convertRecordToCsvRow(balRecord, includeHeader) + System.lineSeparator();
+            return csvRow.getBytes(StandardCharsets.UTF_8);
+        }
     }
 
     private static Object putGenericAction(Environment env, BObject clientConnector, BString path, BString options,
@@ -402,7 +597,7 @@ public class FtpClient {
                     = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
             String filePath = path.getValue();
-            if (options.getValue().equals("OVERWRITE")) {
+            if (options.getValue().equals(FtpConstants.WRITE_OPTION_OVERWRITE)) {
                 connector.send(message, FtpAction.PUT, filePath, null);
             } else {
                 connector.send(message, FtpAction.APPEND, filePath, null);
@@ -412,67 +607,117 @@ public class FtpClient {
     }
 
     public static Object delete(Environment env, BObject clientConnector, BString filePath) {
-        return env.yieldAndRun(() -> {
-            CompletableFuture<Object> balFuture = new CompletableFuture<>();
-            FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
-                    remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
-            VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
-                    getNativeData(VFS_CLIENT_CONNECTOR);
-            connector.addListener(connectorListener);
-            connector.send(null, FtpAction.DELETE, filePath.getValue(), null);
-            return getResult(balFuture);
-        });
+        return executeSinglePathAction(env, clientConnector, filePath, FtpAction.DELETE, true,
+                balFuture -> remoteFileSystemBaseMessage -> {
+                    FtpClientHelper.executeGenericAction();
+                    return true;
+                });
     }
 
     public static Object isDirectory(Environment env, BObject clientConnector, BString filePath) {
-        return env.yieldAndRun(() -> {
-            CompletableFuture<Object> balFuture = new CompletableFuture<>();
-            FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
-                    FtpClientHelper.executeIsDirectoryAction(remoteFileSystemBaseMessage, balFuture));
-            VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
-                    getNativeData(VFS_CLIENT_CONNECTOR);
-            connector.addListener(connectorListener);
-            connector.send(null, FtpAction.ISDIR, filePath.getValue(), null);
-            return getResult(balFuture);
-        });
+        return executeSinglePathAction(env, clientConnector, filePath, FtpAction.ISDIR, false,
+                balFuture -> remoteFileSystemBaseMessage -> {
+                    FtpClientHelper.executeIsDirectoryAction(remoteFileSystemBaseMessage, balFuture);
+                    return true;
+                });
     }
 
     public static Object list(Environment env, BObject clientConnector, BString filePath) {
-        return env.yieldAndRun(() -> {
-            CompletableFuture<Object> balFuture = new CompletableFuture<>();
-            FtpClientListener connectorListener = new FtpClientListener(balFuture, false, remoteFileSystemBaseMessage ->
-                    FtpClientHelper.executeListAction(remoteFileSystemBaseMessage, balFuture));
-            VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
-                    getNativeData(VFS_CLIENT_CONNECTOR);
-            connector.addListener(connectorListener);
-            connector.send(null, FtpAction.LIST, filePath.getValue(), null);
-            return getResult(balFuture);
-        });
-
+        return executeSinglePathAction(env, clientConnector, filePath, FtpAction.LIST, false,
+                balFuture -> remoteFileSystemBaseMessage -> {
+                    FtpClientHelper.executeListAction(remoteFileSystemBaseMessage, balFuture);
+                    return true;
+                });
     }
 
     public static Object mkdir(Environment env, BObject clientConnector, BString path) {
+        return executeSinglePathAction(env, clientConnector, path, FtpAction.MKDIR, true,
+                balFuture -> remoteFileSystemBaseMessage -> {
+                    FtpClientHelper.executeGenericAction();
+                    return true;
+                });
+    }
+
+    public static Object rename(Environment env, BObject clientConnector, BString origin, BString destination) {
+        return executeTwoPathAction(env, clientConnector, origin, destination, FtpAction.RENAME);
+    }
+
+    public static Object move(Environment env, BObject clientConnector, BString sourcePath, BString destinationPath) {
+        return executeTwoPathAction(env, clientConnector, sourcePath, destinationPath, FtpAction.RENAME);
+    }
+
+    public static Object copy(Environment env, BObject clientConnector, BString sourcePath, BString destinationPath) {
+        return executeTwoPathAction(env, clientConnector, sourcePath, destinationPath, FtpAction.COPY);
+    }
+
+    public static Object exists(Environment env, BObject clientConnector, BString filePath) {
+        return executeSinglePathAction(env, clientConnector, filePath, FtpAction.EXISTS, false,
+                balFuture -> remoteFileSystemBaseMessage -> {
+                    FtpClientHelper.executeExistsAction(remoteFileSystemBaseMessage, balFuture);
+                    return true;
+                });
+    }
+
+    public static Object rmdir(Environment env, BObject clientConnector, BString filePath) {
+        return executeSinglePathAction(env, clientConnector, filePath, FtpAction.RMDIR, true,
+                balFuture -> remoteFileSystemBaseMessage -> {
+                    FtpClientHelper.executeGenericAction();
+                    return true;
+                });
+    }
+
+    public static Object size(Environment env, BObject clientConnector, BString filePath) {
+        return executeSinglePathAction(env, clientConnector, filePath, FtpAction.SIZE, false,
+                balFuture -> remoteFileSystemBaseMessage -> {
+                    FtpClientHelper.executeSizeAction(remoteFileSystemBaseMessage, balFuture);
+                    return true;
+                });
+    }
+
+    /**
+     * Helper method to execute single-path FTP actions.
+     *
+     * @param env The Ballerina runtime environment
+     * @param clientConnector The FTP client connector object
+     * @param filePath The file path to operate on
+     * @param action The FTP action to execute
+     * @param closeInput Whether to close the input stream after the action
+     * @param messageHandlerFactory A function that creates a message handler given a CompletableFuture
+     * @return The result of the operation or an error
+     */
+    private static Object executeSinglePathAction(Environment env, BObject clientConnector, BString filePath,
+                                                   FtpAction action, boolean closeInput,
+                                                   Function<CompletableFuture<Object>,
+                                                           Function<RemoteFileSystemBaseMessage, Boolean>>
+                                                           messageHandlerFactory) {
         return env.yieldAndRun(() -> {
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
-            FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
-                    remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
+            Function<RemoteFileSystemBaseMessage, Boolean> messageHandler =
+                    messageHandlerFactory.apply(balFuture);
+            FtpClientListener connectorListener = new FtpClientListener(balFuture, closeInput, messageHandler);
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
-            connector.send(null, FtpAction.MKDIR, path.getValue(), null);
+            connector.send(null, action, filePath.getValue(), null);
             return getResult(balFuture);
         });
     }
 
-    public static Object rename(Environment env, BObject clientConnector, BString origin, BString destination) {
-        Map<String, String> propertyMap = new HashMap<>(
-                (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
+    /**
+     * Helper method to execute two-path FTP actions.
+     *
+     * @param env The Ballerina runtime environment
+     * @param clientConnector The FTP client connector object
+     * @param sourcePath The source file path
+     * @param destinationPath The destination file path
+     * @param action The FTP action to execute (RENAME for move, COPY for copy)
+     * @return The result of the operation or an error
+     */
+    private static Object executeTwoPathAction(Environment env, BObject clientConnector, BString sourcePath,
+                                                BString destinationPath, FtpAction action) {
         String destinationUrl;
         try {
-            propertyMap.put(FtpConstants.URI, FtpUtil.createUrl(clientConnector, origin.getValue()));
-            propertyMap.put(FtpConstants.DESTINATION, FtpUtil.createUrl(clientConnector,
-                    destination.getValue()));
-            destinationUrl = FtpUtil.createUrl(clientConnector, destination.getValue());
+            destinationUrl = FtpUtil.createUrl(clientConnector, destinationPath.getValue());
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
@@ -483,38 +728,7 @@ public class FtpClient {
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
-            connector.send(null, FtpAction.RENAME, origin.getValue(), destinationUrl);
-            return getResult(balFuture);
-        });
-    }
-
-    public static Object rmdir(Environment env, BObject clientConnector, BString filePath) {
-        return env.yieldAndRun(() -> {
-            CompletableFuture balFuture = new CompletableFuture<>();
-            FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
-                    remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
-            VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
-                    getNativeData(VFS_CLIENT_CONNECTOR);
-            connector.addListener(connectorListener);
-            connector.send(null, FtpAction.RMDIR, filePath.getValue(), null);
-            return getResult(balFuture);
-        });
-
-    }
-
-    public static Object size(Environment env, BObject clientConnector, BString filePath) {
-        Map<String, String> propertyMap = new HashMap<>(
-                (Map<String, String>) clientConnector.getNativeData(FtpConstants.PROPERTY_MAP));
-        propertyMap.put(FtpConstants.PASSIVE_MODE, Boolean.TRUE.toString());
-        return env.yieldAndRun(() -> {
-            CompletableFuture<Object> balFuture = new CompletableFuture<>();
-            FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
-                    remoteFileSystemBaseMessage -> FtpClientHelper.executeSizeAction(remoteFileSystemBaseMessage,
-                            balFuture));
-            VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
-                    getNativeData(VFS_CLIENT_CONNECTOR);
-            connector.addListener(connectorListener);
-            connector.send(null, FtpAction.SIZE, filePath.getValue(), null);
+            connector.send(null, action, sourcePath.getValue(), destinationUrl);
             return getResult(balFuture);
         });
     }
@@ -523,9 +737,10 @@ public class FtpClient {
         try {
             return balFuture.get();
         } catch (InterruptedException e) {
-            throw ErrorCreator.createError(e);
+            Thread.currentThread().interrupt();
+            return ErrorCreator.createError(e);
         } catch (Throwable throwable) {
-            throw ErrorCreator.createError(throwable);
+            return ErrorCreator.createError(throwable);
         }
     }
 

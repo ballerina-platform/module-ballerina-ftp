@@ -56,6 +56,7 @@ public class FtpConstants {
     public static final BString FIELD_VALUE = StringUtils.fromString("value");
     public static final String FTP_CALLER = "Caller";
     public static final String FTP_CLIENT = "Client";
+    public static final String FTP_ERROR = "Error";
 
     public static final String FTP_SERVER_EVENT = "WatchEvent";
     public static final String FTP_WATCHEVENT_ADDED_FILES = "addedFiles";
@@ -124,4 +125,17 @@ public class FtpConstants {
     public static final String BALLERINA_FTP_PACKAGE_NAME = "io.ballerina.stdlib.ftp";
     public static final String NO_AUTH_METHOD_ERROR = "No preferred auth method is specified in the " +
             "SFTP client configurations";
+
+    // Native data keys used in client helper streams
+    public static final String NATIVE_INPUT_STREAM = "Input_Stream";
+    public static final String NATIVE_LAX_DATABINDING = "Lax_Data_Binding";
+    public static final String NATIVE_STREAM_VALUE_TYPE = "Type";
+
+    // Write options (string value of Ballerina enum)
+    public static final String WRITE_OPTION_OVERWRITE = "OVERWRITE";
+    public static final String WRITE_OPTION_APPEND = "APPEND";
+
+    // Common error messages
+    public static final String ERR_READING_STREAM = "Error occurred while reading stream";
+    public static final String ERR_CREATE_STREAM = "Unable to create stream";
 }

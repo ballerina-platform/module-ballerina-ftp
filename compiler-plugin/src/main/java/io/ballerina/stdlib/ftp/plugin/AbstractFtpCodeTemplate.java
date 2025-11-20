@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2025, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -39,18 +39,36 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CODE_TEMPLATE_NAME_WITH_CALLER;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.LS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.NODE_LOCATION;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.findNode;
 
 /**
- * Code action to add remote function code snippet with the Caller.
+ * Abstract base class for format-specific handler code templates.
+ * Provides common logic for generating code action templates for FTP handlers.
  */
-public class FtpCodeTemplateWithCaller implements CodeAction {
+public abstract class AbstractFtpCodeTemplate implements CodeAction {
 
-    private static final String REMOTE_FUNCTION_TEXT = LS + "\tremote function onFileChange(ftp:Caller caller, " +
-            "ftp:WatchEvent & readonly event) returns ftp:Error? {" + LS + LS + "\t}" + LS;
+    /**
+     * Returns the remote function template text for this handler.
+     * Subclasses should override this to provide the specific function signature.
+     *
+     * @return The template text with placeholders for line separators (LS)
+     */
+    protected abstract String getRemoteFunctionText();
+
+    /**
+     * Returns the display name for the code action.
+     *
+     * @return The name to show in the IDE code action menu
+     */
+    protected abstract String getActionName();
+
+    /**
+     * Returns the template name identifier for this code action.
+     *
+     * @return The constant name from PluginConstants
+     */
+    protected abstract String getTemplateName();
 
     @Override
     public List<String> supportedDiagnosticCodes() {
@@ -64,7 +82,7 @@ public class FtpCodeTemplateWithCaller implements CodeAction {
             return Optional.empty();
         }
         CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION, diagnostic.location().lineRange());
-        return Optional.of(CodeActionInfo.from("Insert service template with caller", List.of(locationArg)));
+        return Optional.of(CodeActionInfo.from(getActionName(), List.of(locationArg)));
     }
 
     @Override
@@ -100,7 +118,7 @@ public class FtpCodeTemplateWithCaller implements CodeAction {
                     serviceDeclarationNode.closeBraceToken().textRange().startOffset() -
                             lastMember.textRange().endOffset());
         }
-        textEdits.add(TextEdit.from(resourceTextRange, REMOTE_FUNCTION_TEXT));
+        textEdits.add(TextEdit.from(resourceTextRange, getRemoteFunctionText()));
         TextDocumentChange change = TextDocumentChange.from(textEdits.toArray(new TextEdit[0]));
         return Collections.singletonList(new DocumentEdit(codeActionExecutionContext.fileUri(),
                 SyntaxTree.from(syntaxTree, change)));
@@ -108,6 +126,6 @@ public class FtpCodeTemplateWithCaller implements CodeAction {
 
     @Override
     public String name() {
-        return CODE_TEMPLATE_NAME_WITH_CALLER;
+        return getTemplateName();
     }
 }
