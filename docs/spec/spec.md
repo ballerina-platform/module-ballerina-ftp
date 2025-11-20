@@ -35,6 +35,7 @@ The conforming implementation of the specification is released and included in t
       - [4.2.1. Insecure Listener](#421-insecure-listener)
       - [4.2.2. Secure Listener](#422-secure-listener)
       - [4.3. Usage](#43-usage)
+      - [4.3.1. Format-Specific Listener Callbacks](#431-format-specific-listener-callbacks)
   - [5. Caller](#5-caller)
     - [5.1. Initialization](#51-initialization)
     - [5.2. Functions](#52-functions)
@@ -662,6 +663,102 @@ ftp:Service ftpListener = service object {
 ```
 The remote method `onFileChange()` is invoked when the listener notices a file change in the FTP server. This function supports
 having both `ftp:WatchEvent` and `ftp:Caller` parameters or having only `ftp:WatchEvent` parameter.
+
+#### 4.3.1. Format-Specific Listener Callbacks
+
+In addition to the generic `onFileChange()` callback, the listener supports specialized format-specific callbacks that automatically parse files into structured data formats. These callbacks simplify handling files of specific types.
+
+**File extension routing:** Files are automatically routed to handlers based on their extensions. `.txt` → `onFileText()`, `.json` → `onFileJson()`, `.xml` → `onFileXml()`, `.csv` → `onFileCsv()`. Other extensions use `onFile()`. Routing can be customized using the `@ftp:FunctionConfig` annotation.
+
+* `onFileJson()` - Triggered when a JSON file (`.json`) is added. Supports two overloads for different content types:
+```ballerina
+# JSON content overload
+remote function onFileJson(json content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // Process parsed JSON content directly
+    // fileInfo contains metadata about the file
+    // caller allows you to perform FTP operations
+}
+
+# Data-bound record overload
+remote function onFileJson(record {} content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // Process JSON automatically data-bound to your record type
+}
+```
+
+* `onFileXml()` - Triggered when an XML file (`.xml`) is added. Supports two overloads:
+```ballerina
+# XML content overload
+remote function onFileXml(xml content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // Process parsed XML content directly
+}
+
+# Data-bound record overload
+remote function onFileXml(record {} content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // Process XML automatically data-bound to your record type
+}
+```
+
+* `onFileCsv()` - Triggered when a CSV file (`.csv`) is added with RFC4180 defaults. Supports four overloads for different processing modes:
+```ballerina
+# String array overload (in-memory, all rows)
+remote function onFileCsv(string[][] content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // content contains all rows as arrays of strings
+    // First row contains column headers
+}
+
+# Record array overload (in-memory, type-safe)
+remote function onFileCsv(record {} [] content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // content automatically data-bound to record array
+    // Headers automatically mapped to record fields
+}
+
+# Stream of string arrays (streaming, large files)
+remote function onFileCsv(stream<string[], error> content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // Process rows one at a time from stream
+    // Memory-efficient for large files
+}
+
+# Stream of records (streaming, type-safe)
+remote function onFileCsv(stream<record {}, error> content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // Process rows as records from stream
+    // Data-bound and memory-efficient
+}
+```
+
+* `onFileText()` - Triggered when a text file (`.txt`) is added:
+```ballerina
+remote function onFileText(string content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // Process entire file content as UTF-8 text
+}
+```
+
+* `onFile()` - Triggered when any other file type is added (generic binary handling). Supports two overloads:
+```ballerina
+# In-memory byte array overload
+remote function onFile(byte[] content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // content contains entire file as bytes
+}
+
+# Streaming overload for large files
+remote function onFile(stream<byte[], error> content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+    // Process file chunks from stream
+    // Memory-efficient for large files
+}
+```
+
+* `onFileDeleted()` - Triggered when files are deleted from the monitored directory:
+```ballerina
+remote function onFileDeleted(string[] deletedFiles, ftp:Caller caller) returns error? {
+    // Handle file deletion
+    // deletedFiles contains array of deleted file paths
+}
+```
+
+**Optional parameters:** The `fileInfo` and `caller` parameters can be omitted if not needed in your implementation.
+
+All format-specific callbacks receive `fileInfo` (metadata about the file) and optionally `caller`
+(to perform additional FTP operations). The data is automatically parsed based on the callback type.
+
 
 The Listener has following functions to manage a service.
 * `attach()` - can be used to bind a service to the `ftp:Listener`.
