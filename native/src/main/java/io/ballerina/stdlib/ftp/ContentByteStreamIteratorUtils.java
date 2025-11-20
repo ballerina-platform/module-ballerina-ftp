@@ -97,8 +97,10 @@ public class ContentByteStreamIteratorUtils {
      */
     public static Object close(BObject recordIterator) {
         try {
-            InputStream inputStream = (InputStream) recordIterator.getNativeData(FtpConstants.NATIVE_INPUT_STREAM);
-            inputStream.close();
+            Object inputStream = recordIterator.getNativeData(FtpConstants.NATIVE_INPUT_STREAM);
+            if (inputStream != null) {
+                ((InputStream) inputStream).close();
+            }
 
             Object fileObject = recordIterator.getNativeData(FtpConstants.NATIVE_FILE_OBJECT);
             if (fileObject != null) {
