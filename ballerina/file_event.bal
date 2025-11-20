@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Metadata for newly-added files.
+# Information about a file that was added to or found in the monitored folder.
 #
 # + path - Relative file path for a newly-added file
 # + size - Size of the file
@@ -61,11 +61,10 @@ public type FileInfo record {|
     string friendlyURI;
 |};
 
-# This represents the latest status change of the server from the last
-# status change.
+# Event information containing files that were added or deleted since the last poll.
 #
-# + addedFiles - Array of `ftp:FileInfo` that represents newly added files
-# + deletedFiles - Array of strings that contains deleted file names
+# + addedFiles - List of files that were added to the monitored directory
+# + deletedFiles - List of file names that were deleted from the monitored directory
 public type WatchEvent record {|
     FileInfo[] addedFiles;
     string[] deletedFiles;

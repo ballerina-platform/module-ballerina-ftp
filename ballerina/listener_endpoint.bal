@@ -18,7 +18,7 @@ import ballerina/jballerina.java;
 import ballerina/log;
 import ballerina/task;
 
-# Represents a service listener that monitors the FTP location.
+# Watch a folder on a file server and trigger actions when files are added or deleted.
 public isolated class Listener {
 
     private handle EMPTY_JAVA_STRING = java:fromString("");
@@ -150,22 +150,17 @@ class Job {
     }
 }
 
-# Configuration for FTP listener.
+# Configurations for monitoring a file server folder.
 #
-# + protocol - Supported FTP protocols
-# + host - Target service url
-# + port - Port number of the remote service
-# + auth - Authentication options
-# + path - Remote FTP directory location
-# + fileNamePattern - File name pattern that event need to trigger
-# + pollingInterval - Periodic time interval to check new update
-# + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and 
-#                   prevents the underlying VFS from attempting to change to the actual server root. 
-#                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command 
-#                   that can fail on servers restricting root access (e.g., chrooted environments).
-# + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
-#                    null values in JSON/XML are allowed to be mapped to optional fields
-#                    missing fields in JSON/XML are allowed to be mapped as null values
+# + protocol - How to connect: Standard (FTP) or Encrypted (SFTP)
+# + host - File server address (example: files.company.com or 192.168.1.1)
+# + port - File server port (usually 21 for standard, 22 for encrypted)
+# + auth - How to sign in (username/password or security key)
+# + path - Which folder to watch (example: /uploads or /data)
+# + fileNamePattern - Watch only specific files
+# + pollingInterval - How often to check for changes (in seconds)
+# + userDirIsRoot - Treat the home folder as the starting point
+# + laxDataBinding - Allow missing or null values when reading files
 public type ListenerConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -178,6 +173,7 @@ public type ListenerConfiguration record {|
     boolean laxDataBinding = false;
 |};
 
-# Represents a FTP service.
+# Actions to perform when files are added or deleted.
+# Define what should happen when the monitored folder changes.
 public type Service distinct service object {
 };

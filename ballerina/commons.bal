@@ -16,7 +16,7 @@
 
 import ballerina/io;
 
-# Represents the set of protocols supported by the FTP listener and client.
+# How should we connect to the file server
 #
 # + FTP - Unsecure File Transfer Protocol
 # + SFTP - FTP over SSH
@@ -25,10 +25,10 @@ public enum Protocol {
     SFTP = "sftp"
 }
 
-# Configuration to read a privte key.
+# Configuration for using a security key file.
 #
 # + path - Path to the private key file
-# + password - Private key password
+# + password - Password to unlock the security key (if it has one)
 public type PrivateKey record {|
     string path;
     string password?;
@@ -43,24 +43,23 @@ public type Credentials record {|
     string password?;
 |};
 
-# Configurations for facilitating secure communication with a remote
-# FTP server.
+# How to sign in to the file server.
 #
-# + credentials - Username and password to be used
-# + privateKey - Private key to be used
-# + preferredMethods - Preferred authentication methods
+# + credentials - Username and password
+# + privateKey - Security key file for SFTP
+# + preferredMethods - Which sign-in methods to use for authentication
 public type AuthConfiguration record {|
     Credentials credentials?;
     PrivateKey privateKey?;
     PreferredMethod[] preferredMethods = [PUBLICKEY, PASSWORD];
 |};
 
-# Authentication methods for the FTP listener.
-# 
-# + KEYBOARD_INTERACTIVE - Keyboard interactive authentication
-# + GSSAPI_WITH_MIC - GSSAPI with MIC authentication
-# + PASSWORD - Password authentication
-# + PUBLICKEY - Public key authentication
+# Ways the file server can verify your identity.
+#
+# + PASSWORD - Username and password
+# + PUBLICKEY - Security key file
+# + KEYBOARD_INTERACTIVE - Interactive sign-in (promt for username and password)
+# + GSSAPI_WITH_MIC - Enterprise authentication system
 public enum PreferredMethod {
     KEYBOARD_INTERACTIVE,
     GSSAPI_WITH_MIC,
