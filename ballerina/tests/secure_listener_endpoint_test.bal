@@ -45,13 +45,6 @@ Service secureRemoteServerService = service object {
         secureAddedFileCount = event.addedFiles.length();
         secureDeletedFileCount = event.deletedFiles.length();
         secureWatchEventReceived = true;
-
-        foreach FileInfo addedFile in event.addedFiles {
-            log:printInfo("Added file path: " + addedFile.path);
-        }
-        foreach string deletedFile in event.deletedFiles {
-            log:printInfo("Deleted file path: " + deletedFile);
-        }
     }
 };
 

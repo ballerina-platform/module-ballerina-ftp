@@ -18,6 +18,8 @@
 
 package io.ballerina.stdlib.ftp.plugin;
 
+import io.ballerina.compiler.api.symbols.ArrayTypeSymbol;
+import io.ballerina.compiler.api.symbols.TypeDescKind;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
@@ -28,6 +30,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.I
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MANDATORY_PARAMETER_NOT_FOUND;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_DELETED_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS_ON_FILE_DELETED;
+import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getParameterTypeSymbol;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isRemoteFunction;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.reportErrorDiagnostic;
 
@@ -85,7 +88,14 @@ public class FtpFileDeletedValidator {
     }
 
     private boolean validateStringArrayParameter(ParameterNode parameterNode) {
-        return PluginUtils.isStringArrayType(parameterNode, context);
+        return getParameterTypeSymbol(parameterNode, context)
+                .map(typeSymbol -> {
+                    if (!(typeSymbol instanceof ArrayTypeSymbol arrayType)) {
+                        return false;
+                    }
+                    return arrayType.memberTypeDescriptor().typeKind() == TypeDescKind.STRING;
+                })
+                .orElse(false);
     }
 
 }

@@ -18,18 +18,17 @@
 
 package io.ballerina.stdlib.ftp.util;
 
-import io.ballerina.runtime.api.creators.TypeCreator;
+import io.ballerina.lib.data.ModuleUtils;
+import io.ballerina.lib.data.xmldata.xml.Native;
+import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.creators.ValueCreator;
-import io.ballerina.runtime.api.types.ArrayType;
-import io.ballerina.runtime.api.types.PredefinedTypes;
-import io.ballerina.runtime.api.types.StreamType;
 import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
+import io.ballerina.runtime.api.utils.XmlUtils;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
-import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.runtime.api.values.BTypedesc;
 import org.slf4j.Logger;
@@ -37,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
 /**
@@ -66,23 +66,21 @@ public final class FtpContentConverter {
     /**
      * Converts byte array to Ballerina JSON using data.jsondata module.
      *
-     * @param content The byte array content
+     * @param content    The byte array content
      * @param targetType The target Ballerina type for data binding
      * @return Ballerina JSON object or BError
      */
-    public static Object convertBytesToJson(byte[] content, Type targetType) {
+    public static Object convertBytesToJson(byte[] content, Type targetType, boolean laxDataBinding) {
         try {
             BArray byteArray = ValueCreator.createArrayValue(content);
-            BMap<BString, Object> options = createJsonParseOptions();
+            BMap<BString, Object> options = createJsonParseOptions(laxDataBinding);
             BTypedesc typedesc = ValueCreator.createTypedescValue(targetType);
 
             Object result = io.ballerina.lib.data.jsondata.json.Native.parseBytes(byteArray, options, typedesc);
-
             if (result instanceof BError) {
                 log.error("Failed to parse JSON content: {}", ((BError) result).getMessage());
-                return result;
+                return FtpUtil.createError(((BError) result).getErrorMessage().getValue(), FTP_ERROR);
             }
-
             return result;
         } catch (Exception e) {
             log.error("Error converting bytes to JSON", e);
@@ -93,41 +91,39 @@ public final class FtpContentConverter {
     /**
      * Converts byte array to Ballerina XML using data.xmldata module.
      *
-     * @param content The byte array content
+     * @param content    The byte array content
      * @param targetType The target Ballerina type for data binding
      * @return Ballerina XML object or BError
      */
-    public static Object convertBytesToXml(byte[] content, Type targetType) {
+    public static Object convertBytesToXml(byte[] content, Type targetType, boolean laxDataBinding) {
         try {
-            BArray byteArray = ValueCreator.createArrayValue(content);
-            BMap<BString, Object> options = createXmlParseOptions();
-
-            Type referredType = TypeUtils.getReferredType(targetType);
-            BTypedesc typedesc = ValueCreator.createTypedescValue(referredType);
-
-            Object result = io.ballerina.lib.data.xmldata.xml.Native.parseBytes(byteArray, options, typedesc);
-
-            if (result instanceof BError) {
-                return result;
+            if (targetType.getQualifiedName().equals("xml")) {
+                return XmlUtils.parse(StringUtils.fromString(new String(content, StandardCharsets.UTF_8)));
             }
 
-            return result;
-        } catch (Exception e) {
-            return FtpUtil.createError("Failed to parse XML content: " + e.getMessage(), Error.errorType());
+            BMap<BString, Object> mapValue = createXmlParseOptions(laxDataBinding);
+            Object bXml = Native.parseBytes(
+                    ValueCreator.createArrayValue(content), mapValue, ValueCreator.createTypedescValue(targetType));
+            if (bXml instanceof BError) {
+                return FtpUtil.createError(((BError) bXml).getErrorMessage().getValue(), FTP_ERROR);
+            }
+            return bXml;
+        } catch (BError e) {
+            return FtpUtil.createError(e.getErrorMessage().getValue(), FTP_ERROR);
         }
     }
 
     /**
      * Converts byte array to CSV using data.csvdata module.
      *
-     * @param content The byte array content
+     * @param content    The byte array content
      * @param targetType The target Ballerina type for data binding
      * @return Ballerina CSV data (string[][], record[][], or custom type) or BError
      */
-    public static Object convertBytesToCsv(byte[] content, Type targetType) {
+    public static Object convertBytesToCsv(byte[] content, Type targetType, boolean laxDataBinding) {
         try {
             BArray byteArray = ValueCreator.createArrayValue(content);
-            BMap<BString, Object> options = createCsvParseOptions();
+            BMap<BString, Object> options = createCsvParseOptions(laxDataBinding);
 
             Type referredType = TypeUtils.getReferredType(targetType);
             BTypedesc typedesc = ValueCreator.createTypedescValue(referredType);
@@ -136,7 +132,8 @@ public final class FtpContentConverter {
 
             if (result instanceof BError) {
                 log.error("Failed to parse CSV content: {}", ((BError) result).getMessage());
-                return result;
+                return FtpUtil.createError("Failed to parse CSV content: " + ((BError) result).getErrorMessage(),
+                        Error.errorType());
             }
 
             return result;
@@ -152,21 +149,17 @@ public final class FtpContentConverter {
      *
      * @return BMap containing parse options
      */
-    private static BMap<BString, Object> createJsonParseOptions() {
-        BMap<BString, Object> options = ValueCreator.createRecordValue(
-                io.ballerina.lib.data.ModuleUtils.getModule(), "Options");
-
-        Object allowDataProjectionObj = options.get(ALLOW_DATA_PROJECTION);
-        if (allowDataProjectionObj instanceof BMap) {
-            BMap<BString, Object> allowDataProjection = (BMap<BString, Object>) allowDataProjectionObj;
+    private static BMap<BString, Object> createJsonParseOptions(boolean laxDataBinding) {
+        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(ModuleUtils.getModule(), "Options");
+        if (laxDataBinding) {
+            BMap allowDataProjection = mapValue.getMapValue(StringUtils.fromString("allowDataProjection"));
             allowDataProjection.put(StringUtils.fromString("nilAsOptionalField"), Boolean.TRUE);
             allowDataProjection.put(StringUtils.fromString("absentAsNilableType"), Boolean.TRUE);
-            options.put(ALLOW_DATA_PROJECTION, allowDataProjection);
+            mapValue.put(StringUtils.fromString("allowDataProjection"), allowDataProjection);
         } else {
-            options.put(ALLOW_DATA_PROJECTION, Boolean.FALSE);
+            mapValue.put(StringUtils.fromString("allowDataProjection"), Boolean.FALSE);
         }
-
-        return options;
+        return mapValue;
     }
 
     /**
@@ -175,10 +168,12 @@ public final class FtpContentConverter {
      *
      * @return BMap containing parse options
      */
-    private static BMap<BString, Object> createXmlParseOptions() {
-        BMap<BString, Object> options = ValueCreator.createMapValue();
-        options.put(ALLOW_DATA_PROJECTION, true);
-        return options;
+    private static BMap<BString, Object> createXmlParseOptions(boolean laxDataBinding) {
+        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
+                new Module("ballerina", "data.xmldata", "1"),
+                "SourceOptions");
+        mapValue.put(StringUtils.fromString("allowDataProjection"), laxDataBinding);
+        return mapValue;
     }
 
     /**
@@ -187,10 +182,18 @@ public final class FtpContentConverter {
      *
      * @return BMap containing parse options
      */
-    private static BMap<BString, Object> createCsvParseOptions() {
-        BMap<BString, Object> options = ValueCreator.createMapValue();
-        options.put(ALLOW_DATA_PROJECTION, true);
-        return options;
+    private static BMap<BString, Object> createCsvParseOptions(boolean laxDataBinding) {
+        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
+                io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(), "ParseOptions");
+        if (laxDataBinding) {
+            BMap allowDataProjection = mapValue.getMapValue(StringUtils.fromString("allowDataProjection"));
+            allowDataProjection.put(StringUtils.fromString("nilAsOptionalField"), Boolean.TRUE);
+            allowDataProjection.put(StringUtils.fromString("absentAsNilableType"), Boolean.TRUE);
+            mapValue.put(StringUtils.fromString("allowDataProjection"), allowDataProjection);
+        } else {
+            mapValue.put(StringUtils.fromString("allowDataProjection"), Boolean.FALSE);
+        }
+        return mapValue;
     }
 
     /**
@@ -220,49 +223,5 @@ public final class FtpContentConverter {
      */
     public static BArray convertToBallerinaByteArray(byte[] content) {
         return ValueCreator.createArrayValue(content);
-    }
-
-    /**
-     * Creates a Ballerina CSV stream (stream<string[], error?>) from byte array content.
-     * First parses the CSV content to string[][] using csvdata module, then wraps in a stream.
-     *
-     * @param content The byte array content
-     * @return Ballerina stream object of type stream<string[], error?> or BError
-     */
-    public static Object createCsvStreamFromContent(byte[] content) {
-        try {
-            BArray byteArray = ValueCreator.createArrayValue(content);
-            BMap<BString, Object> options = createCsvParseOptions();
-
-            // Create typedesc for string[][]
-            Type stringArrayArrayType = TypeCreator.createArrayType(
-                    TypeCreator.createArrayType(PredefinedTypes.TYPE_STRING));
-            BTypedesc typedesc = ValueCreator.createTypedescValue(stringArrayArrayType);
-
-            Object result = io.ballerina.lib.data.csvdata.csv.Native.parseBytes(byteArray, options, typedesc);
-
-            if (result instanceof BError) {
-                log.error("Failed to parse CSV content for stream: {}", ((BError) result).getMessage());
-                return result;
-            }
-
-            // Create ContentCsvStream object and initialize with parsed data
-            BObject contentCsvStreamObject = ValueCreator.createObjectValue(
-                    io.ballerina.stdlib.ftp.util.ModuleUtils.getModule(), "ContentCsvStream", null, null
-            );
-
-            contentCsvStreamObject.addNativeData("CSV_Data", result);
-            contentCsvStreamObject.addNativeData("Current_Index", 0);
-
-            // Create stream type: stream<string[], error?>
-            ArrayType stringArrayType = TypeCreator.createArrayType(PredefinedTypes.TYPE_STRING);
-            StreamType streamType = TypeCreator.createStreamType(stringArrayType,
-                    PredefinedTypes.TYPE_ERROR);
-
-            return ValueCreator.createStreamValue(streamType, contentCsvStreamObject);
-        } catch (Exception e) {
-            log.error("Failed to create CSV stream", e);
-            return FtpUtil.createError("Failed to create CSV stream: " + e.getMessage(), Error.errorType());
-        }
     }
 }

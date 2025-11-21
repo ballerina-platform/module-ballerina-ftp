@@ -1129,11 +1129,12 @@ public function testListFiles() {
         "test3.zip",
         "content-methods",
         "childDirectory",
+        "delete",
         "test2.txt",
         "test3.txt",
         "test4.txt"
     ];
-    int[] fileSizes = [0, 61, 0, 0, 0, 145, 0, 0, 16400, 12, 9000];
+    int[] fileSizes = [0, 61, 0, 0, 0, 145, 0, 0, 0, 16400, 12, 9000];
     FileInfo[]|Error response = (<Client>clientEp)->list("/home/in");
     if response is FileInfo[] {
         log:printInfo("List of files/directories: ");

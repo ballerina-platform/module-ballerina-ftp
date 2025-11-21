@@ -106,6 +106,7 @@ public class FtpConstants {
     public static final String NATIVE_INPUT_STREAM = "Input_Stream";
     public static final String NATIVE_LAX_DATABINDING = "Lax_Data_Binding";
     public static final String NATIVE_STREAM_VALUE_TYPE = "Type";
+    public static final String NATIVE_FILE_OBJECT = "File_Object";
 
     // Write options (string value of Ballerina enum)
     public static final String WRITE_OPTION_OVERWRITE = "OVERWRITE";

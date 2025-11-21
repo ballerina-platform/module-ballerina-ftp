@@ -6,7 +6,7 @@ This module provides an FTP/SFTP client and an FTP/SFTP server listener implemen
 
 The `ftp:Client` connects to an FTP server and performs various operations on the files. Currently, it supports the
 generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and
- `list`.
+ `list`. The client also provides typed data operations for reading and writing files as text, JSON, XML, CSV, and binary data, with streaming support for handling large files efficiently.
 
 An FTP client is defined using the `protocol` and `host` parameters and optionally, the `port` and
 `auth`. Authentication configuration can be configured using the `auth` parameter for Basic Auth and
@@ -53,6 +53,57 @@ stream<io:Block, io:Error?> fileByteStream
 ftp:Error? putResponse = ftpClient->put("<The resource path>", fileByteStream);
 ```
 
+You can also upload files as specific types:
+
+Upload as text:
+```ballerina
+ftp:Error? result = ftpClient->putText("<The file path>", "Hello, World!");
+```
+
+Upload as JSON or record:
+```ballerina
+// Upload JSON
+json jsonData = {name: "John", age: 30};
+ftp:Error? result = ftpClient->putJson("<The file path>", jsonData);
+
+// Upload a record
+type User record {
+    string name;
+    int age;
+};
+
+User user = {name: "Jane", age: 25};
+ftp:Error? result = ftpClient->putJson("<The file path>", user);
+```
+
+Upload as XML:
+```ballerina
+xml xmlData = xml `<config><database>mydb</database></config>`;
+ftp:Error? result = ftpClient->putXml("<The file path>", xmlData);
+```
+
+Upload as CSV (string arrays or typed records):
+```ballerina
+// Upload as string array of arrays
+string[][] csvData = [["Name", "Age"], ["John", "30"], ["Jane", "25"]];
+ftp:Error? result = ftpClient->putCsv("<The file path>", csvData);
+
+// Upload records as CSV
+type Person record {
+    string name;
+    int age;
+};
+
+Person[] people = [{name: "John", age: 30}, {name: "Jane", age: 25}];
+ftp:Error? result = ftpClient->putCsv("<The file path>", people);
+```
+
+Upload as bytes:
+```ballerina
+byte[] binaryData = [0x48, 0x65, 0x6C, 0x6C, 0x6F]; // "Hello"
+ftp:Error? result = ftpClient->putBytes("<The file path>", binaryData);
+```
+
 ##### Compress and upload a file to a remote server
 
 The following code compresses and uploads a file to a remote FTP server.
@@ -75,21 +126,65 @@ int|ftp:Error sizeResponse = ftpClient->size("<The resource path>");
 
 ##### Read the content of a remote file
 
-The following code reads the content of a file in a remote FTP server.
+The following code reads the content of a file in a remote FTP server. The FTP client supports various data types including text, JSON, XML, CSV, and binary data through typed get operations.
 
+Read as text:
 ```ballerina
-stream<byte[], io:Error?>|Error str = clientEP -> get("<The file path>");
-if (str is stream<byte[], io:Error?>) {
-    record {|byte[] value;|}|io:Error? arr1 = str.next();
-    if (arr1 is record {|byte[] value;|}) {
-        string fileContent = check strings:fromBytes(arr1.value);
-        // `fileContent` is the `string` value of first byte array
-        record {|byte[] value;|}|io:Error? arr2 = str.next();
-        // Similarly following content chunks can be iteratively read with `next` method.
-        // Final chunk will contain the terminal value which is `()`.
-    }
-    io:Error? closeResult = str.close();
-}
+string fileContent = check ftpClient->getText("<The file path>");
+```
+
+Read as JSON or typed record:
+```ballerina
+// Read as JSON
+json jsonData = check ftpClient->getJson("<The file path>");
+
+// Read as a specific record type
+type User record {
+    string name;
+    int age;
+};
+
+User userData = check ftpClient->getJson("<The file path>");
+```
+
+Read as XML or typed record:
+```ballerina
+// Read as XML
+xml xmlData = check ftpClient->getXml("<The file path>");
+
+// Read as a specific record type
+type Config record {
+    string database;
+    int timeout;
+};
+
+Config config = check ftpClient->getXml("<The file path>");
+```
+
+Read as CSV (string arrays or typed records):
+```ballerina
+// Read as string array of arrays
+string[][] csvData = check ftpClient->getCsv("<The file path>");
+
+// Read as an array of typed records
+type CsvRecord record {
+    string id;
+    string name;
+    string email;
+};
+
+CsvRecord[] records = check ftpClient->getCsv("<The file path>");
+```
+
+Read as bytes:
+```ballerina
+// Read entire file as byte array
+byte[] fileBytes = check ftpClient->getBytes("<The file path>");
+
+// Read as streaming bytes
+stream<byte[], io:Error?> byteStream = check ftpClient->getBytesAsStream("<The file path>");
+record {|byte[] value;|} nextBytes = check byteStream.next();
+check byteStream.close();
 ```
 
 ##### Rename/move a remote file
@@ -119,9 +214,7 @@ ftp:Error? rmdirResponse = ftpClient->rmdir("<The directory path>");
 
 ### FTP listener
 
-The `ftp:Listener` is used to listen to a remote FTP location and trigger a `WatchEvent` type of event when new
-files are added to or deleted from the directory. The `fileResource` function is invoked when a new file is added
-and/or deleted.
+The `ftp:Listener` is used to listen to a remote FTP location and trigger events when new files are added to or deleted from the directory. The listener supports both a generic `onFileChange` handler for file system events and format-specific content handlers (`onFileText`, `onFileJson`, `onFileXml`, `onFileCsv`, `onFile`) that automatically deserialize file content based on the file type.
 
 An FTP listener is defined using the mandatory `protocol`, `host`, and  `path` parameters. The authentication
 configuration can be done using the `auth` parameter and the polling interval can be configured using the `pollingInterval` parameter.
@@ -137,34 +230,120 @@ An authentication-related configuration can be given to the FTP listener with th
 The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and
 notify on file addition and deletion periodically.
 
+The FTP listener supports content handler methods that automatically deserialize file content based on the file type. The listener supports text, JSON, XML, CSV, and binary data types with automatic extension-based routing.
+
+Handle text files:
 ```ballerina
-listener ftp:Listener remoteServer = check new({
-    protocol: ftp:FTP,
-    host: "<The FTP host>",
-    auth: {
-        credentials: {
-            username: "<The FTP username>",
-            password: "<The FTP passowrd>"
-        }
-    },
-    port: <The FTP port>,
-    path: "<The remote FTP direcotry location>",
-    pollingInterval: <Polling interval>,
-    fileNamePattern: "<File name pattern>"
-});
+service on remoteServer {
+    remote function onFileText(string content, ftp:FileInfo fileInfo) returns error? {
+        log:print("Text file: " + fileInfo.path);
+        log:print("Content: " + content);
+    }
+}
+```
+
+Handle JSON files (as generic JSON or typed record):
+```ballerina
+type User record {
+    string name;
+    int age;
+    string email;
+};
 
 service on remoteServer {
-    remote function onFileChange(ftp:WatchEvent fileEvent) {
+    // Handle as typed record
+    remote function onFileJson(User content, ftp:FileInfo fileInfo) returns error? {
+        log:print("User file: " + fileInfo.path);
+        log:print("User name: " + content.name);
+    }
+}
+```
 
-        foreach ftp:FileInfo addedFile in fileEvent.addedFiles {
-            log:print("Added file path: " + addedFile.path);
-        }
-        foreach string deletedFile in fileEvent.deletedFiles {
-            log:print("Deleted file path: " + deletedFile);
+Handle XML files (as generic XML or typed record):
+```ballerina
+type Config record {
+    string database;
+    int timeout;
+    boolean debug;
+};
+
+service on remoteServer {
+    // Handle as typed record
+    remote function onFileXml(Config content, ftp:FileInfo fileInfo) returns error? {
+        log:print("Config file: " + fileInfo.path);
+        log:print("Database: " + content.database);
+    }
+}
+```
+
+Handle CSV files (as string arrays or typed record arrays):
+```ballerina
+type CsvRecord record {
+    string id;
+    string name;
+    string email;
+};
+
+service on remoteServer {
+    // Handle as array of typed records
+    remote function onFileCsv(CsvRecord[] content, ftp:FileInfo fileInfo) returns error? {
+        log:print("CSV file: " + fileInfo.path);
+        foreach CsvRecord record in content {
+            log:print("Record: " + record.id + ", " + record.name);
         }
     }
 }
 ```
+
+Handle binary files:
+```ballerina
+service on remoteServer {
+    // Handle as byte array
+    remote function onFile(byte[] content, ftp:FileInfo fileInfo) returns error? {
+        log:print("Binary file: " + fileInfo.path);
+        log:print("File size: " + content.length().toString());
+    }
+}
+```
+
+Stream large files:
+```ballerina
+service on remoteServer {
+    // Stream binary content
+    remote function onFile(stream<byte[], error?> content, ftp:FileInfo fileInfo) returns error? {
+        log:print("Streaming file: " + fileInfo.path);
+        record {|byte[] value;|} nextBytes = check content.next();
+        while nextBytes is record {|byte[] value;|} {
+            log:print("Received chunk: " + nextBytes.value.length().toString() + " bytes");
+            nextBytes = content.next();
+        }
+        check content.close();
+    }
+}
+```
+
+Stream CSV data as typed records:
+```ballerina
+type DataRow record {
+    string timestamp;
+    string value;
+};
+
+service on remoteServer {
+    // Stream CSV as records
+    remote function onFileCsv(stream<DataRow, error?> content, ftp:FileInfo fileInfo) returns error? {
+        log:print("Streaming CSV file: " + fileInfo.path);
+        record {|DataRow value;|}|error? nextRow = content.next();
+        while nextRow is record {|DataRow value;|} {
+            log:print("Row: " + nextRow.value.timestamp + " = " + nextRow.value.value);
+            nextRow = content.next();
+        }
+        check content.close();
+    }
+}
+```
+
+The FTP listener automatically routes files to the appropriate content handler based on file extension: `.txt` → `onFileText()`, `.json` → `onFileJson()`, `.xml` → `onFileXml()`, `.csv` → `onFileCsv()`, and other extensions → `onFile()` (fallback handler). You can override the default routing using the `@ftp:FunctionConfig` annotation to specify a custom file name pattern for each handler method.
 
 ### Secure access with SFTP
 

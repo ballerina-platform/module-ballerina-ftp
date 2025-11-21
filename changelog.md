@@ -7,12 +7,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- [Improving Ballerina FTP Client with Copy, Move and IsExist API](https://github.com/ballerina-platform/ballerina-library/issues/8438)
+- Add functionality for streaming put methods in ftp:Client
+- Add functionality for type based put and get in ftp:Caller
+
+### Fixed
+
+- [SFTP listener fails with insufficient error message](https://github.com/wso2/product-ballerina-integrator/issues/641)
+
+## [2.15.1] - 2025-11-05
+
+### Fixed
+
+- Fix format specific functions in listener compiler validation failure
+
+## [2.15.0] - 2025-11-03
+
+### Added
+
+- [Add databinding support for ftp:Client](https://github.com/ballerina-platform/ballerina-library/issues/6529)
 - [Add a file content listener to read the content of a file once it is added to the remote file system](https://github.com/ballerina-platform/ballerina-library/issues/1490)
+
+### Fixed
+
+- [Fix SFTP authentication scenarios](https://github.com/ballerina-platform/ballerina-library/issues/8155)
+
+## [2.14.1] - 2025-09-24
 
 ### Fixed
 
 - [Fix the issue where the FTP URL is improperly formatted for the jail-break scnenarios](https://github.com/ballerina-platform/ballerina-library/issues/8267)
 - Fix exposed passwords in logs
+- Update dependency fix CVE-2025-48924 vulnerability
 
 ## [2.14.0] - 2025-08-21
 

@@ -18,15 +18,12 @@
 
 package io.ballerina.stdlib.ftp.client;
 
-import io.ballerina.lib.data.jsondata.json.Native;
 import io.ballerina.runtime.api.Environment;
-import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.creators.TypeCreator;
-import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.PredefinedTypes;
+import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
-import io.ballerina.runtime.api.utils.XmlUtils;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
@@ -70,6 +67,11 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.ENTITY_BYTE_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.VFS_CLIENT_CONNECTOR;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToCsv;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToJson;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToString;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToXml;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertToBallerinaByteArray;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
 
@@ -174,7 +176,7 @@ public class FtpClient {
         if (!(content instanceof byte[])) {
             return content;
         }
-        return ValueCreator.createArrayValue((byte[]) content);
+        return convertToBallerinaByteArray((byte[]) content);
     }
 
     public static Object getText(Environment env, BObject clientConnector, BString filePath) {
@@ -182,7 +184,7 @@ public class FtpClient {
         if (!(content instanceof byte[])) {
             return content;
         }
-        return StringUtils.fromString(new String((byte[]) content, StandardCharsets.UTF_8));
+        return convertBytesToString((byte[]) content);
     }
 
     public static Object getJson(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
@@ -192,21 +194,7 @@ public class FtpClient {
         }
 
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
-        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
-                io.ballerina.lib.data.ModuleUtils.getModule(), "Options");
-        if (laxDataBinding) {
-            BMap allowDataProjection = mapValue.getMapValue(StringUtils.fromString("allowDataProjection"));
-            allowDataProjection.put(StringUtils.fromString("nilAsOptionalField"), Boolean.TRUE);
-            allowDataProjection.put(StringUtils.fromString("absentAsNilableType"), Boolean.TRUE);
-            mapValue.put(StringUtils.fromString("allowDataProjection"), allowDataProjection);
-        } else {
-            mapValue.put(StringUtils.fromString("allowDataProjection"), Boolean.FALSE);
-        }
-        Object bJson = Native.parseBytes(ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
-        if (bJson instanceof BError) {
-            return FtpUtil.createError(((BError) bJson).getErrorMessage().getValue(), FTP_ERROR);
-        }
-        return bJson;
+        return convertBytesToJson((byte[]) content, typeDesc.getDescribingType(), laxDataBinding);
     }
 
     public static Object getXml(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
@@ -214,27 +202,8 @@ public class FtpClient {
         if (!(content instanceof byte[])) {
             return content;
         }
-
-        if (typeDesc.getDescribingType().getQualifiedName().equals("xml")) {
-            try {
-                return XmlUtils.parse(StringUtils.fromString(new String((byte[]) content, StandardCharsets.UTF_8)));
-            } catch (BError e) {
-                return FtpUtil.createError(e.getErrorMessage().getValue(), FTP_ERROR);
-            }
-        }
-
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
-        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
-                new Module("ballerina", "data.xmldata", "1"),
-                "SourceOptions");
-        mapValue.put(StringUtils.fromString("allowDataProjection"), laxDataBinding);
-
-        Object bXml = io.ballerina.lib.data.xmldata.xml.Native.parseBytes(
-                ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
-        if (bXml instanceof BError) {
-            return FtpUtil.createError(((BError) bXml).getErrorMessage().getValue(), FTP_ERROR);
-        }
-        return bXml;
+        return convertBytesToXml((byte[]) content, typeDesc.getDescribingType(), laxDataBinding);
     }
 
     public static Object getCsv(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
@@ -244,23 +213,7 @@ public class FtpClient {
         }
 
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
-        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
-                io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(), "ParseOptions");
-        if (laxDataBinding) {
-            BMap allowDataProjection = mapValue.getMapValue(StringUtils.fromString("allowDataProjection"));
-            allowDataProjection.put(StringUtils.fromString("nilAsOptionalField"), Boolean.TRUE);
-            allowDataProjection.put(StringUtils.fromString("absentAsNilableType"), Boolean.TRUE);
-            mapValue.put(StringUtils.fromString("allowDataProjection"), allowDataProjection);
-        } else {
-            mapValue.put(StringUtils.fromString("allowDataProjection"), Boolean.FALSE);
-        }
-
-        Object csv = io.ballerina.lib.data.csvdata.csv.Native.parseBytes(
-                ValueCreator.createArrayValue((byte[]) content), mapValue, typeDesc);
-        if (csv instanceof BError) {
-            return FtpUtil.createError(((BError) csv).getErrorMessage().getValue(), FTP_ERROR);
-        }
-        return csv;
+        return convertBytesToCsv((byte[]) content, typeDesc.getDescribingType(), laxDataBinding);
     }
 
     public static Object getBytesAsStream(Environment env, BObject clientConnector, BString filePath) {
@@ -574,7 +527,7 @@ public class FtpClient {
 
         private static byte[] bytesFromArray(BArray array) {
             // If it's a byte[] just return it; else it's CSV row from string[]
-            if (array.getElementType().getTag() == io.ballerina.runtime.api.types.TypeTags.BYTE_TAG) {
+            if (array.getElementType().getTag() == TypeTags.BYTE_TAG) {
                 return array.getBytes();
             }
             String csvRow = CSVUtils.convertArrayToCsvRow(array) + System.lineSeparator();

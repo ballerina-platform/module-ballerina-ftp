@@ -79,6 +79,10 @@ public class FtpListenerHelper {
                 listener.setFileSystemOptions(connectorImpl.getFileSystemOptions());
             }
 
+            boolean laxDataBinding = serviceEndpointConfig.getBooleanValue(
+                    StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING));
+            listener.setLaxDataBinding(laxDataBinding);
+
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             // This is a temporary solution
 
