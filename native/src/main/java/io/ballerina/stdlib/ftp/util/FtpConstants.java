@@ -81,6 +81,30 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_PREFERRED_METHODS = "preferredMethods";
     public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
 
+    // Advanced file selection configuration constants
+    public static final String ENDPOINT_CONFIG_POLLING_INTERVAL = "pollingInterval";
+    public static final String ENDPOINT_CONFIG_FILE_AGE_FILTER = "fileAgeFilter";
+    public static final String ENDPOINT_CONFIG_FILE_DEPENDENCY_CONDITIONS = "fileDependencyConditions";
+
+    // File age filter fields
+    public static final String FILE_AGE_FILTER_MIN_AGE = "minAge";
+    public static final String FILE_AGE_FILTER_MAX_AGE = "maxAge";
+    public static final String FILE_AGE_FILTER_AGE_CALCULATION_MODE = "ageCalculationMode";
+    public static final String AGE_CALCULATION_MODE_LAST_MODIFIED = "LAST_MODIFIED";
+    public static final String AGE_CALCULATION_MODE_CREATION_TIME = "CREATION_TIME";
+
+    // File dependency condition fields
+    public static final String DEPENDENCY_TARGET_PATTERN = "targetPattern";
+    public static final String DEPENDENCY_REQUIRED_FILES = "requiredFiles";
+    public static final String DEPENDENCY_MATCHING_MODE = "matchingMode";
+    public static final String DEPENDENCY_REQUIRED_FILE_COUNT = "requiredFileCount";
+    public static final String DEPENDENCY_MATCHING_MODE_ALL = "ALL";
+    public static final String DEPENDENCY_MATCHING_MODE_ANY = "ANY";
+    public static final String DEPENDENCY_MATCHING_MODE_EXACT_COUNT = "EXACT_COUNT";
+
+    // Cron scheduling
+    public static final String CRON_EXPRESSION = "cronExpression";
+
     public static final String INPUT_CONTENT_FILE_PATH_KEY = "filePath";
     public static final String INPUT_CONTENT_IS_FILE_KEY = "isFile";
     public static final String INPUT_CONTENT_FILE_CONTENT_KEY = "fileContent";

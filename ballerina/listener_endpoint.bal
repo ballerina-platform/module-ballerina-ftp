@@ -94,15 +94,30 @@ public isolated class Listener {
 
     isolated function internalStart() returns error? {
         lock {
-            self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), self.config.pollingInterval);
+            // Check if pollingInterval is a cron expression (string) or interval (decimal)
+            decimal|string pollingInterval = self.config.pollingInterval;
+
+            if pollingInterval is string {
+                // Cron-based scheduling - delegate to native implementation
+                return startCronScheduler(self, pollingInterval);
+            } else {
+                // Fixed interval scheduling using task scheduler
+                self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), pollingInterval);
+            }
         }
     }
 
     isolated function stop() returns error? {
         lock {
+            // Stop task scheduler if used
             var id = self.jobId;
             if id is task:JobId {
                 check task:unscheduleJob(id);
+            }
+            // Stop cron scheduler if used
+            decimal|string pollingInterval = self.config.pollingInterval;
+            if pollingInterval is string {
+                check stopCronScheduler(self);
             }
         }
     }
@@ -160,6 +175,8 @@ class Job {
 #                   prevents the underlying VFS from attempting to change to the actual server root.
 #                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command
 #                   that can fail on servers restricting root access (e.g., chrooted environments).
+# + fileAgeFilter - Configuration for filtering files based on age (optional)
+# + fileDependencyConditions - Array of dependency conditions for conditional file processing (default: [])
 # + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
 #                    null values in JSON/XML are allowed to be mapped to optional fields
 #                    missing fields in JSON/XML are allowed to be mapped as null values
@@ -170,8 +187,10 @@ public type ListenerConfiguration record {|
     AuthConfiguration auth?;
     string path = "/";
     string fileNamePattern?;
-    decimal pollingInterval = 60;
+    decimal|string pollingInterval = 60;
     boolean userDirIsRoot = false;
+    FileAgeFilter fileAgeFilter?;
+    FileDependencyCondition[] fileDependencyConditions = [];
     boolean laxDataBinding = false;
 |};
 
