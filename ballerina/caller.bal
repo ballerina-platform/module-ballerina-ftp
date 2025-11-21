@@ -17,7 +17,8 @@
 import ballerina/io;
 import ballerina/jballerina.java;
 
-# Represents an FTP caller that is passed to the onFileChange function
+# FTP caller for interacting with FTP/SFTP servers from within file handlers.
+# Provides the same file operations as the Client class.
 public isolated client class Caller {
     private final Client 'client;
 
@@ -29,7 +30,7 @@ public isolated client class Caller {
     }
 
     # Retrieves the file content from a remote resource.
-    # Deprecated: Use `get` function of `ftp:Client` instead.
+    # Deprecated: Use the format specific get methods(`getJson`, `getXml`, `getCsv`, `getBytes`, `getText`) instead.
     # ```ballerina
     # stream<byte[] & readonly, io:Error?>|ftp:Error channel = caller->get(path);
     # ```
@@ -43,64 +44,70 @@ public isolated client class Caller {
 
     # Retrieves the file content as bytes from a remote resource.
     # ```ballerina
-    # byte[] content = check client->getBytes(path);
+    # byte[] content = check caller->getBytes(path);
     # ```
     #
     # + path - The resource path
-    # + return - content as a byte array or `ftp:Error` in case of errors
+    # + return - Content as a byte array or `ftp:Error` in case of errors
     remote isolated function getBytes(string path) returns byte[]|Error {
         return self.'client->getBytes(path);
     }
 
     # Retrieves the file content as text from a remote resource.
     # ```ballerina
-    # string content = check client->getText(path);
+    # string content = check caller->getText(path);
     # ```
     #
     # + path - The resource path
-    # + return - content as a string or `ftp:Error` in case of errors
+    # + return - Content as a string or `ftp:Error` in case of errors
     remote isolated function getText(string path) returns string|Error {
         return self.'client->getText(path);
     }
 
-    # Retrieves the file content as json from a remote resource.
+    # Retrieves the file content as JSON from a remote resource.
     # ```ballerina
-    # json content = check client->getJson(path);
+    # json content = check caller->getJson(path);
     # ```
     #
     # + path - The resource path
-    # + targetType - The target type of the json content
-    #                 (e.g., `json`, `record {}`, or a user-defined record type)
-    # + return - content as a json or `ftp:Error` in case of errors
+    # + targetType - Expected return type (to be used for automatic data binding).
+    #                Supported types:
+    #                - Built-in `json` type
+    #                - Custom types (e.g., `User`, `Student?`, `Person[]`, etc.)
+    # + return - Content as JSON or `ftp:Error` in case of errors
     remote isolated function getJson(string path, typedesc<json|record {}> targetType = <>) returns targetType|Error = @java:Method {
         name: "getJson",
         'class: "io.ballerina.stdlib.ftp.server.FtpCaller"
     } external;
 
-    # Retrieves the file content as xml from a remote resource.
+    # Retrieves the file content as XML from a remote resource.
     # ```ballerina
-    # xml content = check client->getXml(path);
+    # xml content = check caller->getXml(path);
     # ```
     #
     # + path - The resource path
-    # + targetType - The target type of the xml content
-    #                 (e.g., `xml`, `record {}`, or a user-defined record type)
-    # + return - content as a xml or `ftp:Error` in case of errors
+    # + targetType - Expected return type (to be used for automatic data binding).
+    #                Supported types:
+    #                - Built-in `xml` type
+    #                - Custom types (e.g., `User`, `Student?`, `Person[]`, etc.)
+    # + return - Content as XML or `ftp:Error` in case of errors
     remote isolated function getXml(string path, typedesc<xml|record {}> targetType = <>) returns targetType|Error = @java:Method {
         name: "getXml",
         'class: "io.ballerina.stdlib.ftp.server.FtpCaller"
     } external;
 
-    # Fetches file content from the FTP server as CSV.
-    # When the expected data type is record[], the first entry of the csv file should contain matching headers.
+    # Retrieves the file content as CSV from a remote resource.
+    # When the expected data type is a custom type, the first entry of the CSV file should contain matching headers.
     # ```ballerina
-    # string[][] content = check client->getCsv(path);
+    # string[][] content = check caller->getCsv(path);
     # ```
     #
     # + path - The path to the file on the FTP server
-    # + targetType - The target type of the CSV content
-    #                 (e.g., `string[][]`, `record {}[]`, or an array of user-defined record type)
-    # + return - content as a string[][] or `ftp:Error` in case of errors
+    # + targetType - Expected return type (to be used for automatic data binding).
+    #                Supported types:
+    #                - Built-in types: `string[][]` (array of string arrays)
+    #                - Custom types: (e.g., `User[]`, `Student[]`, `Person[]`, etc.)
+    # + return - Content as CSV or `ftp:Error` in case of errors
     remote isolated function getCsv(string path, typedesc<string[][]|record {}[]> targetType = <>) returns targetType|Error = @java:Method {
         name: "getCsv",
         'class: "io.ballerina.stdlib.ftp.server.FtpCaller"
@@ -108,7 +115,7 @@ public isolated client class Caller {
 
     # Retrieves the file content as a byte stream from a remote resource.
     # ```ballerina
-    # stream<byte[], error?> response = check client->getBytesAsStream(path);
+    # stream<byte[], error?> response = check caller->getBytesAsStream(path);
     # ```
     #
     # + path - The path to the file on the FTP server
@@ -120,11 +127,14 @@ public isolated client class Caller {
 
     # Retrieves the file content as a CSV stream from a remote resource.
     # ```ballerina
-    # stream<string[], error?> response = check client->getCsvAsStream(path);
+    # stream<string[], error?> response = check caller->getCsvAsStream(path);
     # ```
     #
     # + path - The path to the file on the FTP server
-    # + targetType - The target element type of the stream (e.g., `string[]` or `record {}`)
+    # + targetType - Expected element type (to be used for automatic data binding).
+    #                Supported types:
+    #                - Built-in types: `string[]` - Array of strings representing CSV columns
+    #                - Custom types: (e.g., `User`, `Student?`, `Person[]`, etc.)
     # + return - A stream from which the file can be read or `ftp:Error` in case of errors
     remote isolated function getCsvAsStream(string path, typedesc<string[]|record {}> targetType = <>) returns stream<targetType, error?>|Error = @java:Method {
         name: "getCsvAsStream",
@@ -132,15 +142,14 @@ public isolated client class Caller {
     } external;
 
     # Appends the content to an existing file in an FTP server.
-    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvAsStream`.
+    # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     # ```ballerina
     # ftp:Error? response = caller->append(path, channel);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
     @deprecated
     remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content)
             returns Error? {
@@ -148,18 +157,15 @@ public isolated client class Caller {
     }
 
     # Adds a file to an FTP server.
-    # Deprecated: Use `putText`, `putJson`, `putXml`, `putCsv`, `putBytes` or `putCsvAsStream`.
+    # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     # ```ballerina
     # ftp:Error? response = caller->put(path, channel);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + compressionType - Type of the compression to be used, if
-    #                     the file should be compressed before
-    #                     uploading
-    # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # + compressionType - Type of the compression to be used if the file should be compressed before uploading
+    # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
     @deprecated
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
             |string|xml|json content, Compression compressionType = NONE) returns Error? {
@@ -168,90 +174,90 @@ public isolated client class Caller {
 
     # Adds a byte array as a file to an FTP server with the specified write option.
     # ```ballerina
-    # ftp:Error? response = client->putBytes(path, content, option);
+    # ftp:Error? response = caller->putBytes(path, content, option);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + option - To indicate whether to overwrite or append the given content
+    # + option - Write option: overwrite or append the given content
     # + return - `()` or else an `ftp:Error` if failed to write
     remote isolated function putBytes(string path, byte[] content, FileWriteOption option = OVERWRITE) returns Error? {
         return self.'client->putBytes(path, content, option);
     }
 
-    # Adds a file to an FTP server with the specified write option.
+    # Adds text content to a file on an FTP server with the specified write option.
     # ```ballerina
-    # ftp:Error? response = client->putText(path, content, option);
+    # ftp:Error? response = caller->putText(path, content, option);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + option - To indicate whether to overwrite or append the given content
+    # + option - Write option: overwrite or append the given content
     # + return - `()` or else an `ftp:Error` if failed to write
     remote isolated function putText(string path, string content, FileWriteOption option = OVERWRITE) returns Error? {
         return self.'client->putText(path, content, option);
     }
 
-    # Adds a file to an FTP server with the specified write option.
+    # Adds JSON content to a file on an FTP server with the specified write option.
     # ```ballerina
-    # ftp:Error? response = client->putJson(path, content, option);
+    # ftp:Error? response = caller->putJson(path, content, option);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + option - To indicate whether to overwrite or append the given content
+    # + option - Write option: overwrite or append the given content
     # + return - `()` or else an `ftp:Error` if failed to write
     remote isolated function putJson(string path, json|record {} content, FileWriteOption option = OVERWRITE) returns Error? {
         return self.'client->putJson(path, content, option);
     }
 
-    # Adds a file to an FTP server with the specified write option.
+    # Adds XML content to a file on an FTP server with the specified write option.
     # ```ballerina
-    # ftp:Error? response = client->putXml(path, content, option);
+    # ftp:Error? response = caller->putXml(path, content, option);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + option - To indicate whether to overwrite or append the given content
+    # + option - Write option: overwrite or append the given content
     # + return - `()` or else an `ftp:Error` if failed to write
     remote isolated function putXml(string path, xml|record {} content, FileWriteOption option = OVERWRITE) returns Error? {
         return self.'client->putXml(path, content, option);
     }
 
-    # Adds a CSV file to an FTP server with the specified write option.
+    # Adds CSV content to a file on an FTP server with the specified write option.
     # ```ballerina
-    # ftp:Error? response = client->putCsv(path, content, option);
+    # ftp:Error? response = caller->putCsv(path, content, option);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + option - To indicate whether to overwrite or append the given content
+    # + option - Write option: overwrite or append the given content
     # + return - `()` or else an `ftp:Error` if failed to write
     remote isolated function putCsv(string path, string[][]|record {}[] content, FileWriteOption option = OVERWRITE) returns Error? {
         return self.'client->putCsv(path, content, option);
     }
 
-    # Adds a byte[] stream as a file to an FTP server with the specified write option.
+    # Adds a byte stream as a file to an FTP server with the specified write option.
     # ```ballerina
-    # ftp:Error? response = client->putBytesAsStream(path, content, option);
+    # ftp:Error? response = caller->putBytesAsStream(path, content, option);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + option - To indicate whether to overwrite or append the given content
+    # + option - Write option: overwrite or append the given content
     # + return - `()` or else an `ftp:Error` if failed to write
     remote isolated function putBytesAsStream(string path, stream<byte[], error?> content, FileWriteOption option = OVERWRITE) returns Error? {
         return self.'client->putBytesAsStream(path, content, option);
     }
 
-    # Adds a CSV file from string[][] or record{}[] elements as a file to an FTP server with the specified write option.
+    # Adds CSV content from a stream of elements to a file on an FTP server with the specified write option.
     # ```ballerina
-    # ftp:Error? response = client->putCsvAsStream(path, content, option);
+    # ftp:Error? response = caller->putCsvAsStream(path, content, option);
     # ```
     #
     # + path - The resource path
     # + content - Content to be written to the file in server
-    # + option - To indicate whether to overwrite or append the given content
+    # + option - Write option: overwrite or append the given content
     # + return - `()` or else an `ftp:Error` if failed to write
     remote isolated function putCsvAsStream(string path, stream<string[]|record {}, error?> content, FileWriteOption option = OVERWRITE) returns Error? {
         return self.'client->putCsvAsStream(path, content, option);
@@ -263,8 +269,7 @@ public isolated client class Caller {
     # ```
     #
     # + path - The directory path
-    # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
     remote isolated function mkdir(string path) returns Error? {
         return self.'client->mkdir(path);
     }
@@ -275,99 +280,87 @@ public isolated client class Caller {
     # ```
     #
     # + path - The directory path
-    # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
     remote isolated function rmdir(string path) returns Error? {
         return self.'client->rmdir(path);
     }
 
-    # Renames a file or moves it to a new location within
-    # the same FTP server.
+    # Renames a file or directory on an FTP server or moves it to a new location.
     # ```ballerina
     # ftp:Error? response = caller->rename(origin, destination);
     # ```
     #
     # + origin - The source file location
     # + destination - The destination file location
-    # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
     remote isolated function rename(string origin, string destination) returns Error? {
         return self.'client->rename(origin, destination);
     }
 
-    # Moves a file from one location to another within
-    # the same FTP server.
+    # Moves a file from one location to another on an FTP server.
     # ```ballerina
     # ftp:Error? response = caller->move(sourcePath, destinationPath);
     # ```
     #
     # + sourcePath - The source file location
     # + destinationPath - The destination file location
-    # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
     remote isolated function move(string sourcePath, string destinationPath) returns Error? {
         return self.'client->move(sourcePath, destinationPath);
     }
 
-    # Copies a file from one location to another within
-    # the same FTP server.
+    # Copies a file from one location to another on an FTP server.
     # ```ballerina
     # ftp:Error? response = caller->copy(sourcePath, destinationPath);
     # ```
     #
     # + sourcePath - The source file location
     # + destinationPath - The destination file location
-    # + return - `()` or else an `ftp:Error` if failed to establish
-    #            the communication with the FTP server
+    # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
     remote isolated function copy(string sourcePath, string destinationPath) returns Error? {
         return self.'client->copy(sourcePath, destinationPath);
     }
 
-    # Checks if a file or directory exists in the FTP server.
+    # Checks if a file or directory exists on an FTP server.
     # ```ballerina
     # boolean|ftp:Error response = caller->exists(path);
     # ```
     #
     # + path - The resource path
-    # + return - `true` if the file or directory exists, `false` otherwise,
-    #            or an `ftp:Error` if failed to establish the communication
-    #            with the FTP server
+    # + return - `true` if the file or directory exists, `false` otherwise, or an `ftp:Error` if failed to establish the communication with the FTP server
     remote isolated function exists(string path) returns boolean|Error {
         return self.'client->exists(path);
     }
 
-    # Gets the size of a file resource.
+    # Gets the size of a file on an FTP server.
     # ```ballerina
     # int|ftp:Error response = caller->size(path);
     # ```
     #
     # + path - The resource path
-    # + return - The file size in bytes or an `ftp:Error` if
-    #            failed to establish the communication with the FTP server
+    # + return - The file size in bytes or an `ftp:Error` if failed to establish the communication with the FTP server
     remote isolated function size(string path) returns int|Error {
         return self.'client->size(path);
     }
 
-    # Gets the file name list in a given folder.
+    # Lists files and directories in a folder on an FTP server.
     # ```ballerina
     # ftp:FileInfo[]|ftp:Error response = caller->list(path);
     # ```
     #
     # + path - The directory path
-    # + return - An array of file names or an `ftp:Error` if failed to
-    #            establish the communication with the FTP server
+    # + return - An array of FileInfo records or an `ftp:Error` if failed to establish the communication with the FTP server
     remote isolated function list(string path) returns FileInfo[]|Error {
         return self.'client->list(path);
     }
 
-    # Checks if a given resource is a directory.
+    # Checks if a given resource is a directory on an FTP server.
     # ```ballerina
     # boolean|ftp:Error response = caller->isDirectory(path);
     # ```
     #
     # + path - The resource path
-    # + return - `true` if given resource is a directory or an `ftp:Error` if
-    #            an error occurred while checking the path
+    # + return - `true` if the resource is a directory, `false` otherwise, or an `ftp:Error` if the check fails
     remote isolated function isDirectory(string path) returns boolean|Error {
         return self.'client->isDirectory(path);
     }
@@ -378,8 +371,7 @@ public isolated client class Caller {
     # ```
     #
     # + path - The resource path
-    # + return - `()` or else an `ftp:Error` if failed to establish
-    #             the communication with the FTP server
+    # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
     remote isolated function delete(string path) returns Error? {
         return self.'client->delete(path);
     }

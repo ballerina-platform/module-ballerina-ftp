@@ -16,14 +16,15 @@
 
 import ballerina/jballerina.java;
 
-# Represents the type of the record which returned from the contentByteStream.next() call.
+# Record returned from the `ContentCsvStringArrayStream.next()` method.
 #
-# + value - The array of strings
+# + value - The array of strings representing a CSV row
 public type ContentCsvStringArrayStreamEntry record {|
     string[] value;
 |};
 
-# `ContentCsvStringStream` used to initialize a stream of type string[] for content callbacks.
+# Stream for reading CSV content row by row from content callbacks.
+# This stream provides CSV rows as string arrays.
 public class ContentCsvStringArrayStream {
 
     private boolean isClosed = false;
@@ -42,7 +43,7 @@ public class ContentCsvStringArrayStream {
     }
 
     # Closes the stream. The primary usage of this function is to close the stream without reaching the end.
-    # If the stream reaches the end, the `contentByteStream.next` will automatically close the stream.
+    # If the stream reaches the end, the `contentCsvStringArrayStream.next` will automatically close the stream.
     #
     # + return - Returns `()` when the closing was successful or an `error`
     public isolated function close() returns error? {

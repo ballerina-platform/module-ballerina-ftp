@@ -17,15 +17,15 @@
 import ballerina/io;
 import ballerina/jballerina.java;
 
-# Represents the type of the record which returned from the byteStream.next() call.
+# Record returned from the `ByteStream.next()` method.
 #
-# + value - The array of byte
+# + value - The array of bytes
 type StreamEntry record {|
     byte[] & readonly value;
 |};
 
-# `ByteStream` used to initialize a stream of type byte[]. This `ByteStream` refers to the stream that embedded to
-# the I/O byte channels.
+# Stream for reading file content in byte chunks from the FTP server.
+# This stream wraps the underlying I/O byte channel.
 class ByteStream {
 
     private Client entity;

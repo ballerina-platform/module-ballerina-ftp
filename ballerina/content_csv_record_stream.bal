@@ -16,14 +16,15 @@
 
 import ballerina/jballerina.java;
 
-# Represents the type of the record which returned from the contentByteStream.next() call.
+# Record returned from the `ContentCsvRecordStream.next()` method.
 #
-# + value - The record
+# + value - The record deserialized from a CSV row
 public type ContentCsvRecordStreamEntry record {|
     record {} value;
 |};
 
-# `ContentCsvRecordStream` used to initialize a stream of type string[] for content callbacks.
+# Stream for reading CSV content as structured records from content callbacks.
+# This stream deserializes CSV rows into Ballerina record types.
 public class ContentCsvRecordStream {
 
     private boolean isClosed = false;
@@ -42,7 +43,7 @@ public class ContentCsvRecordStream {
     }
 
     # Closes the stream. The primary usage of this function is to close the stream without reaching the end.
-    # If the stream reaches the end, the `contentByteStream.next` will automatically close the stream.
+    # If the stream reaches the end, the `contentCsvRecordStream.next` will automatically close the stream.
     #
     # + return - Returns `()` when the closing was successful or an `error`
     public isolated function close() returns error? {
