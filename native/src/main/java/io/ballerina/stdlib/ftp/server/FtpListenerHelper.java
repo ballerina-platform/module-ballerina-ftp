@@ -78,7 +78,7 @@ public class FtpListenerHelper {
             final FtpListener listener = new FtpListener(env.getRuntime());
             RemoteFileSystemServerConnector serverConnector = fileSystemConnectorFactory
                     .createServerConnector(paramMap, listener);
-          
+
           // Pass FileSystemManager and options to listener for content fetching
             if (serverConnector instanceof RemoteFileSystemServerConnectorImpl) {
                 RemoteFileSystemServerConnectorImpl connectorImpl =
@@ -86,6 +86,10 @@ public class FtpListenerHelper {
                 listener.setFileSystemManager(connectorImpl.getFileSystemManager());
                 listener.setFileSystemOptions(connectorImpl.getFileSystemOptions());
             }
+
+            boolean laxDataBinding = serviceEndpointConfig.getBooleanValue(
+                    StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING));
+            listener.setLaxDataBinding(laxDataBinding);
 
             // Set file dependency conditions on the consumer
             List<FileDependencyCondition> dependencyConditions = parseFileDependencyConditions(serviceEndpointConfig);

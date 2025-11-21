@@ -1,1 +1,11 @@
 rootProject.name = 'ftp-server'
+
+// Load root gradle.properties
+def rootDir = settingsDir.parentFile.parentFile.parentFile
+def rootProps = new Properties()
+new File(rootDir, 'gradle.properties').withInputStream { rootProps.load(it) }
+
+// Make properties available to build.gradle
+rootProps.each { key, value ->
+    gradle.ext[key] = value
+}

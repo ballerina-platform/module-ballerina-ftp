@@ -79,6 +79,7 @@ public class FtpListener implements RemoteFileSystemListener {
     private BObject caller;
     private FileSystemManager fileSystemManager;
     private FileSystemOptions fileSystemOptions;
+    private boolean laxDataBinding;
 
     FtpListener(Runtime runtime) {
         this.runtime = runtime;
@@ -92,6 +93,10 @@ public class FtpListener implements RemoteFileSystemListener {
         this.fileSystemOptions = fileSystemOptions;
     }
 
+    public void setLaxDataBinding(boolean laxDataBinding) {
+        this.laxDataBinding = laxDataBinding;
+    }
+
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
@@ -99,38 +104,7 @@ public class FtpListener implements RemoteFileSystemListener {
 
             if (runtime != null) {
                 for (BObject service : registeredServices.values()) {
-                    // Create router to handle content method selection
-                    ContentMethodRouter router = new ContentMethodRouter(service);
-
-                    // Check for onFileDeleted method
-                    Optional<MethodType> onFileDeletedMethodType = getOnFileDeletedMethod(service);
-
-                    // Check if any content handler methods are available
-                    if (router.hasContentMethods()) {
-                        // Process content-based callbacks with routing (includes added files and deleted files)
-                        processContentBasedCallbacks(service, event, router);
-                    } else if (onFileDeletedMethodType.isPresent()) {
-                        // Service has only onFileDeleted method (no content methods)
-                        // Process deleted files directly
-                        if (!event.getDeletedFiles().isEmpty()) {
-                            processFileDeletedCallback(service, event, onFileDeletedMethodType.get());
-                        }
-                        // For added files, fall back to onFileChange if present
-                        if (!event.getAddedFiles().isEmpty()) {
-                            Optional<MethodType> onFileChangeMethodType = getOnFileChangeMethod(service);
-                            if (onFileChangeMethodType.isPresent()) {
-                                processMetadataOnlyCallbacks(service, event, onFileChangeMethodType.get());
-                            }
-                        }
-                    } else {
-                        // Fall back to traditional onFileChange
-                        Optional<MethodType> onFileChangeMethodType = getOnFileChangeMethod(service);
-                        if (onFileChangeMethodType.isPresent()) {
-                            processMetadataOnlyCallbacks(service, event, onFileChangeMethodType.get());
-                        } else {
-                            log.error("No valid remote method found in service");
-                        }
-                    }
+                    dispatchFileEventToService(service, event);
                 }
             } else {
                 log.error("Runtime should not be null.");
@@ -139,13 +113,38 @@ public class FtpListener implements RemoteFileSystemListener {
         return true;
     }
 
+    private void dispatchFileEventToService(BObject service, RemoteFileSystemEvent event) {
+        FormatMethodsHolder formatMethodHolder = new FormatMethodsHolder(service);
+        Optional<MethodType> onFileDeletedMethodType = getOnFileDeletedMethod(service);
+
+        // Dispatch Strategy: Check handler availability in order
+        if (formatMethodHolder.hasContentMethods()) {
+            processContentBasedCallbacks(service, event, formatMethodHolder);
+        } else if (onFileDeletedMethodType.isPresent()) {
+            if (!event.getDeletedFiles().isEmpty()) {
+                processFileDeletedCallback(service, event, onFileDeletedMethodType.get());
+            }
+        } else {
+            // Strategy 3: Fall back to legacy onFileChange handler
+            Optional<MethodType> onFileChangeMethodType = getOnFileChangeMethod(service);
+            if (onFileChangeMethodType.isPresent()) {
+                log.debug("Service uses deprecated onFileChange handler for file events.");
+                processMetadataOnlyCallbacks(service, event, onFileChangeMethodType.get());
+            } else {
+                log.error("Service has no valid handler method. Must have one of: " +
+                        "onFile, onFileText, onFileJson, onFileXml, onFileCsv (format-specific), " +
+                        "onFileDeleted, or onFileChange (deprecated)");
+            }
+        }
+    }
+
     /**
      * Processes content-based callbacks for the new content listener methods.
      * Uses ContentMethodRouter to dispatch files to appropriate handlers.
      * Also handles file deletion events via onFileDeleted method if available.
      */
     private void processContentBasedCallbacks(BObject service, RemoteFileSystemEvent event,
-                                              ContentMethodRouter router) {
+                                              FormatMethodsHolder holder) {
         // Process added files with content methods
         if (!event.getAddedFiles().isEmpty()) {
             if (fileSystemManager == null || fileSystemOptions == null) {
@@ -154,8 +153,8 @@ public class FtpListener implements RemoteFileSystemListener {
             } else {
                 try {
                     FtpContentCallbackHandler contentHandler = new FtpContentCallbackHandler(
-                            runtime, fileSystemManager, fileSystemOptions);
-                    contentHandler.processContentCallbacks(service, event, router, caller);
+                            runtime, fileSystemManager, fileSystemOptions, laxDataBinding);
+                    contentHandler.processContentCallbacks(service, event, holder, caller);
                 } catch (Exception e) {
                     log.error("Error in content callback processing for added files", e);
                 }

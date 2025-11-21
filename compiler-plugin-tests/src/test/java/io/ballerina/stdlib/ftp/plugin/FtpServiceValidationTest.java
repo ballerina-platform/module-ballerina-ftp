@@ -595,4 +595,56 @@ public class FtpServiceValidationTest {
                 "format-specific handlers (onFile, onFileText, onFileJson, onFileXml, onFileCsv, onFileDeleted).");
     }
 
+    @Test(description = "Validation when onFile handler uses invalid stream type (stream<byte, error?> " +
+            "instead of stream<byte[], error?>)")
+    public void testInvalidContentService18() {
+        Package currentPackage = loadPackage("invalid_content_service_18");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_CONTENT_PARAMETER_TYPE,
+                "Invalid parameter type for handler onFile. Expected byte[] or stream<byte[], error?>, " +
+                        "found stream<byte, error?>.");
+    }
+
+    @Test(description = "Validation when onFileXml handler accepts stream type instead of xml")
+    public void testInvalidContentService19() {
+        Package currentPackage = loadPackage("invalid_content_service_19");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_CONTENT_PARAMETER_TYPE,
+                "Invalid parameter type for handler onFileXml. " +
+                        "Expected xml or record{}, found stream<xml, error?>.");
+    }
+
+    @Test(description = "Validation when service on multiple listeners uses incompatible content handler types")
+    public void testInvalidContentService20() {
+        Package currentPackage = loadPackage("invalid_content_service_20");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 2);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        assertDiagnostic(((Diagnostic) diagnostics[0]), INVALID_CONTENT_PARAMETER_TYPE,
+                "Invalid parameter type for handler onFile. " +
+                        "Expected byte[] or stream<byte[], error?>, found byte.");
+        assertDiagnostic(((Diagnostic) diagnostics[1]), INVALID_CONTENT_PARAMETER_TYPE,
+                "Invalid parameter type for handler onFileXml. Expected xml or record{}, found json.");
+    }
+
+    @Test(description = "Validation when content handlers use invalid return types instead of error?")
+    public void testInvalidContentService21() {
+        Package currentPackage = loadPackage("invalid_content_service_21");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 3);
+        Object[] diagnostics = diagnosticResult.errors().toArray();
+        for (Object obj : diagnostics) {
+            Diagnostic diagnostic = (Diagnostic) obj;
+            assertDiagnostic(diagnostic, INVALID_RETURN_TYPE_ERROR_OR_NIL);
+        }
+    }
+
 }

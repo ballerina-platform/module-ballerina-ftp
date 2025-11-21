@@ -47,13 +47,6 @@ Service remoteServerService = service object {
         addedFileCount = event.addedFiles.length();
         deletedFileCount = event.deletedFiles.length();
         watchEventReceived = true;
-
-        foreach FileInfo addedFile in event.addedFiles {
-            log:printInfo("Added file path: " + addedFile.path);
-        }
-        foreach string deletedFile in event.deletedFiles {
-            log:printInfo("Deleted file path: " + deletedFile);
-        }
     }
 };
 

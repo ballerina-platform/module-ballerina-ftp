@@ -28,7 +28,6 @@ import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 
-import java.util.Objects;
 import java.util.Optional;
 
 import static io.ballerina.compiler.api.symbols.TypeDescKind.ARRAY;
@@ -71,10 +70,6 @@ public class FtpContentFunctionValidator {
     }
 
     public void validate() {
-        if (Objects.isNull(funcDefinitionNode)) {
-            return;
-        }
-
         if (!isRemoteFunction(context, funcDefinitionNode)) {
             reportErrorDiagnostic(context, CONTENT_METHOD_MUST_BE_REMOTE,
                     funcDefinitionNode.location(), contentMethodName);
@@ -163,10 +158,17 @@ public class FtpContentFunctionValidator {
         // onFile accepts: byte[] or stream<byte[], error?>
         if (typeKind == ARRAY) {
             // Check if it's byte[]
-            return isByteArray(typeSymbol);
+            TypeSymbol memberType = ((ArrayTypeSymbol) typeSymbol).memberTypeDescriptor();
+            return memberType.typeKind() == BYTE;
         } else if (typeKind == STREAM) {
-            // Check if it's stream<byte[], error?>
-            return isByteStream(typeSymbol);
+            // Get the stream's item type - should be byte[]
+            TypeSymbol itemType = ((StreamTypeSymbol) typeSymbol).typeParameter();
+            if (!(itemType instanceof ArrayTypeSymbol arrayType)) {
+                return false;
+            }
+            // Verify the array contains bytes
+            TypeSymbol memberType = arrayType.memberTypeDescriptor();
+            return memberType.typeKind() == BYTE;
         }
         return false;
     }
@@ -175,53 +177,19 @@ public class FtpContentFunctionValidator {
         if (typeKind == ARRAY) {
             // Array variant: string[][] or record[][]
             ArrayTypeSymbol arrayTypeSymbol = (ArrayTypeSymbol) typeSymbol;
-            return isStringArrayArray(arrayTypeSymbol) || isRecordArray(arrayTypeSymbol);
+            return isStringArrayOfArray(arrayTypeSymbol) || isRecordArray(arrayTypeSymbol);
         } else if (typeKind == STREAM) {
-            // Stream variant: stream<string[], error?> or stream<record[], error?>
+            // Stream variant: stream<string[], error?> or stream<record{}, error?>
             StreamTypeSymbol streamTypeSymbol = (StreamTypeSymbol) typeSymbol;
-            return isStringArrayStream(streamTypeSymbol) || isStreamRecordArray(streamTypeSymbol);
+            return isStringArrayStream(streamTypeSymbol) || isRecordStream(streamTypeSymbol);
         }
         return false;
     }
 
-    private boolean isStreamRecordArray(StreamTypeSymbol streamType) {
+    private boolean isRecordStream(StreamTypeSymbol streamType) {
         // Get the stream's item type - should be record{}
         TypeSymbol itemType = streamType.typeParameter();
         return itemType.typeKind() == RECORD || isRecordTypeReference(itemType);
-    }
-
-    /**
-     * Validates that a type symbol represents byte[] (byte array).
-     * This is the accepted parameter type for onFile handler.
-     *
-     * @param typeSymbol The type symbol to validate
-     * @return true if typeSymbol is exactly byte[], false otherwise
-     */
-    private boolean isByteArray(TypeSymbol typeSymbol) {
-        if (!(typeSymbol instanceof ArrayTypeSymbol arrayType)) {
-            return false;
-        }
-        TypeSymbol memberType = arrayType.memberTypeDescriptor();
-        // Ensure it's exactly byte, not nullable or union type
-        return memberType.typeKind() == BYTE;
-    }
-
-
-    private boolean isByteStream(TypeSymbol typeSymbol) {
-        // Must be a stream type
-        if (typeSymbol.typeKind() != STREAM || !(typeSymbol instanceof StreamTypeSymbol streamType)) {
-            return false;
-        }
-
-        // Get the stream's item type - should be byte[]
-        TypeSymbol itemType = streamType.typeParameter();
-        if (!(itemType instanceof ArrayTypeSymbol arrayType)) {
-            return false;
-        }
-
-        // Verify the array contains bytes
-        TypeSymbol memberType = arrayType.memberTypeDescriptor();
-        return memberType.typeKind() == BYTE;
     }
 
     private boolean isStringArrayStream(StreamTypeSymbol streamType) {
@@ -236,7 +204,7 @@ public class FtpContentFunctionValidator {
         return memberType.typeKind() == STRING;
     }
 
-    private boolean isStringArrayArray(ArrayTypeSymbol outerArray) {
+    private boolean isStringArrayOfArray(ArrayTypeSymbol outerArray) {
         TypeSymbol outerMember = outerArray.memberTypeDescriptor();
         if (!(outerMember instanceof ArrayTypeSymbol innerArray)) {
             return false;
