@@ -19,7 +19,6 @@
 package io.ballerina.stdlib.ftp.plugin;
 
 import io.ballerina.compiler.api.SemanticModel;
-import io.ballerina.compiler.api.symbols.ArrayTypeSymbol;
 import io.ballerina.compiler.api.symbols.MethodSymbol;
 import io.ballerina.compiler.api.symbols.ModuleSymbol;
 import io.ballerina.compiler.api.symbols.ParameterSymbol;
@@ -144,18 +143,6 @@ public final class PluginUtils {
     public static boolean validateCallerParameter(ParameterNode parameterNode,
                                                     SyntaxNodeAnalysisContext context) {
         return validateQualifiedFtpParameter(parameterNode, context, CALLER);
-    }
-
-    public static boolean isStringArrayType(ParameterNode parameterNode,
-                                             SyntaxNodeAnalysisContext context) {
-        return getParameterTypeSymbol(parameterNode, context)
-                .map(typeSymbol -> {
-                    if (!(typeSymbol instanceof ArrayTypeSymbol arrayType)) {
-                        return false;
-                    }
-                    return arrayType.memberTypeDescriptor().typeKind() == TypeDescKind.STRING;
-                })
-                .orElse(false);
     }
 
     private static boolean validateQualifiedFtpParameter(ParameterNode parameterNode,

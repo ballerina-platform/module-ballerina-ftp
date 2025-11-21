@@ -139,6 +139,13 @@ public final class MockFtpServer {
         fileSystem.add(new FileEntry("/home/in/complexDirectory/subfolder1/subSubFolder3/content2.txt"));
         fileSystem.add(new FileEntry("/home/in/child_directory/content1.txt"));
         fileSystem.add(new FileEntry("/home/in/child_directory/content2.txt"));
+
+        fileSystem.add(new DirectoryEntry("/home/in/delete"));
+        fileSystem.add(new FileEntry("/home/in/delete/.init", ""));
+
+        fileSystem.add(new DirectoryEntry("/home/in/content-methods"));
+        fileSystem.add(new FileEntry("/home/in/content-methods/.init", ""));
+
         ftpServer.setFileSystem(fileSystem);
         ftpServer.start();
         logger.info("Starting FTP server...");
