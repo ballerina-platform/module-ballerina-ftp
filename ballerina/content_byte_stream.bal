@@ -16,21 +16,21 @@
 
 import ballerina/jballerina.java;
 
-# Represents the type of the record which returned from the contentByteStream.next() call.
+# Record returned from the `ContentByteStream.next()` method.
 #
-# + value - The array of byte
+# + value - The array of bytes
 public type ContentStreamEntry record {|
     byte[] value;
 |};
 
-# Represents the type of the record which returned from the contentCsvStream.next() call.
+# Record returned from the `ContentCsvStream.next()` method.
 #
 # + value - The array of strings representing a CSV row
 public type ContentCsvStreamEntry record {|
     string[] value;
 |};
 
-# `ContentByteStream` used to initialize a stream of type byte[] for content callbacks.
+# Stream for reading file content in byte chunks from content callbacks.
 # This stream wraps byte array content and provides it as chunks.
 public class ContentByteStream {
 
@@ -65,7 +65,7 @@ public class ContentByteStream {
     }
 }
 
-# `ContentCsvStream` used to initialize a stream of type string[] for CSV content callbacks.
+# Stream for reading CSV content row by row from content callbacks.
 # This stream wraps CSV content and provides it row by row as string arrays.
 public class ContentCsvStream {
 

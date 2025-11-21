@@ -14,29 +14,29 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Metadata for newly-added files.
+# Metadata about a file or directory on the FTP server.
 #
-# + path - Relative file path for a newly-added file
-# + size - Size of the file
-# + lastModifiedTimestamp - Last-modified timestamp of the file in UNIX Epoch time
-# + name - File name
-# + isFolder - `true` if the file is a folder
-# + isFile - `true` if the file is a file
-# + pathDecoded - Normalized absolute path of this file within its file system
-# + extension - Extension of the file name
-# + publicURIString - Receiver as a URI String for public display
-# + fileType - Type of the file
-# + isAttached - `true` if the `fileObject` is attached
-# + isContentOpen - `true` if someone reads/writes from/to this file
-# + isExecutable - `true` if this file is executable
-# + isHidden - `true` if this file is hidden
-# + isReadable - `true` if this file can be read
-# + isWritable - `true` if this file can be written
-# + depth - Depth of the file name within its file system
-# + scheme - URI scheme of the file
+# + path - Relative file path
+# + size - Size of the file in bytes
+# + lastModifiedTimestamp - Last-modified timestamp in UNIX Epoch time
+# + name - File name (without path)
+# + isFolder - `true` if the resource is a directory
+# + isFile - `true` if the resource is a regular file
+# + pathDecoded - Normalized absolute path within the file system
+# + extension - File name extension (e.g., 'txt', 'pdf')
+# + publicURIString - File URI formatted for public display
+# + fileType - MIME type or file classification
+# + isAttached - `true` if the file object is currently attached
+# + isContentOpen - `true` if the file is currently being read or written
+# + isExecutable - `true` if the file has execute permissions
+# + isHidden - `true` if the file is marked as hidden
+# + isReadable - `true` if the file has read permissions
+# + isWritable - `true` if the file has write permissions
+# + depth - Directory nesting level within the file system
+# + scheme - URI scheme (e.g., 'ftp', 'sftp')
 # + uri - Absolute URI of the file
-# + rootURI - Root URI of the file system in which the file exists
-# + friendlyURI - A "friendly path" is a path, which can be accessed without a password
+# + rootURI - Root URI of the file system
+# + friendlyURI - Access path that does not require authentication
 public type FileInfo record {|
     string path;
     int size;
@@ -61,11 +61,10 @@ public type FileInfo record {|
     string friendlyURI;
 |};
 
-# This represents the latest status change of the server from the last
-# status change.
+# File system changes detected by the FTP listener in a polling cycle.
 #
-# + addedFiles - Array of `ftp:FileInfo` that represents newly added files
-# + deletedFiles - Array of strings that contains deleted file names
+# + addedFiles - Array of newly added files
+# + deletedFiles - Array of deleted file names
 public type WatchEvent record {|
     FileInfo[] addedFiles;
     string[] deletedFiles;
