@@ -18,7 +18,7 @@ import ballerina/lang.runtime as runtime;
 import ballerina/lang.'string as strings;
 import ballerina/test;
 
-Client? ftpClientCache = ();
+Client ftpClient = check new (config);
 
 isolated boolean cronEventReceived = false;
 isolated string[] cronAddedFilePaths = [];
@@ -29,10 +29,9 @@ isolated boolean dependencyEventReceived = false;
 isolated string dependencyMatchedFile = "";
 
 @test:Config {
-    enable: false
+    groups: ["adFiltering"]
 }
 function testCronScheduledPolling() returns error? {
-    Client? ftpClient = getClient();
     string cronFilePath = "/home/in/advanced/cron/cron-schedule.txt";
     lock {
 	    cronEventReceived = false;
@@ -41,8 +40,8 @@ function testCronScheduledPolling() returns error? {
 	    cronAddedFilePaths = [];
     }
 
-    check removeIfExists((<Client>ftpClient), cronFilePath);
-    check (<Client>ftpClient)->put(cronFilePath, "cron-data");
+    check removeIfExists(ftpClient, cronFilePath);
+    check ftpClient->putText(cronFilePath, "cron-data");
 
     Service cronService = service object {
         remote function onFileChange(WatchEvent & readonly event) {
@@ -72,7 +71,7 @@ function testCronScheduledPolling() returns error? {
             }
         },
         path: "/home/in/advanced/cron",
-        pollingInterval: "*/1 * * * * *",
+        pollingInterval: "*/5 * * * * *",
         fileNamePattern: ".*\\.txt"
     });
     check cronListener.attach(cronService);
@@ -92,10 +91,9 @@ function testCronScheduledPolling() returns error? {
         waitCount += 1;
     }
 
-    runtime:deregisterListener(cronListener);
     check cronListener.gracefulStop();
-    check cronListener.detach(cronService);
-    check removeIfExists(<Client>ftpClient, cronFilePath);
+    runtime:deregisterListener(cronListener);
+    check removeIfExists(ftpClient, cronFilePath);
 
     boolean cronSeen;
     string[] addedPaths;
@@ -114,16 +112,15 @@ function testCronScheduledPolling() returns error? {
 }
 
 @test:Config {
-    enable: false
+    groups: ["adFiltering"]
 }
-function testFileAgeFilterRespectsMinAge() returns error? {
-    Client? ftpClient = getClient();
+function testFileAgeFilterRespectsMaxAge() returns error? {
     string ageFilePath = "/home/in/advanced/age/age-filter.txt";
     lock {
 	    ageEventReceived = false;
     }
 
-    check removeIfExists(<Client>ftpClient, ageFilePath);
+    check removeIfExists(ftpClient, ageFilePath);
 
     Service ageService = service object {
         remote function onFileChange(WatchEvent & readonly event) {
@@ -151,23 +148,18 @@ function testFileAgeFilterRespectsMinAge() returns error? {
             }
         },
         path: "/home/in/advanced/age",
-        pollingInterval: 1,
+        pollingInterval: 5,
         fileAgeFilter: {
-            minAge: 3
-        }
+            maxAge: 60
+        },
+        fileNamePattern: ".*\\.txt"
     });
     check ageListener.attach(ageService);
     check ageListener.'start();
     runtime:registerListener(ageListener);
 
-    check (<Client>ftpClient)->put(ageFilePath, "age-filter");
-
-    runtime:sleep(2);
-    boolean ageSeenEarly;
-    lock {
-        ageSeenEarly = ageEventReceived;
-    }
-    test:assertFalse(ageSeenEarly, msg = "File was processed before the minimum age elapsed");
+    // Test 1: Recent file within maxAge should be picked up
+    check ftpClient->putText(ageFilePath, "age-filter");
 
     int waitCount = 0;
     while waitCount < 10 {
@@ -182,23 +174,48 @@ function testFileAgeFilterRespectsMinAge() returns error? {
         waitCount += 1;
     }
 
-    runtime:deregisterListener(ageListener);
-    check ageListener.gracefulStop();
-    check ageListener.detach(ageService);
-    check removeIfExists(<Client>ftpClient, ageFilePath);
-
     boolean ageDelivered;
     lock {
         ageDelivered = ageEventReceived;
     }
-    test:assertTrue(ageDelivered, msg = "File that satisfied the age filter was not delivered");
+    test:assertTrue(ageDelivered, msg = "Recent file within max age was not delivered");
+
+    runtime:sleep(130);
+
+    // Test 2: Wait for file to exceed maxAge threshold and verify it's not picked up again
+    lock {
+        ageEventReceived = false;
+    }
+
+    // File is now older than maxAge (120 seconds). Verify it's not picked up again
+    waitCount = 0;
+    boolean ageSeenAfterMaxAge;
+    while waitCount < 10 {
+        lock {
+            ageSeenAfterMaxAge = ageEventReceived;
+        }
+        if ageSeenAfterMaxAge {
+            break;
+        }
+        runtime:sleep(1);
+        waitCount += 1;
+    }
+
+    lock {
+        ageSeenAfterMaxAge = ageEventReceived;
+    }
+    test:assertFalse(ageSeenAfterMaxAge, msg = "File older than max age was incorrectly picked up");
+
+    runtime:deregisterListener(ageListener);
+    check ageListener.gracefulStop();
+
+    check removeIfExists(ftpClient, ageFilePath);
 }
 
 @test:Config {
-    enable: false
+    groups: ["adFiltering"]
 }
 function testFileDependencyFiltering() returns error? {
-    Client? ftpClient = getClient();
     string xmlPath = "/home/in/advanced/dependency/invoice_pending.xml";
     string csvPath = "/home/in/advanced/dependency/invoice_pending.csv";
     string checksumPath = "/home/in/advanced/dependency/invoice_pending.checksum";
@@ -209,9 +226,9 @@ function testFileDependencyFiltering() returns error? {
 	    dependencyMatchedFile = "";
     }
 
-    check removeIfExists(<Client>ftpClient, xmlPath);
-    check removeIfExists(<Client>ftpClient, csvPath);
-    check removeIfExists(<Client>ftpClient, checksumPath);
+    check removeIfExists(ftpClient, xmlPath);
+    check removeIfExists(ftpClient, csvPath);
+    check removeIfExists(ftpClient, checksumPath);
 
     Service dependencyService = service object {
         remote function onFileChange(WatchEvent & readonly event) {
@@ -257,7 +274,7 @@ function testFileDependencyFiltering() returns error? {
     runtime:registerListener(dependencyListener);
 
     // Create the target file without the dependencies first.
-    check (<Client>ftpClient)->put(xmlPath, "invoice");
+    check ftpClient->put(xmlPath, "invoice");
 
     runtime:sleep(2);
     boolean dependencySeenEarly;
@@ -267,8 +284,8 @@ function testFileDependencyFiltering() returns error? {
     test:assertFalse(dependencySeenEarly, msg = "File was processed without required dependencies");
 
     // Add the dependent files so the next poll should deliver the XML file.
-    check (<Client>ftpClient)->put(csvPath, "invoice-csv");
-    check (<Client>ftpClient)->put(checksumPath, "checksum");
+    check ftpClient->put(csvPath, "invoice-csv");
+    check ftpClient->put(checksumPath, "checksum");
 
     int waitCount = 0;
     while waitCount < 10 {
@@ -285,10 +302,10 @@ function testFileDependencyFiltering() returns error? {
 
     runtime:deregisterListener(dependencyListener);
     check dependencyListener.gracefulStop();
-    check dependencyListener.detach(dependencyService);
-    check removeIfExists(<Client>ftpClient, xmlPath);
-    check removeIfExists(<Client>ftpClient, csvPath);
-    check removeIfExists(<Client>ftpClient, checksumPath);
+
+    check removeIfExists(ftpClient, xmlPath);
+    check removeIfExists(ftpClient, csvPath);
+    check removeIfExists(ftpClient, checksumPath);
 
     boolean dependencyDelivered;
     string matchedFileName;
@@ -304,13 +321,6 @@ function testFileDependencyFiltering() returns error? {
     if dependencyDelivered {
         test:assertEquals(matchedFileName, "invoice_pending.xml");
     }
-}
-
-function getClient() returns Client? {
-    if ftpClientCache is Client {
-        return ftpClientCache;
-    }
-    panic error("FTP client is not initialized");
 }
 
 function ensureDirectory(Client ftpClient, string path) returns error? {

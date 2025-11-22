@@ -89,7 +89,7 @@ public final class MockFtpServer {
         UserAccount anonymousUserAccount = new UserAccount("anonymous", "abc", rootFolder);
         anonymousUserAccount.setPasswordCheckedDuringValidation(false);
         anonFtpServer.addUserAccount(anonymousUserAccount);
-        FileSystem fileSystem = new UnixFakeFileSystem();
+        FileSystem fileSystem = new TimestampAwareFakeFileSystem();
         fileSystem.add(new DirectoryEntry(rootFolder));
         fileSystem.add(new FileEntry("/home/in/test1.txt", content));
         anonFtpServer.setFileSystem(fileSystem);
@@ -122,7 +122,7 @@ public final class MockFtpServer {
         }
 
         ftpServer.addUserAccount(new UserAccount(username, password, rootFolder));
-        FileSystem fileSystem = new UnixFakeFileSystem();
+        FileSystem fileSystem = new TimestampAwareFakeFileSystem();
         fileSystem.add(new DirectoryEntry(rootFolder));
         fileSystem.add(new FileEntry("/home/in/test1.txt", content1));
         fileSystem.add(new FileEntry("/home/in/test2.txt", content1));
@@ -145,6 +145,15 @@ public final class MockFtpServer {
 
         fileSystem.add(new DirectoryEntry("/home/in/content-methods"));
         fileSystem.add(new FileEntry("/home/in/content-methods/.init", ""));
+
+        fileSystem.add(new DirectoryEntry("/home/in/advanced/cron"));
+        fileSystem.add(new FileEntry("/home/in/cron/.init", ""));
+
+        fileSystem.add(new DirectoryEntry("/home/in/advanced/age"));
+        fileSystem.add(new FileEntry("/home/in/age/.init", ""));
+
+        fileSystem.add(new DirectoryEntry("/home/in/advanced/dependency"));
+        fileSystem.add(new FileEntry("/home/in/dependency/.init", ""));
 
         ftpServer.setFileSystem(fileSystem);
         ftpServer.start();
