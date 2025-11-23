@@ -323,6 +323,295 @@ function testFileDependencyFiltering() returns error? {
     }
 }
 
+@test:Config {
+    groups: ["adFiltering"]
+}
+function testFileAgeFilterRespectsMinAge() returns error? {
+    string ageFilePath = "/home/in/advanced/age/age-min-filter.txt";
+    lock {
+	    ageEventReceived = false;
+    }
+
+    check removeIfExists(ftpClient, ageFilePath);
+
+    Service ageService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+            if event.addedFiles.length() == 0 {
+                return;
+            }
+            foreach FileInfo file in event.addedFiles {
+                if file.pathDecoded == "/home/in/advanced/age/age-min-filter.txt" {
+                    lock {
+                        ageEventReceived = true;
+                    }
+                }
+            }
+        }
+    };
+
+    Listener ageListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: "wso2123"
+            }
+        },
+        path: "/home/in/advanced/age",
+        pollingInterval: 1,
+        fileAgeFilter: {
+            minAge: 60
+        },
+        fileNamePattern: ".*\\.txt"
+    });
+    check ageListener.attach(ageService);
+    check ageListener.'start();
+    runtime:registerListener(ageListener);
+
+    check ftpClient->putText(ageFilePath, "age-min-filter");
+
+    runtime:sleep(30);
+    boolean ageSeenEarly;
+    lock {
+        ageSeenEarly = ageEventReceived;
+    }
+    test:assertFalse(ageSeenEarly, msg = "File was processed before the minimum age of 60 seconds elapsed");
+
+    int waitCount = 0;
+    while waitCount < 40 {
+        boolean ageSeen;
+        lock {
+            ageSeen = ageEventReceived;
+        }
+        if ageSeen {
+            break;
+        }
+        runtime:sleep(1);
+        waitCount += 1;
+    }
+
+    check ageListener.gracefulStop();
+    runtime:deregisterListener(ageListener);
+    check removeIfExists(ftpClient, ageFilePath);
+
+    boolean ageDelivered;
+    lock {
+        ageDelivered = ageEventReceived;
+    }
+    test:assertTrue(ageDelivered, msg = "File that satisfied the minimum age filter was not delivered");
+}
+
+@test:Config {
+    groups: ["adFiltering"]
+}
+function testDependencyFilteringWithCreationTime() returns error? {
+    string xmlPath = "/home/in/advanced/dependency/doc_creation.xml";
+    string csvPath = "/home/in/advanced/dependency/doc_creation.csv";
+    lock {
+	    dependencyEventReceived = false;
+    }
+    lock {
+	    dependencyMatchedFile = "";
+    }
+
+    check removeIfExists(ftpClient, xmlPath);
+    check removeIfExists(ftpClient, csvPath);
+
+    Service dependencyService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+            if event.addedFiles.length() == 0 {
+                return;
+            }
+            foreach FileInfo file in event.addedFiles {
+                if file.pathDecoded == "/home/in/advanced/dependency/doc_creation.xml" {
+                    lock {
+                        dependencyEventReceived = true;
+                    }
+                    lock {
+                        dependencyMatchedFile = file.name;
+                    }
+                }
+            }
+        }
+    };
+
+    Listener dependencyListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: "wso2123"
+            }
+        },
+        path: "/home/in/advanced/dependency",
+        pollingInterval: 1,
+        fileNamePattern: "doc_creation\\.xml",
+        fileDependencyConditions: [
+            {
+                targetPattern: "(doc_creation)\\.xml",
+                requiredFiles: ["$1.csv"],
+                matchingMode: ALL
+            }
+        ]
+    });
+    check dependencyListener.attach(dependencyService);
+    check dependencyListener.'start();
+    runtime:registerListener(dependencyListener);
+
+    check ftpClient->putText(csvPath, "csv-data");
+    runtime:sleep(2);
+    check ftpClient->putText(xmlPath, "xml-data");
+
+    int waitCount = 0;
+    while waitCount < 10 {
+        boolean ageSeen;
+        lock {
+            ageSeen = dependencyEventReceived;
+        }
+        if ageSeen {
+            break;
+        }
+        runtime:sleep(1);
+        waitCount += 1;
+    }
+
+    check dependencyListener.gracefulStop();
+    runtime:deregisterListener(dependencyListener);
+    check removeIfExists(ftpClient, xmlPath);
+    check removeIfExists(ftpClient, csvPath);
+
+    boolean dependencyDelivered;
+    lock {
+        dependencyDelivered = dependencyEventReceived;
+    }
+    test:assertTrue(dependencyDelivered, msg = "Dependency filtering with creation time did not work");
+}
+
+@test:Config {
+    groups: ["adFiltering"]
+}
+function testInvalidCronExpression() returns error? {
+    Service invalidCronService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+
+    Listener cronListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: "wso2123"
+            }
+        },
+        path: "/home/in",
+        pollingInterval: "INVALID CRON"
+    });
+
+    check cronListener.attach(invalidCronService);
+    error? startErr = cronListener.'start();
+
+    test:assertTrue(startErr is error, msg = "Invalid cron expression should throw an error");
+}
+
+@test:Config {
+    groups: ["adFiltering"]
+}
+function testDependencyMatchingModeAny() returns error? {
+    string xmlPath = "/home/in/advanced/dependency/report_any.xml";
+    string csvPath = "/home/in/advanced/dependency/report_any.csv";
+    string txtPath = "/home/in/advanced/dependency/report_any.txt";
+    lock {
+	    dependencyEventReceived = false;
+    }
+    lock {
+	    dependencyMatchedFile = "";
+    }
+
+    check removeIfExists(ftpClient, xmlPath);
+    check removeIfExists(ftpClient, csvPath);
+    check removeIfExists(ftpClient, txtPath);
+
+    Service dependencyService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+            if event.addedFiles.length() == 0 {
+                return;
+            }
+            foreach FileInfo file in event.addedFiles {
+                if file.pathDecoded == "/home/in/advanced/dependency/report_any.xml" {
+                    lock {
+                        dependencyEventReceived = true;
+                    }
+                    lock {
+                        dependencyMatchedFile = file.name;
+                    }
+                }
+            }
+        }
+    };
+
+    Listener dependencyListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: "wso2123"
+            }
+        },
+        path: "/home/in/advanced/dependency",
+        pollingInterval: 1,
+        fileNamePattern: "report_any\\.xml",
+        fileDependencyConditions: [
+            {
+                targetPattern: "(report_any)\\.xml",
+                requiredFiles: ["$1.csv", "$1.txt"],
+                matchingMode: ANY
+            }
+        ]
+    });
+    check dependencyListener.attach(dependencyService);
+    check dependencyListener.'start();
+    runtime:registerListener(dependencyListener);
+
+    // Create only CSV file (not all dependencies) - should still trigger with ANY mode
+    check ftpClient->putText(csvPath, "csv-data");
+    runtime:sleep(2);
+    check ftpClient->putText(xmlPath, "xml-data");
+
+    int waitCount = 0;
+    while waitCount < 10 {
+        boolean ageSeen;
+        lock {
+            ageSeen = dependencyEventReceived;
+        }
+        if ageSeen {
+            break;
+        }
+        runtime:sleep(1);
+        waitCount += 1;
+    }
+
+    check dependencyListener.gracefulStop();
+    runtime:deregisterListener(dependencyListener);
+    check removeIfExists(ftpClient, xmlPath);
+    check removeIfExists(ftpClient, csvPath);
+    check removeIfExists(ftpClient, txtPath);
+
+    boolean dependencyDelivered;
+    lock {
+        dependencyDelivered = dependencyEventReceived;
+    }
+    test:assertTrue(dependencyDelivered, msg = "Dependency matching with ANY mode did not work");
+}
+
 function ensureDirectory(Client ftpClient, string path) returns error? {
     var mkdirResult = trap ftpClient->mkdir(path);
     if mkdirResult is error {
