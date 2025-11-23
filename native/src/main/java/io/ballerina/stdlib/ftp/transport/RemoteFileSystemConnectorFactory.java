@@ -33,7 +33,7 @@ import java.util.Map;
 public interface RemoteFileSystemConnectorFactory {
 
     /**
-     * @param connectorConfig    properties required for the {@link RemoteFileSystemServerConnector}.
+     * @param connectorConfig          properties required for the {@link RemoteFileSystemServerConnector}.
      * @param remoteFileSystemListener listener which gets triggered when message comes.
      * @return RemoteFileSystemServerConnector RemoteFileSystemServerConnector instance.
      * @throws RemoteFileSystemConnectorException if any error occurred when creating the server connector.
@@ -49,12 +49,12 @@ public interface RemoteFileSystemConnectorFactory {
      * @throws RemoteFileSystemConnectorException if any error occurred when initializing the server connector.
      */
     RemoteFileSystemServerConnector createServerConnector(Map<String, String> connectorConfig,
-                                             List<FileDependencyCondition> dependencyConditions,
-                                             RemoteFileSystemListener remoteFileSystemListener)
+                                                          List<FileDependencyCondition> dependencyConditions,
+                                                          RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException;
 
     /**
-     * @param connectorConfig          properties required for the {@link VfsClientConnector}.
+     * @param connectorConfig properties required for the {@link VfsClientConnector}.
      * @return VFSClientConnector instance
      * @throws RemoteFileSystemConnectorException if any error occurred when initializing the server connector.
      */

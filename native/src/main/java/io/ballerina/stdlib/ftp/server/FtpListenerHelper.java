@@ -67,7 +67,8 @@ public class FtpListenerHelper {
 
     /**
      * Initialize a new FTP Connector for the listener.
-     * @param ftpListener Listener that places `ftp:WatchEvent` by Ballerina runtime
+     *
+     * @param ftpListener           Listener that places `ftp:WatchEvent` by Ballerina runtime
      * @param serviceEndpointConfig FTP server endpoint configuration
      */
     public static Object init(Environment env, BObject ftpListener, BMap<BString, Object> serviceEndpointConfig) {
@@ -85,7 +86,7 @@ public class FtpListenerHelper {
                         listener);
             }
 
-          // Pass FileSystemManager and options to listener for content fetching
+            // Pass FileSystemManager and options to listener for content fetching
             if (serverConnector instanceof RemoteFileSystemServerConnectorImpl) {
                 RemoteFileSystemServerConnectorImpl connectorImpl =
                         (RemoteFileSystemServerConnectorImpl) serverConnector;
@@ -149,7 +150,7 @@ public class FtpListenerHelper {
         if (listener.getCaller() != null) {
             return null;
         }
-        BMap serviceEndpointConfig  = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
+        BMap serviceEndpointConfig = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
         BObject caller = createCaller(serviceEndpointConfig);
         if (caller instanceof BError) {
             return caller;
@@ -312,7 +313,7 @@ public class FtpListenerHelper {
     /**
      * Start the cron-based scheduler for the FTP listener.
      *
-     * @param ftpListener The FTP listener object
+     * @param ftpListener       The FTP listener object
      * @param cronExpressionStr The cron expression string
      * @return null on success, BError on failure
      */

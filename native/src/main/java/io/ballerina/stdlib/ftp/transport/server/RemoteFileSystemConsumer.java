@@ -20,7 +20,7 @@ package io.ballerina.stdlib.ftp.transport.server;
 
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.server.FtpListener;
-    import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
+import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
 import io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils;
@@ -93,7 +93,7 @@ public class RemoteFileSystemConsumer {
             }
         } catch (FileSystemException e) {
             remoteFileSystemListener.onError(e);
-            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null) 
+            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null)
                     ? e.getCause().getMessage() : e.getMessage();
             throw new RemoteFileSystemConnectorException(
                     "Unable to initialize the connection with the server. " + rootCauseMessage, e);
@@ -130,6 +130,7 @@ public class RemoteFileSystemConsumer {
         this(fileProperties, listener);
         this.dependencyConditions = conditions;
     }
+
     /**
      * Do the file processing operation for the given set of properties. Do the
      * checks and pass the control to file system processor thread/threads.
@@ -182,8 +183,8 @@ public class RemoteFileSystemConsumer {
                 }
             } else {
                 String errorMsg = String.format("Unable to access or read file or directory :  %s. Reason: %s",
-                                FileTransportUtils.maskUrlPassword(listeningDirURI),
-                                (isFileExists ? "The file can not be read!" : "The file does not exist!"));
+                        FileTransportUtils.maskUrlPassword(listeningDirURI),
+                        (isFileExists ? "The file can not be read!" : "The file does not exist!"));
                 remoteFileSystemListener.onError(new RemoteFileSystemConnectorException(errorMsg));
             }
         } catch (FileSystemException e) {
@@ -213,7 +214,7 @@ public class RemoteFileSystemConsumer {
     public FtpListener getFtpListener() {
         return (FtpListener) remoteFileSystemListener;
     }
-  
+
     /**
      * Get the FileSystemManager instance.
      *
@@ -411,12 +412,12 @@ public class RemoteFileSystemConsumer {
     /**
      * Check if required files exist based on the matching mode.
      *
-     * @param condition The dependency condition
+     * @param condition     The dependency condition
      * @param captureGroups Map of capture groups from the target pattern match
      * @return true if required files exist according to matching mode
      */
     private boolean checkRequiredFiles(FileDependencyCondition condition,
-                                        Map<String, String> captureGroups) throws FileSystemException {
+                                       Map<String, String> captureGroups) throws FileSystemException {
         List<String> requiredPatterns = condition.getRequiredFiles();
         String matchingMode = condition.getMatchingMode();
 

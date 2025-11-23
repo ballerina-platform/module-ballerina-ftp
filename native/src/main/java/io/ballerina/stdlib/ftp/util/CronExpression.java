@@ -103,11 +103,11 @@ public class CronExpression {
      */
     private boolean matches(LocalDateTime time) {
         return seconds.contains(time.getSecond()) &&
-               minutes.contains(time.getMinute()) &&
-               hours.contains(time.getHour()) &&
-               matchesDayOfMonth(time) &&
-               months.contains(time.getMonthValue()) &&
-               matchesDayOfWeek(time);
+                minutes.contains(time.getMinute()) &&
+                hours.contains(time.getHour()) &&
+                matchesDayOfMonth(time) &&
+                months.contains(time.getMonthValue()) &&
+                matchesDayOfWeek(time);
     }
 
     /**

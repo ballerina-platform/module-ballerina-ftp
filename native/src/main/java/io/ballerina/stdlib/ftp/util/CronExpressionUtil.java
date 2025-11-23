@@ -100,8 +100,8 @@ public class CronExpressionUtil {
      * Parses a cron field into a list of valid values.
      *
      * @param field The field string to parse
-     * @param min Minimum valid value
-     * @param max Maximum valid value
+     * @param min   Minimum valid value
+     * @param max   Maximum valid value
      * @return List of valid values
      */
     public static List<Integer> parseField(String field, int min, int max) {
@@ -156,7 +156,7 @@ public class CronExpressionUtil {
         for (Integer value : values) {
             if (value < min || value > max) {
                 throw new IllegalArgumentException(
-                    String.format("Value %d is out of range [%d-%d]", value, min, max));
+                        String.format("Value %d is out of range [%d-%d]", value, min, max));
             }
         }
 

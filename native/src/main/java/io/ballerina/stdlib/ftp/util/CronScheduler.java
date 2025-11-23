@@ -43,7 +43,7 @@ public class CronScheduler {
      * Creates a new cron scheduler.
      *
      * @param cronExpression The cron expression to use for scheduling
-     * @param task The task to execute
+     * @param task           The task to execute
      */
     public CronScheduler(CronExpression cronExpression, Runnable task) {
         this.cronExpression = cronExpression;

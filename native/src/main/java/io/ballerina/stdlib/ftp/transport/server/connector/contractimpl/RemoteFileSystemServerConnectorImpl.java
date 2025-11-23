@@ -45,11 +45,12 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
     private AtomicBoolean isPollOperationOccupied = new AtomicBoolean(false);
 
     public RemoteFileSystemServerConnectorImpl(Map<String, String> properties,
-            RemoteFileSystemListener remoteFileSystemListener) throws RemoteFileSystemConnectorException {
+                                               RemoteFileSystemListener remoteFileSystemListener)
+            throws RemoteFileSystemConnectorException {
         try {
             consumer = new RemoteFileSystemConsumer(properties, remoteFileSystemListener);
         } catch (RemoteFileSystemConnectorException e) {
-            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null) 
+            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null)
                     ? e.getCause().getMessage() : e.getMessage();
             throw new RemoteFileSystemConnectorException(
                     "Failed to initialize File server connector. " + rootCauseMessage, e);
@@ -57,7 +58,7 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
     }
 
     public RemoteFileSystemServerConnectorImpl(Map<String, String> properties,
-                                                List<FileDependencyCondition> conditions,
+                                               List<FileDependencyCondition> conditions,
                                                RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException {
         try {

@@ -44,6 +44,7 @@ public interface RemoteFileSystemListener {
     /**
      * Notify to the caller once the underlying task is successfully finished. Error situation need to handle through
      * {@link #onError(Throwable)} method.
+     *
      * @return
      */
     BError done();
