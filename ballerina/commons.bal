@@ -16,15 +16,16 @@
 
 import ballerina/io;
 
-# Protocols supported by the FTP connector.
+# Protocol to use for FTP server connections.
+# Determines whether to use basic FTP (unsecure) or SFTP (secure over SSH).
 # FTP - Unsecure File Transfer Protocol
-# SFTP - FTP over SSH
+# SFTP - File Transfer Protocol over SSH
 public enum Protocol {
     FTP = "ftp",
     SFTP = "sftp"
 }
 
-# Configuration for a private key used in key-based authentication.
+# Private key configuration for SSH-based authentication.
 #
 # + path - Path to the private key file
 # + password - Optional password for the private key
@@ -33,7 +34,7 @@ public type PrivateKey record {|
     string password?;
 |};
 
-# Credentials for basic authentication using username and password.
+# Basic authentication credentials for connecting to FTP servers using username and password.
 #
 # + username - Username for authentication
 # + password - Optional password for authentication
@@ -42,7 +43,7 @@ public type Credentials record {|
     string password?;
 |};
 
-# Configuration for authenticating with an FTP server.
+# Specifies authentication options for FTP server connections.
 #
 # + credentials - Username and password for basic authentication
 # + privateKey - Private key and password for key-based authentication
@@ -53,11 +54,12 @@ public type AuthConfiguration record {|
     PreferredMethod[] preferredMethods = [PUBLICKEY, PASSWORD];
 |};
 
-# Authentication methods supported by the FTP connector.
-# + KEYBOARD_INTERACTIVE - Keyboard interactive authentication
-# + GSSAPI_WITH_MIC - GSSAPI with MIC authentication
-# + PASSWORD - Password-based authentication
-# + PUBLICKEY - Public key-based authentication
+# Authentication methods to use when connecting to FTP/SFTP servers.
+#
+# KEYBOARD_INTERACTIVE - Keyboard interactive authentication (user prompted for credentials)
+# GSSAPI_WITH_MIC - GSSAPI with MIC (Generic Security Service Application Program Interface)
+# PASSWORD - Password-based authentication using username and password
+# PUBLICKEY - Public key-based authentication using SSH key pairs
 public enum PreferredMethod {
     KEYBOARD_INTERACTIVE,
     GSSAPI_WITH_MIC,
@@ -78,4 +80,53 @@ public type InputContent record {|
     stream<byte[] & readonly, io:Error?> fileContent?;
     string textContent?;
     boolean compressInput = false;
+|};
+
+# Determines the timestamp used when calculating file age for filtering.
+#
+# LAST_MODIFIED - Use file's last modified timestamp (default)
+# CREATION_TIME - Use file's creation timestamp (where supported by file system)
+public enum AgeCalculationMode {
+    LAST_MODIFIED,
+    CREATION_TIME
+}
+
+# Filters files based on their age to control which files trigger listener events.
+# Useful for processing only files within a specific age range (e.g., skip very new files or very old files).
+#
+# + minAge - Minimum age of file in seconds since last modification/creation (inclusive).
+#            Files younger than this will be skipped. If not specified, no minimum age requirement.
+# + maxAge - Maximum age of file in seconds since last modification/creation (inclusive).
+#            Files older than this will be skipped. If not specified, no maximum age requirement.
+# + ageCalculationMode - Whether to calculate age based on last modified time or creation time
+public type FileAgeFilter record {|
+    decimal minAge?;
+    decimal maxAge?;
+    AgeCalculationMode ageCalculationMode = LAST_MODIFIED;
+|};
+
+# Determines how to match required files when evaluating file dependencies.
+# Controls whether all dependencies must be present, at least one, or a specific count.
+# ALL - All required file patterns must have at least one matching file (default)
+# ANY - At least one required file pattern must have a matching file
+# EXACT_COUNT - Exact number of required files must match (count specified in requiredFileCount)
+public enum DependencyMatchingMode {
+    ALL,
+    ANY,
+    EXACT_COUNT
+}
+
+# Defines a dependency condition where processing of target files depends on the existence of other files.
+# This allows conditional file processing based on the presence of related files (e.g., processing a data file only
+# when a corresponding marker file exists). Supports capture group substitution to dynamically match related files.
+#
+# + targetPattern - Regex pattern for files that should be processed conditionally
+# + requiredFiles - Array of file patterns that must exist. Supports capture group substitution (e.g., "$1")
+# + matchingMode - How to match required files (ALL, ANY, or EXACT_COUNT)
+# + requiredFileCount - For EXACT_COUNT mode, specifies the exact number of required files
+public type FileDependencyCondition record {|
+    string targetPattern;
+    string[] requiredFiles;
+    DependencyMatchingMode matchingMode = ALL;
+    int requiredFileCount = 1;
 |};

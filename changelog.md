@@ -7,7 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- [Added support for advanced file selection and processing](https://github.com/ballerina-platform/ballerina-library/issues/8376)
 - [Improving Ballerina FTP Client with Copy, Move and IsExist API](https://github.com/ballerina-platform/ballerina-library/issues/8438)
+- [Review Library/Connector API docs in BI editor](https://github.com/ballerina-platform/ballerina-library/issues/7736)
 - Add functionality for streaming put methods in ftp:Client
 - Add functionality for type based put and get in ftp:Caller
 

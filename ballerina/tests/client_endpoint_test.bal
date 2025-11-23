@@ -1121,20 +1121,24 @@ public function testGetFileSize() {
 }
 public function testListFiles() {
     string[] resourceNames = [
-        "child_directory",
+        "cron",
         "test1.txt",
         "complexDirectory",
         "test",
+        "advanced",
+        "dependency",
         "folder1",
         "test3.zip",
-        "content-methods",
         "childDirectory",
         "delete",
         "test2.txt",
-        "test3.txt",
-        "test4.txt"
+        "test4.txt",
+        "child_directory",
+        "content-methods",
+        "age",
+        "test3.txt"
     ];
-    int[] fileSizes = [0, 61, 0, 0, 0, 145, 0, 0, 0, 16400, 12, 9000];
+    int[] fileSizes = [0, 61, 0, 0, 0, 0, 0, 145, 0, 0, 16400, 9000, 0, 0, 0, 12];
     FileInfo[]|Error response = (<Client>clientEp)->list("/home/in");
     if response is FileInfo[] {
         log:printInfo("List of files/directories: ");

@@ -23,6 +23,7 @@ import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.types.Parameter;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -31,13 +32,19 @@ import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
+import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
 import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.RemoteFileSystemServerConnectorImpl;
+import io.ballerina.stdlib.ftp.util.CronExpression;
+import io.ballerina.stdlib.ftp.util.CronScheduler;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.ftp.util.ModuleUtils;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -60,7 +67,8 @@ public class FtpListenerHelper {
 
     /**
      * Initialize a new FTP Connector for the listener.
-     * @param ftpListener Listener that places `ftp:WatchEvent` by Ballerina runtime
+     *
+     * @param ftpListener           Listener that places `ftp:WatchEvent` by Ballerina runtime
      * @param serviceEndpointConfig FTP server endpoint configuration
      */
     public static Object init(Environment env, BObject ftpListener, BMap<BString, Object> serviceEndpointConfig) {
@@ -68,8 +76,15 @@ public class FtpListenerHelper {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
             final FtpListener listener = new FtpListener(env.getRuntime());
-            RemoteFileSystemServerConnector serverConnector = fileSystemConnectorFactory
-                    .createServerConnector(paramMap, listener);
+
+            RemoteFileSystemServerConnector serverConnector;
+            List<FileDependencyCondition> dependencyConditions = parseFileDependencyConditions(serviceEndpointConfig);
+            if (dependencyConditions.isEmpty()) {
+                serverConnector = fileSystemConnectorFactory.createServerConnector(paramMap, listener);
+            } else {
+                serverConnector = fileSystemConnectorFactory.createServerConnector(paramMap, dependencyConditions,
+                        listener);
+            }
 
             // Pass FileSystemManager and options to listener for content fetching
             if (serverConnector instanceof RemoteFileSystemServerConnectorImpl) {
@@ -135,7 +150,7 @@ public class FtpListenerHelper {
         if (listener.getCaller() != null) {
             return null;
         }
-        BMap serviceEndpointConfig  = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
+        BMap serviceEndpointConfig = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
         BObject caller = createCaller(serviceEndpointConfig);
         if (caller instanceof BError) {
             return caller;
@@ -178,7 +193,77 @@ public class FtpListenerHelper {
         params.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         params.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
         params.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
+
+        // Add file age filter parameters
+        addFileAgeFilterParams(serviceEndpointConfig, params);
+
         return params;
+    }
+
+    private static void addFileAgeFilterParams(BMap serviceEndpointConfig, Map<String, String> params) {
+        BMap fileAgeFilter = serviceEndpointConfig.getMapValue(
+                StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_AGE_FILTER));
+        if (fileAgeFilter != null) {
+            // Min age
+            Object minAgeObj = fileAgeFilter.get(StringUtils.fromString(FtpConstants.FILE_AGE_FILTER_MIN_AGE));
+            if (minAgeObj != null) {
+                params.put(FtpConstants.FILE_AGE_FILTER_MIN_AGE, String.valueOf(minAgeObj));
+            }
+
+            // Max age
+            Object maxAgeObj = fileAgeFilter.get(StringUtils.fromString(FtpConstants.FILE_AGE_FILTER_MAX_AGE));
+            if (maxAgeObj != null) {
+                params.put(FtpConstants.FILE_AGE_FILTER_MAX_AGE, String.valueOf(maxAgeObj));
+            }
+
+            // Age calculation mode
+            BString modeStr = fileAgeFilter.getStringValue(
+                    StringUtils.fromString(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE));
+            if (modeStr != null && !modeStr.getValue().isEmpty()) {
+                params.put(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE, modeStr.getValue());
+            }
+        }
+    }
+
+    private static List<FileDependencyCondition> parseFileDependencyConditions(
+            BMap<BString, Object> serviceEndpointConfig) {
+        List<FileDependencyCondition> conditions = new ArrayList<>();
+
+        BArray conditionsArray = serviceEndpointConfig.getArrayValue(
+                StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_DEPENDENCY_CONDITIONS));
+
+        if (conditionsArray == null || conditionsArray.isEmpty()) {
+            return conditions;
+        }
+
+        for (int i = 0; i < conditionsArray.size(); i++) {
+            BMap conditionMap = (BMap) conditionsArray.get(i);
+
+            // Target pattern
+            String targetPattern = conditionMap.getStringValue(
+                    StringUtils.fromString(FtpConstants.DEPENDENCY_TARGET_PATTERN)).getValue();
+
+            // Required files
+            BArray requiredFilesArray = conditionMap.getArrayValue(
+                    StringUtils.fromString(FtpConstants.DEPENDENCY_REQUIRED_FILES));
+            List<String> requiredFiles = new ArrayList<>();
+            for (int j = 0; j < requiredFilesArray.size(); j++) {
+                requiredFiles.add(((BString) requiredFilesArray.get(j)).getValue());
+            }
+
+            // Matching mode
+            String matchingMode = conditionMap.getStringValue(
+                    StringUtils.fromString(FtpConstants.DEPENDENCY_MATCHING_MODE)).getValue();
+
+            // Required file count
+            long requiredFileCount = conditionMap.getIntValue(
+                    StringUtils.fromString(FtpConstants.DEPENDENCY_REQUIRED_FILE_COUNT));
+
+            conditions.add(new FileDependencyCondition(
+                    targetPattern, requiredFiles, matchingMode, (int) requiredFileCount));
+        }
+
+        return conditions;
     }
 
     private static void addStringProperty(BMap config, Map<String, String> params) {
@@ -223,5 +308,65 @@ public class FtpListenerHelper {
     private static BObject createCaller(BMap<BString, Object> serviceEndpointConfig) {
         BObject client = ValueCreator.createObjectValue(ModuleUtils.getModule(), FTP_CLIENT, serviceEndpointConfig);
         return ValueCreator.createObjectValue(ModuleUtils.getModule(), FTP_CALLER, client);
+    }
+
+    /**
+     * Start the cron-based scheduler for the FTP listener.
+     *
+     * @param ftpListener       The FTP listener object
+     * @param cronExpressionStr The cron expression string
+     * @return null on success, BError on failure
+     */
+    public static Object startCronScheduler(BObject ftpListener, BString cronExpressionStr) {
+        try {
+            String cronExpression = cronExpressionStr.getValue();
+
+            // Create task that polls the FTP server
+            Runnable pollTask = () -> {
+                Object result = poll(ftpListener);
+                if (result instanceof BError) {
+                    // Log error but don't stop scheduler
+                    LoggerFactory.getLogger(FtpListenerHelper.class)
+                            .error("Error during FTP poll: {}", ((BError) result).getMessage());
+                }
+            };
+
+            // Create and start the cron scheduler (validation happens in constructor)
+            CronExpression cron = new CronExpression(cronExpression);
+            CronScheduler scheduler = new CronScheduler(cron, pollTask);
+            scheduler.start();
+
+            // Store scheduler in native data for later cleanup
+            ftpListener.addNativeData(FtpConstants.CRON_EXPRESSION, scheduler);
+
+            return null;
+        } catch (IllegalArgumentException e) {
+            return FtpUtil.createError("Invalid cron expression: " + e.getMessage(),
+                    e, Error.errorType());
+        } catch (Exception e) {
+            return FtpUtil.createError("Failed to start cron scheduler: " + e.getMessage(),
+                    findRootCause(e), Error.errorType());
+        }
+    }
+
+    /**
+     * Stop the cron-based scheduler for the FTP listener.
+     *
+     * @param ftpListener The FTP listener object
+     * @return null on success, BError on failure
+     */
+    public static Object stopCronScheduler(BObject ftpListener) {
+        try {
+            Object schedulerObj = ftpListener.getNativeData(FtpConstants.CRON_EXPRESSION);
+            if (schedulerObj instanceof CronScheduler) {
+                CronScheduler scheduler = (CronScheduler) schedulerObj;
+                scheduler.stop();
+                ftpListener.addNativeData(FtpConstants.CRON_EXPRESSION, null);
+            }
+            return null;
+        } catch (Exception e) {
+            return FtpUtil.createError("Failed to stop cron scheduler: " + e.getMessage(),
+                    findRootCause(e), Error.errorType());
+        }
     }
 }
