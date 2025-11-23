@@ -362,7 +362,7 @@ function testFileAgeFilterRespectsMinAge() returns error? {
         path: "/home/in/advanced/age",
         pollingInterval: 1,
         fileAgeFilter: {
-            minAge: 60
+            minAge: 90
         },
         fileNamePattern: ".*\\.txt"
     });
@@ -377,10 +377,9 @@ function testFileAgeFilterRespectsMinAge() returns error? {
     lock {
         ageSeenEarly = ageEventReceived;
     }
-    test:assertFalse(ageSeenEarly, msg = "File was processed before the minimum age of 60 seconds elapsed");
-
+    test:assertFalse(ageSeenEarly, msg = "File was processed before the minimum age of 90 seconds elapsed");
     int waitCount = 0;
-    while waitCount < 40 {
+    while waitCount < 70 {
         boolean ageSeen;
         lock {
             ageSeen = ageEventReceived;
@@ -518,6 +517,42 @@ function testInvalidCronExpression() returns error? {
     error? startErr = cronListener.'start();
 
     test:assertTrue(startErr is error, msg = "Invalid cron expression should throw an error");
+}
+
+@test:Config {
+    groups: ["adFiltering"]
+}
+function testComplexCronExpression() returns error? {
+    string complexCronFilePath = "/home/in/advanced/cron/complex-cron.txt";
+
+    check removeIfExists(ftpClient, complexCronFilePath);
+    check ftpClient->putText(complexCronFilePath, "complex-cron-data");
+
+    Service complexCronService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+
+    Listener complexCronListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {
+            credentials: {
+                username: "wso2",
+                password: "wso2123"
+            }
+        },
+        path: "/home/in/advanced/cron",
+        pollingInterval: "0/30 * * * * *",
+        fileNamePattern: ".*\\.txt"
+    });
+    check complexCronListener.attach(complexCronService);
+    error? result = complexCronListener.'start();
+
+    check complexCronListener.gracefulStop();
+
+    test:assertTrue(result is (), "Cron expression should pass");
 }
 
 @test:Config {
