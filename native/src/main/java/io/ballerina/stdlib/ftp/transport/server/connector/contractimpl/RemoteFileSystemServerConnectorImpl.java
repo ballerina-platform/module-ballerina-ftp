@@ -21,6 +21,7 @@ package io.ballerina.stdlib.ftp.transport.server.connector.contractimpl;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.server.FtpListener;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
+import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
 import io.ballerina.stdlib.ftp.transport.server.RemoteFileSystemConsumer;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
 import org.apache.commons.vfs2.FileSystemManager;
@@ -28,6 +29,7 @@ import org.apache.commons.vfs2.FileSystemOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -48,6 +50,20 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
             consumer = new RemoteFileSystemConsumer(properties, remoteFileSystemListener);
         } catch (RemoteFileSystemConnectorException e) {
             String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null) 
+                    ? e.getCause().getMessage() : e.getMessage();
+            throw new RemoteFileSystemConnectorException(
+                    "Failed to initialize File server connector. " + rootCauseMessage, e);
+        }
+    }
+
+    public RemoteFileSystemServerConnectorImpl(Map<String, String> properties,
+                                                List<FileDependencyCondition> conditions,
+                                               RemoteFileSystemListener remoteFileSystemListener)
+            throws RemoteFileSystemConnectorException {
+        try {
+            consumer = new RemoteFileSystemConsumer(properties, conditions, remoteFileSystemListener);
+        } catch (RemoteFileSystemConnectorException e) {
+            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null)
                     ? e.getCause().getMessage() : e.getMessage();
             throw new RemoteFileSystemConnectorException(
                     "Failed to initialize File server connector. " + rootCauseMessage, e);
@@ -77,10 +93,6 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
 
     public FtpListener getFtpListener() {
         return consumer.getFtpListener();
-    }
-
-    public RemoteFileSystemConsumer getConsumer() {
-        return consumer;
     }
 
     public FileSystemManager getFileSystemManager() {

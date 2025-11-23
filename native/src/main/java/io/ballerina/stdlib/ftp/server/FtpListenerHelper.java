@@ -33,7 +33,6 @@ import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
 import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
-import io.ballerina.stdlib.ftp.transport.server.RemoteFileSystemConsumer;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
 import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.RemoteFileSystemServerConnectorImpl;
 import io.ballerina.stdlib.ftp.util.CronExpression;
@@ -76,8 +75,15 @@ public class FtpListenerHelper {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
             final FtpListener listener = new FtpListener(env.getRuntime());
-            RemoteFileSystemServerConnector serverConnector = fileSystemConnectorFactory
-                    .createServerConnector(paramMap, listener);
+
+            RemoteFileSystemServerConnector serverConnector;
+            List<FileDependencyCondition> dependencyConditions = parseFileDependencyConditions(serviceEndpointConfig);
+            if (dependencyConditions.isEmpty()) {
+                serverConnector = fileSystemConnectorFactory.createServerConnector(paramMap, listener);
+            } else {
+                serverConnector = fileSystemConnectorFactory.createServerConnector(paramMap, dependencyConditions,
+                        listener);
+            }
 
           // Pass FileSystemManager and options to listener for content fetching
             if (serverConnector instanceof RemoteFileSystemServerConnectorImpl) {
@@ -90,13 +96,6 @@ public class FtpListenerHelper {
             boolean laxDataBinding = serviceEndpointConfig.getBooleanValue(
                     StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING));
             listener.setLaxDataBinding(laxDataBinding);
-
-            // Set file dependency conditions on the consumer
-            List<FileDependencyCondition> dependencyConditions = parseFileDependencyConditions(serviceEndpointConfig);
-            RemoteFileSystemConsumer consumer = serverConnector.getConsumer();
-            if (consumer != null && !dependencyConditions.isEmpty()) {
-                consumer.setFileDependencyConditions(dependencyConditions);
-            }
 
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             // This is a temporary solution
@@ -232,7 +231,7 @@ public class FtpListenerHelper {
         BArray conditionsArray = serviceEndpointConfig.getArrayValue(
                 StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_DEPENDENCY_CONDITIONS));
 
-        if (conditionsArray == null || conditionsArray.size() == 0) {
+        if (conditionsArray == null || conditionsArray.isEmpty()) {
             return conditions;
         }
 
@@ -321,12 +320,6 @@ public class FtpListenerHelper {
         try {
             String cronExpression = cronExpressionStr.getValue();
 
-            // Validate cron expression
-            if (!CronExpression.isValid(cronExpression)) {
-                return FtpUtil.createError("Invalid cron expression: " + cronExpression,
-                        null, Error.errorType());
-            }
-
             // Create task that polls the FTP server
             Runnable pollTask = () -> {
                 Object result = poll(ftpListener);
@@ -337,7 +330,7 @@ public class FtpListenerHelper {
                 }
             };
 
-            // Create and start the cron scheduler
+            // Create and start the cron scheduler (validation happens in constructor)
             CronExpression cron = new CronExpression(cronExpression);
             CronScheduler scheduler = new CronScheduler(cron, pollTask);
             scheduler.start();

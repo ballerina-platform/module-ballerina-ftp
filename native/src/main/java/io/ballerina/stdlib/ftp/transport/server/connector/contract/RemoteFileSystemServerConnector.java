@@ -20,7 +20,6 @@ package io.ballerina.stdlib.ftp.transport.server.connector.contract;
 
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.server.FtpListener;
-import io.ballerina.stdlib.ftp.transport.server.RemoteFileSystemConsumer;
 
 /**
  * RemoteFileSystemServer Connector interface to poll information from given the directory location.
@@ -49,10 +48,4 @@ public interface RemoteFileSystemServerConnector {
      */
     FtpListener getFtpListener();
 
-    /**
-     * Get the consumer instance for advanced configuration.
-     *
-     * @return The RemoteFileSystemConsumer instance
-     */
-    RemoteFileSystemConsumer getConsumer();
 }

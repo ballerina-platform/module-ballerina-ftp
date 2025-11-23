@@ -20,7 +20,7 @@ package io.ballerina.stdlib.ftp.transport.server;
 
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.server.FtpListener;
-import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
+    import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
 import io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils;
@@ -123,6 +123,13 @@ public class RemoteFileSystemConsumer {
         }
     }
 
+    public RemoteFileSystemConsumer(Map<String, String> fileProperties,
+                                    List<FileDependencyCondition> conditions,
+                                    RemoteFileSystemListener listener)
+            throws RemoteFileSystemConnectorException {
+        this(fileProperties, listener);
+        this.dependencyConditions = conditions;
+    }
     /**
      * Do the file processing operation for the given set of properties. Do the
      * checks and pass the control to file system processor thread/threads.
@@ -205,15 +212,6 @@ public class RemoteFileSystemConsumer {
      */
     public FtpListener getFtpListener() {
         return (FtpListener) remoteFileSystemListener;
-    }
-
-    /**
-     * Set file dependency conditions for conditional file processing.
-     *
-     * @param conditions List of dependency conditions
-     */
-    public void setFileDependencyConditions(List<FileDependencyCondition> conditions) {
-        this.dependencyConditions = conditions != null ? conditions : new ArrayList<>();
     }
   
     /**
@@ -469,7 +467,7 @@ public class RemoteFileSystemConsumer {
             }
             return false;
 
-        } else if (FtpConstants.DEPENDENCY_MATCHING_MODE_EXACT_COUNT.equals(matchingMode)) {
+        } else {
             // Exact count of files must match (across all patterns)
             int matchCount = 0;
             for (String pattern : resolvedPatterns) {
@@ -481,8 +479,6 @@ public class RemoteFileSystemConsumer {
             }
             return matchCount == condition.getRequiredFileCount();
         }
-
-        return true;
     }
 
     @ExcludeCoverageFromGeneratedReport
