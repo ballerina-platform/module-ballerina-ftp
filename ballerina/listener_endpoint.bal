@@ -36,7 +36,7 @@ public isolated class Listener {
         }
     }
 
-    # Starts the FTP listener.
+    # Starts the FTP listener and begins monitoring for file changes.
     # ```ballerina
     # error? response = listener.'start();
     # ```
@@ -46,7 +46,7 @@ public isolated class Listener {
         return self.internalStart();
     }
 
-    # Attaches a service to the FTP listener.
+    # Attaches an FTP service to the listener.
     # ```ballerina
     # error? response = listener.attach(service1);
     # ```
@@ -162,7 +162,7 @@ class Job {
     }
 }
 
-# Configuration for FTP listener.
+# Configuration for the FTP listener.
 #
 # + protocol - Protocol to use for the connection: FTP (unsecure) or SFTP (over SSH)
 # + host - Target server hostname or IP address
@@ -170,7 +170,7 @@ class Job {
 # + auth - Authentication options for connecting to the server
 # + path - Directory path on the FTP server to monitor for file changes
 # + fileNamePattern - File name pattern (regex) to filter which files trigger events
-# + pollingInterval - Polling interval in seconds for checking file changes
+# + pollingInterval - Polling interval in seconds for checking file changes, or a cron expression for time-based scheduling
 # + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and
 #                   prevents the underlying VFS from attempting to change to the actual server root.
 #                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command
