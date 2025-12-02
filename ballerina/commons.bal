@@ -28,6 +28,14 @@ public enum Protocol {
     SFTP = "sftp" // File Transfer Protocol over SSH
 }
 
+# FTPS connection mode.
+# IMPLICIT - SSL/TLS connection is established immediately upon connection (typically port 990)
+# EXPLICIT - Starts as regular FTP, then upgrades to SSL/TLS using AUTH TLS command (typically port 21)
+public enum FtpsMode {
+    IMPLICIT,  // Implicit FTPS
+    EXPLICIT   // Explicit FTPS (FTPES)
+}
+
 # Private key configuration for SSH-based authentication (used with SFTP).
 #
 # + path - Path to the private key file
@@ -42,9 +50,11 @@ public type PrivateKey record {|
 #
 # + key - Keystore configuration for client authentication
 # + trustStore - Truststore configuration for server certificate validation
+# + mode - FTPS connection mode (IMPLICIT or EXPLICIT). Defaults to EXPLICIT if not specified.
 public type SecureSocket record {|
     crypto:KeyStore key?;
     crypto:TrustStore trustStore?;
+    FtpsMode mode = EXPLICIT;
 |};
 
 # Basic authentication credentials for connecting to FTP servers using username and password.
