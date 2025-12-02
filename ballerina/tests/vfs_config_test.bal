@@ -511,3 +511,40 @@ public function testListenerWithTimeouts() returns error? {
         log:printInfo("Listener with timeout configurations initialized successfully");
     }
 }
+
+@test:Config {
+}
+public function testSftpWithHttpConnectProxy() returns error? {
+    // Test SFTP client with HTTP CONNECT proxy configuration
+    ClientConfiguration httpProxyConfig = {
+        protocol: SFTP,
+        host: "127.0.0.1",
+        port: 21213,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            },
+            preferredMethods: [GSSAPI_WITH_MIC, PUBLICKEY, KEYBOARD_INTERACTIVE, PASSWORD]
+        },
+        proxy: {
+            host: "proxy.example.com",
+            port: 3128,
+            'type: HTTP,
+            auth: {
+                username: "proxyuser",
+                password: "proxypass"
+            }
+        }
+    };
+
+    Client|Error sftpClient = new(httpProxyConfig);
+    test:assertTrue(sftpClient is Error);
+
+    Error err = <Error>sftpClient;
+    error? cause = err.cause();
+    test:assertFalse(err.cause() is ());
+
+    test:assertEquals((<error> cause).message(), "proxy.example.com");
+}
