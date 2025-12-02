@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/file;
 import ballerina/io;
 import ballerina/lang.runtime;
 import ballerina/log;
@@ -73,6 +74,7 @@ int xmlRecordFilesProcessed = 0;
 const string JSON_TEST_FILE = "tests/resources/datafiles/test_data.json";
 const string XML_TEST_FILE = "tests/resources/datafiles/test_data.xml";
 const string CSV_TEST_FILE = "tests/resources/datafiles/test_data.csv";
+const string CSV_TEST_FILE_WITH_ERROR = "tests/resources/datafiles/test_data_with_error.csv";
 const string TEXT_TEST_FILE = "tests/resources/datafiles/test_text.txt";
 const string GENERIC_TEST_FILE = "tests/resources/datafiles/file2.txt";
 
@@ -711,7 +713,8 @@ public function testOnFileCsvRecordArray() returns error? {
         port: 21212,
         path: CONTENT_TEST_DIR,
         pollingInterval: 4,
-        fileNamePattern: "csvrecord.*\\.csv"
+        fileNamePattern: "csvrecord.*\\.csv",
+        enableCsvFailSafe: true
     });
 
     check csvRecordListener.attach(csvRecordService);
@@ -719,7 +722,7 @@ public function testOnFileCsvRecordArray() returns error? {
     runtime:registerListener(csvRecordListener);
 
     // Upload CSV file for record deserialization
-    stream<io:Block, io:Error?> csvStream = check io:fileReadBlocksAsStream(CSV_TEST_FILE, 5);
+    stream<io:Block, io:Error?> csvStream = check io:fileReadBlocksAsStream(CSV_TEST_FILE_WITH_ERROR);
     check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/csvrecord.csv", csvStream);
     runtime:sleep(15);
 
@@ -728,13 +731,14 @@ public function testOnFileCsvRecordArray() returns error? {
     check csvRecordListener.gracefulStop();
 
     test:assertTrue(contentMethodInvoked, "onFileCsv (record array) should have been invoked");
-    test:assertTrue(csvRecordArrayReceived.length() >= 3,
-        string `Should have deserialized at least 3 Employee records, got ${csvRecordArrayReceived.length()}`);
+    test:assertTrue(csvRecordArrayReceived.length() >= 2,
+        string `Should have deserialized at least 2 Employee records, got ${csvRecordArrayReceived.length()}`);
 
     // Verify first record
     Employee firstEmployee = csvRecordArrayReceived[0];
-    test:assertEquals(firstEmployee.name, "Alice Johnson", "First employee's name should match");
-    test:assertEquals(firstEmployee.age, 25, "First employee's age should match");
+    test:assertEquals(firstEmployee.name, "Bob Williams", "First employee's name should match");
+    test:assertEquals(firstEmployee.age, 35, "First employee's age should match");
+    check file:remove("error.log");
 }
 
 @test:Config {
