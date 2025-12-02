@@ -223,7 +223,8 @@ public class FtpUtil {
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = FTP_ANONYMOUS_USERNAME;
-        String password = protocol.equals(FtpConstants.SCHEME_FTP) ? FTP_ANONYMOUS_PASSWORD : null;
+        String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) 
+                ? FTP_ANONYMOUS_PASSWORD : null;
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
@@ -277,7 +278,8 @@ public class FtpUtil {
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = FTP_ANONYMOUS_USERNAME;
-        String password = protocol.equals(FtpConstants.SCHEME_FTP) ? FTP_ANONYMOUS_PASSWORD : null;
+        String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) 
+                ? FTP_ANONYMOUS_PASSWORD : null;
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));

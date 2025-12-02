@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.IDENTITY_PASS_PHRASE;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_FTP;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_FTPS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_SFTP;
 
 /**
@@ -66,9 +67,12 @@ public final class FileTransportUtils {
         }
         FileSystemOptions opts = new FileSystemOptions();
         String listeningDirURI = options.get(FtpConstants.URI);
-        if (listeningDirURI.toLowerCase(Locale.getDefault()).startsWith(SCHEME_FTP)) {
+        String lowerCaseUri = listeningDirURI.toLowerCase(Locale.getDefault());
+        if (lowerCaseUri.startsWith(SCHEME_FTPS)) {
+            setFtpsOptions(options, opts);
+        } else if (lowerCaseUri.startsWith(SCHEME_FTP)) {
             setFtpOptions(options, opts);
-        } else if (listeningDirURI.toLowerCase(Locale.getDefault()).startsWith(SCHEME_SFTP)) {
+        } else if (lowerCaseUri.startsWith(SCHEME_SFTP)) {
             setSftpOptions(options, opts);
         }
         return opts;
@@ -119,6 +123,19 @@ public final class FileTransportUtils {
                 configBuilder.setFileType(opts, FtpFileType.BINARY);
             }
         }
+    }
+
+    private static void setFtpsOptions(Map<String, String> options, FileSystemOptions opts) {
+        // FTPS uses the same config builder as FTP but with SSL/TLS enabled
+        final FtpFileSystemConfigBuilder configBuilder = FtpFileSystemConfigBuilder.getInstance();
+        if (options.get(FtpConstants.PASSIVE_MODE) != null) {
+            configBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(FtpConstants.PASSIVE_MODE)));
+        }
+        if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
+            configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT)));
+        }
+        // SSL/TLS configuration will be handled by the secureSocket configuration
+        // Apache Commons VFS2 automatically handles FTPS when the scheme is "ftps://"
     }
 
     private static void setSftpOptions(Map<String, String> options, FileSystemOptions opts)

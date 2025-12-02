@@ -15,23 +15,36 @@
 // under the License.
 
 import ballerina/io;
+import ballerina/crypto;
 
 # Protocol to use for FTP server connections.
-# Determines whether to use basic FTP (unsecure) or SFTP (secure over SSH).
+# Determines whether to use basic FTP (unsecure), FTPS (secure over SSL/TLS), or SFTP (secure over SSH).
 # FTP - Unsecure File Transfer Protocol
+# FTPS - Secure File Transfer Protocol (FTP over SSL/TLS)
 # SFTP - File Transfer Protocol over SSH
 public enum Protocol {
-    FTP = "ftp",
-    SFTP = "sftp"
+    FTP = "ftp", // Unsecure File Transfer Protocol
+    FTPS = "ftps", // Secure File Transfer Protocol (FTP over SSL/TLS)
+    SFTP = "sftp" // File Transfer Protocol over SSH
 }
 
-# Private key configuration for SSH-based authentication.
+# Private key configuration for SSH-based authentication (used with SFTP).
 #
 # + path - Path to the private key file
 # + password - Optional password for the private key
 public type PrivateKey record {|
     string path;
     string password?;
+|};
+
+# Secure socket configuration for FTPS (FTP over SSL/TLS).
+# Used for configuring SSL/TLS certificates and keystores for FTPS connections.
+#
+# + key - Keystore configuration for client authentication
+# + trustStore - Truststore configuration for server certificate validation
+public type SecureSocket record {|
+    crypto:KeyStore key?;
+    crypto:TrustStore trustStore?;
 |};
 
 # Basic authentication credentials for connecting to FTP servers using username and password.
@@ -46,11 +59,13 @@ public type Credentials record {|
 # Specifies authentication options for FTP server connections.
 #
 # + credentials - Username and password for basic authentication
-# + privateKey - Private key and password for key-based authentication
-# + preferredMethods - Preferred authentication methods
+# + privateKey - Private key and password for SSH-based authentication (used with SFTP protocol)
+# + secureSocket - Secure socket configuration for SSL/TLS (used with FTPS protocol)
+# + preferredMethods - Preferred authentication methods (used with SFTP protocol)
 public type AuthConfiguration record {|
     Credentials credentials?;
     PrivateKey privateKey?;
+    SecureSocket secureSocket?;
     PreferredMethod[] preferredMethods = [PUBLICKEY, PASSWORD];
 |};
 

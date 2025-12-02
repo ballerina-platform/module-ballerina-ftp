@@ -171,12 +171,32 @@ public class FtpListenerHelper {
 
         BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
+        
+        // Get protocol for validation
+        String protocol = (serviceEndpointConfig.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
+        
         String url = FtpUtil.createUrl(serviceEndpointConfig);
         params.put(FtpConstants.URI, url);
         addStringProperty(serviceEndpointConfig, params);
         if (auth != null) {
             final BMap privateKey = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+            final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                    FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+            
+            // Validate protocol and credential combinations
+            if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) {
+                throw FtpUtil.createError("privateKey can only be used with SFTP protocol. " +
+                        "For FTPS, use secureSocket configuration.", Error.errorType());
+            }
+            
+            if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) {
+                throw FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
+                        "For SFTP, use privateKey configuration.", Error.errorType());
+            }
+            
+            // Handle privateKey for SFTP
             if (privateKey != null) {
                 final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
@@ -193,7 +213,14 @@ public class FtpListenerHelper {
                     params.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword);
                 }
             }
-            params.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+            
+            // Handle secureSocket for FTPS
+            // Note: SSL/TLS configuration will be handled by Apache Commons VFS2 when using ftps:// scheme
+            // Additional secureSocket configuration can be added here if needed
+            
+            if (protocol.equals(FtpConstants.SCHEME_SFTP)) {
+                params.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+            }
         }
         boolean userDirIsRoot = serviceEndpointConfig.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
         params.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));

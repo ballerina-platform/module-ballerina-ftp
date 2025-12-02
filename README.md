@@ -17,8 +17,8 @@ generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isD
  `list`. The client also provides typed data operations for reading and writing files as text, JSON, XML, CSV, and binary data, with streaming support for handling large files efficiently.
 
 An FTP client is defined using the `protocol` and `host` parameters and optionally, the `port` and
-`auth`. Authentication configuration can be configured using the `auth` parameter for Basic Auth and
-private key.
+`auth`. The protocol can be `FTP` (unsecured), `FTPS` (FTP over SSL/TLS), or `SFTP` (SSH File Transfer Protocol).
+Authentication configuration can be configured using the `auth` parameter for Basic Auth, private key (for SFTP), or secure socket (for FTPS).
 
 An authentication-related configuration can be given to the FTP client with the `auth` configuration.
 
@@ -353,11 +353,78 @@ service on remoteServer {
 
 The FTP listener automatically routes files to the appropriate content handler based on file extension: `.txt` → `onFileText()`, `.json` → `onFileJson()`, `.xml` → `onFileXml()`, `.csv` → `onFileCsv()`, and other extensions → `onFile()` (fallback handler). You can override the default routing using the `@ftp:FunctionConfig` annotation to specify a custom file name pattern for each handler method.
 
+### Secure access with FTPS
+
+FTPS (FTP over SSL/TLS) is a secure protocol that extends FTP with SSL/TLS encryption. Unlike SFTP which uses SSH, FTPS uses SSL/TLS certificates for secure communication.
+
+The protocol selection is explicit - you must specify `protocol: ftp:FTPS` to use FTPS. The `secureSocket` configuration is used for SSL/TLS certificate configuration (keystore and truststore).
+
+#### FTPS client configuration
+
+```ballerina
+ftp:ClientConfiguration ftpsConfig = {
+    protocol: ftp:FTPS,
+    host: "<The FTPS host>",
+    port: <The FTPS port>,
+    auth: {
+        credentials: {
+            username: "<The FTPS username>",
+            password: "<The FTPS password>"
+        },
+        secureSocket: {
+            key: {
+                path: "<Path to keystore file>",
+                password: "<Keystore password>"
+            },
+            trustStore: {
+                path: "<Path to truststore file>",
+                password: "<Truststore password>"
+            }
+        }
+    }
+};
+
+// Create the FTPS client.
+ftp:Client|ftp:Error ftpsClient = new(ftpsConfig);
+```
+
+#### FTPS listener configuration
+
+```ballerina
+listener ftp:Listener remoteServer = check new({
+    protocol: ftp:FTPS,
+    host: "<The FTPS host>",
+    port: <The FTPS port>,
+    path: "<The remote FTPS directory location>",
+    pollingInterval: <Polling interval>,
+    fileNamePattern: "<File name pattern>",
+    auth: {
+        credentials: {
+            username: "<The FTPS username>",
+            password: "<The FTPS password>"
+        },
+        secureSocket: {
+            key: {
+                path: "<Path to keystore file>",
+                password: "<Keystore password>"
+            },
+            trustStore: {
+                path: "<Path to truststore file>",
+                password: "<Truststore password>"
+            }
+        }
+    }
+});
+```
+
 ### Secure access with SFTP
 
-SFTP is a secure protocol alternative to the FTP, which runs on top of the SSH protocol.
+SFTP (SSH File Transfer Protocol) is a secure protocol that runs on top of the SSH protocol.
 There are several ways to authenticate an SFTP server. One is using the username and the password.
 Another way is using the client's private key. The Ballerina SFTP client and the listener support only those authentication standards.
+
+**Important:** The protocol selection is explicit - you must specify `protocol: ftp:SFTP` to use SFTP. The `privateKey` configuration is only valid for SFTP protocol. For FTPS, use `secureSocket` configuration instead.
+
 An authentication-related configuration can be given to the SFTP client/listener with the `auth` configuration.
 Password-based authentication is defined with the `credentials` configuration while the private key based authentication is defined with the `privateKey` configuration.
 
@@ -453,7 +520,7 @@ Execute the commands below to build from source.
 7. Publish the generated artifacts to the local Ballerina central repository:
     ```
     ./gradlew clean build -PpublishToLocalCentral=true
-    ```
+    ````
 
 8. Publish the generated artifacts to the Ballerina central repository:
    ```

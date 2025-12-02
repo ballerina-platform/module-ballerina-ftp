@@ -35,6 +35,7 @@ public class FtpConstants {
     public static final String FILE_NAME_PATTERN = "fileNamePattern";
     public static final String SCHEME_SFTP = "sftp";
     public static final String SCHEME_FTP = "ftp";
+    public static final String SCHEME_FTPS = "ftps";
     public static final String URI = "uri";
     public static final String PASSIVE_MODE = "PASSIVE_MODE";
     public static final String USER_DIR_IS_ROOT = "USER_DIR_IS_ROOT";
@@ -78,6 +79,7 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_AUTH = "auth";
     public static final String ENDPOINT_CONFIG_CREDENTIALS = "credentials";
     public static final String ENDPOINT_CONFIG_PRIVATE_KEY = "privateKey";
+    public static final String ENDPOINT_CONFIG_SECURE_SOCKET = "secureSocket";
     public static final String ENDPOINT_CONFIG_PREFERRED_METHODS = "preferredMethods";
     public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
 
