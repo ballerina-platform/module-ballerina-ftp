@@ -20,6 +20,7 @@ package io.ballerina.stdlib.ftp.util;
 
 import io.ballerina.lib.data.ModuleUtils;
 import io.ballerina.lib.data.xmldata.xml.Native;
+import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.Type;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 
+import static io.ballerina.lib.data.csvdata.csv.Native.parseBytes;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
@@ -47,6 +49,17 @@ public final class FtpContentConverter {
 
     private static final Logger log = LoggerFactory.getLogger(FtpContentConverter.class);
     private static final BString ALLOW_DATA_PROJECTION = StringUtils.fromString("allowDataProjection");
+    public static final BString FILE_PATH = StringUtils.fromString("filePath");
+    public static final String CURRENT_DIRECTORY_PATH = System.getProperty("user.dir");
+    public static final String ERROR_LOG_FILE_NAME = "/error.log";
+    public static final BString APPEND = StringUtils.fromString("APPEND");
+    public static final BString FILE_WRITE_OPTION = StringUtils.fromString("fileWriteOption");
+    public static final BString CONTENT_TYPE = StringUtils.fromString("contentType");
+    public static final BString RAW_TYPE = StringUtils.fromString("RAW");
+    public static final BString FILE_OUTPUT_MODE = StringUtils.fromString("fileOutputMode");
+    public static final BString FAIL_SAFE = StringUtils.fromString("failSafe");
+    public static final String FAIL_SAFE_OPTIONS = "FailSafeOptions";
+    public static final String FILE_OUTPUT_MODE_TYPE = "FileOutputMode";
 
     private FtpContentConverter() {
         // private constructor
@@ -120,15 +133,16 @@ public final class FtpContentConverter {
      * @param targetType The target Ballerina type for data binding
      * @return Ballerina CSV data (string[][], record[][], or custom type) or BError
      */
-    public static Object convertBytesToCsv(byte[] content, Type targetType, boolean laxDataBinding) {
+    public static Object convertBytesToCsv(Environment env, byte[] content, Type targetType, boolean laxDataBinding,
+                                           boolean csvFailSafeConfigs) {
         try {
             BArray byteArray = ValueCreator.createArrayValue(content);
-            BMap<BString, Object> options = createCsvParseOptions(laxDataBinding);
+            BMap<BString, Object> options = createCsvParseOptions(laxDataBinding, csvFailSafeConfigs);
 
             Type referredType = TypeUtils.getReferredType(targetType);
             BTypedesc typedesc = ValueCreator.createTypedescValue(referredType);
 
-            Object result = io.ballerina.lib.data.csvdata.csv.Native.parseBytes(byteArray, options, typedesc);
+            Object result = parseBytes(env, byteArray, options, typedesc);
 
             if (result instanceof BError) {
                 log.error("Failed to parse CSV content: {}", ((BError) result).getMessage());
@@ -182,9 +196,22 @@ public final class FtpContentConverter {
      *
      * @return BMap containing parse options
      */
-    private static BMap<BString, Object> createCsvParseOptions(boolean laxDataBinding) {
+    private static BMap<BString, Object> createCsvParseOptions(boolean laxDataBinding, boolean enableCsvFailSafe) {
         BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
                 io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(), "ParseOptions");
+        if (enableCsvFailSafe) {
+            BMap<BString, Object> failSafe =
+                    ValueCreator.createRecordValue(io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(),
+                            FAIL_SAFE_OPTIONS);
+            BMap<BString, Object> fileOutputMode =
+                    ValueCreator.createRecordValue(io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(),
+                            FILE_OUTPUT_MODE_TYPE);
+            fileOutputMode.put(FILE_PATH, StringUtils.fromString(CURRENT_DIRECTORY_PATH + ERROR_LOG_FILE_NAME));
+            fileOutputMode.put(FILE_WRITE_OPTION, APPEND);
+            fileOutputMode.put(CONTENT_TYPE, RAW_TYPE);
+            failSafe.put(FILE_OUTPUT_MODE, fileOutputMode);
+            mapValue.put(FAIL_SAFE, failSafe);
+        }
         if (laxDataBinding) {
             BMap allowDataProjection = mapValue.getMapValue(StringUtils.fromString("allowDataProjection"));
             allowDataProjection.put(StringUtils.fromString("nilAsOptionalField"), Boolean.TRUE);
