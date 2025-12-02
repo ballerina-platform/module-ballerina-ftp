@@ -180,6 +180,9 @@ class Job {
 # + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
 #                    null values in JSON/XML are allowed to be mapped to optional fields
 #                    missing fields in JSON/XML are allowed to be mapped as null values
+# + enableCsvFailSafe - If set to `true`, enables fail-safe mode for CSV content processing.
+#                       In fail-safe mode, malformed CSV records are logged and skipped,
+#                       allowing processing to continue for well-formed records
 public type ListenerConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -192,6 +195,7 @@ public type ListenerConfiguration record {|
     FileAgeFilter fileAgeFilter?;
     FileDependencyCondition[] fileDependencyConditions = [];
     boolean laxDataBinding = false;
+    boolean enableCsvFailSafe = false;
 |};
 
 # FTP service for handling file system change events.
