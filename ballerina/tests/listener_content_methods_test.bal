@@ -685,9 +685,126 @@ public function testOnFileCsvStream() returns error? {
 }
 
 @test:Config {
+    dependsOn: [testOptionalParametersWithoutCaller]
+}
+public function testOnFileCsvStreamWithFailSafe() returns error? {
+    // Reset state
+    csvStreamRowsProcessed = 0;
+    lastFileInfo = ();
+    contentMethodInvoked = false;
+
+    // Service with onFileCsv (stream variant)
+    Service csvStreamService = service object {
+        remote function onFileCsv(stream<string[], error?> content, FileInfo fileInfo, Caller caller) returns error? {
+            log:printInfo(string `onFileCsv (stream) invoked for: ${fileInfo.name}`);
+            lastFileInfo = fileInfo;
+            contentMethodInvoked = true;
+
+            // Process stream
+            error? processStream = content.forEach(function(string[] row) {
+                csvStreamRowsProcessed += 1;
+                log:printInfo(string `Processing CSV row: ${row.length()} columns`);
+            });
+
+            if processStream is error {
+                log:printError("Error processing CSV stream", processStream);
+                return processStream;
+            }
+        }
+    };
+
+    // Create listener for .csvstream files
+    Listener csvStreamListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        port: 21212,
+        path: CONTENT_TEST_DIR,
+        pollingInterval: 4,
+        fileNamePattern: "csvstream.*\\.csv",
+        enableCsvFailSafe: true
+    });
+
+    check csvStreamListener.attach(csvStreamService);
+    check csvStreamListener.'start();
+    runtime:registerListener(csvStreamListener);
+
+    // Upload CSV file for stream processing
+    stream<io:Block, io:Error?> csvStream = check io:fileReadBlocksAsStream(CSV_TEST_FILE_WITH_ERROR, 5);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/csvstream.csv", csvStream);
+    runtime:sleep(15);
+
+    // Cleanup
+    runtime:deregisterListener(csvStreamListener);
+    check csvStreamListener.gracefulStop();
+
+    test:assertTrue(contentMethodInvoked, "onFileCsv (stream) should have been invoked");
+    test:assertTrue(csvStreamRowsProcessed > 0, string `Should have processed CSV rows, got ${csvStreamRowsProcessed}`);
+
+    FileInfo fileInfo = check lastFileInfo.ensureType();
+    test:assertTrue(fileInfo.name.endsWith(".csv"), "Should process .csvstream files");
+}
+
+@test:Config {
     dependsOn: [testOnFileCsvStream]
 }
 public function testOnFileCsvRecordArray() returns error? {
+    // Reset state
+    csvRecordArrayReceived = [];
+    csvRecordFilesProcessed = 0;
+    lastFileInfo = ();
+    contentMethodInvoked = false;
+
+    // Service with onFileCsv (record array variant)
+    Service csvRecordService = service object {
+        remote function onFileCsv(Employee[] content, FileInfo fileInfo, Caller caller) returns error? {
+            log:printInfo(string `onFileCsv (Employee[]) invoked for: ${fileInfo.name}, records: ${content.length()}`);
+            csvRecordArrayReceived = content;
+            lastFileInfo = fileInfo;
+            csvRecordFilesProcessed += 1;
+            contentMethodInvoked = true;
+        }
+    };
+
+    // Create listener for .csvrecord files
+    Listener csvRecordListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        port: 21212,
+        path: CONTENT_TEST_DIR,
+        pollingInterval: 4,
+        fileNamePattern: "csvrecord.*\\.csv"
+    });
+
+    check csvRecordListener.attach(csvRecordService);
+    check csvRecordListener.'start();
+    runtime:registerListener(csvRecordListener);
+
+    // Upload CSV file for record deserialization
+    stream<io:Block, io:Error?> csvStream = check io:fileReadBlocksAsStream(CSV_TEST_FILE);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/csvrecord.csv", csvStream);
+    runtime:sleep(15);
+
+    // Cleanup
+    runtime:deregisterListener(csvRecordListener);
+    check csvRecordListener.gracefulStop();
+
+    test:assertTrue(contentMethodInvoked, "onFileCsv (record array) should have been invoked");
+    test:assertTrue(csvRecordArrayReceived.length() >= 3,
+        string `Should have deserialized at least 3 Employee records, got ${csvRecordArrayReceived.length()}`);
+
+    // Verify first record
+    Employee firstEmployee = csvRecordArrayReceived[0];
+    test:assertEquals(firstEmployee.name, "Alice Johnson", "First employee's name should match");
+    test:assertEquals(firstEmployee.age, 25, "First employee's age should match");
+}
+
+@test:Config {
+    groups: ["csv"],
+    dependsOn: [testOnFileCsvStream]
+}
+public function testOnFileCsvRecordArrayWithFailSafe() returns error? {
     // Reset state
     csvRecordArrayReceived = [];
     csvRecordFilesProcessed = 0;
