@@ -432,10 +432,10 @@ public enum Compression {
 # + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
 #                    null values in JSON/XML are allowed to be mapped to optional fields
 #                    missing fields in JSON/XML are allowed to be mapped as null values
-# + connectTimeout - Connection timeout in seconds (default: 30.0 for FTP, 10.0 for SFTP)
-# + socketConfig - Socket timeout configurations (optional)
-# + ftpFileTransfer - File transfer type: BINARY or ASCII (FTP only, default: BINARY)
-# + sftpCompression - Compression algorithms (SFTP only, default: "none")
+# + connectTimeout - Connection timeout in seconds 
+# + socketConfig - Socket timeout configurations 
+# + ftpFileTransfer - File transfer type: BINARY or ASCII (FTP only)
+# + sftpCompression - Compression algorithms (SFTP only)
 # + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
 # + proxy - Proxy configuration for SFTP connections (SFTP only)
 public type ClientConfiguration record {|

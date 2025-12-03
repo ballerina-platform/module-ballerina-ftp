@@ -76,6 +76,12 @@ public enum FtpFileTransfer {
     ASCII
 }
 
+# Compression algorithms for SFTP file transfers.
+# Specifies which compression method to apply during data transfer.
+#
+# + ZLIB - Standard ZLIB compression
+# + ZLIBOPENSSH - OpenSSH variant of ZLIB compression
+# + NO - No compression
 public enum TransferCompression {
     ZLIB = "zlib",
     ZLIBOPENSSH = "zlib@openssh.com",
