@@ -78,39 +78,33 @@ public class FtpUtil {
             throws BallerinaFtpException {
         // Extract connectTimeout
         Object connectTimeoutObj = config.get(StringUtils.fromString(FtpConstants.CONNECT_TIMEOUT));
-        if (connectTimeoutObj != null) {
-            double connectTimeout = ((BDecimal) connectTimeoutObj).floatValue();
-            validateTimeout(connectTimeout, "connectTimeout");
-            ftpProperties.put(FtpConstants.CONNECT_TIMEOUT, String.valueOf(connectTimeout));
-        }
+        double connectTimeout = ((BDecimal) connectTimeoutObj).floatValue();
+        validateTimeout(connectTimeout, "connectTimeout");
+        ftpProperties.put(FtpConstants.CONNECT_TIMEOUT, String.valueOf(connectTimeout));
 
         // Extract socketConfig
         BMap socketConfig = config.getMapValue(StringUtils.fromString(FtpConstants.SOCKET_CONFIG));
-        if (socketConfig != null) {
-            // Extract ftpDataTimeout
-            Object ftpDataTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.FTP_DATA_TIMEOUT));
-            if (ftpDataTimeoutObj != null) {
-                double ftpDataTimeout = ((BDecimal) ftpDataTimeoutObj).floatValue();
-                validateTimeout(ftpDataTimeout, "ftpDataTimeout");
-                ftpProperties.put(FtpConstants.FTP_DATA_TIMEOUT, String.valueOf(ftpDataTimeout));
-            }
-
-            // Extract ftpSocketTimeout
-            Object ftpSocketTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.FTP_SOCKET_TIMEOUT));
-            if (ftpSocketTimeoutObj != null) {
-                double ftpSocketTimeout = ((BDecimal) ftpSocketTimeoutObj).floatValue();
-                validateTimeout(ftpSocketTimeout, "ftpSocketTimeout");
-                ftpProperties.put(FtpConstants.FTP_SOCKET_TIMEOUT, String.valueOf(ftpSocketTimeout));
-            }
-
-            // Extract sftpSessionTimeout
-            Object sftpSessionTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.SFTP_SESSION_TIMEOUT));
-            if (sftpSessionTimeoutObj != null) {
-                double sftpSessionTimeout = ((BDecimal) sftpSessionTimeoutObj).floatValue();
-                validateTimeout(sftpSessionTimeout, "sftpSessionTimeout");
-                ftpProperties.put(FtpConstants.SFTP_SESSION_TIMEOUT, String.valueOf(sftpSessionTimeout));
-            }
+        if (socketConfig == null) {
+            return;
         }
+
+        // Extract ftpDataTimeout
+        Object ftpDataTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.FTP_DATA_TIMEOUT));
+        double ftpDataTimeout = ((BDecimal) ftpDataTimeoutObj).floatValue();
+        validateTimeout(ftpDataTimeout, "ftpDataTimeout");
+        ftpProperties.put(FtpConstants.FTP_DATA_TIMEOUT, String.valueOf(ftpDataTimeout));
+
+        // Extract ftpSocketTimeout
+        Object ftpSocketTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.FTP_SOCKET_TIMEOUT));
+        double ftpSocketTimeout = ((BDecimal) ftpSocketTimeoutObj).floatValue();
+        validateTimeout(ftpSocketTimeout, "ftpSocketTimeout");
+        ftpProperties.put(FtpConstants.FTP_SOCKET_TIMEOUT, String.valueOf(ftpSocketTimeout));
+
+        // Extract sftpSessionTimeout
+        Object sftpSessionTimeoutObj = socketConfig.get(StringUtils.fromString(FtpConstants.SFTP_SESSION_TIMEOUT));
+        double sftpSessionTimeout = ((BDecimal) sftpSessionTimeoutObj).floatValue();
+        validateTimeout(sftpSessionTimeout, "sftpSessionTimeout");
+        ftpProperties.put(FtpConstants.SFTP_SESSION_TIMEOUT, String.valueOf(sftpSessionTimeout));
     }
 
     private static void validateTimeout(double timeout, String fieldName) throws BallerinaFtpException {
@@ -131,9 +125,19 @@ public class FtpUtil {
     }
 
     public static void extractCompressionConfiguration(BMap<Object, Object> config, Map<String, String> ftpProperties) {
-        BString sftpCompression = config.getStringValue(StringUtils.fromString(FtpConstants.SFTP_COMPRESSION));
-        if (sftpCompression != null && !sftpCompression.getValue().isEmpty()) {
-            ftpProperties.put(FtpConstants.SFTP_COMPRESSION, sftpCompression.getValue());
+        BArray sftpCompression = config.getArrayValue(StringUtils.fromString(FtpConstants.SFTP_COMPRESSION));
+        if (sftpCompression != null && !sftpCompression.isEmpty()) {
+            StringBuilder compressionValues = new StringBuilder();
+            for (int i = 0; i < sftpCompression.size(); i++) {
+                if (i > 0) {
+                    compressionValues.append(",");
+                }
+                compressionValues.append(sftpCompression.getBString(i).getValue());
+            }
+            String sftpCompressionValue = compressionValues.toString();
+            if (!"none".equals(sftpCompressionValue)) {
+                ftpProperties.put(FtpConstants.SFTP_COMPRESSION, sftpCompressionValue);
+            }
         }
     }
 

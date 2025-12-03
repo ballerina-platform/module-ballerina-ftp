@@ -261,7 +261,7 @@ public function testSftpCompressionEnabled() returns error? {
             },
             preferredMethods: [GSSAPI_WITH_MIC, PUBLICKEY, KEYBOARD_INTERACTIVE, PASSWORD]
         },
-        sftpCompression: "zlib,none"  // Prefer zlib compression
+        sftpCompression: [ ZLIB, NO ]// Prefer zlib compression
     };
 
     Client|Error sftpClient = new(compressionConfig);
@@ -293,7 +293,7 @@ public function testSftpCompressionNone() returns error? {
             },
             preferredMethods: [GSSAPI_WITH_MIC, PUBLICKEY, KEYBOARD_INTERACTIVE, PASSWORD]
         },
-        sftpCompression: "none"  // Explicitly disable compression
+        sftpCompression: [ NO ]  // Explicitly disable compression
     };
 
     Client|Error sftpClient = new(noCompressionConfig);
@@ -328,7 +328,7 @@ public function testSftpDefaultCompressionIsNone() returns error? {
         // sftpCompression not specified - should default to "none"
     };
 
-    test:assertEquals(defaultConfig.sftpCompression, "none",
+    test:assertEquals(defaultConfig.sftpCompression, ["none"],
         msg = "Default SFTP compression should be 'none'");
 
     log:printInfo("Default SFTP compression is 'none' as expected");
@@ -443,7 +443,7 @@ public function testCombinedVfsConfigsSftp() returns error? {
             preferredMethods: [GSSAPI_WITH_MIC, PUBLICKEY, KEYBOARD_INTERACTIVE, PASSWORD]
         },
         connectTimeout: 15.0,
-        sftpCompression: "none",
+        sftpCompression: [ NO ],
         socketConfig: {
             sftpSessionTimeout: 400.0
         }

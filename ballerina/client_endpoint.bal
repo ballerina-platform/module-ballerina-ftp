@@ -449,7 +449,7 @@ public type ClientConfiguration record {|
     SocketConfig socketConfig?;
     ProxyConfiguration proxy?;
     FtpFileTransfer ftpFileTransfer = BINARY;
-    string sftpCompression = "none";
+    TransferCompression[] sftpCompression = [NO];
     string sftpSshKnownHosts?;
 |};
 

@@ -151,9 +151,6 @@ public final class FileTransportUtils {
             Duration connectTimeout = Duration.ofMillis((long) (connectTimeoutSeconds * 1000));
             configBuilder.setConnectTimeout(opts, connectTimeout);
             log.debug("SFTP connectTimeout set to {} seconds", connectTimeoutSeconds);
-        } else {
-            // Default to 10 seconds for backward compatibility
-            configBuilder.setConnectTimeout(opts, Duration.ofSeconds(10));
         }
 
         if (options.get(FtpConstants.SFTP_SESSION_TIMEOUT) != null) {
@@ -166,10 +163,8 @@ public final class FileTransportUtils {
         // Compression configuration
         if (options.get(FtpConstants.SFTP_COMPRESSION) != null) {
             String compression = options.get(FtpConstants.SFTP_COMPRESSION);
-            if (!compression.isEmpty() && !compression.equalsIgnoreCase("none")) {
-                configBuilder.setCompression(opts, compression);
-                log.debug("SFTP compression set to: {}", compression);
-            }
+            configBuilder.setCompression(opts, compression);
+            log.debug("SFTP compression set to: {}", compression);
         }
 
         // Known hosts configuration
@@ -196,7 +191,7 @@ public final class FileTransportUtils {
             String proxyPortStr = options.get(FtpConstants.PROXY_PORT);
             String proxyType = options.getOrDefault(FtpConstants.PROXY_TYPE, FtpConstants.PROXY_TYPE_HTTP);
 
-            if (proxyHost != null && !proxyHost.isEmpty()) {
+            if (!proxyHost.isEmpty()) {
                 int proxyPort = proxyPortStr != null ? Integer.parseInt(proxyPortStr) : 8080;
                 configBuilder.setProxyHost(opts, proxyHost);
                 configBuilder.setProxyPort(opts, proxyPort);

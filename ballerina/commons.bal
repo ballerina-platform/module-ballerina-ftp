@@ -76,6 +76,12 @@ public enum FtpFileTransfer {
     ASCII
 }
 
+public enum TransferCompression {
+    ZLIB = "zlib",
+    ZLIBOPENSSH = "zlib@openssh.com",
+    NO = "none"
+}
+
 # Proxy type for SFTP connections
 #
 # + HTTP - HTTP CONNECT proxy
