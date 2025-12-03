@@ -53,6 +53,11 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CLIENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVICE_ENDPOINT_CONFIG;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.extractCompressionConfiguration;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.extractFileTransferConfiguration;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.extractKnownHostsConfiguration;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.extractProxyConfiguration;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.extractTimeoutConfigurations;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
 
@@ -162,7 +167,8 @@ public class FtpListenerHelper {
 
     private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
             throws BallerinaFtpException {
-        Map<String, String> params = new HashMap<>(12);
+        Map<String, String> params = new HashMap<>(25);
+
         BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String url = FtpUtil.createUrl(serviceEndpointConfig);
@@ -196,6 +202,12 @@ public class FtpListenerHelper {
 
         // Add file age filter parameters
         addFileAgeFilterParams(serviceEndpointConfig, params);
+
+        extractTimeoutConfigurations(serviceEndpointConfig, params);
+        extractFileTransferConfiguration(serviceEndpointConfig, params);
+        extractCompressionConfiguration(serviceEndpointConfig, params);
+        extractKnownHostsConfiguration(serviceEndpointConfig, params);
+        extractProxyConfiguration(serviceEndpointConfig, params);
 
         return params;
     }

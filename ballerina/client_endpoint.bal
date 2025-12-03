@@ -432,6 +432,12 @@ public enum Compression {
 # + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
 #                    null values in JSON/XML are allowed to be mapped to optional fields
 #                    missing fields in JSON/XML are allowed to be mapped as null values
+# + connectTimeout - Connection timeout in seconds 
+# + socketConfig - Socket timeout configurations 
+# + ftpFileTransfer - File transfer type: BINARY or ASCII (FTP only)
+# + sftpCompression - Compression algorithms (SFTP only)
+# + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
+# + proxy - Proxy configuration for SFTP connections (SFTP only)
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -439,6 +445,12 @@ public type ClientConfiguration record {|
     AuthConfiguration auth?;
     boolean userDirIsRoot = false;
     boolean laxDataBinding = false;
+    decimal connectTimeout = 30.0;
+    SocketConfig socketConfig?;
+    ProxyConfiguration proxy?;
+    FtpFileTransfer ftpFileTransfer = BINARY;
+    TransferCompression[] sftpCompression = [NO];
+    string sftpSshKnownHosts?;
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,

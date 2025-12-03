@@ -105,6 +105,33 @@ public class FtpConstants {
     // Cron scheduling
     public static final String CRON_EXPRESSION = "cronExpression";
 
+    // New VFS configuration constants
+    public static final String CONNECT_TIMEOUT = "connectTimeout";
+    public static final String SOCKET_CONFIG = "socketConfig";
+    public static final String FTP_DATA_TIMEOUT = "ftpDataTimeout";
+    public static final String FTP_SOCKET_TIMEOUT = "ftpSocketTimeout";
+    public static final String SFTP_SESSION_TIMEOUT = "sftpSessionTimeout";
+    public static final String FTP_FILE_TYPE = "ftpFileTransfer";
+    public static final String SFTP_COMPRESSION = "sftpCompression";
+    public static final String SFTP_KNOWN_HOSTS = "sftpSshKnownHosts";
+    public static final String PROXY = "proxy";
+    public static final String PROXY_HOST = "host";
+    public static final String PROXY_PORT = "port";
+    public static final String PROXY_TYPE = "type";
+    public static final String PROXY_AUTH = "auth";
+    public static final String PROXY_USERNAME = "username";
+    public static final String PROXY_PASSWORD = "password";
+    public static final String PROXY_COMMAND = "command";
+
+    // FTP file type values
+    public static final String FILE_TYPE_BINARY = "BINARY";
+    public static final String FILE_TYPE_ASCII = "ASCII";
+
+    // Proxy type values
+    public static final String PROXY_TYPE_HTTP = "HTTP";
+    public static final String PROXY_TYPE_SOCKS5 = "SOCKS5";
+    public static final String PROXY_TYPE_STREAM = "STREAM";
+
     public static final String INPUT_CONTENT_FILE_PATH_KEY = "filePath";
     public static final String INPUT_CONTENT_IS_FILE_KEY = "isFile";
     public static final String INPUT_CONTENT_FILE_CONTENT_KEY = "fileContent";

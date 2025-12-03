@@ -27,13 +27,7 @@ import org.apache.ftpserver.ssl.SslConfigurationFactory;
 import org.apache.ftpserver.usermanager.PropertiesUserManagerFactory;
 import org.apache.ftpserver.usermanager.impl.BaseUser;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
-import org.apache.sshd.common.file.virtualfs.VirtualFileSystemFactory;
-import org.apache.sshd.common.keyprovider.AbstractKeyPairProvider;
-import org.apache.sshd.common.keyprovider.KeyPairProvider;
 import org.apache.sshd.server.SshServer;
-import org.apache.sshd.server.scp.ScpCommandFactory;
-import org.apache.sshd.server.shell.ProcessShellFactory;
-import org.apache.sshd.server.subsystem.sftp.SftpSubsystemFactory;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
@@ -44,27 +38,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Creates a Mock FTP Servers
  */
+@SuppressWarnings({"java:S2068", "java:S6437"})  // Hardcoded credentials acceptable for test utilities
 public final class MockFtpServer {
 
     private MockFtpServer() {}
@@ -116,10 +98,11 @@ public final class MockFtpServer {
         ftpServer.setServerControlPort(port);
         String rootFolder = "/home/in";
         String content1 = "File content";
-        String content2 = "";
+        StringBuilder content2Builder = new StringBuilder();
         for (int i = 0; i < 1000; i++) {
-            content2 += "123456789";
+            content2Builder.append("123456789");
         }
+        String content2 = content2Builder.toString();
 
         ftpServer.addUserAccount(new UserAccount(username, password, rootFolder));
         FileSystem fileSystem = new TimestampAwareFakeFileSystem();
@@ -219,72 +202,19 @@ public final class MockFtpServer {
 
     public static Object initSftpServer(String resources) throws Exception {
         final int port = 21213;
-        File homeFolder = new File(resources + "/datafiles");
         sftpServer = SshServer.setUpDefaultServer();
-        VirtualFileSystemFactory virtualFileSystemFactory
-                = new VirtualFileSystemFactory(homeFolder.getAbsoluteFile().toPath());
-        virtualFileSystemFactory.getDefaultHomeDir().resolve("in").toFile().mkdirs();
-        virtualFileSystemFactory.getDefaultHomeDir().resolve("out").toFile().mkdirs();
-        sftpServer.setFileSystemFactory(virtualFileSystemFactory);
-        sftpServer.setHost("localhost");
-        sftpServer.setPort(port);
-        sftpServer.setSubsystemFactories(Collections.singletonList(new SftpSubsystemFactory()));
-        sftpServer.setCommandFactory(new ScpCommandFactory());
+        SftpServerUtil.setupBasicServerConfig(sftpServer, resources, port);
         try {
-            sftpServer.setKeyPairProvider(getKeyPairProvider(resources));
-            sftpServer.setPublickeyAuthenticator(new TwoFactorAuthorizedKeysAuthenticator(
-                    new File(resources + "/authorized_keys"), sftpAuthStatusHolder));
-            sftpServer.setPasswordAuthenticator(
-                    (authUsername, authPassword, session) -> sftpAuthStatusHolder.isPublicKeyAuthenticated()
-                            && username.equals(authUsername) && password.equals(authPassword));
-            sftpServer.setShellFactory(new ProcessShellFactory("/bin/sh", "-i", "-l"));
+            SftpServerUtil.setupAuthentication(sftpServer, resources, sftpAuthStatusHolder,
+                    username, password);
             sftpServer.start();
         } catch (Exception e) {
             throw new Exception("Error while starting SFTP server: " + e.getMessage());
         }
 
-        int i = 0;
-        while (!sftpServer.isOpen() && i < 10) {
-            try {
-                TimeUnit.MILLISECONDS.sleep(500);
-                i++;
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new Exception("Error in starting mock FTP server: " + e.getMessage());
-            }
-        }
+        SftpServerUtil.waitForServerStart(sftpServer);
         logger.info("Started Mock SFTP server");
         return null;
-    }
-
-    private static KeyPairProvider getKeyPairProvider(String resources) throws IOException, CertificateException,
-            NoSuchAlgorithmException,
-            KeyStoreException,
-            UnrecoverableKeyException {
-        String keystorePath = resources + "/keystore.jks";
-        char[] keystorePassword = "changeit".toCharArray();
-        char[] keyPassword = "changeit".toCharArray();
-        KeyStore ks  = KeyStore.getInstance(KeyStore.getDefaultType());
-        ks.load(new FileInputStream(keystorePath), keystorePassword);
-
-        List<KeyPair> keyPairs = new ArrayList<>();
-        for (Enumeration<String> it = ks.aliases(); it.hasMoreElements(); ) {
-            String alias = it.nextElement();
-            Key key = ks.getKey(alias, keyPassword);
-            if (key instanceof PrivateKey) {
-                Certificate cert = ks.getCertificate(alias);
-                PublicKey publicKey = cert.getPublicKey();
-                keyPairs.add(new KeyPair(publicKey, (PrivateKey) key));
-            }
-        }
-
-        return new AbstractKeyPairProvider() {
-            @Override
-            public Iterable<KeyPair> loadKeys() {
-                return keyPairs;
-            }
-        };
-
     }
 
     public static void stopAnonymousFtpServer() {
@@ -310,7 +240,7 @@ public final class MockFtpServer {
 
     public static void stopFtpsServer() throws IOException {
         if (!ftpsServer.isSuspended() && !ftpsServer.isStopped()) {
-            sftpServer.stop();
+            ftpsServer.stop();
         }
         logger.info("Stopped FTPS server");
     }
