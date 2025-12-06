@@ -55,7 +55,6 @@ public final class FtpContentConverter {
     public static final BString APPEND = StringUtils.fromString("APPEND");
     public static final BString FILE_WRITE_OPTION = StringUtils.fromString("fileWriteOption");
     public static final BString CONTENT_TYPE = StringUtils.fromString("contentType");
-    public static final BString RAW_TYPE = StringUtils.fromString("RAW");
     public static final BString FILE_OUTPUT_MODE = StringUtils.fromString("fileOutputMode");
     public static final BString FAIL_SAFE = StringUtils.fromString("failSafe");
     public static final String FAIL_SAFE_OPTIONS = "FailSafeOptions";
@@ -134,10 +133,10 @@ public final class FtpContentConverter {
      * @return Ballerina CSV data (string[][], record[][], or custom type) or BError
      */
     public static Object convertBytesToCsv(Environment env, byte[] content, Type targetType, boolean laxDataBinding,
-                                           boolean csvFailSafeConfigs) {
+                                           BMap<?, ?> csvFailSafe) {
         try {
             BArray byteArray = ValueCreator.createArrayValue(content);
-            BMap<BString, Object> options = createCsvParseOptions(laxDataBinding, csvFailSafeConfigs);
+            BMap<BString, Object> options = createCsvParseOptions(laxDataBinding, csvFailSafe);
 
             Type referredType = TypeUtils.getReferredType(targetType);
             BTypedesc typedesc = ValueCreator.createTypedescValue(referredType);
@@ -196,10 +195,11 @@ public final class FtpContentConverter {
      *
      * @return BMap containing parse options
      */
-    private static BMap<BString, Object> createCsvParseOptions(boolean laxDataBinding, boolean enableCsvFailSafe) {
+    private static BMap<BString, Object> createCsvParseOptions(boolean laxDataBinding, BMap<?, ?> csvFailSafe) {
         BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
                 io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(), "ParseOptions");
-        if (enableCsvFailSafe) {
+        if (csvFailSafe != null) {
+            BString contentType = csvFailSafe.getStringValue(CONTENT_TYPE);
             BMap<BString, Object> failSafe =
                     ValueCreator.createRecordValue(io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(),
                             FAIL_SAFE_OPTIONS);
@@ -208,7 +208,7 @@ public final class FtpContentConverter {
                             FILE_OUTPUT_MODE_TYPE);
             fileOutputMode.put(FILE_PATH, StringUtils.fromString(CURRENT_DIRECTORY_PATH + ERROR_LOG_FILE_NAME));
             fileOutputMode.put(FILE_WRITE_OPTION, APPEND);
-            fileOutputMode.put(CONTENT_TYPE, RAW_TYPE);
+            fileOutputMode.put(CONTENT_TYPE, contentType);
             failSafe.put(FILE_OUTPUT_MODE, fileOutputMode);
             mapValue.put(FAIL_SAFE, failSafe);
         }

@@ -80,7 +80,7 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_PRIVATE_KEY = "privateKey";
     public static final String ENDPOINT_CONFIG_PREFERRED_METHODS = "preferredMethods";
     public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
-    public static final String ENDPOINT_CONFIG_CSV_FAIL_SAFE = "enableCsvFailSafe";
+    public static final String ENDPOINT_CONFIG_CSV_FAIL_SAFE = "csvFailSafe";
 
     // Advanced file selection configuration constants
     public static final String ENDPOINT_CONFIG_POLLING_INTERVAL = "pollingInterval";

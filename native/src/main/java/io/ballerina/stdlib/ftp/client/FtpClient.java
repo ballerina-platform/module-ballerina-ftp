@@ -232,9 +232,8 @@ public class FtpClient {
         }
 
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
-        boolean enableCsvFailSafe = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_CSV_FAIL_SAFE);
-        return convertBytesToCsv(env, (byte[]) content, typeDesc.getDescribingType(),
-                laxDataBinding, enableCsvFailSafe);
+        BMap<?, ?> csvFailSafe = (BMap<?, ?>) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_CSV_FAIL_SAFE);
+        return convertBytesToCsv(env, (byte[]) content, typeDesc.getDescribingType(), laxDataBinding, csvFailSafe);
     }
 
     public static Object getBytesAsStream(Environment env, BObject clientConnector, BString filePath) {
