@@ -722,7 +722,7 @@ public function testOnFileCsvStreamWithFailSafe() returns error? {
         path: CONTENT_TEST_DIR,
         pollingInterval: 4,
         fileNamePattern: "csvstream.*\\.csv",
-        enableCsvFailSafe: true
+        csvFailSafe: {}
     });
 
     check csvStreamListener.attach(csvStreamService);
@@ -743,6 +743,7 @@ public function testOnFileCsvStreamWithFailSafe() returns error? {
 
     FileInfo fileInfo = check lastFileInfo.ensureType();
     test:assertTrue(fileInfo.name.endsWith(".csv"), "Should process .csvstream files");
+    check file:remove("error.log");
 }
 
 @test:Config {
@@ -831,7 +832,7 @@ public function testOnFileCsvRecordArrayWithFailSafe() returns error? {
         path: CONTENT_TEST_DIR,
         pollingInterval: 4,
         fileNamePattern: "csvrecord.*\\.csv",
-        enableCsvFailSafe: true
+        csvFailSafe: {}
     });
 
     check csvRecordListener.attach(csvRecordService);
