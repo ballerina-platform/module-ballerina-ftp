@@ -19,6 +19,7 @@ package io.ballerina.stdlib.ftp;
 
 import io.ballerina.lib.data.csvdata.csv.Native;
 import io.ballerina.lib.data.csvdata.utils.ModuleUtils;
+import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.creators.TypeCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.PredefinedTypes;
@@ -94,7 +95,7 @@ public class ContentCsvStreamIteratorUtils {
         return ValueCreator.createStreamValue(streamType, contentCsvStreamObject);
     }
 
-    public static Object next(BObject recordIterator) {
+    public static Object next(Environment environment, BObject recordIterator) {
         final Type elementType = (Type) recordIterator.getNativeData(NATIVE_STREAM_VALUE_TYPE);
         final String recordTypeName = resolveRecordTypeName(elementType);
         final BMap<BString, Object> streamEntry =
@@ -118,9 +119,9 @@ public class ContentCsvStreamIteratorUtils {
                 BMap<BString, Object> parseOptions =
                         ValueCreator.createRecordValue(ModuleUtils.getModule(), "ParseOptions");
                 parseOptions.put(StringUtils.fromString("allowDataProjection"), laxDataBinding);
-
                 // Parse
                 Object parsed = Native.parseBytes(
+                        environment,
                         ValueCreator.createArrayValue(bytes),
                         parseOptions,
                         ValueCreator.createTypedescValue(TypeCreator.createArrayType(elementType)));

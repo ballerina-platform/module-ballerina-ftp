@@ -66,6 +66,8 @@ import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
  */
 public class FtpListenerHelper {
 
+    public static final BString CSV_FAIL_SAFE = StringUtils.fromString("csvFailSafe");
+
     private FtpListenerHelper() {
         // private constructor
     }
@@ -80,7 +82,7 @@ public class FtpListenerHelper {
         try {
             Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
-            final FtpListener listener = new FtpListener(env.getRuntime());
+            final FtpListener listener = new FtpListener(env);
 
             RemoteFileSystemServerConnector serverConnector;
             List<FileDependencyCondition> dependencyConditions = parseFileDependencyConditions(serviceEndpointConfig);
@@ -103,6 +105,8 @@ public class FtpListenerHelper {
                     StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING));
             listener.setLaxDataBinding(laxDataBinding);
 
+            BMap<?, ?> csvFailSafe = serviceEndpointConfig.getMapValue(CSV_FAIL_SAFE);
+            listener.setCsvFailSafe(csvFailSafe);
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             // This is a temporary solution
 
