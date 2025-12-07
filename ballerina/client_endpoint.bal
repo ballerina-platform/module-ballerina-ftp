@@ -432,6 +432,12 @@ public enum Compression {
 # + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
 #                    null values in JSON/XML are allowed to be mapped to optional fields
 #                    missing fields in JSON/XML are allowed to be mapped as null values
+# + connectTimeout - Connection timeout in seconds 
+# + socketConfig - Socket timeout configurations 
+# + ftpFileTransfer - File transfer type: BINARY or ASCII (FTP only)
+# + sftpCompression - Compression algorithms (SFTP only)
+# + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
+# + proxy - Proxy configuration for SFTP connections (SFTP only)
 # + enableCsvFailSafe - If set to `true`, enables fail-safe mode for CSV content processing.
 #                       In fail-safe mode, malformed CSV records are logged and skipped,
 #                       allowing processing to continue for well-formed records
@@ -442,6 +448,12 @@ public type ClientConfiguration record {|
     AuthConfiguration auth?;
     boolean userDirIsRoot = false;
     boolean laxDataBinding = false;
+    decimal connectTimeout = 30.0;
+    SocketConfig socketConfig?;
+    ProxyConfiguration proxy?;
+    FtpFileTransfer ftpFileTransfer = BINARY;
+    TransferCompression[] sftpCompression = [NO];
+    string sftpSshKnownHosts?;
     boolean enableCsvFailSafe = false;
 |};
 

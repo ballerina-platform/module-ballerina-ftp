@@ -73,6 +73,11 @@ import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToStr
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToXml;
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertToBallerinaByteArray;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.extractCompressionConfiguration;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.extractFileTransferConfiguration;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.extractKnownHostsConfiguration;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.extractProxyConfiguration;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.extractTimeoutConfigurations;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
 
 /**
@@ -107,7 +112,7 @@ public class FtpClient {
                 FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PORT))));
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
-        Map<String, String> ftpConfig = new HashMap<>(6);
+        Map<String, String> ftpConfig = new HashMap<>(20);
         BMap auth = config.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_AUTH));
         if (auth != null) {
             final BMap privateKey = auth.getMapValue(StringUtils.fromString(
@@ -128,6 +133,18 @@ public class FtpClient {
         boolean userDirIsRoot = config.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
         ftpConfig.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         ftpConfig.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
+
+        // Extract new VFS configurations
+        try {
+            extractTimeoutConfigurations(config, ftpConfig);
+            extractFileTransferConfiguration(config, ftpConfig);
+            extractCompressionConfiguration(config, ftpConfig);
+            extractKnownHostsConfiguration(config, ftpConfig);
+            extractProxyConfiguration(config, ftpConfig);
+        } catch (BallerinaFtpException e) {
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
+        }
+
         String url;
         try {
             url = FtpUtil.createUrl(clientEndpoint, "");
