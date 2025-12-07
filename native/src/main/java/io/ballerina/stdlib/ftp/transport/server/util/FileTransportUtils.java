@@ -25,16 +25,24 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
 import org.apache.commons.vfs2.provider.ftp.FtpFileType;
+import org.apache.commons.vfs2.provider.ftps.FtpsFileSystemConfigBuilder;
+import org.apache.commons.vfs2.provider.ftps.FtpsMode;
 import org.apache.commons.vfs2.provider.sftp.IdentityInfo;
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.IDENTITY_PASS_PHRASE;
@@ -68,11 +76,11 @@ public final class FileTransportUtils {
         FileSystemOptions opts = new FileSystemOptions();
         String listeningDirURI = options.get(FtpConstants.URI);
         String lowerCaseUri = listeningDirURI.toLowerCase(Locale.getDefault());
-        if (lowerCaseUri.startsWith(SCHEME_FTPS)) {
+        if (lowerCaseUri.startsWith(SCHEME_FTPS)) {//
             setFtpsOptions(options, opts);
         } else if (lowerCaseUri.startsWith(SCHEME_FTP)) {
             setFtpOptions(options, opts);
-        } else if (lowerCaseUri.startsWith(SCHEME_SFTP)) {
+        } else if (lowerCaseUri.startsWith(SCHEME_SFTP)) { 
             setSftpOptions(options, opts);
         }
         return opts;
@@ -88,6 +96,7 @@ public final class FileTransportUtils {
         if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
             configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT)));
         }
+
 
         if (options.get(FtpConstants.CONNECT_TIMEOUT) != null) {
             double connectTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.CONNECT_TIMEOUT));
@@ -125,17 +134,143 @@ public final class FileTransportUtils {
         }
     }
 
-    private static void setFtpsOptions(Map<String, String> options, FileSystemOptions opts) {
-        // FTPS uses the same config builder as FTP but with SSL/TLS enabled
-        final FtpFileSystemConfigBuilder configBuilder = FtpFileSystemConfigBuilder.getInstance();
+    private static void setFtpsOptions(Map<String, String> options, FileSystemOptions opts)
+            throws RemoteFileSystemConnectorException {
+        // Use FTPS-specific config builder for proper FTPS configuration
+        final FtpsFileSystemConfigBuilder ftpsConfigBuilder = FtpsFileSystemConfigBuilder.getInstance();
+        final FtpFileSystemConfigBuilder ftpConfigBuilder = FtpFileSystemConfigBuilder.getInstance();
+        
+        // Set common FTP options (passive mode, user dir as root)
+        // These are inherited from FtpFileSystemConfigBuilder
         if (options.get(FtpConstants.PASSIVE_MODE) != null) {
-            configBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(FtpConstants.PASSIVE_MODE)));
+            ftpConfigBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(FtpConstants.PASSIVE_MODE)));
         }
         if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
-            configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT)));
+            ftpConfigBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT)));
         }
-        // SSL/TLS configuration will be handled by the secureSocket configuration
-        // Apache Commons VFS2 automatically handles FTPS when the scheme is "ftps://"
+        
+        // Handle implicit vs explicit FTPS mode using the recommended VFS2 API
+        String ftpsMode = options.get(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE);
+        if (ftpsMode != null && ftpsMode.equals(FtpConstants.FTPS_MODE_IMPLICIT)) {
+            // For implicit FTPS, set implicit SSL mode
+            try {
+                ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.IMPLICIT);
+            } catch (FileSystemException e) {
+                throw new RemoteFileSystemConnectorException(
+                        "Failed to set FTPS mode to IMPLICIT: " + e.getMessage(), e);
+            }
+        } else {
+            // For explicit FTPS (default), set explicit mode
+            try {
+                ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.EXPLICIT);
+            } catch (FileSystemException e) {
+                throw new RemoteFileSystemConnectorException(
+                        "Failed to set FTPS mode to EXPLICIT: " + e.getMessage(), e);
+            }
+        }
+        
+        // Configure SSL/TLS certificates (KeyStore/TrustStore) for FTPS
+        configureFtpsSslCertificates(ftpsConfigBuilder, opts, options); //
+    }
+    
+    /**
+     * Configures SSL/TLS certificates for FTPS by loading KeyStore and TrustStore
+     * and setting KeyManager and TrustManager in VFS2.
+     *
+     * @param ftpsConfigBuilder The FTPS config builder
+     * @param opts The file system options
+     * @param options The configuration options map
+     * @throws RemoteFileSystemConnectorException If configuration fails
+     */
+    private static void configureFtpsSslCertificates(FtpsFileSystemConfigBuilder ftpsConfigBuilder,
+                                                     FileSystemOptions opts,
+                                                     Map<String, String> options) 
+            throws RemoteFileSystemConnectorException { //
+        try {
+            // Configure KeyManager if KeyStore is provided (for client authentication)
+            String keystorePath = options.get(FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH);
+            String keystorePassword = options.get(FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD);
+            if (keystorePath != null && !keystorePath.isEmpty()) {
+                KeyManager[] keyManagers = createKeyManagers(keystorePath, keystorePassword);
+                if (keyManagers != null && keyManagers.length > 0) {
+                    ftpsConfigBuilder.setKeyManager(opts, keyManagers[0]);
+                }
+            }
+            
+            // Configure TrustManager if TrustStore is provided (for server certificate validation)
+            String truststorePath = options.get(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH);
+            String truststorePassword = options.get(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD);
+            if (truststorePath != null && !truststorePath.isEmpty()) {
+                TrustManager[] trustManagers = createTrustManagers(truststorePath, truststorePassword);
+                if (trustManagers != null && trustManagers.length > 0) {
+                    ftpsConfigBuilder.setTrustManager(opts, trustManagers[0]);
+                }
+            }
+        } catch (Exception e) {
+            throw new RemoteFileSystemConnectorException(
+                    "Failed to configure SSL/TLS certificates for FTPS: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Creates KeyManager array from KeyStore file.
+     *
+     * @param keystorePath Path to the keystore file
+     * @param keystorePassword Password for the keystore
+     * @return Array of KeyManagers
+     * @throws Exception If KeyManager creation fails
+     */
+    private static KeyManager[] createKeyManagers(String keystorePath, String keystorePassword)
+            throws Exception { //
+        if (keystorePath == null || keystorePath.isEmpty()) {
+            return null;
+        }
+        
+        KeyStore keyStore = loadKeyStore(keystorePath, keystorePassword);
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(
+                KeyManagerFactory.getDefaultAlgorithm());
+        char[] password = (keystorePassword != null) ? keystorePassword.toCharArray() : null;
+        keyManagerFactory.init(keyStore, password);
+        return keyManagerFactory.getKeyManagers();
+    }
+    
+    /**
+     * Creates TrustManager array from TrustStore file.
+     *
+     * @param truststorePath Path to the truststore file
+     * @param truststorePassword Password for the truststore
+     * @return Array of TrustManagers
+     * @throws Exception If TrustManager creation fails
+     */
+    private static TrustManager[] createTrustManagers(String truststorePath, String truststorePassword)
+            throws Exception { //
+        if (truststorePath == null || truststorePath.isEmpty()) {
+            return null;
+        }
+        
+        KeyStore trustStore = loadKeyStore(truststorePath, truststorePassword);
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                TrustManagerFactory.getDefaultAlgorithm());
+        trustManagerFactory.init(trustStore);
+        return trustManagerFactory.getTrustManagers();
+    }
+    
+    /**
+     * Loads a KeyStore from file.
+     *
+     * @param keystorePath Path to the keystore file
+     * @param keystorePassword Password for the keystore
+     * @return Loaded KeyStore
+     * @throws Exception If KeyStore loading fails
+     */
+    private static KeyStore loadKeyStore(String keystorePath, String keystorePassword)
+            throws Exception { //
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        char[] password = (keystorePassword != null) ? keystorePassword.toCharArray() : null;
+        try (FileInputStream fis = new FileInputStream(new File(keystorePath))) {
+            keyStore.load(fis, password);
+        }
+        return keyStore;
     }
 
     private static void setSftpOptions(Map<String, String> options, FileSystemOptions opts)

@@ -223,7 +223,7 @@ public class FtpUtil {
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = FTP_ANONYMOUS_USERNAME;
-        String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) 
+        String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) //
                 ? FTP_ANONYMOUS_PASSWORD : null;
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
@@ -278,7 +278,7 @@ public class FtpUtil {
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = FTP_ANONYMOUS_USERNAME;
-        String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) 
+        String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) //
                 ? FTP_ANONYMOUS_PASSWORD : null;
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
@@ -515,5 +515,50 @@ public class FtpUtil {
      */
     public static Module getFtpPackage() {
         return getModule();
+    }
+
+    /**
+     * Extracts path and password from a crypto:KeyStore or crypto:TrustStore BObject/BMap.
+     * Handles both BMap (record) and BObject (typed object) cases.
+     *
+     * @param keyStoreObj The KeyStore/TrustStore object (can be BMap or BObject)
+     * @return Map with "path" and "password" keys, or null if extraction fails
+     */
+    public static Map<String, String> extractKeyStoreInfo(Object keyStoreObj) { //
+        if (keyStoreObj == null) {
+            return null;
+        }
+        
+        Map<String, String> result = new HashMap<>(2);
+        
+        try {
+            BString path = null;
+            BString password = null;
+            
+            // Try as BMap first (record type)
+            if (keyStoreObj instanceof BMap) {
+                BMap keyStoreMap = (BMap) keyStoreObj;
+                path = keyStoreMap.getStringValue(StringUtils.fromString("path"));
+                password = keyStoreMap.getStringValue(StringUtils.fromString("password"));
+            }
+            // Try as BObject (typed object from crypto module)
+            else if (keyStoreObj instanceof BObject) {
+                BObject keyStoreObject = (BObject) keyStoreObj;
+                path = keyStoreObject.getStringValue(StringUtils.fromString("path"));
+                password = keyStoreObject.getStringValue(StringUtils.fromString("password"));
+            }
+            
+            if (path != null && !path.getValue().isEmpty()) {
+                result.put("path", path.getValue());
+            }
+            if (password != null && !password.getValue().isEmpty()) {
+                result.put("password", password.getValue());
+            }
+            
+            return result.isEmpty() ? null : result;
+        } catch (Exception e) {
+            log.warn("Failed to extract KeyStore/TrustStore information: {}", e.getMessage());
+            return null;
+        }
     }
 }

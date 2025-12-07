@@ -116,22 +116,21 @@ public class FtpClient {
             // Validate protocol and credential combinations
             final BMap privateKey = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
-            final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+            final BMap secureSocket = auth.getMapValue(StringUtils.fromString( //
                     FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
             
             // privateKey should only be used with SFTP
-            if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) { //
                 return FtpUtil.createError("privateKey can only be used with SFTP protocol. " +
                         "For FTPS, use secureSocket configuration.", Error.errorType());
             }
             
             // secureSocket should only be used with FTPS
-            if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) { //
                 return FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
                         "For SFTP, use privateKey configuration.", Error.errorType());
             }
             
-            // Handle privateKey for SFTP
             if (privateKey != null) {
                 final BString privateKeyPath = privateKey.getStringValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_KEY_PATH));
@@ -144,11 +143,66 @@ public class FtpClient {
             }
             
             // Handle secureSocket for FTPS
-            // Note: SSL/TLS configuration will be handled by Apache Commons VFS2 when using ftps:// scheme
-            // Additional secureSocket configuration can be added here if needed
+            if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_FTPS)) { //
+                // Read FTPS mode (IMPLICIT or EXPLICIT)
+                final BString mode = secureSocket.getStringValue(StringUtils.fromString(
+                        FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
+                if (mode != null && !mode.getValue().isEmpty()) {
+                    ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode.getValue());
+                } else {
+                    // Default to EXPLICIT if not specified
+                    ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, FtpConstants.FTPS_MODE_EXPLICIT);
+                }
+                
+                // Extract KeyStore configuration (for client authentication)
+                // Try both BMap and BObject to handle different representations
+                Object keyStoreObj = secureSocket.get(StringUtils.fromString("key")); //
+                if (keyStoreObj == null) {
+                    keyStoreObj = secureSocket.getMapValue(StringUtils.fromString("key"));
+                }
+                if (keyStoreObj == null) {
+                    keyStoreObj = secureSocket.getObjectValue(StringUtils.fromString("key"));
+                }
+                if (keyStoreObj != null) {
+                    Map<String, String> keyStoreInfo = FtpUtil.extractKeyStoreInfo(keyStoreObj);
+                    if (keyStoreInfo != null) {
+                        String keyStorePath = keyStoreInfo.get("path");
+                        String keyStorePassword = keyStoreInfo.get("password");
+                        if (keyStorePath != null && !keyStorePath.isEmpty()) {
+                            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, keyStorePath);
+                        }
+                        if (keyStorePassword != null && !keyStorePassword.isEmpty()) {
+                            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, keyStorePassword);
+                        }
+                    }
+                }
+                
+                // Extract TrustStore configuration (for server certificate validation)
+                // Try both BMap and BObject to handle different representations
+                Object trustStoreObj = secureSocket.get(StringUtils.fromString("trustStore")); //
+                if (trustStoreObj == null) {
+                    trustStoreObj = secureSocket.getMapValue(StringUtils.fromString("trustStore"));
+                }
+                if (trustStoreObj == null) {
+                    trustStoreObj = secureSocket.getObjectValue(StringUtils.fromString("trustStore"));
+                }
+                if (trustStoreObj != null) {
+                    Map<String, String> trustStoreInfo = FtpUtil.extractKeyStoreInfo(trustStoreObj);
+                    if (trustStoreInfo != null) {
+                        String trustStorePath = trustStoreInfo.get("path");
+                        String trustStorePassword = trustStoreInfo.get("password");
+                        if (trustStorePath != null && !trustStorePath.isEmpty()) {
+                            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, trustStorePath);
+                        }
+                        if (trustStorePassword != null && !trustStorePassword.isEmpty()) {
+                            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, trustStorePassword);
+                        }
+                    }
+                }
+            }
             
-            if (protocol.equals(FtpConstants.SCHEME_SFTP)) {
-                ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+            if (protocol.equals(FtpConstants.SCHEME_SFTP)) { //
+            ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
             }
         }
         ftpConfig.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));

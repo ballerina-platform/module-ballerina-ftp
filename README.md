@@ -359,6 +359,12 @@ FTPS (FTP over SSL/TLS) is a secure protocol that extends FTP with SSL/TLS encry
 
 The protocol selection is explicit - you must specify `protocol: ftp:FTPS` to use FTPS. The `secureSocket` configuration is used for SSL/TLS certificate configuration (keystore and truststore).
 
+FTPS supports two connection modes:
+- **IMPLICIT**: SSL/TLS connection is established immediately upon connection (typically uses port 990)
+- **EXPLICIT** (default): Starts as regular FTP, then upgrades to SSL/TLS using AUTH TLS command (typically uses port 21)
+
+You can specify the mode using the `mode` field in `secureSocket` configuration. If not specified, it defaults to `EXPLICIT`.
+
 #### FTPS client configuration
 
 ```ballerina
@@ -379,7 +385,8 @@ ftp:ClientConfiguration ftpsConfig = {
             trustStore: {
                 path: "<Path to truststore file>",
                 password: "<Truststore password>"
-            }
+            },
+            mode: ftp:EXPLICIT  // or ftp:IMPLICIT for implicit FTPS
         }
     }
 };
@@ -411,7 +418,8 @@ listener ftp:Listener remoteServer = check new({
             trustStore: {
                 path: "<Path to truststore file>",
                 password: "<Truststore password>"
-            }
+            },
+            mode: ftp:EXPLICIT  // or ftp:IMPLICIT for implicit FTPS
         }
     }
 });

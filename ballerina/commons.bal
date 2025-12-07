@@ -57,7 +57,7 @@ public type SecureSocket record {|
     FtpsMode mode = EXPLICIT;
 |};
 
-# Basic authentication credentials for connecting to FTP servers using username and password.
+# Basic authentication credentials for connecting to FTP/FTPS servers using username and password.
 #
 # + username - Username for authentication
 # + password - Optional password for authentication
