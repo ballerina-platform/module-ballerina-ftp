@@ -186,9 +186,8 @@ class Job {
 # + sftpCompression - Compression algorithms (SFTP only)
 # + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
 # + proxy - Proxy configuration for SFTP connections (SFTP only)
-# + enableCsvFailSafe - If set to `true`, enables fail-safe mode for CSV content processing.
-#                       In fail-safe mode, malformed CSV records are logged and skipped,
-#                       allowing processing to continue for well-formed records
+# + csvFailSafe - Configuration for fail-safe CSV content processing. In the fail-safe mode, 
+#                 malformed CSV records are skipped and written to a separate file in the current directory
 public type ListenerConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -207,8 +206,22 @@ public type ListenerConfiguration record {|
     FtpFileTransfer ftpFileTransfer = BINARY;
     TransferCompression[] sftpCompression = [NO];
     string sftpSshKnownHosts?;
-    boolean enableCsvFailSafe = false;
+    FailSafeOptions csvFailSafe?;
 |};
+
+# Fail-safe options for CSV content processing.
+#
+# + contentType - Specifies the type of content to log in case of errors
+public type FailSafeOptions record {|
+    ErrorLogContentType contentType = METADATA;
+|};
+
+# Specifies the type of content to log in case of errors during fail-safe CSV processing.
+public enum ErrorLogContentType {
+    METADATA,
+    RAW,
+    RAW_AND_METADATA
+};
 
 # FTP service for handling file system change events.
 public type Service distinct service object {
