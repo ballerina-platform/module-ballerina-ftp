@@ -77,16 +77,16 @@ public class FtpContentCallbackHandler {
     private final FileSystemManager fileSystemManager;
     private final FileSystemOptions fileSystemOptions;
     private final boolean laxDataBinding;
-    private final boolean enableCsvFailSafe;
+    private BMap<?, ?> csvFailSafe = ValueCreator.createMapValue();
 
     public FtpContentCallbackHandler(Runtime ballerinaRuntime, FileSystemManager fileSystemManager,
                                      FileSystemOptions fileSystemOptions, boolean laxDataBinding,
-                                     boolean enableCsvFailSafe) {
+                                     BMap<?, ?> csvFailSafe) {
         this.ballerinaRuntime = ballerinaRuntime;
         this.fileSystemManager = fileSystemManager;
         this.fileSystemOptions = fileSystemOptions;
         this.laxDataBinding = laxDataBinding;
-        this.enableCsvFailSafe = enableCsvFailSafe;
+        this.csvFailSafe = csvFailSafe;
     }
 
     /**
@@ -189,7 +189,7 @@ public class FtpContentCallbackHandler {
                 case ON_FILE_JSON_REMOTE_FUNCTION -> convertBytesToJson(fileContent, firstParamType, laxDataBinding);
                 case ON_FILE_XML_REMOTE_FUNCTION -> convertBytesToXml(fileContent, firstParamType, laxDataBinding);
                 case ON_FILE_CSV_REMOTE_FUNCTION -> convertBytesToCsv(environment, fileContent, firstParamType,
-                        laxDataBinding, enableCsvFailSafe);
+                        laxDataBinding, csvFailSafe);
                 default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
             };
         }

@@ -82,7 +82,7 @@ public class FtpListener implements RemoteFileSystemListener {
     private FileSystemManager fileSystemManager;
     private FileSystemOptions fileSystemOptions;
     private boolean laxDataBinding;
-    private boolean enableCsvFailSafe = false;
+    private BMap<?, ?> csvFailSafe = ValueCreator.createMapValue();
 
     FtpListener(Runtime runtime) {
         this.runtime = runtime;
@@ -105,8 +105,8 @@ public class FtpListener implements RemoteFileSystemListener {
         this.laxDataBinding = laxDataBinding;
     }
 
-    public void setEnableCsvFailSafe(boolean enableCsvFailSafe) {
-        this.enableCsvFailSafe = enableCsvFailSafe;
+    public void setCsvFailSafeConfigs(BMap<?, ?> csvFailSafe) {
+        this.csvFailSafe = csvFailSafe;
     }
 
     @Override
@@ -165,7 +165,7 @@ public class FtpListener implements RemoteFileSystemListener {
             } else {
                 try {
                     FtpContentCallbackHandler contentHandler = new FtpContentCallbackHandler(
-                            runtime, fileSystemManager, fileSystemOptions, laxDataBinding, enableCsvFailSafe);
+                            runtime, fileSystemManager, fileSystemOptions, laxDataBinding, csvFailSafe);
                     contentHandler.processContentCallbacks(env, service, event, holder, caller);
                 } catch (Exception e) {
                     log.error("Error in content callback processing for added files", e);

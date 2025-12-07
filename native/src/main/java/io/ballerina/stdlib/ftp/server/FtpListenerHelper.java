@@ -66,7 +66,7 @@ import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
  */
 public class FtpListenerHelper {
 
-    public static final BString ENABLE_CSV_FAIL_SAFE = StringUtils.fromString("enableCsvFailSafe");
+    public static final BString CSV_FAIL_SAFE = StringUtils.fromString("csvFailSafe");
 
     private FtpListenerHelper() {
         // private constructor
@@ -105,8 +105,8 @@ public class FtpListenerHelper {
                     StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING));
             listener.setLaxDataBinding(laxDataBinding);
 
-            boolean enableCsvFailSafe = serviceEndpointConfig.getBooleanValue(ENABLE_CSV_FAIL_SAFE);
-            listener.setEnableCsvFailSafe(enableCsvFailSafe);
+            BMap<?, ?> csvFailSafe = serviceEndpointConfig.getMapValue(CSV_FAIL_SAFE);
+            listener.setCsvFailSafeConfigs(csvFailSafe);
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
             // This is a temporary solution
 
