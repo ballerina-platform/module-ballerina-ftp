@@ -116,7 +116,7 @@ public class FtpClient {
             // Validate protocol and credential combinations
             final BMap privateKey = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
-            final BMap secureSocket = auth.getMapValue(StringUtils.fromString( //
+            final BMap secureSocket = auth.getMapValue(StringUtils.fromString(//
                     FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
             
             // privateKey should only be used with SFTP
