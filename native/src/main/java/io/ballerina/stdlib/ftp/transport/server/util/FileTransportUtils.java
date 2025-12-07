@@ -39,6 +39,7 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
+
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManager;
@@ -76,7 +77,7 @@ public final class FileTransportUtils {
         FileSystemOptions opts = new FileSystemOptions();
         String listeningDirURI = options.get(FtpConstants.URI);
         String lowerCaseUri = listeningDirURI.toLowerCase(Locale.getDefault());
-        if (lowerCaseUri.startsWith(SCHEME_FTPS)) {//
+        if (lowerCaseUri.startsWith(SCHEME_FTPS)) { //
             setFtpsOptions(options, opts);
         } else if (lowerCaseUri.startsWith(SCHEME_FTP)) {
             setFtpOptions(options, opts);
@@ -153,20 +154,10 @@ public final class FileTransportUtils {
         String ftpsMode = options.get(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE);
         if (ftpsMode != null && ftpsMode.equals(FtpConstants.FTPS_MODE_IMPLICIT)) {
             // For implicit FTPS, set implicit SSL mode
-            try {
-                ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.IMPLICIT);
-            } catch (FileSystemException e) {
-                throw new RemoteFileSystemConnectorException(
-                        "Failed to set FTPS mode to IMPLICIT: " + e.getMessage(), e);
-            }
+            ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.IMPLICIT);
         } else {
             // For explicit FTPS (default), set explicit mode
-            try {
-                ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.EXPLICIT);
-            } catch (FileSystemException e) {
-                throw new RemoteFileSystemConnectorException(
-                        "Failed to set FTPS mode to EXPLICIT: " + e.getMessage(), e);
-            }
+            ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.EXPLICIT);
         }
         
         // Configure SSL/TLS certificates (KeyStore/TrustStore) for FTPS

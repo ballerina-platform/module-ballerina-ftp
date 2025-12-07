@@ -540,9 +540,7 @@ public class FtpUtil {
                 BMap keyStoreMap = (BMap) keyStoreObj;
                 path = keyStoreMap.getStringValue(StringUtils.fromString("path"));
                 password = keyStoreMap.getStringValue(StringUtils.fromString("password"));
-            }
-            // Try as BObject (typed object from crypto module)
-            else if (keyStoreObj instanceof BObject) {
+            } else if (keyStoreObj instanceof BObject) { // Try as BObject (typed object from crypto module)
                 BObject keyStoreObject = (BObject) keyStoreObj;
                 path = keyStoreObject.getStringValue(StringUtils.fromString("path"));
                 password = keyStoreObject.getStringValue(StringUtils.fromString("password"));
