@@ -19,7 +19,7 @@ import ballerina/lang.runtime;
 import ballerina/log;
 import ballerina/test;
 
-// Global tracking variables for onFileDeleted tests
+// Global tracking variables for onFileDelete tests
 string[] deletedFilesReceived = [];
 int deleteEventCount = 0;
 boolean deleteEventReceived = false;
@@ -106,15 +106,13 @@ public function testOnFileDeletedMultipleFiles() returns error? {
     deleteEventCount = 0;
     deleteEventReceived = false;
 
-    // Service with onFileDeleted
+    // Service with onFileDelete - called once per deleted file
     Service deleteMultipleFilesService = service object {
-        remote function onFileDeleted(string[] deletedFiles) returns error? {
-            log:printInfo(string `onFileDeleted invoked with ${deletedFiles.length()} files`);
-            foreach string file in deletedFiles {
-                deletedFilesReceived.push(file);
-                deleteEventCount += 1;
-                deleteEventReceived = true;
-            }
+        remote function onFileDelete(string deletedFile) returns error? {
+            log:printInfo(string `onFileDelete invoked for: ${deletedFile}`);
+            deletedFilesReceived.push(deletedFile);
+            deleteEventCount += 1;
+            deleteEventReceived = true;
         }
     };
 
@@ -158,6 +156,7 @@ public function testOnFileDeletedMultipleFiles() returns error? {
     test:assertTrue(deleteEventReceived, "Delete event should have been received");
     test:assertTrue(deletedFilesReceived.length() >= 3,
         string `Should have 3 deleted files, but got ${deletedFilesReceived.length()}`);
+    test:assertTrue(deleteEventCount >= 3, "Delete count should be at least 3");
 
     // Verify all deleted files are in the list
     boolean foundFileA = false;
@@ -188,11 +187,11 @@ public function testOnFileDeletedWithCaller() returns error? {
     deletedFilesWithCaller = [];
     deleteCallerEventReceived = false;
 
-    // Service with onFileDeleted and Caller
+    // Service with onFileDelete and Caller
     Service deleteWithCallerService = service object {
-        remote function onFileDeleted(string[] deletedFiles, Caller caller) returns error? {
-            log:printInfo(string `onFileDeleted with Caller invoked with ${deletedFiles.length()} files`);
-            deletedFilesWithCaller = deletedFiles;
+        remote function onFileDelete(string deletedFile, Caller caller) returns error? {
+            log:printInfo(string `onFileDelete with Caller invoked for: ${deletedFile}`);
+            deletedFilesWithCaller.push(deletedFile);
             deleteCallerEventReceived = true;
 
             // Use caller to list remaining files
@@ -245,11 +244,11 @@ public function testOnFileDeletedWithFileNamePattern() returns error? {
     deleteEventCount = 0;
     deleteEventReceived = false;
 
-    // Service with onFileDeleted
+    // Service with onFileDelete
     Service deletePatternService = service object {
-        remote function onFileDeleted(string[] deletedFiles) returns error? {
-            log:printInfo(string `onFileDeleted invoked with ${deletedFiles.length()} files`);
-            deletedFilesReceived = deletedFiles;
+        remote function onFileDelete(string deletedFile) returns error? {
+            log:printInfo(string `onFileDelete invoked for: ${deletedFile}`);
+            deletedFilesReceived.push(deletedFile);
             deleteEventCount += 1;
             deleteEventReceived = true;
         }
@@ -292,14 +291,17 @@ public function testOnFileDeletedWithFileNamePattern() returns error? {
     // Should only report the file matching the pattern (.deleted4)
     test:assertTrue(deletedFilesReceived.length() >= 1,
         "Should have only 1 deleted file (matching pattern)");
-    test:assertTrue(deletedFilesReceived[0].includes("matchingFile.deleted4"),
-        "Deleted file should be the one matching the pattern");
 
-    // Verify non-matching file was NOT reported
+    boolean foundMatchingFile = false;
     foreach string deletedFile in deletedFilesReceived {
+        if deletedFile.includes("matchingFile.deleted4") {
+            foundMatchingFile = true;
+        }
+        // Verify non-matching file was NOT reported
         test:assertFalse(deletedFile.includes("nonMatchingFile.other"),
             "Non-matching file should not be in deleted files list");
     }
+    test:assertTrue(foundMatchingFile, "Should find matchingFile.deleted4");
 }
 
 @test:Config {
@@ -312,11 +314,11 @@ public function testOnFileDeletedNoFilesDeleted() returns error? {
     deleteEventCount = 0;
     deleteEventReceived = false;
 
-    // Service with onFileDeleted
+    // Service with onFileDelete
     Service deleteNoFilesService = service object {
-        remote function onFileDeleted(string[] deletedFiles) returns error? {
-            log:printInfo(string `onFileDeleted invoked with ${deletedFiles.length()} files`);
-            deletedFilesReceived = deletedFiles;
+        remote function onFileDelete(string deletedFile) returns error? {
+            log:printInfo(string `onFileDelete invoked for: ${deletedFile}`);
+            deletedFilesReceived.push(deletedFile);
             deleteEventCount += 1;
             deleteEventReceived = true;
         }
@@ -344,7 +346,7 @@ public function testOnFileDeletedNoFilesDeleted() returns error? {
     runtime:deregisterListener(deleteListener);
     check deleteListener.gracefulStop();
 
-    // Assertions - onFileDeleted should NOT have been invoked
+    // Assertions - onFileDelete should NOT have been invoked
     test:assertFalse(deleteEventReceived, "Delete event should NOT have been received when no files deleted");
     test:assertEquals(deleteEventCount, 0, "Should have received 0 delete events");
 }
@@ -357,10 +359,10 @@ public function testOnFileDeletedErrorHandling() returns error? {
     // Reset state
     deleteEventReceived = false;
 
-    // Service with onFileDeleted that throws an error
+    // Service with onFileDelete that throws an error
     Service deleteErrorService = service object {
-        remote function onFileDeleted(string[] deletedFiles) returns error? {
-            log:printInfo(string `onFileDeleted invoked with ${deletedFiles.length()} files - throwing error`);
+        remote function onFileDelete(string deletedFile) returns error? {
+            log:printInfo(string `onFileDelete invoked for ${deletedFile} - throwing error`);
             deleteEventReceived = true;
             return error("Intentional error for testing");
         }
@@ -406,11 +408,11 @@ public function testOnFileDeletedIsolatedService() returns error? {
     deletedFilesReceived = [];
     deleteEventReceived = false;
 
-    // Service with onFileDeleted (testing isolated compatibility)
+    // Service with onFileDelete (testing isolated compatibility)
     Service isolatedDeleteService = service object {
-        remote function onFileDeleted(string[] deletedFiles) returns error? {
-            log:printInfo(string `onFileDeleted invoked with ${deletedFiles.length()} files`);
-            deletedFilesReceived = deletedFiles;
+        remote function onFileDelete(string deletedFile) returns error? {
+            log:printInfo(string `onFileDelete invoked for: ${deletedFile}`);
+            deletedFilesReceived.push(deletedFile);
             deleteEventReceived = true;
         }
     };
