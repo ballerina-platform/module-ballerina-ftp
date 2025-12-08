@@ -722,7 +722,7 @@ public function testOnFileCsvStreamWithFailSafe() returns error? {
         path: CONTENT_TEST_DIR,
         pollingInterval: 4,
         fileNamePattern: "csvstream.*\\.csv",
-        enableCsvFailSafe: true
+        csvFailSafe: {}
     });
 
     check csvStreamListener.attach(csvStreamService);
@@ -831,7 +831,7 @@ public function testOnFileCsvRecordArrayWithFailSafe() returns error? {
         path: CONTENT_TEST_DIR,
         pollingInterval: 4,
         fileNamePattern: "csvrecord.*\\.csv",
-        enableCsvFailSafe: true
+        csvFailSafe: {}
     });
 
     check csvRecordListener.attach(csvRecordService);
