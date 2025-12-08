@@ -185,12 +185,14 @@ public class FtpListenerHelper {
                     FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
             
             // Validate protocol and credential combinations
-            if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) { //
+            // privateKey (SSH-based) should not be used with FTPS (SSL/TLS-based)
+            if (privateKey != null && protocol.equals(FtpConstants.SCHEME_FTPS)) { //
                 throw FtpUtil.createError("privateKey can only be used with SFTP protocol. " +
                         "For FTPS, use secureSocket configuration.", Error.errorType());
             }
             
-            if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) { //
+            // secureSocket (SSL/TLS-based) should not be used with SFTP (SSH-based)
+            if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_SFTP)) { //
                 throw FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
                         "For SFTP, use privateKey configuration.", Error.errorType());
             }

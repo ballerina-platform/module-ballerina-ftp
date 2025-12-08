@@ -85,6 +85,8 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_KEYSTORE_PASSWORD = "keystorePassword";
     public static final String ENDPOINT_CONFIG_TRUSTSTORE_PATH = "truststorePath";
     public static final String ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD = "truststorePassword";
+    public static final String SECURE_SOCKET_KEY = "key";
+    public static final String SECURE_SOCKET_TRUSTSTORE = "trustStore";
 
     public static final String ENDPOINT_CONFIG_PREFERRED_METHODS = "preferredMethods";
     public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
