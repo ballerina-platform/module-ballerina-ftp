@@ -414,7 +414,7 @@ public class FtpUtil {
     }
 
     /**
-     * Gets all content handler methods from a service.
+s     * Gets all content handler methods from a service.
      *
      * @param service The BObject service
      * @return Array of MethodType objects representing all content handler methods
@@ -522,11 +522,11 @@ public class FtpUtil {
      * Handles both BMap (record) and BObject (typed object) cases.
      *
      * @param keyStoreObj The KeyStore/TrustStore object (can be BMap or BObject)
-     * @return Map with "path" and "password" keys, or null if extraction fails
+     * @return Map with "path" and "password" keys, or empty map if extraction fails
      */
     public static Map<String, String> extractKeyStoreInfo(Object keyStoreObj) { //
         if (keyStoreObj == null) {
-            return null;
+            return new HashMap<>();
         }
         
         Map<String, String> result = new HashMap<>(2);
@@ -538,25 +538,25 @@ public class FtpUtil {
             // Try as BMap first (record type)
             if (keyStoreObj instanceof BMap) {
                 BMap keyStoreMap = (BMap) keyStoreObj;
-                path = keyStoreMap.getStringValue(StringUtils.fromString("path"));
-                password = keyStoreMap.getStringValue(StringUtils.fromString("password"));
+                path = keyStoreMap.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+                password = keyStoreMap.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
             } else if (keyStoreObj instanceof BObject) { // Try as BObject (typed object from crypto module)
                 BObject keyStoreObject = (BObject) keyStoreObj;
-                path = keyStoreObject.getStringValue(StringUtils.fromString("path"));
-                password = keyStoreObject.getStringValue(StringUtils.fromString("password"));
+                path = keyStoreObject.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+                password = keyStoreObject.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
             }
             
             if (path != null && !path.getValue().isEmpty()) {
-                result.put("path", path.getValue());
+                result.put(FtpConstants.KEYSTORE_PATH_KEY, path.getValue());
             }
             if (password != null && !password.getValue().isEmpty()) {
-                result.put("password", password.getValue());
+                result.put(FtpConstants.KEYSTORE_PASSWORD_KEY, password.getValue());
             }
             
-            return result.isEmpty() ? null : result;
+            return result;
         } catch (Exception e) {
             log.warn("Failed to extract KeyStore/TrustStore information: {}", e.getMessage());
-            return null;
+            return new HashMap<>();
         }
     }
 }

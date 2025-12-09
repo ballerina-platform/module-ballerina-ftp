@@ -168,131 +168,297 @@ public class FtpListenerHelper {
     private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
             throws BallerinaFtpException {
         Map<String, String> params = new HashMap<>(25);
+        
+        String protocol = extractProtocol(serviceEndpointConfig);
+        configureBasicServerParams(serviceEndpointConfig, params);
+        
+        configureServerAuthentication(serviceEndpointConfig, protocol, params);
+        applyDefaultServerParams(serviceEndpointConfig, params);
+        addFileAgeFilterParams(serviceEndpointConfig, params);
+        extractServerVfsConfigurations(serviceEndpointConfig, params);
+        
+        return params;
+    }
 
-        BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_AUTH));
-        
-        String protocol = (serviceEndpointConfig.getStringValue(StringUtils.fromString(
+    /**
+     * Extracts the protocol from the service endpoint configuration.
+     * 
+     * @param serviceEndpointConfig The service endpoint configuration map
+     * @return The protocol string
+     */
+    private static String extractProtocol(BMap serviceEndpointConfig) {
+        return (serviceEndpointConfig.getStringValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
-        
+    }
+
+    /**
+     * Configures basic server parameters (URL, file pattern).
+     * 
+     * @param serviceEndpointConfig The service endpoint configuration map
+     * @param params The parameters map to populate
+     * @throws BallerinaFtpException If URL creation fails
+     */
+    private static void configureBasicServerParams(BMap serviceEndpointConfig, Map<String, String> params)
+            throws BallerinaFtpException {
         String url = FtpUtil.createUrl(serviceEndpointConfig);
         params.put(FtpConstants.URI, url);
         addStringProperty(serviceEndpointConfig, params);
-        if (auth != null) {
-            final BMap privateKey = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
-            final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
-            
-            // Validate protocol and credential combinations
-            // privateKey (SSH-based) should not be used with FTPS (SSL/TLS-based)
-            if (privateKey != null && protocol.equals(FtpConstants.SCHEME_FTPS)) { //
-                throw FtpUtil.createError("privateKey can only be used with SFTP protocol. " +
-                        "For FTPS, use secureSocket configuration.", Error.errorType());
-            }
-            
-            // secureSocket (SSL/TLS-based) should not be used with SFTP (SSH-based)
-            if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_SFTP)) { //
-                throw FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
-                        "For SFTP, use privateKey configuration.", Error.errorType());
-            }
-            
-            // Handle privateKey for SFTP
-            if (privateKey != null) {
-                final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
-                if (privateKeyPath.isEmpty()) {
-                    throw FtpUtil.createError("Private key path cannot be empty", null, Error.errorType());
-                }
-                params.put(FtpConstants.IDENTITY, privateKeyPath);
-                String privateKeyPassword = null;
-                if (privateKey.containsKey(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY))) {
-                    privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
-                            FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
-                }
-                if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
-                    params.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword);
-                }
-            }
-            
-            // Handle secureSocket for FTPS
-            if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_FTPS)) { //
-                // Read FTPS mode (IMPLICIT or EXPLICIT)
-                final BString mode = secureSocket.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
-                if (mode != null && !mode.getValue().isEmpty()) {
-                    params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode.getValue());
-                } else {
-                    // Default to EXPLICIT if not specified
-                    params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, FtpConstants.FTPS_MODE_EXPLICIT);
-                }
-                
-                // Extract KeyStore configuration (for client authentication)
-                // Try both BMap and BObject to handle different representations
-                Object keyStoreObj = secureSocket.get(StringUtils.fromString("key")); //
-                if (keyStoreObj == null) {
-                    keyStoreObj = secureSocket.getMapValue(StringUtils.fromString("key"));
-                }
-                if (keyStoreObj == null) {
-                    keyStoreObj = secureSocket.getObjectValue(StringUtils.fromString("key"));
-                }
-                if (keyStoreObj != null) {
-                    Map<String, String> keyStoreInfo = FtpUtil.extractKeyStoreInfo(keyStoreObj);
-                    if (keyStoreInfo != null) {
-                        String keyStorePath = keyStoreInfo.get("path");
-                        String keyStorePassword = keyStoreInfo.get("password");
-                        if (keyStorePath != null && !keyStorePath.isEmpty()) {
-                            params.put(FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, keyStorePath);
-                        }
-                        if (keyStorePassword != null && !keyStorePassword.isEmpty()) {
-                            params.put(FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, keyStorePassword);
-                        }
-                    }
-                }
-                
-                // Extract TrustStore configuration (for server certificate validation)
-                // Try both BMap and BObject to handle different representations
-                Object trustStoreObj = secureSocket.get(StringUtils.fromString("trustStore")); //
-                if (trustStoreObj == null) {
-                    trustStoreObj = secureSocket.getMapValue(StringUtils.fromString("trustStore"));
-                }
-                if (trustStoreObj == null) {
-                    trustStoreObj = secureSocket.getObjectValue(StringUtils.fromString("trustStore"));
-                }
-                if (trustStoreObj != null) {
-                    Map<String, String> trustStoreInfo = FtpUtil.extractKeyStoreInfo(trustStoreObj);
-                    if (trustStoreInfo != null) {
-                        String trustStorePath = trustStoreInfo.get("path");
-                        String trustStorePassword = trustStoreInfo.get("password");
-                        if (trustStorePath != null && !trustStorePath.isEmpty()) {
-                            params.put(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, trustStorePath);
-                        }
-                        if (trustStorePassword != null && !trustStorePassword.isEmpty()) {
-                            params.put(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, trustStorePassword);
-                        }
-                    }
-                }
-            }
-            
-            if (protocol.equals(FtpConstants.SCHEME_SFTP)) {
-            params.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+    }
+
+    /**
+     * Configures server authentication settings including validation and protocol-specific setup.
+     * 
+     * @param serviceEndpointConfig The service endpoint configuration map
+     * @param protocol The protocol being used
+     * @param params The parameters map to populate
+     * @throws BallerinaFtpException If authentication configuration fails
+     */
+    private static void configureServerAuthentication(BMap serviceEndpointConfig, String protocol,
+                                                       Map<String, String> params) throws BallerinaFtpException {
+        BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_AUTH));
+        if (auth == null) {
+            return;
+        }
+        
+        validateServerAuthProtocolCombination(auth, protocol);
+        configureServerPrivateKey(auth, params);
+        
+        BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            configureServerFtpsSecureSocket(secureSocket, params);
+        }
+        
+        if (protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            params.put(ENDPOINT_CONFIG_PREFERRED_METHODS, 
+                    FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+        }
+    }
+
+    /**
+     * Validates that protocol and authentication method combinations are correct for server.
+     * 
+     * @param auth The authentication configuration map
+     * @param protocol The protocol being used (SFTP or FTPS)
+     * @throws BallerinaFtpException If validation fails
+     */
+    private static void validateServerAuthProtocolCombination(BMap auth, String protocol)
+            throws BallerinaFtpException {
+        final BMap privateKey = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+        final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        
+        if (privateKey != null && protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            throw FtpUtil.createError("privateKey can only be used with SFTP protocol. " +
+                    "For FTPS, use secureSocket configuration.", Error.errorType());
+        }
+        
+        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            throw FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
+                    "For SFTP, use privateKey configuration.", Error.errorType());
+        }
+    }
+
+    /**
+     * Configures private key authentication for SFTP server.
+     * 
+     * @param auth The authentication configuration map
+     * @param params The parameters map to populate
+     * @throws BallerinaFtpException If private key configuration is invalid
+     */
+    private static void configureServerPrivateKey(BMap auth, Map<String, String> params)
+            throws BallerinaFtpException {
+        final BMap privateKey = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+        
+        if (privateKey == null) {
+            return;
+        }
+        
+        final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
+        if (privateKeyPath.isEmpty()) {
+            throw FtpUtil.createError("Private key path cannot be empty", null, Error.errorType());
+        }
+        
+        params.put(FtpConstants.IDENTITY, privateKeyPath);
+        
+        String privateKeyPassword = null;
+        if (privateKey.containsKey(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY))) {
+            privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
+                    FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
+        }
+        
+        if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
+            params.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword);
+        }
+    }
+
+    /**
+     * Configures secure socket settings for FTPS protocol on server.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param params The parameters map to populate
+     */
+    private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, String> params) {
+        configureServerFtpsMode(secureSocket, params);
+        configureServerFtpsDataChannelProtection(secureSocket, params);
+        configureServerFtpsHostnameVerification(secureSocket, params);
+        extractAndConfigureServerStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
+                params);
+        extractAndConfigureServerStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
+                params);
+    }
+
+    /**
+     * Configures FTPS mode (IMPLICIT or EXPLICIT) for server.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param params The parameters map to populate
+     */
+    private static void configureServerFtpsMode(BMap secureSocket, Map<String, String> params) {
+        final BString mode = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
+        
+        if (mode != null && !mode.getValue().isEmpty()) {
+            params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode.getValue());
+        } else {
+            params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, FtpConstants.FTPS_MODE_EXPLICIT);
+        }
+    }
+
+    /**
+     * Configures FTPS data channel protection level for server.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param params The parameters map to populate
+     */
+    private static void configureServerFtpsDataChannelProtection(BMap secureSocket, Map<String, String> params) {
+        final BString dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION));
+        
+        if (dataChannelProtection != null && !dataChannelProtection.getValue().isEmpty()) {
+            params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
+                    dataChannelProtection.getValue());
+        } else {
+            params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
+                    FtpConstants.FTPS_DATA_CHANNEL_PROTECTION_PRIVATE);
+        }
+    }
+
+    /**
+     * Configures FTPS hostname verification for server.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param params The parameters map to populate
+     */
+    private static void configureServerFtpsHostnameVerification(BMap secureSocket, Map<String, String> params) {
+        Object verifyHostnameObj = secureSocket.get(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME));
+        
+        boolean verifyHostname = true;
+        if (verifyHostnameObj != null) {
+            if (verifyHostnameObj instanceof Boolean) {
+                verifyHostname = (Boolean) verifyHostnameObj;
+            } else if (verifyHostnameObj instanceof BString) {
+                verifyHostname = Boolean.parseBoolean(((BString) verifyHostnameObj).getValue());
             }
         }
+        
+        params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME, String.valueOf(verifyHostname));
+    }
+
+    /**
+     * Extracts a store (KeyStore or TrustStore) from secureSocket configuration and adds it to params.
+     * Handles both BMap and BObject representations.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param storeKey The key name (SECURE_SOCKET_KEY for KeyStore, SECURE_SOCKET_TRUSTSTORE for TrustStore)
+     * @param pathConfigKey The configuration key for the store path
+     * @param passwordConfigKey The configuration key for the store password
+     * @param params The parameters map to populate
+     */
+    private static void extractAndConfigureServerStore(BMap secureSocket, String storeKey, 
+                                                        String pathConfigKey, String passwordConfigKey,
+                                                        Map<String, String> params) {
+        Object storeObj = getServerStoreObject(secureSocket, storeKey);
+        if (storeObj == null) {
+            return;
+        }
+        
+        Map<String, String> storeInfo = FtpUtil.extractKeyStoreInfo(storeObj);
+        if (storeInfo.isEmpty()) {
+            return;
+        }
+        
+        String storePath = storeInfo.get(FtpConstants.KEYSTORE_PATH_KEY);
+        String storePassword = storeInfo.get(FtpConstants.KEYSTORE_PASSWORD_KEY);
+        
+        if (storePath != null && !storePath.isEmpty()) {
+            params.put(pathConfigKey, storePath);
+        }
+        
+        if (storePassword != null && !storePassword.isEmpty()) {
+            params.put(passwordConfigKey, storePassword);
+        }
+    }
+
+    /**
+     * Attempts to retrieve a store object from secureSocket using multiple methods.
+     * Handles both BMap and BObject representations.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param storeKey The key name (SECURE_SOCKET_KEY or SECURE_SOCKET_TRUSTSTORE)
+     * @return The store object, or null if not found
+     */
+    private static Object getServerStoreObject(BMap secureSocket, String storeKey) {
+        BString keyString = StringUtils.fromString(storeKey);
+        Object storeObj = secureSocket.get(keyString);
+        if (storeObj != null) {
+            return storeObj;
+        }
+        
+        storeObj = secureSocket.getMapValue(keyString);
+        if (storeObj != null) {
+            return storeObj;
+        }
+        
+        return secureSocket.getObjectValue(keyString);
+    }
+
+    /**
+     * Applies default server configuration values.
+     * 
+     * @param serviceEndpointConfig The service endpoint configuration map
+     * @param params The parameters map to populate
+     */
+    private static void applyDefaultServerParams(BMap serviceEndpointConfig, Map<String, String> params) {
         boolean userDirIsRoot = serviceEndpointConfig.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
         params.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         params.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
         params.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
+    }
 
-        // Add file age filter parameters
-        addFileAgeFilterParams(serviceEndpointConfig, params);
-
+    /**
+     * Extracts VFS-related configurations for server (timeout, file transfer, compression, known hosts, proxy).
+     * 
+     * @param serviceEndpointConfig The service endpoint configuration map
+     * @param params The parameters map to populate
+     * @throws BallerinaFtpException If extraction fails
+     */
+    private static void extractServerVfsConfigurations(BMap serviceEndpointConfig, Map<String, String> params)
+            throws BallerinaFtpException {
         extractTimeoutConfigurations(serviceEndpointConfig, params);
         extractFileTransferConfiguration(serviceEndpointConfig, params);
         extractCompressionConfiguration(serviceEndpointConfig, params);
         extractKnownHostsConfiguration(serviceEndpointConfig, params);
         extractProxyConfiguration(serviceEndpointConfig, params);
-
-        return params;
     }
 
     private static void addFileAgeFilterParams(BMap serviceEndpointConfig, Map<String, String> params) {
