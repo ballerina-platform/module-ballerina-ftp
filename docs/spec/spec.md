@@ -750,7 +750,7 @@ remote function onFile(stream<byte[], error> content, ftp:FileInfo fileInfo, ftp
 ```ballerina
 remote function onFileDelete(string deletedFile, ftp:Caller caller) returns error? {
     // Handle file deletion
-    // deletedFiles contains array of deleted file path
+    // deletedFile contains the deleted file path
 }
 ```
 
