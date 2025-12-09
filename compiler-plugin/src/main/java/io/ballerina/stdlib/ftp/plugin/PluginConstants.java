@@ -40,6 +40,7 @@ public final class PluginConstants {
 
     // Event-based handler function names
     public static final String ON_FILE_DELETED_FUNC = "onFileDeleted";
+    public static final String ON_FILE_DELETE_FUNC = "onFileDelete";
 
     /**
      * All format-specific handler names.
@@ -72,7 +73,7 @@ public final class PluginConstants {
 
     public enum CompilationErrors {
         INVALID_REMOTE_FUNCTION("Invalid remote method. Allowed handlers: onFile, onFileText, onFileJson, " +
-                "onFileXml, onFileCsv (format-specific), onFileDeleted, or onFileChange (deprecated).", "FTP_101"),
+                "onFileXml, onFileCsv (format-specific) or onFileDelete.", "FTP_101"),
         METHOD_MUST_BE_REMOTE("onFileChange method must be remote.", "FTP_102"),
         RESOURCE_FUNCTION_NOT_ALLOWED("Resource functions are not allowed for ftp services.", "FTP_103"),
         MUST_HAVE_WATCHEVENT("Missing required parameter. Use either 'WatchEvent & readonly' or 'WatchEvent' " +
@@ -88,7 +89,7 @@ public final class PluginConstants {
         TEMPLATE_CODE_GENERATION_HINT("Empty FTP service. Click to generate handler method template.",
                 "FTP_111"),
         MULTIPLE_CONTENT_METHODS("Cannot mix event-based handler (onFileChange) with " +
-                "format-specific handlers (onFile, onFileText, onFileJson, onFileXml, onFileCsv, onFileDeleted).",
+                "format-specific handlers (onFile, onFileText, onFileJson, onFileXml, onFileCsv, onFileDelete).",
                 "FTP_112"),
         CONTENT_METHOD_MUST_BE_REMOTE("'%s' handler must be declared as remote.", "FTP_115"),
         MANDATORY_PARAMETER_NOT_FOUND("Mandatory parameter missing for '%s'. Expected '%s'.", "FTP_120"),
@@ -99,7 +100,7 @@ public final class PluginConstants {
         TOO_MANY_PARAMETERS("Too many parameters for '%s'. Format-specific handlers accept at most 3 parameters: " +
                 "(content, fileInfo?, caller?).", "FTP_118"),
         NO_VALID_REMOTE_METHOD("Service must define at least one handler method: onFile, onFileText, onFileJson, " +
-                "onFileXml, onFileCsv (format-specific) or onFileDeleted.", "FTP_119"),
+                "onFileXml, onFileCsv (format-specific) or onFileDelete.", "FTP_119"),
         ON_FILE_DELETED_MUST_BE_REMOTE("onFileDeleted method must be remote.", "FTP_123"),
         INVALID_ON_FILE_DELETED_PARAMETER("Invalid parameter for onFileDeleted. First parameter must be " +
                 "'string[]' (list of deleted file paths).", "FTP_124"),
@@ -108,8 +109,19 @@ public final class PluginConstants {
         TOO_MANY_PARAMETERS_ON_FILE_DELETED("Too many parameters for onFileDeleted. Accepts at most 2 parameters: " +
                 "(deletedFiles, caller?).", "FTP_126"),
         ON_FILE_CHANGE_DEPRECATED("'onFileChange' is deprecated. Use format-specific handlers (onFileJson, " +
-                "onFileXml, onFileCsv, onFileText) for automatic type conversion, or onFileDeleted for deletion " +
-                "events.", "FTP_127");
+                "onFileXml, onFileCsv, onFileText) for automatic type conversion, or onFileDelete for deletion " +
+                "events.", "FTP_127"),
+        ON_FILE_DELETE_MUST_BE_REMOTE("onFileDelete method must be remote.", "FTP_128"),
+        INVALID_ON_FILE_DELETE_PARAMETER("Invalid parameter for onFileDelete. First parameter must be " +
+                "'string' (deleted file path).", "FTP_129"),
+        INVALID_ON_FILE_DELETE_CALLER_PARAMETER("Invalid second parameter for onFileDelete. " +
+                "Optional second parameter must be 'Caller'.", "FTP_130"),
+        TOO_MANY_PARAMETERS_ON_FILE_DELETE("Too many parameters for onFileDelete. Accepts at most 2 parameters: " +
+                "(deletedFile, caller?).", "FTP_131"),
+        ON_FILE_DELETED_DEPRECATED("'onFileDeleted' is deprecated and will be removed in a future release. " +
+                "Use 'onFileDelete' instead.", "FTP_132"),
+        BOTH_ON_FILE_DELETE_METHODS_NOT_ALLOWED("Cannot use both 'onFileDelete' and 'onFileDeleted' methods. " +
+                "Use only 'onFileDelete' as 'onFileDeleted' is deprecated.", "FTP_133");
         private final String error;
         private final String errorCode;
 

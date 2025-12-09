@@ -465,7 +465,9 @@ public class FtpUtil {
     public static Optional<MethodType> getOnFileDeletedMethod(BObject service) {
         MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
         return Stream.of(methodTypes)
-                .filter(methodType -> FtpConstants.ON_FILE_DELETED_REMOTE_FUNCTION.equals(methodType.getName()))
+                .filter(methodType ->
+                        (FtpConstants.ON_FILE_DELETED_REMOTE_FUNCTION.equals(methodType.getName()) ||
+                        FtpConstants.ON_FILE_DELETE_REMOTE_FUNCTION.equals(methodType.getName())))
                 .findFirst();
     }
 
