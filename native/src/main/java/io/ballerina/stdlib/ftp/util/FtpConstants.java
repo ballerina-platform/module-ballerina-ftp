@@ -87,6 +87,8 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD = "truststorePassword";
     public static final String SECURE_SOCKET_KEY = "key";
     public static final String SECURE_SOCKET_TRUSTSTORE = "trustStore";
+    public static final String KEYSTORE_PATH_KEY = "path";
+    public static final String KEYSTORE_PASSWORD_KEY = "password";
 
     public static final String ENDPOINT_CONFIG_PREFERRED_METHODS = "preferredMethods";
     public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
@@ -94,6 +96,14 @@ public class FtpConstants {
     // FTPS mode constants
     public static final String FTPS_MODE_IMPLICIT = "IMPLICIT"; //
     public static final String FTPS_MODE_EXPLICIT = "EXPLICIT";
+    
+    // FTPS data channel protection and hostname verification constants
+    public static final String ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION = "dataChannelProtection";
+    public static final String ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME = "verifyHostname";
+    public static final String FTPS_DATA_CHANNEL_PROTECTION_CLEAR = "CLEAR";
+    public static final String FTPS_DATA_CHANNEL_PROTECTION_PRIVATE = "PRIVATE";
+    public static final String FTPS_DATA_CHANNEL_PROTECTION_SAFE = "SAFE";
+    public static final String FTPS_DATA_CHANNEL_PROTECTION_CONFIDENTIAL = "CONFIDENTIAL";
 
     // Advanced file selection configuration constants
     public static final String ENDPOINT_CONFIG_POLLING_INTERVAL = "pollingInterval";

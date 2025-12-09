@@ -25,6 +25,7 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
 import org.apache.commons.vfs2.provider.ftp.FtpFileType;
+import org.apache.commons.vfs2.provider.ftps.FtpsDataChannelProtectionLevel;
 import org.apache.commons.vfs2.provider.ftps.FtpsFileSystemConfigBuilder;
 import org.apache.commons.vfs2.provider.ftps.FtpsMode;
 import org.apache.commons.vfs2.provider.sftp.IdentityInfo;
@@ -40,6 +41,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManager;
@@ -160,6 +163,9 @@ public final class FileTransportUtils {
             ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.EXPLICIT);
         }
         
+        // Configure data channel protection and hostname verification
+        configureFtpsSecurityOptions(ftpsConfigBuilder, opts, options);
+        
         // Configure SSL/TLS certificates (KeyStore/TrustStore) for FTPS
         configureFtpsSslCertificates(ftpsConfigBuilder, opts, options); //
     }
@@ -183,7 +189,7 @@ public final class FileTransportUtils {
             String keystorePassword = options.get(FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD);
             if (keystorePath != null && !keystorePath.isEmpty()) {
                 KeyManager[] keyManagers = createKeyManagers(keystorePath, keystorePassword);
-                if (keyManagers != null && keyManagers.length > 0) {
+                if (keyManagers.length > 0) {
                     ftpsConfigBuilder.setKeyManager(opts, keyManagers[0]);
                 }
             }
@@ -193,7 +199,7 @@ public final class FileTransportUtils {
             String truststorePassword = options.get(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD);
             if (truststorePath != null && !truststorePath.isEmpty()) {
                 TrustManager[] trustManagers = createTrustManagers(truststorePath, truststorePassword);
-                if (trustManagers != null && trustManagers.length > 0) {
+                if (trustManagers.length > 0) {
                     ftpsConfigBuilder.setTrustManager(opts, trustManagers[0]);
                 }
             }
@@ -204,17 +210,76 @@ public final class FileTransportUtils {
     }
     
     /**
+     * Configures FTPS security options including data channel protection and hostname verification.
+     *
+     * @param ftpsConfigBuilder The FTPS config builder
+     * @param opts The file system options
+     * @param options The configuration options map
+     */
+    private static void configureFtpsSecurityOptions(FtpsFileSystemConfigBuilder ftpsConfigBuilder,
+                                                     FileSystemOptions opts,
+                                                     Map<String, String> options) {
+        // Configure data channel protection level
+        String protectionLevel = options.get(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION);
+        if (protectionLevel != null) {
+            FtpsDataChannelProtectionLevel level = mapToVfs2ProtectionLevel(protectionLevel);
+            ftpsConfigBuilder.setDataChannelProtectionLevel(opts, level);
+            log.debug("FTPS data channel protection set to: {}", protectionLevel);
+        } else {
+            // Default to PRIVATE (secure)
+            ftpsConfigBuilder.setDataChannelProtectionLevel(opts, FtpsDataChannelProtectionLevel.P);
+            log.debug("FTPS data channel protection defaulting to PRIVATE");
+        }
+        
+        // Configure hostname verification
+        String verifyHostnameStr = options.get(FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME);
+        boolean verifyHostname = verifyHostnameStr == null || 
+                                Boolean.parseBoolean(verifyHostnameStr);
+        if (verifyHostname) {
+            // Strict hostname verification
+            ftpsConfigBuilder.setHostnameVerifier(opts, HttpsURLConnection.getDefaultHostnameVerifier());
+            log.debug("FTPS hostname verification enabled");
+        } else {
+            // To disable hostname verification (not recommended)
+            ftpsConfigBuilder.setHostnameVerifier(opts, (hostname, session) -> true);
+            log.debug("FTPS hostname verification disabled");
+        }
+    }
+    
+    /**
+     * Maps Ballerina data channel protection level string to VFS2 enum value.
+     *
+     * @param level The protection level string (CLEAR, PRIVATE, SAFE, or CONFIDENTIAL)
+     * @return The corresponding VFS2 FtpsDataChannelProtectionLevel enum value
+     */
+    private static FtpsDataChannelProtectionLevel mapToVfs2ProtectionLevel(String level) {
+        switch (level.toUpperCase()) {
+            case "CLEAR":
+                return FtpsDataChannelProtectionLevel.C;
+            case "PRIVATE":
+                return FtpsDataChannelProtectionLevel.P;
+            case "SAFE":
+                return FtpsDataChannelProtectionLevel.S;
+            case "CONFIDENTIAL":
+                return FtpsDataChannelProtectionLevel.E;
+            default:
+                log.warn("Unknown data channel protection level: {}, defaulting to PRIVATE", level);
+                return FtpsDataChannelProtectionLevel.P;
+        }
+    }
+    
+    /**
      * Creates KeyManager array from KeyStore file.
      *
      * @param keystorePath Path to the keystore file
      * @param keystorePassword Password for the keystore
-     * @return Array of KeyManagers
+     * @return Array of KeyManagers, or empty array if keystorePath is null or empty
      * @throws Exception If KeyManager creation fails
      */
     private static KeyManager[] createKeyManagers(String keystorePath, String keystorePassword)
             throws Exception { //
         if (keystorePath == null || keystorePath.isEmpty()) {
-            return null;
+            return new KeyManager[0];
         }
         
         KeyStore keyStore = loadKeyStore(keystorePath, keystorePassword);
@@ -230,13 +295,13 @@ public final class FileTransportUtils {
      *
      * @param truststorePath Path to the truststore file
      * @param truststorePassword Password for the truststore
-     * @return Array of TrustManagers
+     * @return Array of TrustManagers, or empty array if truststorePath is null or empty
      * @throws Exception If TrustManager creation fails
      */
     private static TrustManager[] createTrustManagers(String truststorePath, String truststorePassword)
             throws Exception { //
         if (truststorePath == null || truststorePath.isEmpty()) {
-            return null;
+            return new TrustManager[0];
         }
         
         KeyStore trustStore = loadKeyStore(truststorePath, truststorePassword);

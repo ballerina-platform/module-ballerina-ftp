@@ -18,22 +18,35 @@ import ballerina/io;
 import ballerina/crypto;
 
 # Protocol to use for FTP server connections.
-# Determines whether to use basic FTP (unsecure), FTPS (secure over SSL/TLS), or SFTP (secure over SSH).
+# Determines whether to use basic FTP, FTPS, or SFTP.
 # FTP - Unsecure File Transfer Protocol
 # FTPS - Secure File Transfer Protocol (FTP over SSL/TLS)
 # SFTP - File Transfer Protocol over SSH
 public enum Protocol {
-    FTP = "ftp", // Unsecure File Transfer Protocol
-    FTPS = "ftps", // Secure File Transfer Protocol (FTP over SSL/TLS)
-    SFTP = "sftp" // File Transfer Protocol over SSH
+    FTP = "ftp",
+    FTPS = "ftps",
+    SFTP = "sftp"
 }
 
 # FTPS connection mode.
 # IMPLICIT - SSL/TLS connection is established immediately upon connection (typically port 990)
 # EXPLICIT - Starts as regular FTP, then upgrades to SSL/TLS using AUTH TLS command (typically port 21)
 public enum FtpsMode {
-    IMPLICIT,  // Implicit FTPS
-    EXPLICIT   // Explicit FTPS (FTPES)
+    IMPLICIT,
+    EXPLICIT
+}
+
+# FTPS data channel protection level.
+# Controls whether the data channel (file transfers) is encrypted.
+# CLEAR - Data channel is not encrypted (PROT C). Not recommended for security.
+# PRIVATE - Data channel is encrypted (PROT P). Recommended for secure transfers.
+# SAFE - Data channel has integrity protection only (PROT S). Rarely used.
+# CONFIDENTIAL - Data channel is encrypted (PROT E). Similar to PRIVATE.
+public enum FtpsDataChannelProtection {
+    CLEAR,
+    PRIVATE,
+    SAFE,
+    CONFIDENTIAL
 }
 
 # Private key configuration for SSH-based authentication (used with SFTP).
@@ -51,10 +64,18 @@ public type PrivateKey record {|
 # + key - Keystore configuration for client authentication
 # + trustStore - Truststore configuration for server certificate validation
 # + mode - FTPS connection mode (IMPLICIT or EXPLICIT). Defaults to EXPLICIT if not specified.
+# + dataChannelProtection - Data channel protection level (CLEAR, PRIVATE, SAFE, or CONFIDENTIAL).
+#                           Controls encryption of the data channel used for file transfers.
+#                           Defaults to PRIVATE (encrypted) for secure transfers.
+# + verifyHostname - Whether to verify that the server certificate hostname matches the connection hostname.
+#                    Defaults to true for security. Set to false only if using self-signed certificates
+#                    or in development environments.
 public type SecureSocket record {|
     crypto:KeyStore key?;
     crypto:TrustStore trustStore?;
     FtpsMode mode = EXPLICIT;
+    FtpsDataChannelProtection dataChannelProtection = PRIVATE;
+    boolean verifyHostname = true;
 |};
 
 # Basic authentication credentials for connecting to FTP/FTPS servers using username and password.

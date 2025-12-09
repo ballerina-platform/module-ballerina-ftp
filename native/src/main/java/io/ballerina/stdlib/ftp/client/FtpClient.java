@@ -306,6 +306,8 @@ public class FtpClient {
      */
     private static Object configureFtpsSecureSocket(BMap secureSocket, Map<String, String> ftpConfig) {
         configureFtpsMode(secureSocket, ftpConfig);
+        configureFtpsDataChannelProtection(secureSocket, ftpConfig);
+        configureFtpsHostnameVerification(secureSocket, ftpConfig);
         extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
@@ -336,6 +338,48 @@ public class FtpClient {
     }
 
     /**
+     * Configures FTPS data channel protection level.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param ftpConfig The FTP configuration map to populate
+     */
+    private static void configureFtpsDataChannelProtection(BMap secureSocket, Map<String, String> ftpConfig) {
+        final BString dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION));
+        
+        if (dataChannelProtection != null && !dataChannelProtection.getValue().isEmpty()) {
+            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
+                    dataChannelProtection.getValue());
+        } else {
+            // Default to PRIVATE (secure) if not specified
+            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
+                    FtpConstants.FTPS_DATA_CHANNEL_PROTECTION_PRIVATE);
+        }
+    }
+
+    /**
+     * Configures FTPS hostname verification.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param ftpConfig The FTP configuration map to populate
+     */
+    private static void configureFtpsHostnameVerification(BMap secureSocket, Map<String, String> ftpConfig) {
+        Object verifyHostnameObj = secureSocket.get(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME));
+        
+        boolean verifyHostname = true; // Default to secure
+        if (verifyHostnameObj != null) {
+            if (verifyHostnameObj instanceof Boolean) {
+                verifyHostname = (Boolean) verifyHostnameObj;
+            } else if (verifyHostnameObj instanceof BString) {
+                verifyHostname = Boolean.parseBoolean(((BString) verifyHostnameObj).getValue());
+            }
+        }
+        
+        ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME, String.valueOf(verifyHostname));
+    }
+
+    /**
      * Extracts a store (KeyStore or TrustStore) from secureSocket configuration and adds it to ftpConfig.
      * Handles both BMap and BObject representations.
      * 
@@ -354,12 +398,12 @@ public class FtpClient {
         }
         
         Map<String, String> storeInfo = FtpUtil.extractKeyStoreInfo(storeObj);
-        if (storeInfo == null) {
+        if (storeInfo.isEmpty()) {
             return;
         }
         
-        String storePath = storeInfo.get("path");
-        String storePassword = storeInfo.get("password");
+        String storePath = storeInfo.get(FtpConstants.KEYSTORE_PATH_KEY);
+        String storePassword = storeInfo.get(FtpConstants.KEYSTORE_PASSWORD_KEY);
         
         if (storePath != null && !storePath.isEmpty()) {
             ftpConfig.put(pathConfigKey, storePath);
