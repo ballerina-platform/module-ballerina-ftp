@@ -141,16 +141,17 @@ public final class FileTransportUtils {
     private static void setFtpsOptions(Map<String, String> options, FileSystemOptions opts)
             throws RemoteFileSystemConnectorException {
         // Use FTPS-specific config builder for proper FTPS configuration
+        // All options must use ftpsConfigBuilder to ensure they are applied to the ftps. namespace
         final FtpsFileSystemConfigBuilder ftpsConfigBuilder = FtpsFileSystemConfigBuilder.getInstance();
-        final FtpFileSystemConfigBuilder ftpConfigBuilder = FtpFileSystemConfigBuilder.getInstance();
         
-        // Set common FTP options (passive mode, user dir as root)
-        // These are inherited from FtpFileSystemConfigBuilder
+        // Set common FTP options (passive mode, user dir as root) using FTPS builder
+        // These methods are inherited from FtpFileSystemConfigBuilder but must be called
+        // on the FTPS builder to ensure they are applied to the ftps. namespace
         if (options.get(FtpConstants.PASSIVE_MODE) != null) {
-            ftpConfigBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(FtpConstants.PASSIVE_MODE)));
+            ftpsConfigBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(FtpConstants.PASSIVE_MODE)));
         }
         if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
-            ftpConfigBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT)));
+            ftpsConfigBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT)));
         }
         
         // Handle implicit vs explicit FTPS mode using the recommended VFS2 API
