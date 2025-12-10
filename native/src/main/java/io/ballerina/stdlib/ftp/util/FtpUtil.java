@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -242,6 +243,23 @@ public class FtpUtil {
                 }
             }
         }
+        
+        // Fix: Default port to 990 for IMPLICIT FTPS if no port is specified
+        if (FtpConstants.SCHEME_FTPS.equals(protocol) && (port == -1 || port == 0)) {
+            if (auth != null) {
+                final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                        FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+                if (secureSocket != null) {
+                    final BString mode = secureSocket.getStringValue(StringUtils.fromString(
+                            FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
+                    if (mode != null && FtpConstants.FTPS_MODE_IMPLICIT.equals(mode.getValue())) {
+                        // Default to port 990 for IMPLICIT FTPS when port is not specified
+                        port = 990;
+                    }
+                }
+            }
+        }
+        
         return createUrl(protocol, host, port, username, password, filePath);
     }
 
@@ -519,22 +537,36 @@ s     * Gets all content handler methods from a service.
     }
 
     /**
-     * Extracts the Java KeyStore object from a Ballerina crypto:KeyStore or crypto:TrustStore BObject.
+     * Loads a Java KeyStore from a file path and password.
      * 
-     * @param storeObj The Ballerina BObject (crypto:KeyStore or crypto:TrustStore)
-     * @return The underlying java.security.KeyStore, or null if extraction fails
+     * @param path The file path to the KeyStore
+     * @param password The password for the KeyStore
+     * @return The loaded java.security.KeyStore object
+     * @throws BallerinaFtpException If loading fails
      */
-    public static KeyStore extractJavaKeyStore(Object storeObj) {
-        if (storeObj instanceof BObject) {
-            BObject bObj = (BObject) storeObj;
-            // Access the native data field where the crypto module hides the Java object
-            Object nativeData = bObj.getNativeData(FtpConstants.CRYPTO_NATIVE_DATA_KEY_STORE);
-            if (nativeData instanceof KeyStore) {
-                return (KeyStore) nativeData;
-            }
+    public static KeyStore loadKeyStore(String path, String password) throws BallerinaFtpException {
+        if (path == null || path.isEmpty()) {
+            return null;
         }
-        log.warn("Could not extract Java KeyStore from the provided Ballerina Object");
-        return null;
+        try {
+            // Auto-detect type based on extension
+            String type = KeyStore.getDefaultType();
+            if (path.toLowerCase().endsWith(".jks")) {
+                type = "JKS";
+            } else if (path.toLowerCase().endsWith(".p12") || path.toLowerCase().endsWith(".pfx")) {
+                type = "PKCS12";
+            }
+
+            KeyStore keyStore = KeyStore.getInstance(type);
+            char[] passChars = (password != null) ? password.toCharArray() : null;
+            
+            try (FileInputStream fis = new FileInputStream(new File(path))) {
+                keyStore.load(fis, passChars);
+            }
+            return keyStore;
+        } catch (Exception e) {
+            throw new BallerinaFtpException("Failed to load KeyStore from path: " + path + ". " + e.getMessage(), e);
+        }
     }
 
     /**

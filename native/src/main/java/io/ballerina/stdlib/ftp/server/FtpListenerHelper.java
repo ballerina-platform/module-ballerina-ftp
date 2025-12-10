@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.security.KeyStore;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
@@ -376,7 +377,7 @@ public class FtpListenerHelper {
 
     /**
      * Extracts a store (KeyStore or TrustStore) from secureSocket configuration and adds it to params.
-     * Handles both BMap and BObject representations.
+     * Handles both BMap and BObject representations. Extracts path/password strings and loads the Java KeyStore.
      * 
      * @param secureSocket The secure socket configuration map
      * @param storeKey The key name (SECURE_SOCKET_KEY for KeyStore, SECURE_SOCKET_TRUSTSTORE for TrustStore)
@@ -392,20 +393,38 @@ public class FtpListenerHelper {
             return;
         }
         
-        Map<String, String> storeInfo = FtpUtil.extractKeyStoreInfo(storeObj);
-        if (storeInfo.isEmpty()) {
-            return;
+        String path = null;
+        String password = null;
+        
+        if (storeObj instanceof BMap) {
+            BMap storeRecord = (BMap) storeObj;
+            BString pathBStr = storeRecord.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+            BString passBStr = storeRecord.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
+            
+            if (pathBStr != null) path = pathBStr.getValue();
+            if (passBStr != null) password = passBStr.getValue();
         }
         
-        String storePath = storeInfo.get(FtpConstants.KEYSTORE_PATH_KEY);
-        String storePassword = storeInfo.get(FtpConstants.KEYSTORE_PASSWORD_KEY);
-        
-        if (storePath != null && !storePath.isEmpty()) {
-            params.put(pathConfigKey, storePath);
+        // BRIDGE: Load the Java Object
+        if (path != null) {
+            try {
+                KeyStore javaKeyStore = FtpUtil.loadKeyStore(path, password);
+                
+                if (javaKeyStore != null) {
+                    if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY)) {
+                        params.put(FtpConstants.KEYSTORE_INSTANCE, javaKeyStore);
+                    } else {
+                        params.put(FtpConstants.TRUSTSTORE_INSTANCE, javaKeyStore);
+                    }
+                }
+            } catch (BallerinaFtpException e) {
+                // Use Logger, not stdout
+                LoggerFactory.getLogger(FtpListenerHelper.class).error("Failed to load FTPS Server Keystore: {}", e.getMessage());
+            }
         }
         
-        if (storePassword != null && !storePassword.isEmpty()) {
-            params.put(passwordConfigKey, storePassword);
+        if (password != null) {
+            params.put(passwordConfigKey, password);
         }
     }
 

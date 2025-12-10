@@ -146,12 +146,10 @@ public final class FileTransportUtils {
     private static void setFtpsOptions(Map<String, Object> options, FileSystemOptions opts)
             throws RemoteFileSystemConnectorException {
         // Use FTPS-specific config builder for proper FTPS configuration
-        // All options must use ftpsConfigBuilder to ensure they are applied to the ftps. namespace
         final FtpsFileSystemConfigBuilder ftpsConfigBuilder = FtpsFileSystemConfigBuilder.getInstance();
         
         // Set common FTP options (passive mode, user dir as root) using FTPS builder
-        // These methods are inherited from FtpFileSystemConfigBuilder but must be called
-        // on the FTPS builder to ensure they are applied to the ftps. namespace
+        // These methods are inherited from FtpFileSystemConfigBuilder but must be called on the FTPS builder to ensure they are applied to the ftps. namespace
         Object passiveModeObj = options.get(FtpConstants.PASSIVE_MODE);
         if (passiveModeObj != null) {
             ftpsConfigBuilder.setPassiveMode(opts, Boolean.parseBoolean(passiveModeObj.toString()));
@@ -161,22 +159,25 @@ public final class FileTransportUtils {
             ftpsConfigBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(userDirIsRootObj.toString()));
         }
 
-        if (options.get(FtpConstants.CONNECT_TIMEOUT) != null) {
-            double connectTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.CONNECT_TIMEOUT));
+        Object connectTimeoutObj = options.get(FtpConstants.CONNECT_TIMEOUT);
+        if (connectTimeoutObj != null) {
+            double connectTimeoutSeconds = Double.parseDouble(connectTimeoutObj.toString());
             Duration connectTimeout = Duration.ofMillis((long) (connectTimeoutSeconds * 1000));
             ftpsConfigBuilder.setConnectTimeout(opts, connectTimeout);
             log.debug("FTPS connectTimeout set to {} seconds", connectTimeoutSeconds);
         }
 
-        if (options.get(FtpConstants.FTP_DATA_TIMEOUT) != null) {
-            double dataTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.FTP_DATA_TIMEOUT));
+        Object dataTimeoutObj = options.get(FtpConstants.FTP_DATA_TIMEOUT);
+        if (dataTimeoutObj != null) {
+            double dataTimeoutSeconds = Double.parseDouble(dataTimeoutObj.toString());
             Duration dataTimeout = Duration.ofMillis((long) (dataTimeoutSeconds * 1000));
             ftpsConfigBuilder.setDataTimeout(opts, dataTimeout);
             log.debug("FTPS dataTimeout set to {} seconds", dataTimeoutSeconds);
         }
 
-        if (options.get(FtpConstants.FTP_SOCKET_TIMEOUT) != null) {
-            double socketTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.FTP_SOCKET_TIMEOUT));
+        Object socketTimeoutObj = options.get(FtpConstants.FTP_SOCKET_TIMEOUT);
+        if (socketTimeoutObj != null) {
+            double socketTimeoutSeconds = Double.parseDouble(socketTimeoutObj.toString());
             Duration socketTimeout = Duration.ofMillis((long) (socketTimeoutSeconds * 1000));
             ftpsConfigBuilder.setSoTimeout(opts, socketTimeout);
             log.debug("FTPS socketTimeout set to {} seconds", socketTimeoutSeconds);
