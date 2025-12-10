@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,7 +75,7 @@ public class FtpUtil {
         // private constructor
     }
 
-    public static void extractTimeoutConfigurations(BMap<Object, Object> config, Map<String, String> ftpProperties)
+    public static void extractTimeoutConfigurations(BMap<Object, Object> config, Map<String, Object> ftpProperties)
             throws BallerinaFtpException {
         // Extract connectTimeout
         Object connectTimeoutObj = config.get(StringUtils.fromString(FtpConstants.CONNECT_TIMEOUT));
@@ -117,14 +118,14 @@ public class FtpUtil {
     }
 
     public static void extractFileTransferConfiguration(BMap<Object, Object> config,
-                                                        Map<String, String> ftpProperties) {
+                                                        Map<String, Object> ftpProperties) {
         BString ftpFileTransfer = config.getStringValue(StringUtils.fromString(FtpConstants.FTP_FILE_TYPE));
         if (ftpFileTransfer != null && !ftpFileTransfer.getValue().isEmpty()) {
             ftpProperties.put(FtpConstants.FTP_FILE_TYPE, ftpFileTransfer.getValue());
         }
     }
 
-    public static void extractCompressionConfiguration(BMap<Object, Object> config, Map<String, String> ftpProperties) {
+    public static void extractCompressionConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties) {
         BArray sftpCompression = config.getArrayValue(StringUtils.fromString(FtpConstants.SFTP_COMPRESSION));
         if (sftpCompression != null && !sftpCompression.isEmpty()) {
             StringBuilder compressionValues = new StringBuilder();
@@ -141,14 +142,14 @@ public class FtpUtil {
         }
     }
 
-    public static void extractKnownHostsConfiguration(BMap<Object, Object> config, Map<String, String> ftpProperties) {
+    public static void extractKnownHostsConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties) {
         BString knownHosts = config.getStringValue(StringUtils.fromString(FtpConstants.SFTP_KNOWN_HOSTS));
         if (knownHosts != null && !knownHosts.getValue().isEmpty()) {
             ftpProperties.put(FtpConstants.SFTP_KNOWN_HOSTS, knownHosts.getValue());
         }
     }
 
-    public static void extractProxyConfiguration(BMap<Object, Object> config, Map<String, String> ftpProperties)
+    public static void extractProxyConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties)
             throws BallerinaFtpException {
         BMap proxyConfig = config.getMapValue(StringUtils.fromString(FtpConstants.PROXY));
         if (proxyConfig == null) {
@@ -518,12 +519,33 @@ s     * Gets all content handler methods from a service.
     }
 
     /**
+     * Extracts the Java KeyStore object from a Ballerina crypto:KeyStore or crypto:TrustStore BObject.
+     * 
+     * @param storeObj The Ballerina BObject (crypto:KeyStore or crypto:TrustStore)
+     * @return The underlying java.security.KeyStore, or null if extraction fails
+     */
+    public static KeyStore extractJavaKeyStore(Object storeObj) {
+        if (storeObj instanceof BObject) {
+            BObject bObj = (BObject) storeObj;
+            // Access the native data field where the crypto module hides the Java object
+            Object nativeData = bObj.getNativeData(FtpConstants.CRYPTO_NATIVE_DATA_KEY_STORE);
+            if (nativeData instanceof KeyStore) {
+                return (KeyStore) nativeData;
+            }
+        }
+        log.warn("Could not extract Java KeyStore from the provided Ballerina Object");
+        return null;
+    }
+
+    /**
      * Extracts path and password from a crypto:KeyStore or crypto:TrustStore BObject/BMap.
      * Handles both BMap (record) and BObject (typed object) cases.
-     *
+     * 
+     * @deprecated This method is deprecated. Use extractJavaKeyStore instead to get the KeyStore object directly.
      * @param keyStoreObj The KeyStore/TrustStore object (can be BMap or BObject)
      * @return Map with "path" and "password" keys, or empty map if extraction fails
      */
+    @Deprecated
     public static Map<String, String> extractKeyStoreInfo(Object keyStoreObj) { //
         if (keyStoreObj == null) {
             return new HashMap<>();
