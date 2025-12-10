@@ -41,6 +41,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManager;
@@ -234,11 +236,12 @@ public final class FileTransportUtils {
         boolean verifyHostname = verifyHostnameStr == null || 
                                 Boolean.parseBoolean(verifyHostnameStr);
         if (verifyHostname) {
-            // Enable endpoint checking for hostname verification
-            ftpsConfigBuilder.setEndpointCheckingEnabled(opts, true);
+            // Strict hostname verification
+            ftpsConfigBuilder.setHostnameVerifier(opts, HttpsURLConnection.getDefaultHostnameVerifier());
             log.debug("FTPS hostname verification enabled");
         } else {
-            ftpsConfigBuilder.setEndpointCheckingEnabled(opts, false);
+            // To disable hostname verification (not recommended)
+            ftpsConfigBuilder.setHostnameVerifier(opts, (hostname, session) -> true);
             log.debug("FTPS hostname verification disabled");
         }
     }
