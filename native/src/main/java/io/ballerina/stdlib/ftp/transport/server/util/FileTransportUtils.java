@@ -181,10 +181,26 @@ public final class FileTransportUtils {
             ftpsConfigBuilder.setSoTimeout(opts, socketTimeout);
             log.debug("FTPS socketTimeout set to {} seconds", socketTimeoutSeconds);
         }
+
+        Object fileTypeObj = options.get(FtpConstants.FTP_FILE_TYPE);
+        if (fileTypeObj != null) {
+            String fileTypeStr = fileTypeObj.toString();
+            if (FtpConstants.FILE_TYPE_ASCII.equalsIgnoreCase(fileTypeStr)) {
+                ftpsConfigBuilder.setFileType(opts, FtpFileType.ASCII);
+                log.debug("FTPS file type set to ASCII");
+            } else if (FtpConstants.FILE_TYPE_BINARY.equalsIgnoreCase(fileTypeStr)) {
+                ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
+                log.debug("FTPS file type set to BINARY");
+            } else {
+                log.warn("Unknown FTPS file type: {}, defaulting to BINARY", fileTypeStr);
+                ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
+            }
+        }
         
         // Handle implicit vs explicit FTPS mode using the recommended VFS2 API
         Object ftpsModeObj = options.get(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE);
-        if (ftpsModeObj != null && ftpsModeObj.toString().equals(FtpConstants.FTPS_MODE_IMPLICIT)) {
+        if (ftpsModeObj != null && FtpConstants.FTPS_MODE_IMPLICIT.equalsIgnoreCase(ftpsModeObj.toString()))
+        {
             // For implicit FTPS, set implicit SSL mode
             ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.IMPLICIT);
         } else {
@@ -196,7 +212,7 @@ public final class FileTransportUtils {
         configureFtpsSecurityOptions(ftpsConfigBuilder, opts, options);
         
         // Configure SSL/TLS certificates (KeyStore/TrustStore) for FTPS
-        configureFtpsSslCertificates(ftpsConfigBuilder, opts, options); //
+        configureFtpsSslCertificates(ftpsConfigBuilder, opts, options);
     }
     
     /**
@@ -227,8 +243,10 @@ public final class FileTransportUtils {
                 kmf.init(keyStore, passChars);
                 KeyManager[] keyManagers = kmf.getKeyManagers();
                 
-                if (keyManagers.length > 0) {
+                if (keyManagers != null && keyManagers.length > 0) {
                     ftpsConfigBuilder.setKeyManager(opts, keyManagers[0]);
+                } else {
+                    log.warn("FTPS configured with Keystore but no KeyManagers were found.");
                 }
             }
             
@@ -242,8 +260,22 @@ public final class FileTransportUtils {
                 tmf.init(trustStore);
                 TrustManager[] trustManagers = tmf.getTrustManagers();
                 
-                if (trustManagers.length > 0) {
+                if (trustManagers != null && trustManagers.length > 0) {
+                ///// SECURITY CHECK: Verify Hostname (Todo: Add this feature) //////
+                boolean verifyHostname = Boolean.parseBoolean((String)options.getOrDefault(
+                    FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME, "true"));
+
+                if (verifyHostname) {
+                    // Note: VFS2 does not natively support enabling Hostname Verification easily.
+                    // Ideally, we wrap trustManagers[0] here with a custom class that checks the hostname.
+                    // For now, if we cannot support it, we should log a severe warning.
+                    log.warn("SECURITY WARNING: FTPS Hostname verification is enabled in config but " +
+                             "not enforced by the current VFS2 implementation.");
+                }
+                
                     ftpsConfigBuilder.setTrustManager(opts, trustManagers[0]);
+                } else {
+                    log.warn("FTPS configured with TrustStore but no TrustManagers were found.");
                 }
             }
         } catch (Exception e) {

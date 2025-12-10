@@ -302,8 +302,10 @@ public class FtpListenerHelper {
      * 
      * @param secureSocket The secure socket configuration map
      * @param params The parameters map to populate
+     * @throws BallerinaFtpException If keystore loading fails
      */
-    private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, Object> params) {
+    private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, Object> params) 
+    throws BallerinaFtpException {
         configureServerFtpsMode(secureSocket, params);
         configureServerFtpsDataChannelProtection(secureSocket, params);
         configureServerFtpsHostnameVerification(secureSocket, params);
@@ -389,10 +391,11 @@ public class FtpListenerHelper {
      * @param pathConfigKey The configuration key for the store path
      * @param passwordConfigKey The configuration key for the store password
      * @param params The parameters map to populate
+     * @throws BallerinaFtpException 
      */
     private static void extractAndConfigureServerStore(BMap secureSocket, String storeKey, 
                                                         String pathConfigKey, String passwordConfigKey,
-                                                        Map<String, Object> params) {
+                                                        Map<String, Object> params) throws BallerinaFtpException {
         Object storeObj = getServerStoreObject(secureSocket, storeKey);
         if (storeObj == null) {
             return;
@@ -427,9 +430,8 @@ public class FtpListenerHelper {
                     }
                 }
             } catch (BallerinaFtpException e) {
-                // Use Logger, not stdout
-                LoggerFactory.getLogger(FtpListenerHelper.class)
-                        .error("Failed to load FTPS Server Keystore: {}", e.getMessage());
+                // throwing error
+                throw new BallerinaFtpException("Failed to load FTPS Server Keystore: " + e.getMessage(), e);
             }
         }
         

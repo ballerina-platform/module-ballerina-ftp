@@ -224,6 +224,20 @@ public class FtpUtil {
         int port = extractPortValue(config.getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
+        if (protocol.equals(FtpConstants.SCHEME_FTPS) && (port <= 0 || port == 21)) {
+            if (auth != null) {
+                final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                        FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+                if (secureSocket != null) {
+                    final BString mode = secureSocket.getStringValue(StringUtils.fromString(
+                            FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
+                    // Check if mode is IMPLICIT
+                    if (mode != null && FtpConstants.FTPS_MODE_IMPLICIT.equalsIgnoreCase(mode.getValue())) {
+                        port = 990; 
+                    }
+                }
+            }
+        }
         String username = FTP_ANONYMOUS_USERNAME;
         String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) //
                 ? FTP_ANONYMOUS_PASSWORD : null;
