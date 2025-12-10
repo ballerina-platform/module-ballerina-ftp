@@ -42,12 +42,12 @@ import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.ftp.util.ModuleUtils;
 import org.slf4j.LoggerFactory;
 
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.security.KeyStore;
 
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
@@ -356,6 +356,10 @@ public class FtpListenerHelper {
     /**
      * Configures FTPS hostname verification for server.
      * 
+     * Note: The verifyHostname value is stored in the parameters map but is not actually used
+     * because Apache Commons VFS2 does not support hostname verification configuration via
+     * FtpsFileSystemConfigBuilder.setHostnameVerifier() in the current version.
+     * 
      * @param secureSocket The secure socket configuration map
      * @param params The parameters map to populate
      */
@@ -372,6 +376,7 @@ public class FtpListenerHelper {
             }
         }
         
+        // Value is stored but not used - VFS2 doesn't support hostname verification configuration
         params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME, String.valueOf(verifyHostname));
     }
 
@@ -401,8 +406,12 @@ public class FtpListenerHelper {
             BString pathBStr = storeRecord.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
             BString passBStr = storeRecord.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
             
-            if (pathBStr != null) path = pathBStr.getValue();
-            if (passBStr != null) password = passBStr.getValue();
+            if (pathBStr != null) {
+                path = pathBStr.getValue();
+            }
+            if (passBStr != null) {
+                password = passBStr.getValue();
+            }
         }
         
         // BRIDGE: Load the Java Object
@@ -419,7 +428,8 @@ public class FtpListenerHelper {
                 }
             } catch (BallerinaFtpException e) {
                 // Use Logger, not stdout
-                LoggerFactory.getLogger(FtpListenerHelper.class).error("Failed to load FTPS Server Keystore: {}", e.getMessage());
+                LoggerFactory.getLogger(FtpListenerHelper.class)
+                        .error("Failed to load FTPS Server Keystore: {}", e.getMessage());
             }
         }
         
