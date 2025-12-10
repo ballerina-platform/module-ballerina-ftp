@@ -40,8 +40,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManager;
@@ -274,20 +272,6 @@ public final class FileTransportUtils {
             // Default to PRIVATE (secure)
             ftpsConfigBuilder.setDataChannelProtectionLevel(opts, FtpsDataChannelProtectionLevel.P);
             log.debug("FTPS data channel protection defaulting to PRIVATE");
-        }
-        
-        // Configure hostname verification
-        Object verifyHostnameObj = options.get(FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME);
-        boolean verifyHostname = verifyHostnameObj == null || 
-                                Boolean.parseBoolean(verifyHostnameObj.toString());
-        if (verifyHostname) {
-            // Strict hostname verification
-            ftpsConfigBuilder.setHostnameVerifier(opts, HttpsURLConnection.getDefaultHostnameVerifier());
-            log.debug("FTPS hostname verification enabled");
-        } else {
-            // To disable hostname verification (not recommended)
-            ftpsConfigBuilder.setHostnameVerifier(opts, (hostname, session) -> true);
-            log.debug("FTPS hostname verification disabled");
         }
     }
     

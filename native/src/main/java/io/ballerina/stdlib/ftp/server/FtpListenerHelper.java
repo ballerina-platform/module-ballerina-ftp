@@ -356,6 +356,10 @@ public class FtpListenerHelper {
     /**
      * Configures FTPS hostname verification for server.
      * 
+     * Note: The verifyHostname value is stored in the parameters map but is not actually used
+     * because Apache Commons VFS2 does not support hostname verification configuration via
+     * FtpsFileSystemConfigBuilder.setHostnameVerifier() in the current version.
+     * 
      * @param secureSocket The secure socket configuration map
      * @param params The parameters map to populate
      */
@@ -372,6 +376,7 @@ public class FtpListenerHelper {
             }
         }
         
+        // Value is stored but not used - VFS2 doesn't support hostname verification configuration
         params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME, String.valueOf(verifyHostname));
     }
 

@@ -259,11 +259,11 @@ public class FtpClient {
      */
     private static Object extractVfsConfigurations(BMap<Object, Object> config, Map<String, Object> ftpConfig) {
         try {
-            FtpUtil.extractTimeoutConfigurations(config, ftpConfig);
-            FtpUtil.extractFileTransferConfiguration(config, ftpConfig);
-            FtpUtil.extractCompressionConfiguration(config, ftpConfig);
-            FtpUtil.extractKnownHostsConfiguration(config, ftpConfig);
-            FtpUtil.extractProxyConfiguration(config, ftpConfig);
+            extractTimeoutConfigurations(config, ftpConfig);
+            extractFileTransferConfiguration(config, ftpConfig);
+            extractCompressionConfiguration(config, ftpConfig);
+            extractKnownHostsConfiguration(config, ftpConfig);
+            extractProxyConfiguration(config, ftpConfig);
             return null;
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
@@ -323,7 +323,7 @@ public class FtpClient {
         configureFtpsDataChannelProtection(secureSocket, ftpConfig);
         configureFtpsHostnameVerification(secureSocket, ftpConfig);
         
-        // Propagate errors from KeyStore loading
+        // Return error if KeyStore loading fails
         Object keyError = extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
@@ -383,6 +383,16 @@ public class FtpClient {
      * @param secureSocket The secure socket configuration map
      * @param ftpConfig The FTP configuration map to populate
      */
+    /**
+     * Configures FTPS hostname verification for client.
+     * 
+     * Note: The verifyHostname value is stored in the configuration map but is not actually used
+     * because Apache Commons VFS2 does not support hostname verification configuration via
+     * FtpsFileSystemConfigBuilder.setHostnameVerifier() in the current version.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param ftpConfig The FTP configuration map to populate
+     */
     private static void configureFtpsHostnameVerification(BMap secureSocket, Map<String, Object> ftpConfig) {
         Object verifyHostnameObj = secureSocket.get(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME));
@@ -396,6 +406,7 @@ public class FtpClient {
             }
         }
         
+        // Value is stored but not used - VFS2 doesn't support hostname verification configuration
         ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME, String.valueOf(verifyHostname));
     }
 
@@ -408,13 +419,14 @@ public class FtpClient {
      * @param pathConfigKey The configuration key for the store path (deprecated, kept for backward compatibility)
      * @param passwordConfigKey The configuration key for the store password
      * @param ftpConfig The FTP configuration map to populate
+     * @return Error object if KeyStore loading fails, null otherwise
      */
-    private static void extractAndConfigureStore(BMap secureSocket, String storeKey, 
+    private static Object extractAndConfigureStore(BMap secureSocket, String storeKey, 
                                                   String pathConfigKey, String passwordConfigKey,
                                                   Map<String, Object> ftpConfig) {
         Object storeObj = getStoreObject(secureSocket, storeKey);
         if (storeObj == null) {
-            return;
+            return null;
         }
         
         String path = null;
@@ -456,8 +468,7 @@ public class FtpClient {
                 }
             } catch (BallerinaFtpException e) {
                 log.error("Failed to load FTPS Keystore from path {}: {}", path, e.getMessage());
-                // We do not return error here to allow the process to continue, 
-                // though connection will likely fail later if this was critical.
+                return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
             }
         }
         
@@ -465,6 +476,8 @@ public class FtpClient {
         if (password != null) {
             ftpConfig.put(passwordConfigKey, password);
         }
+        
+        return null;
     }
 
     /**
