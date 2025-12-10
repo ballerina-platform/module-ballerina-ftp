@@ -78,7 +78,7 @@ public class FtpListenerHelper {
      */
     public static Object init(Environment env, BObject ftpListener, BMap<BString, Object> serviceEndpointConfig) {
         try {
-            Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
+            Map<String, Object> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
             final FtpListener listener = new FtpListener(env.getRuntime());
 
@@ -165,9 +165,9 @@ public class FtpListenerHelper {
         return null;
     }
 
-    private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
+    private static Map<String, Object> getServerConnectorParamMap(BMap serviceEndpointConfig)
             throws BallerinaFtpException {
-        Map<String, String> params = new HashMap<>(25);
+        Map<String, Object> params = new HashMap<>(25);
         
         String protocol = extractProtocol(serviceEndpointConfig);
         configureBasicServerParams(serviceEndpointConfig, params);
@@ -198,7 +198,7 @@ public class FtpListenerHelper {
      * @param params The parameters map to populate
      * @throws BallerinaFtpException If URL creation fails
      */
-    private static void configureBasicServerParams(BMap serviceEndpointConfig, Map<String, String> params)
+    private static void configureBasicServerParams(BMap serviceEndpointConfig, Map<String, Object> params)
             throws BallerinaFtpException {
         String url = FtpUtil.createUrl(serviceEndpointConfig);
         params.put(FtpConstants.URI, url);
@@ -214,7 +214,7 @@ public class FtpListenerHelper {
      * @throws BallerinaFtpException If authentication configuration fails
      */
     private static void configureServerAuthentication(BMap serviceEndpointConfig, String protocol,
-                                                       Map<String, String> params) throws BallerinaFtpException {
+                                                       Map<String, Object> params) throws BallerinaFtpException {
         BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         if (auth == null) {
@@ -268,7 +268,7 @@ public class FtpListenerHelper {
      * @param params The parameters map to populate
      * @throws BallerinaFtpException If private key configuration is invalid
      */
-    private static void configureServerPrivateKey(BMap auth, Map<String, String> params)
+    private static void configureServerPrivateKey(BMap auth, Map<String, Object> params)
             throws BallerinaFtpException {
         final BMap privateKey = auth.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
@@ -302,7 +302,7 @@ public class FtpListenerHelper {
      * @param secureSocket The secure socket configuration map
      * @param params The parameters map to populate
      */
-    private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, String> params) {
+    private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, Object> params) {
         configureServerFtpsMode(secureSocket, params);
         configureServerFtpsDataChannelProtection(secureSocket, params);
         configureServerFtpsHostnameVerification(secureSocket, params);
@@ -322,7 +322,7 @@ public class FtpListenerHelper {
      * @param secureSocket The secure socket configuration map
      * @param params The parameters map to populate
      */
-    private static void configureServerFtpsMode(BMap secureSocket, Map<String, String> params) {
+    private static void configureServerFtpsMode(BMap secureSocket, Map<String, Object> params) {
         final BString mode = secureSocket.getStringValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
         
@@ -339,7 +339,7 @@ public class FtpListenerHelper {
      * @param secureSocket The secure socket configuration map
      * @param params The parameters map to populate
      */
-    private static void configureServerFtpsDataChannelProtection(BMap secureSocket, Map<String, String> params) {
+    private static void configureServerFtpsDataChannelProtection(BMap secureSocket, Map<String, Object> params) {
         final BString dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION));
         
@@ -358,7 +358,7 @@ public class FtpListenerHelper {
      * @param secureSocket The secure socket configuration map
      * @param params The parameters map to populate
      */
-    private static void configureServerFtpsHostnameVerification(BMap secureSocket, Map<String, String> params) {
+    private static void configureServerFtpsHostnameVerification(BMap secureSocket, Map<String, Object> params) {
         Object verifyHostnameObj = secureSocket.get(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME));
         
@@ -386,7 +386,7 @@ public class FtpListenerHelper {
      */
     private static void extractAndConfigureServerStore(BMap secureSocket, String storeKey, 
                                                         String pathConfigKey, String passwordConfigKey,
-                                                        Map<String, String> params) {
+                                                        Map<String, Object> params) {
         Object storeObj = getServerStoreObject(secureSocket, storeKey);
         if (storeObj == null) {
             return;
@@ -438,7 +438,7 @@ public class FtpListenerHelper {
      * @param serviceEndpointConfig The service endpoint configuration map
      * @param params The parameters map to populate
      */
-    private static void applyDefaultServerParams(BMap serviceEndpointConfig, Map<String, String> params) {
+    private static void applyDefaultServerParams(BMap serviceEndpointConfig, Map<String, Object> params) {
         boolean userDirIsRoot = serviceEndpointConfig.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
         params.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         params.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
@@ -452,7 +452,7 @@ public class FtpListenerHelper {
      * @param params The parameters map to populate
      * @throws BallerinaFtpException If extraction fails
      */
-    private static void extractServerVfsConfigurations(BMap serviceEndpointConfig, Map<String, String> params)
+    private static void extractServerVfsConfigurations(BMap serviceEndpointConfig, Map<String, Object> params)
             throws BallerinaFtpException {
         extractTimeoutConfigurations(serviceEndpointConfig, params);
         extractFileTransferConfiguration(serviceEndpointConfig, params);
@@ -461,7 +461,7 @@ public class FtpListenerHelper {
         extractProxyConfiguration(serviceEndpointConfig, params);
     }
 
-    private static void addFileAgeFilterParams(BMap serviceEndpointConfig, Map<String, String> params) {
+    private static void addFileAgeFilterParams(BMap serviceEndpointConfig, Map<String, Object> params) {
         BMap fileAgeFilter = serviceEndpointConfig.getMapValue(
                 StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_AGE_FILTER));
         if (fileAgeFilter != null) {
@@ -527,7 +527,7 @@ public class FtpListenerHelper {
         return conditions;
     }
 
-    private static void addStringProperty(BMap config, Map<String, String> params) {
+    private static void addStringProperty(BMap config, Map<String, Object> params) {
         BString namePatternString = config.getStringValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN));
         String fileNamePattern = (namePatternString != null && !namePatternString.getValue().isEmpty()) ?

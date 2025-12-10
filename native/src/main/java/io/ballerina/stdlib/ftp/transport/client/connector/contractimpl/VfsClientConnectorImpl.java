@@ -54,20 +54,21 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
     private static final Logger logger = LoggerFactory.getLogger(
             VfsClientConnectorImpl.class);
 
-    private Map<String, String> connectorConfig;
+    private Map<String, Object> connectorConfig;
     private RemoteFileSystemListener remoteFileSystemListener;
     private FileSystemOptions opts;
     private FileObject path;
     private FileSystemManager fsManager;
 
-    public VfsClientConnectorImpl(Map<String, String> config)
+    public VfsClientConnectorImpl(Map<String, Object> config)
             throws RemoteFileSystemConnectorException {
         this.connectorConfig = config;
         opts = FileTransportUtils.attachFileSystemOptions(config);
         String fileURI = null;
         try {
             fsManager = VFS.getManager();
-            fileURI = connectorConfig.get(FtpConstants.URI);
+            Object uriObj = connectorConfig.get(FtpConstants.URI);
+            fileURI = (uriObj != null) ? uriObj.toString() : null;
             path = fsManager.resolveFile(fileURI, opts);
         } catch (FileSystemException e) {
             String safeUri = maskUrlPassword(fileURI);

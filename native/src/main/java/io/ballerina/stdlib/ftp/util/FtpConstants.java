@@ -90,6 +90,14 @@ public class FtpConstants {
     public static final String KEYSTORE_PATH_KEY = "path";
     public static final String KEYSTORE_PASSWORD_KEY = "password";
 
+    // The key used internally by ballerina/crypto to store the Java KeyStore object
+    // Note: This is the standard key, but it relies on internal implementation details of the crypto module
+    public static final String CRYPTO_NATIVE_DATA_KEY_STORE = "native_data_key_store";
+    
+    // Keys for storing the Java Objects in our config map
+    public static final String KEYSTORE_INSTANCE = "KEYSTORE_INSTANCE";
+    public static final String TRUSTSTORE_INSTANCE = "TRUSTSTORE_INSTANCE";
+
     public static final String ENDPOINT_CONFIG_PREFERRED_METHODS = "preferredMethods";
     public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
     
