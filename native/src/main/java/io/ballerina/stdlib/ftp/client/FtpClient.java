@@ -259,11 +259,11 @@ public class FtpClient {
      */
     private static Object extractVfsConfigurations(BMap<Object, Object> config, Map<String, Object> ftpConfig) {
         try {
-            extractTimeoutConfigurations(config, ftpConfig);
-            extractFileTransferConfiguration(config, ftpConfig);
-            extractCompressionConfiguration(config, ftpConfig);
-            extractKnownHostsConfiguration(config, ftpConfig);
-            extractProxyConfiguration(config, ftpConfig);
+            FtpUtil.extractTimeoutConfigurations(config, ftpConfig);
+            FtpUtil.extractFileTransferConfiguration(config, ftpConfig);
+            FtpUtil.extractCompressionConfiguration(config, ftpConfig);
+            FtpUtil.extractKnownHostsConfiguration(config, ftpConfig);
+            FtpUtil.extractProxyConfiguration(config, ftpConfig);
             return null;
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
@@ -278,6 +278,19 @@ public class FtpClient {
      * @return Error object if creation fails, null otherwise
      */
     private static Object createAndStoreConnector(BObject clientEndpoint, Map<String, Object> ftpConfig) {
+        // Fix: Default port to 990 for IMPLICIT FTPS if no port is specified
+        String protocol = (String) clientEndpoint.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
+        if (FtpConstants.SCHEME_FTPS.equals(protocol)) {
+            Object ftpsModeObj = ftpConfig.get(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE);
+            if (ftpsModeObj != null && FtpConstants.FTPS_MODE_IMPLICIT.equals(ftpsModeObj.toString())) {
+                Integer currentPort = (Integer) clientEndpoint.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
+                if (currentPort == null || currentPort == -1) {
+                    // Default to port 990 for IMPLICIT FTPS when port is not specified
+                    clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PORT, 990);
+                }
+            }
+        }
+        
         String url;
         try {
             url = FtpUtil.createUrl(clientEndpoint, "");
@@ -309,14 +322,20 @@ public class FtpClient {
         configureFtpsMode(secureSocket, ftpConfig);
         configureFtpsDataChannelProtection(secureSocket, ftpConfig);
         configureFtpsHostnameVerification(secureSocket, ftpConfig);
-        extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
+        
+        // Propagate errors from KeyStore loading
+        Object keyError = extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
                 ftpConfig);
-        extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
+        if (keyError != null) return keyError;
+
+        Object trustError = extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
                 FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
                 ftpConfig);
+        if (trustError != null) return trustError;
+
         return null;
     }
 
@@ -382,7 +401,7 @@ public class FtpClient {
 
     /**
      * Extracts a store (KeyStore or TrustStore) from secureSocket configuration and adds it to ftpConfig.
-     * Handles both BMap and BObject representations. Extracts the Java KeyStore object directly.
+     * Handles both BMap and BObject representations. Extracts path/password strings and loads the Java KeyStore.
      * 
      * @param secureSocket The secure socket configuration map
      * @param storeKey The key name ("key" for KeyStore, "trustStore" for TrustStore)
@@ -398,39 +417,52 @@ public class FtpClient {
             return;
         }
         
-        // A. Extract the Java KeyStore object
-        KeyStore javaKeyStore = FtpUtil.extractJavaKeyStore(storeObj);
-        
-        // B. Determine if we are handling KeyStore or TrustStore based on the key
-        if (javaKeyStore != null) {
-            if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY)) {
-                ftpConfig.put(FtpConstants.KEYSTORE_INSTANCE, javaKeyStore);
-            } else {
-                ftpConfig.put(FtpConstants.TRUSTSTORE_INSTANCE, javaKeyStore);
-            }
-        }
-        
-        // C. Extract password from the BObject or BMap
+        String path = null;
         String password = null;
+        
+        // Extract Strings from Ballerina Record (BMap)
         if (storeObj instanceof BMap) {
-            BString pass = ((BMap) storeObj).getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
-            if (pass != null) {
-                password = pass.getValue();
-            }
-        } else if (storeObj instanceof BObject) {
-            // Try getting password from BObject if it exists as a field
+            BMap storeRecord = (BMap) storeObj;
+            BString pathBStr = storeRecord.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+            BString passBStr = storeRecord.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
+            
+            if (pathBStr != null) path = pathBStr.getValue();
+            if (passBStr != null) password = passBStr.getValue();
+        } 
+        // Fallback if it's a BObject (unlikely for crypto:KeyStore but safe to keep)
+        else if (storeObj instanceof BObject) {
             try {
-                BString pass = ((BObject) storeObj).getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
-                if (pass != null) {
-                    password = pass.getValue();
-                }
+                BObject storeObject = (BObject) storeObj;
+                BString pathBStr = storeObject.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+                BString passBStr = storeObject.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
+                if (pathBStr != null) path = pathBStr.getValue();
+                if (passBStr != null) password = passBStr.getValue();
             } catch (Exception e) {
-                // Field might not exist on the BObject, rely on external config or default
-                log.debug("Could not extract password from KeyStore/TrustStore object: {}", e.getMessage());
+                log.debug("Could not extract path/password from BObject: {}", e.getMessage());
             }
         }
         
-        if (password != null && !password.isEmpty()) {
+        // BRIDGE: Load the Java Object and put it in the Map
+        if (path != null) {
+            try {
+                KeyStore javaKeyStore = FtpUtil.loadKeyStore(path, password);
+                
+                if (javaKeyStore != null) {
+                    if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY)) {
+                        ftpConfig.put(FtpConstants.KEYSTORE_INSTANCE, javaKeyStore);
+                    } else {
+                        ftpConfig.put(FtpConstants.TRUSTSTORE_INSTANCE, javaKeyStore);
+                    }
+                }
+            } catch (BallerinaFtpException e) {
+                log.error("Failed to load FTPS Keystore from path {}: {}", path, e.getMessage());
+                // We do not return error here to allow the process to continue, 
+                // though connection will likely fail later if this was critical.
+            }
+        }
+        
+        // Backward compatibility: store password string if needed
+        if (password != null) {
             ftpConfig.put(passwordConfigKey, password);
         }
     }

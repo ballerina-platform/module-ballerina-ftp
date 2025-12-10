@@ -35,7 +35,7 @@ public class FtpConstants {
     public static final String FILE_NAME_PATTERN = "fileNamePattern";
     public static final String SCHEME_SFTP = "sftp";
     public static final String SCHEME_FTP = "ftp";
-    public static final String SCHEME_FTPS = "ftps"; //
+    public static final String SCHEME_FTPS = "ftps";
     public static final String URI = "uri";
     public static final String PASSIVE_MODE = "PASSIVE_MODE";
     public static final String USER_DIR_IS_ROOT = "USER_DIR_IS_ROOT";
@@ -79,22 +79,20 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_AUTH = "auth";
     public static final String ENDPOINT_CONFIG_CREDENTIALS = "credentials";
     public static final String ENDPOINT_CONFIG_PRIVATE_KEY = "privateKey";
-    public static final String ENDPOINT_CONFIG_SECURE_SOCKET = "secureSocket"; //
-    public static final String ENDPOINT_CONFIG_FTPS_MODE = "mode"; //
+    public static final String ENDPOINT_CONFIG_SECURE_SOCKET = "secureSocket";
+    public static final String ENDPOINT_CONFIG_FTPS_MODE = "mode";
     public static final String ENDPOINT_CONFIG_KEYSTORE_PATH = "keystorePath";
     public static final String ENDPOINT_CONFIG_KEYSTORE_PASSWORD = "keystorePassword";
     public static final String ENDPOINT_CONFIG_TRUSTSTORE_PATH = "truststorePath";
     public static final String ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD = "truststorePassword";
+
+    // Keys for extracting data from Ballerina Records
     public static final String SECURE_SOCKET_KEY = "key";
     public static final String SECURE_SOCKET_TRUSTSTORE = "trustStore";
     public static final String KEYSTORE_PATH_KEY = "path";
     public static final String KEYSTORE_PASSWORD_KEY = "password";
-
-    // The key used internally by ballerina/crypto to store the Java KeyStore object
-    // Note: This is the standard key, but it relies on internal implementation details of the crypto module
-    public static final String CRYPTO_NATIVE_DATA_KEY_STORE = "native_data_key_store";
     
-    // Keys for storing the Java Objects in our config map
+    // Keys for storing the Java Objects in the Config Map (Transport Layer)
     public static final String KEYSTORE_INSTANCE = "KEYSTORE_INSTANCE";
     public static final String TRUSTSTORE_INSTANCE = "TRUSTSTORE_INSTANCE";
 
@@ -102,7 +100,7 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
     
     // FTPS mode constants
-    public static final String FTPS_MODE_IMPLICIT = "IMPLICIT"; //
+    public static final String FTPS_MODE_IMPLICIT = "IMPLICIT";
     public static final String FTPS_MODE_EXPLICIT = "EXPLICIT";
     
     // FTPS data channel protection and hostname verification constants
