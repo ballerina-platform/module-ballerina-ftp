@@ -328,13 +328,17 @@ public class FtpClient {
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
                 ftpConfig);
-        if (keyError != null) return keyError;
+        if (keyError != null) {
+            return keyError;
+        }
 
         Object trustError = extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
                 FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
                 ftpConfig);
-        if (trustError != null) return trustError;
+        if (trustError != null) {
+            return trustError;
+        }
 
         return null;
     }
@@ -435,20 +439,31 @@ public class FtpClient {
         // Extract Strings from Ballerina Record (BMap)
         if (storeObj instanceof BMap) {
             BMap storeRecord = (BMap) storeObj;
-            BString pathBStr = storeRecord.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
-            BString passBStr = storeRecord.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
+            BString pathBStr = storeRecord.getStringValue(
+                    StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+            BString passBStr = storeRecord.getStringValue(
+                    StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
             
-            if (pathBStr != null) path = pathBStr.getValue();
-            if (passBStr != null) password = passBStr.getValue();
-        } 
-        // Fallback if it's a BObject (unlikely for crypto:KeyStore but safe to keep)
-        else if (storeObj instanceof BObject) {
+            if (pathBStr != null) {
+                path = pathBStr.getValue();
+            }
+            if (passBStr != null) {
+                password = passBStr.getValue();
+            }
+        } else if (storeObj instanceof BObject) {
+            // Fallback if it's a BObject (unlikely for crypto:KeyStore but safe to keep)
             try {
                 BObject storeObject = (BObject) storeObj;
-                BString pathBStr = storeObject.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
-                BString passBStr = storeObject.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
-                if (pathBStr != null) path = pathBStr.getValue();
-                if (passBStr != null) password = passBStr.getValue();
+                BString pathBStr = storeObject.getStringValue(
+                        StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+                BString passBStr = storeObject.getStringValue(
+                        StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
+                if (pathBStr != null) {
+                    path = pathBStr.getValue();
+                }
+                if (passBStr != null) {
+                    password = passBStr.getValue();
+                }
             } catch (Exception e) {
                 log.debug("Could not extract path/password from BObject: {}", e.getMessage());
             }

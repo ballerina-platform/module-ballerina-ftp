@@ -147,7 +147,8 @@ public final class FileTransportUtils {
         final FtpsFileSystemConfigBuilder ftpsConfigBuilder = FtpsFileSystemConfigBuilder.getInstance();
         
         // Set common FTP options (passive mode, user dir as root) using FTPS builder
-        // These methods are inherited from FtpFileSystemConfigBuilder but must be called on the FTPS builder to ensure they are applied to the ftps. namespace
+        // These methods are inherited from FtpFileSystemConfigBuilder 
+        // but must be called on the FTPS builder to ensure they are applied to the ftps. namespace
         Object passiveModeObj = options.get(FtpConstants.PASSIVE_MODE);
         if (passiveModeObj != null) {
             ftpsConfigBuilder.setPassiveMode(opts, Boolean.parseBoolean(passiveModeObj.toString()));
