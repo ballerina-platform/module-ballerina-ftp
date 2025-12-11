@@ -208,7 +208,7 @@ public final class FileTransportUtils {
             ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.EXPLICIT);
         }
         
-        // Configure data channel protection and hostname verification
+        // Configure data channel protection
         configureFtpsSecurityOptions(ftpsConfigBuilder, opts, options);
         
         // Configure SSL/TLS certificates (KeyStore/TrustStore) for FTPS
@@ -261,18 +261,6 @@ public final class FileTransportUtils {
                 TrustManager[] trustManagers = tmf.getTrustManagers();
                 
                 if (trustManagers != null && trustManagers.length > 0) {
-                ///// SECURITY CHECK: Verify Hostname (Todo: Add this feature) //////
-                boolean verifyHostname = Boolean.parseBoolean((String)options.getOrDefault(
-                    FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME, "true"));
-
-                if (verifyHostname) {
-                    // Note: VFS2 does not natively support enabling Hostname Verification easily.
-                    // Ideally, we wrap trustManagers[0] here with a custom class that checks the hostname.
-                    // For now, if we cannot support it, we should log a severe warning.
-                    log.warn("SECURITY WARNING: FTPS Hostname verification is enabled in config but " +
-                             "not enforced by the current VFS2 implementation.");
-                }
-                
                     ftpsConfigBuilder.setTrustManager(opts, trustManagers[0]);
                 } else {
                     log.warn("FTPS configured with TrustStore but no TrustManagers were found.");
@@ -285,7 +273,7 @@ public final class FileTransportUtils {
     }
     
     /**
-     * Configures FTPS security options including data channel protection and hostname verification.
+     * Configures FTPS security options including data channel protection
      *
      * @param ftpsConfigBuilder The FTPS config builder
      * @param opts The file system options
