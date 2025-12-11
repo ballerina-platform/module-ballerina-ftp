@@ -44,7 +44,7 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
     private RemoteFileSystemConsumer consumer;
     private AtomicBoolean isPollOperationOccupied = new AtomicBoolean(false);
 
-    public RemoteFileSystemServerConnectorImpl(Map<String, String> properties,
+    public RemoteFileSystemServerConnectorImpl(Map<String, Object> properties,
                                                RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException {
         try {
@@ -57,7 +57,7 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
         }
     }
 
-    public RemoteFileSystemServerConnectorImpl(Map<String, String> properties,
+    public RemoteFileSystemServerConnectorImpl(Map<String, Object> properties,
                                                List<FileDependencyCondition> conditions,
                                                RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException {
