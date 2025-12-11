@@ -321,7 +321,6 @@ public class FtpClient {
     private static Object configureFtpsSecureSocket(BMap secureSocket, Map<String, Object> ftpConfig) {
         configureFtpsMode(secureSocket, ftpConfig);
         configureFtpsDataChannelProtection(secureSocket, ftpConfig);
-        configureFtpsHostnameVerification(secureSocket, ftpConfig);
         
         // Return error if KeyStore loading fails
         Object keyError = extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
@@ -379,39 +378,6 @@ public class FtpClient {
             ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
                     FtpConstants.FTPS_DATA_CHANNEL_PROTECTION_PRIVATE);
         }
-    }
-
-    /**
-     * Configures FTPS hostname verification.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param ftpConfig The FTP configuration map to populate
-     */
-    /**
-     * Configures FTPS hostname verification for client.
-     * 
-     * Note: The verifyHostname value is stored in the configuration map but is not actually used
-     * because Apache Commons VFS2 does not support hostname verification configuration via
-     * FtpsFileSystemConfigBuilder.setHostnameVerifier() in the current version.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param ftpConfig The FTP configuration map to populate
-     */
-    private static void configureFtpsHostnameVerification(BMap secureSocket, Map<String, Object> ftpConfig) {
-        Object verifyHostnameObj = secureSocket.get(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME));
-        
-        boolean verifyHostname = true; // Default to secure
-        if (verifyHostnameObj != null) {
-            if (verifyHostnameObj instanceof Boolean) {
-                verifyHostname = (Boolean) verifyHostnameObj;
-            } else if (verifyHostnameObj instanceof BString) {
-                verifyHostname = Boolean.parseBoolean(((BString) verifyHostnameObj).getValue());
-            }
-        }
-        
-        // Value is stored but not used - VFS2 doesn't support hostname verification configuration
-        ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME, String.valueOf(verifyHostname));
     }
 
     /**

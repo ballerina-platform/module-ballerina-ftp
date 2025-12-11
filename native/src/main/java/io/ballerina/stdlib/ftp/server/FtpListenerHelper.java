@@ -308,7 +308,6 @@ public class FtpListenerHelper {
     throws BallerinaFtpException {
         configureServerFtpsMode(secureSocket, params);
         configureServerFtpsDataChannelProtection(secureSocket, params);
-        configureServerFtpsHostnameVerification(secureSocket, params);
         extractAndConfigureServerStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
@@ -353,33 +352,6 @@ public class FtpListenerHelper {
             params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
                     FtpConstants.FTPS_DATA_CHANNEL_PROTECTION_PRIVATE);
         }
-    }
-
-    /**
-     * Configures FTPS hostname verification for server.
-     * 
-     * Note: The verifyHostname value is stored in the parameters map but is not actually used
-     * because Apache Commons VFS2 does not support hostname verification configuration via
-     * FtpsFileSystemConfigBuilder.setHostnameVerifier() in the current version.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param params The parameters map to populate
-     */
-    private static void configureServerFtpsHostnameVerification(BMap secureSocket, Map<String, Object> params) {
-        Object verifyHostnameObj = secureSocket.get(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME));
-        
-        boolean verifyHostname = true;
-        if (verifyHostnameObj != null) {
-            if (verifyHostnameObj instanceof Boolean) {
-                verifyHostname = (Boolean) verifyHostnameObj;
-            } else if (verifyHostnameObj instanceof BString) {
-                verifyHostname = Boolean.parseBoolean(((BString) verifyHostnameObj).getValue());
-            }
-        }
-        
-        // Value is stored but not used - VFS2 doesn't support hostname verification configuration
-        params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME, String.valueOf(verifyHostname));
     }
 
     /**

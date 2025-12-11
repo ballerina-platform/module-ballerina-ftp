@@ -103,9 +103,8 @@ public class FtpConstants {
     public static final String FTPS_MODE_IMPLICIT = "IMPLICIT";
     public static final String FTPS_MODE_EXPLICIT = "EXPLICIT";
     
-    // FTPS data channel protection and hostname verification constants
+    // FTPS data channel protection constants
     public static final String ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION = "dataChannelProtection";
-    public static final String ENDPOINT_CONFIG_FTPS_VERIFY_HOSTNAME = "verifyHostname";
     public static final String FTPS_DATA_CHANNEL_PROTECTION_CLEAR = "CLEAR";
     public static final String FTPS_DATA_CHANNEL_PROTECTION_PRIVATE = "PRIVATE";
     public static final String FTPS_DATA_CHANNEL_PROTECTION_SAFE = "SAFE";
