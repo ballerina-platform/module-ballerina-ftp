@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'ftp'
+version '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.mockftpserver', name: 'MockFtpServer', version: "${gradle.ext.mockFtpServerVersion}"
+    implementation group: 'org.apache.ftpserver', name: 'ftpserver-core', version: "${gradle.ext.ftpServerVersion}"
+    implementation group: 'org.apache.sshd', name: 'sshd-core', version: "${gradle.ext.sshdCoreVersion}"
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "${gradle.ext.slf4jVersion}"
+    implementation group: 'commons-net', name: 'commons-net', version: "${gradle.ext.commonsNetVersion}"
+    implementation group: 'org.apache.commons', name: 'commons-vfs2', version: "${gradle.ext.commonsVfsVersion}"
+    implementation group: 'com.jcraft', name: 'jsch', version: "${gradle.ext.jschVersion}"
+}
+
+mainClassName = 'FtpsServer'

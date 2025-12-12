@@ -1,0 +1,7 @@
+[package]
+org = "ftp"
+name = "ftps_processor"
+version = "1.0.0"
+
+[build-options]
+observabilityIncluded = true
