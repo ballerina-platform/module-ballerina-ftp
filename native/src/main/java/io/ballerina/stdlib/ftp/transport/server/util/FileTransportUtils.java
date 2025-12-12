@@ -199,8 +199,7 @@ public final class FileTransportUtils {
         
         // Handle implicit vs explicit FTPS mode using the recommended VFS2 API
         Object ftpsModeObj = options.get(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE);
-        if (ftpsModeObj != null && FtpConstants.FTPS_MODE_IMPLICIT.equalsIgnoreCase(ftpsModeObj.toString()))
-        {
+        if (ftpsModeObj != null && FtpConstants.FTPS_MODE_IMPLICIT.equalsIgnoreCase(ftpsModeObj.toString())) {
             // For implicit FTPS, set implicit SSL mode
             ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.IMPLICIT);
         } else {
@@ -273,7 +272,7 @@ public final class FileTransportUtils {
     }
     
     /**
-     * Configures FTPS security options including data channel protection
+     * Configures FTPS security options including data channel protection.
      *
      * @param ftpsConfigBuilder The FTPS config builder
      * @param opts The file system options

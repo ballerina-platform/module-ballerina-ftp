@@ -67,15 +67,11 @@ public type PrivateKey record {|
 # + dataChannelProtection - Data channel protection level (CLEAR, PRIVATE, SAFE, or CONFIDENTIAL).
 #                           Controls encryption of the data channel used for file transfers.
 #                           Defaults to PRIVATE (encrypted) for secure transfers.
-# + verifyHostname - Whether to verify that the server certificate hostname matches the connection hostname.
-#                    Defaults to true for security. Set to false only if using self-signed certificates
-#                    or in development environments.
 public type SecureSocket record {|
     crypto:KeyStore key?;
     crypto:TrustStore trustStore?;
     FtpsMode mode = EXPLICIT;
     FtpsDataChannelProtection dataChannelProtection = PRIVATE;
-    boolean verifyHostname = true;
 |};
 
 # Basic authentication credentials for connecting to FTP/FTPS servers using username and password.
