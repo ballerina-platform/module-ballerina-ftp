@@ -1337,27 +1337,6 @@ public function testCloseThenPutApis() returns error? {
 @test:Config {
     dependsOn: [testCloseThenPutApis]
 }
-public function testCloseThenMoveCopyApis() returns error? {
-    Client ftpClient = check new (config);
-    Error? closeResult = ftpClient->close();
-    test:assertEquals(closeResult, ());
-
-    Error? moveResult = ftpClient->move("/home/in/test1.txt", "/home/in/after-close-move.txt");
-    test:assertTrue(moveResult is Error);
-    if moveResult is Error {
-        test:assertEquals(moveResult.message(), "FTP client is closed");
-    }
-
-    Error? copyResult = ftpClient->copy("/home/in/test1.txt", "/home/in/after-close-copy.txt");
-    test:assertTrue(copyResult is Error);
-    if copyResult is Error {
-        test:assertEquals(copyResult.message(), "FTP client is closed");
-    }
-}
-
-@test:Config {
-    dependsOn: [testCloseThenMoveCopyApis]
-}
 public function testCloseThenGetApis() returns error? {
     Client ftpClient = check new (config);
     Error? closeResult = ftpClient->close();
@@ -1409,6 +1388,98 @@ public function testCloseThenGetApis() returns error? {
     test:assertTrue(getCsvAsStreamResult is Error);
     if getCsvAsStreamResult is Error {
         test:assertEquals(getCsvAsStreamResult.message(), "FTP client is closed");
+    }
+}
+
+@test:Config {
+    dependsOn: [testCloseThenGetApis]
+}
+public function testCloseThenOtherApis() returns error? {
+    Client ftpClient = check new (config);
+    Error? closeResult = ftpClient->close();
+    test:assertEquals(closeResult, ());
+
+    Error? moveResult = ftpClient->move("/home/in/test1.txt", "/home/in/after-close-move.txt");
+    test:assertTrue(moveResult is Error);
+    if moveResult is Error {
+        test:assertEquals(moveResult.message(), "FTP client is closed");
+    }
+
+    Error? copyResult = ftpClient->copy("/home/in/test1.txt", "/home/in/after-close-copy.txt");
+    test:assertTrue(copyResult is Error);
+    if copyResult is Error {
+        test:assertEquals(copyResult.message(), "FTP client is closed");
+    }
+
+    Error? appendResult = ftpClient->append("/home/in/after-close-append.txt", "abc");
+    test:assertTrue(appendResult is Error);
+    if appendResult is Error {
+        test:assertEquals(appendResult.message(), "FTP client is closed");
+    }
+
+    Error? mkdirResult = ftpClient->mkdir("/home/in/after-close-dir");
+    test:assertTrue(mkdirResult is Error);
+    if mkdirResult is Error {
+        test:assertEquals(mkdirResult.message(), "FTP client is closed");
+    }
+
+    Error? rmdirResult = ftpClient->rmdir("/home/in/after-close-dir");
+    test:assertTrue(rmdirResult is Error);
+    if rmdirResult is Error {
+        test:assertEquals(rmdirResult.message(), "FTP client is closed");
+    }
+
+    Error? renameResult = ftpClient->rename("/home/in/test1.txt", "/home/in/after-close-rename.txt");
+    test:assertTrue(renameResult is Error);
+    if renameResult is Error {
+        test:assertEquals(renameResult.message(), "FTP client is closed");
+    }
+
+    boolean|Error isDirResult = ftpClient->isDirectory("/home/in");
+    test:assertTrue(isDirResult is Error);
+    if isDirResult is Error {
+        test:assertEquals(isDirResult.message(), "FTP client is closed");
+    }
+
+    int|Error sizeResult = ftpClient->size("/home/in/test1.txt");
+    test:assertTrue(sizeResult is Error);
+    if sizeResult is Error {
+        test:assertEquals(sizeResult.message(), "FTP client is closed");
+    }
+
+    FileInfo[]|Error listResult = ftpClient->list("/home/in");
+    test:assertTrue(listResult is Error);
+    if listResult is Error {
+        test:assertEquals(listResult.message(), "FTP client is closed");
+    }
+
+    Error? deleteResult = ftpClient->delete("/home/in/test1.txt");
+    test:assertTrue(deleteResult is Error);
+    if deleteResult is Error {
+        test:assertEquals(deleteResult.message(), "FTP client is closed");
+    }
+}
+
+@test:Config {
+    dependsOn: [testCloseThenOtherApis]
+}
+public function testCallerCloseClosesUnderlyingClient() returns error? {
+    Client ftpClient = check new (config);
+    Caller caller = new (ftpClient);
+
+    Error? closeResult = caller->close();
+    test:assertEquals(closeResult, ());
+
+    boolean|Error existsResult = caller->exists("/home/in/test1.txt");
+    test:assertTrue(existsResult is Error);
+    if existsResult is Error {
+        test:assertEquals(existsResult.message(), "FTP client is closed");
+    }
+
+    string|Error getTextResult = ftpClient->getText("/home/in/test1.txt");
+    test:assertTrue(getTextResult is Error);
+    if getTextResult is Error {
+        test:assertEquals(getTextResult.message(), "FTP client is closed");
     }
 }
 
