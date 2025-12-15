@@ -1253,6 +1253,30 @@ function testGenericRmdir(string path) returns error? {
     }
 }
 
+@test:Config {
+    dependsOn: [testRemoveComplexDirectory]
+}
+public function testClientClose() returns error? {
+    Client ftpClient = check new (config);
+    Error? closeResult = ftpClient->close();
+    test:assertEquals(closeResult, ());
+
+    closeResult = ftpClient->close();
+    test:assertEquals(closeResult, ());
+
+    boolean|Error existsResult = ftpClient->exists(filePath);
+    test:assertTrue(existsResult is Error);
+    if existsResult is Error {
+        test:assertEquals(existsResult.message(), "FTP client is closed");
+    }
+    stream<io:Block, io:Error?> byteStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    Error? putResult = ftpClient->put(newFilePath, byteStream);
+    test:assertTrue(putResult is Error);
+    if putResult is Error {
+        test:assertEquals(putResult.message(), "FTP client is closed");
+    }
+}
+
 @test:AfterSuite {}
 public function cleanTestEnvironment() returns error? {
     check (<Listener>callerListener).gracefulStop();
