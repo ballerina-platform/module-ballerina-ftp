@@ -87,6 +87,7 @@ public class FtpClient {
 
     private static final Logger log = LoggerFactory.getLogger(FtpClient.class);
     private static final String CLIENT_CLOSED_ERROR_MESSAGE = "FTP client is closed";
+    public static final String ON_CLOSE_ERROR = "Error occurred while closing the FTP client: ";
 
     private FtpClient() {
         // private constructor
@@ -316,16 +317,14 @@ public class FtpClient {
     public static Object close(BObject clientConnector) {
         Object closeStreamResult = closeInputByteStream(clientConnector);
         if (closeStreamResult instanceof BError error) {
-            return FtpUtil.createError("Error while closing the FTP client input stream: "
-                    + error.getMessage(), error, FTP_ERROR);
+            return FtpUtil.createError(ON_CLOSE_ERROR + error.getMessage(), error, FTP_ERROR);
         }
         Object connectorInstance = clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
         if (connectorInstance instanceof VfsClientConnectorImpl connector) {
             try {
                 connector.close();
             } catch (Exception exception) {
-                return FtpUtil.createError("Error while closing the FTP client connection: "
-                                + exception.getMessage(), exception, FTP_ERROR);
+                return FtpUtil.createError(ON_CLOSE_ERROR + exception.getMessage(), exception, FTP_ERROR);
             }
         }
         clientConnector.addNativeData(VFS_CLIENT_CONNECTOR, null);
