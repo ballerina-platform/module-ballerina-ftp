@@ -175,6 +175,10 @@ public class FtpClient {
                             balFuture, clientConnector));
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
                     getNativeData(VFS_CLIENT_CONNECTOR);
+            if (connector == null) {
+                balFuture.complete(FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR));
+                return getResult(balFuture);
+            }
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.GET, filePath.getValue(), null);
             return getResult(balFuture);
@@ -244,6 +248,10 @@ public class FtpClient {
                                     balFuture, TypeCreator.createArrayType(PredefinedTypes.TYPE_BYTE), laxDataBinding));
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
                     getNativeData(VFS_CLIENT_CONNECTOR);
+            if (connector == null) {
+                balFuture.complete(FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR));
+                return getResult(balFuture);
+            }
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.GET, filePath.getValue(), null);
             return getResult(balFuture);
@@ -261,6 +269,10 @@ public class FtpClient {
                                     balFuture, typeDesc.getDescribingType(), laxDataBinding));
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
                     getNativeData(VFS_CLIENT_CONNECTOR);
+            if (connector == null) {
+                balFuture.complete(FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR));
+                return getResult(balFuture);
+            }
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.GET, filePath.getValue(), null);
             return getResult(balFuture);
@@ -275,6 +287,10 @@ public class FtpClient {
                             balFuture));
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
                     getNativeData(VFS_CLIENT_CONNECTOR);
+            if (connector == null) {
+                balFuture.complete(FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR));
+                return getResult(balFuture);
+            }
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.GET_ALL, filePath.getValue(), null);
             return getResult(balFuture);
