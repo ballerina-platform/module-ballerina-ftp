@@ -87,6 +87,7 @@ public class FtpClient {
 
     private static final Logger log = LoggerFactory.getLogger(FtpClient.class);
     private static final String CLIENT_CLOSED_ERROR_MESSAGE = "FTP client is closed";
+    private static final String ON_CLOSE_ERROR = "Error occurred while closing the FTP client: ";
 
     private FtpClient() {
         // private constructor
@@ -316,16 +317,14 @@ public class FtpClient {
     public static Object close(BObject clientConnector) {
         Object closeStreamResult = closeInputByteStream(clientConnector);
         if (closeStreamResult instanceof BError error) {
-            return FtpUtil.createError("Error while closing the FTP client input stream: "
-                    + error.getMessage(), error, FTP_ERROR);
+            return FtpUtil.createError(ON_CLOSE_ERROR + error.getMessage(), error, FTP_ERROR);
         }
         Object connectorInstance = clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
         if (connectorInstance instanceof VfsClientConnectorImpl connector) {
             try {
                 connector.close();
             } catch (Exception exception) {
-                return FtpUtil.createError("Error while closing the FTP client connection: "
-                                + exception.getMessage(), exception, FTP_ERROR);
+                return FtpUtil.createError(ON_CLOSE_ERROR + exception.getMessage(), exception, FTP_ERROR);
             }
         }
         clientConnector.addNativeData(VFS_CLIENT_CONNECTOR, null);
@@ -715,10 +714,11 @@ public class FtpClient {
             FtpClientListener connectorListener = new FtpClientListener(balFuture, closeInput, messageHandler);
             Object nativeConnector = clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
             if (!(nativeConnector instanceof VfsClientConnectorImpl connector)) {
-                return FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR);
+                balFuture.complete(FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR));
+            } else {
+                connector.addListener(connectorListener);
+                connector.send(null, action, filePath.getValue(), null);
             }
-            connector.addListener(connectorListener);
-            connector.send(null, action, filePath.getValue(), null);
             return getResult(balFuture);
         });
     }
@@ -747,10 +747,11 @@ public class FtpClient {
                     remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
             Object nativeConnector = clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
             if (!(nativeConnector instanceof VfsClientConnectorImpl connector)) {
-                return FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR);
+                balFuture.complete(FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR));
+            } else {
+                connector.addListener(connectorListener);
+                connector.send(null, action, sourcePath.getValue(), destinationUrl);
             }
-            connector.addListener(connectorListener);
-            connector.send(null, action, sourcePath.getValue(), destinationUrl);
             return getResult(balFuture);
         });
     }

@@ -1331,7 +1331,10 @@ public function testCloseThenPutApis() returns error? {
         ["1", "A"]
     ].toStream();
     Error? putCsvAsStream = ftpClient->putCsvAsStream("/home/in/after-close-putCsvAsStream.csv", csvStream);
-    test:assertTrue(putCsvAsStream is Error, msg = "Expected putCsvAsStream() to fail after close()");
+    test:assertTrue(putCsvAsStream is Error);
+    if putCsvAsStream is Error {
+        test:assertEquals(putCsvAsStream.message(), "FTP client is closed");
+    }
 }
 
 @test:Config {
