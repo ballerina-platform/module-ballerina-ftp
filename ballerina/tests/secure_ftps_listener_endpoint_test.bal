@@ -39,7 +39,7 @@ ListenerConfiguration ftpsExplicitRemoteServerConfig = {
                 path: "tests/resources/keystore.jks",
                 password: "changeit"
             },
-            trustStore: {
+            cert: {
                 path: "tests/resources/keystore.jks",
                 password: "changeit"
             },
@@ -65,7 +65,7 @@ ListenerConfiguration ftpsImplicitRemoteServerConfig = {
                 path: "tests/resources/keystore.jks",
                 password: "changeit"
             },
-            trustStore: {
+            cert: {
                 path: "tests/resources/keystore.jks",
                 password: "changeit"
             },
@@ -80,29 +80,17 @@ ListenerConfiguration ftpsImplicitRemoteServerConfig = {
 
 Service ftpsExplicitRemoteServerService = service object {
     remote function onFileChange(WatchEvent & readonly event) {
-        // #region agent log
-        log:printInfo("DEBUG: FTPS EXPLICIT onFileChange called - added: " + event.addedFiles.length().toString() + ", deleted: " + event.deletedFiles.length().toString());
-        // #endregion
         ftpsExplicitAddedFileCount = event.addedFiles.length();
         ftpsExplicitDeletedFileCount = event.deletedFiles.length();
         ftpsExplicitWatchEventReceived = true;
-        // #region agent log
-        log:printInfo("DEBUG: FTPS EXPLICIT watchEventReceived set to true");
-        // #endregion
     }
 };
 
 Service ftpsImplicitRemoteServerService = service object {
     remote function onFileChange(WatchEvent & readonly event) {
-        // #region agent log
-        log:printInfo("DEBUG: FTPS IMPLICIT onFileChange called - added: " + event.addedFiles.length().toString() + ", deleted: " + event.deletedFiles.length().toString());
-        // #endregion
         ftpsImplicitAddedFileCount = event.addedFiles.length();
         ftpsImplicitDeletedFileCount = event.deletedFiles.length();
         ftpsImplicitWatchEventReceived = true;
-        // #region agent log
-        log:printInfo("DEBUG: FTPS IMPLICIT watchEventReceived set to true");
-        // #endregion
     }
 };
 
@@ -111,37 +99,13 @@ Listener? ftpsImplicitRemoteServerListener = ();
 
 @test:BeforeSuite
 function initFtpsListenerTestEnvironment() returns error? {
-    // #region agent log
-    log:printInfo("DEBUG: Starting FTPS listener initialization - EXPLICIT");
-    // #endregion
     ftpsExplicitRemoteServerListener = check new (ftpsExplicitRemoteServerConfig);
-    // #region agent log
-    log:printInfo("DEBUG: FTPS EXPLICIT listener created successfully");
-    // #endregion
     check (<Listener>ftpsExplicitRemoteServerListener).attach(ftpsExplicitRemoteServerService);
-    // #region agent log
-    log:printInfo("DEBUG: FTPS EXPLICIT service attached successfully");
-    // #endregion
     check (<Listener>ftpsExplicitRemoteServerListener).'start();
-    // #region agent log
-    log:printInfo("DEBUG: FTPS EXPLICIT listener started successfully");
-    // #endregion
 
-    // #region agent log
-    log:printInfo("DEBUG: Starting FTPS listener initialization - IMPLICIT");
-    // #endregion
     ftpsImplicitRemoteServerListener = check new (ftpsImplicitRemoteServerConfig);
-    // #region agent log
-    log:printInfo("DEBUG: FTPS IMPLICIT listener created successfully");
-    // #endregion
     check (<Listener>ftpsImplicitRemoteServerListener).attach(ftpsImplicitRemoteServerService);
-    // #region agent log
-    log:printInfo("DEBUG: FTPS IMPLICIT service attached successfully");
-    // #endregion
     check (<Listener>ftpsImplicitRemoteServerListener).'start();
-    // #region agent log
-    log:printInfo("DEBUG: FTPS IMPLICIT listener started successfully");
-    // #endregion
 }
 
 @test:AfterSuite
@@ -156,68 +120,40 @@ function cleanFtpsListenerTestEnvironment() returns error? {
 
 @test:Config {}
 public function testFtpsExplicitAddedFileCount() {
-    // #region agent log
-    log:printInfo("DEBUG: testFtpsExplicitAddedFileCount started, watchEventReceived: " + ftpsExplicitWatchEventReceived.toString());
-    // #endregion
     int timeoutInSeconds = 300;
     // Test fails in 5 minutes if failed to receive watchEvent
     while timeoutInSeconds > 0 {
         if ftpsExplicitWatchEventReceived {
-            // #region agent log
-            log:printInfo("DEBUG: testFtpsExplicitAddedFileCount - event received, count: " + ftpsExplicitAddedFileCount.toString());
-            // #endregion
             log:printInfo("FTPS EXPLICIT added file count: " + ftpsExplicitAddedFileCount.toString());
             // Be lenient - expect at least 2 files (may have more from previous tests)
             test:assertTrue(ftpsExplicitAddedFileCount >= 2, "Should have at least 2 added files");
             break;
         } else {
-            // #region agent log
-            if timeoutInSeconds % 30 == 0 {
-                log:printInfo("DEBUG: testFtpsExplicitAddedFileCount - waiting, remaining: " + timeoutInSeconds.toString() + "s, watchEventReceived: " + ftpsExplicitWatchEventReceived.toString());
-            }
-            // #endregion
             runtime:sleep(1);
             timeoutInSeconds = timeoutInSeconds - 1;
         }
     }
     if timeoutInSeconds == 0 {
-        // #region agent log
-        log:printError("DEBUG: testFtpsExplicitAddedFileCount - TIMEOUT, watchEventReceived: " + ftpsExplicitWatchEventReceived.toString() + ", listener state: " + (ftpsExplicitRemoteServerListener is Listener).toString());
-        // #endregion
         test:assertFail("Failed to receive WatchEvent for 5 minutes.");
     }
 }
 
 @test:Config {}
 public function testFtpsImplicitAddedFileCount() {
-    // #region agent log
-    log:printInfo("DEBUG: testFtpsImplicitAddedFileCount started, watchEventReceived: " + ftpsImplicitWatchEventReceived.toString());
-    // #endregion
     int timeoutInSeconds = 300;
     // Test fails in 5 minutes if failed to receive watchEvent
     while timeoutInSeconds > 0 {
         if ftpsImplicitWatchEventReceived {
-            // #region agent log
-            log:printInfo("DEBUG: testFtpsImplicitAddedFileCount - event received, count: " + ftpsImplicitAddedFileCount.toString());
-            // #endregion
             log:printInfo("FTPS IMPLICIT added file count: " + ftpsImplicitAddedFileCount.toString());
             // Be lenient - expect at least 2 files (may have more from previous tests)
             test:assertTrue(ftpsImplicitAddedFileCount >= 2, "Should have at least 2 added files");
             break;
         } else {
-            // #region agent log
-            if timeoutInSeconds % 30 == 0 {
-                log:printInfo("DEBUG: testFtpsImplicitAddedFileCount - waiting, remaining: " + timeoutInSeconds.toString() + "s, watchEventReceived: " + ftpsImplicitWatchEventReceived.toString());
-            }
-            // #endregion
             runtime:sleep(1);
             timeoutInSeconds = timeoutInSeconds - 1;
         }
     }
     if timeoutInSeconds == 0 {
-        // #region agent log
-        log:printError("DEBUG: testFtpsImplicitAddedFileCount - TIMEOUT, watchEventReceived: " + ftpsImplicitWatchEventReceived.toString() + ", listener state: " + (ftpsImplicitRemoteServerListener is Listener).toString());
-        // #endregion
         test:assertFail("Failed to receive WatchEvent for 5 minutes.");
     }
 }
@@ -235,7 +171,7 @@ public function testFtpsConnectWithInvalidKeystore() returns error? {
                     path: "tests/resources/invalid.keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
@@ -269,7 +205,7 @@ public function testFtpsConnectWithInvalidTruststore() returns error? {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/invalid.truststore.jks",
                     password: "changeit"
                 },
@@ -303,7 +239,7 @@ public function testFtpsConnectToFTPServerWithFTPProtocol() returns error? {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
@@ -358,7 +294,7 @@ public function testFtpsConnectWithEmptyCredentials() returns error? {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
@@ -394,7 +330,7 @@ public function testFtpsConnectWithEmptyKeystorePath() returns error? {
                     path: "",
                     password: ""
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
@@ -430,7 +366,7 @@ public function testFtpsServerConnectWithInvalidHostWithDetails() returns error?
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
@@ -467,7 +403,7 @@ public function testFtpsServerConnectWithInvalidPortWithDetails() returns error?
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },

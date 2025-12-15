@@ -195,6 +195,11 @@ public final class FileTransportUtils {
                 log.warn("Unknown FTPS file type: {}, defaulting to BINARY", fileTypeStr);
                 ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
             }
+        } else {
+            // Default to BINARY when file type is not specified
+            // This is required for VFS to determine file type, especially with CLEAR data channel protection
+            ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
+            log.debug("FTPS file type defaulting to BINARY");
         }
         
         // Handle implicit vs explicit FTPS mode using the recommended VFS2 API

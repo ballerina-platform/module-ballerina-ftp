@@ -30,7 +30,7 @@ ClientConfiguration ftpsExplicitConfig = {
                 path: "tests/resources/keystore.jks",
                 password: "changeit"
             },
-            trustStore: {
+            cert: {
                 path: "tests/resources/keystore.jks",
                 password: "changeit"
             },
@@ -52,7 +52,7 @@ ClientConfiguration ftpsImplicitConfig = {
                 path: "tests/resources/keystore.jks",
                 password: "changeit"
             },
-            trustStore: {
+            cert: {
                 path: "tests/resources/keystore.jks",
                 password: "changeit"
             },
@@ -74,7 +74,7 @@ ClientConfiguration ftpsClearDataChannelConfig = {
                 path: "tests/resources/keystore.jks",
                 password: "changeit"
             },
-            trustStore: {
+            cert: {
                 path: "tests/resources/keystore.jks",
                 password: "changeit"
             },
@@ -90,30 +90,10 @@ Client? ftpsClearDataChannelClientEp = ();
 
 @test:BeforeSuite
 function initFtpsTestEnvironment() returns error? {
-    // #region agent log
-    log:printInfo("DEBUG: Starting FTPS client initialization - EXPLICIT");
-    // #endregion
     io:println("Initializing FTPS test clients");
     ftpsExplicitClientEp = check new (ftpsExplicitConfig);
-    // #region agent log
-    log:printInfo("DEBUG: FTPS EXPLICIT client created successfully, client state: " + (ftpsExplicitClientEp is Client).toString());
-    // #endregion
-    
-    // #region agent log
-    log:printInfo("DEBUG: Starting FTPS client initialization - IMPLICIT");
-    // #endregion
     ftpsImplicitClientEp = check new (ftpsImplicitConfig);
-    // #region agent log
-    log:printInfo("DEBUG: FTPS IMPLICIT client created successfully, client state: " + (ftpsImplicitClientEp is Client).toString());
-    // #endregion
-    
-    // #region agent log
-    log:printInfo("DEBUG: Starting FTPS client initialization - CLEAR data channel");
-    // #endregion
     ftpsClearDataChannelClientEp = check new (ftpsClearDataChannelConfig);
-    // #region agent log
-    log:printInfo("DEBUG: FTPS CLEAR data channel client created successfully, client state: " + (ftpsClearDataChannelClientEp is Client).toString());
-    // #endregion
 }
 
 
@@ -121,51 +101,22 @@ function initFtpsTestEnvironment() returns error? {
     dependsOn: [testRemoveDirectory]
 }
 public function testFtpsExplicitGetFileContent() returns error? {
-    // #region agent log
-    log:printInfo("DEBUG: testFtpsExplicitGetFileContent started, client state: " + (ftpsExplicitClientEp is Client).toString());
-    // #endregion
     // First, put a file to ensure it exists
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    // #region agent log
-    log:printInfo("DEBUG: About to execute FTPS EXPLICIT PUT /file2.txt");
-    // #endregion
     Error? putResponse = (<Client>ftpsExplicitClientEp)->put("/file2.txt", bStream);
     if putResponse is Error {
-        // #region agent log
-        log:printError("DEBUG: FTPS EXPLICIT PUT failed: " + putResponse.message());
-        // #endregion
         test:assertFail(msg = "Error in FTPS EXPLICIT `put` operation for setup: " + putResponse.message());
-    } else {
-        // #region agent log
-        log:printInfo("DEBUG: FTPS EXPLICIT PUT /file2.txt succeeded");
-        // #endregion
     }
 
-    // #region agent log
-    log:printInfo("DEBUG: About to execute FTPS EXPLICIT GET /file2.txt");
-    // #endregion
     stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get("/file2.txt");
     if str is stream<byte[] & readonly, io:Error?> {
-        // #region agent log
-        log:printInfo("DEBUG: FTPS EXPLICIT GET succeeded, reading stream content");
-        // #endregion
         test:assertTrue(check matchStreamContent(str, "Put content"),
             msg = "Found unexpected content from FTPS EXPLICIT `get` operation");
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
-            // #region agent log
-            log:printError("DEBUG: FTPS EXPLICIT stream close failed: " + closeResult.message());
-            // #endregion
             test:assertFail(msg = "Error while closing stream in FTPS EXPLICIT `get` operation." + closeResult.message());
-        } else {
-            // #region agent log
-            log:printInfo("DEBUG: FTPS EXPLICIT stream closed successfully");
-            // #endregion
         }
     } else {
-        // #region agent log
-        log:printError("DEBUG: FTPS EXPLICIT GET failed: " + str.message());
-        // #endregion
         test:assertFail("Found unexpected response type" + str.message());
     }
 }
@@ -174,51 +125,22 @@ public function testFtpsExplicitGetFileContent() returns error? {
     dependsOn: [testFtpsExplicitGetFileContent]
 }
 public function testFtpsImplicitGetFileContent() returns error? {
-    // #region agent log
-    log:printInfo("DEBUG: testFtpsImplicitGetFileContent started, client state: " + (ftpsImplicitClientEp is Client).toString());
-    // #endregion
     // First, put a file to ensure it exists
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    // #region agent log
-    log:printInfo("DEBUG: About to execute FTPS IMPLICIT PUT /file2.txt");
-    // #endregion
     Error? putResponse = (<Client>ftpsImplicitClientEp)->put("/file2.txt", bStream);
     if putResponse is Error {
-        // #region agent log
-        log:printError("DEBUG: FTPS IMPLICIT PUT failed: " + putResponse.message());
-        // #endregion
         test:assertFail(msg = "Error in FTPS IMPLICIT `put` operation for setup: " + putResponse.message());
-    } else {
-        // #region agent log
-        log:printInfo("DEBUG: FTPS IMPLICIT PUT /file2.txt succeeded");
-        // #endregion
     }
 
-    // #region agent log
-    log:printInfo("DEBUG: About to execute FTPS IMPLICIT GET /file2.txt");
-    // #endregion
     stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsImplicitClientEp)->get("/file2.txt");
     if str is stream<byte[] & readonly, io:Error?> {
-        // #region agent log
-        log:printInfo("DEBUG: FTPS IMPLICIT GET succeeded, reading stream content");
-        // #endregion
         test:assertTrue(check matchStreamContent(str, "Put content"),
             msg = "Found unexpected content from FTPS IMPLICIT `get` operation");
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
-            // #region agent log
-            log:printError("DEBUG: FTPS IMPLICIT stream close failed: " + closeResult.message());
-            // #endregion
             test:assertFail(msg = "Error while closing stream in FTPS IMPLICIT `get` operation." + closeResult.message());
-        } else {
-            // #region agent log
-            log:printInfo("DEBUG: FTPS IMPLICIT stream closed successfully");
-            // #endregion
         }
     } else {
-        // #region agent log
-        log:printError("DEBUG: FTPS IMPLICIT GET failed: " + str.message());
-        // #endregion
         test:assertFail("Found unexpected response type" + str.message());
     }
 }
@@ -227,52 +149,23 @@ public function testFtpsImplicitGetFileContent() returns error? {
     dependsOn: [testFtpsExplicitGetFileContent]
 }
 public function testFtpsExplicitPutFileContent() returns error? {
-    // #region agent log
-    log:printInfo("DEBUG: testFtpsExplicitPutFileContent started");
-    // #endregion
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
 
-    // #region agent log
-    log:printInfo("DEBUG: About to execute FTPS EXPLICIT PUT /tempFtpsFile1.txt");
-    // #endregion
     Error? response = (<Client>ftpsExplicitClientEp)->put("/tempFtpsFile1.txt", bStream);
     if response is Error {
-        // #region agent log
-        log:printError("DEBUG: FTPS EXPLICIT PUT /tempFtpsFile1.txt failed: " + response.message());
-        // #endregion
         test:assertFail(msg = "Error in FTPS EXPLICIT `put` operation" + response.message());
-    } else {
-        // #region agent log
-        log:printInfo("DEBUG: FTPS EXPLICIT PUT /tempFtpsFile1.txt succeeded");
-        // #endregion
     }
     log:printInfo("Executed FTPS EXPLICIT `put` operation");
 
-    // #region agent log
-    log:printInfo("DEBUG: About to execute FTPS EXPLICIT GET /tempFtpsFile1.txt");
-    // #endregion
     stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get("/tempFtpsFile1.txt");
     if str is stream<byte[] & readonly, io:Error?> {
-        // #region agent log
-        log:printInfo("DEBUG: FTPS EXPLICIT GET /tempFtpsFile1.txt succeeded, reading stream");
-        // #endregion
         test:assertTrue(check matchStreamContent(str, "Put content"),
             msg = "Found unexpected content from FTPS EXPLICIT `get` operation after `put` operation");
         io:Error? closeResult = str.close();
         if closeResult is io:Error {
-            // #region agent log
-            log:printError("DEBUG: FTPS EXPLICIT stream close failed: " + closeResult.message());
-            // #endregion
             test:assertFail(msg = "Error while closing stream in FTPS EXPLICIT `get` operation." + closeResult.message());
-        } else {
-            // #region agent log
-            log:printInfo("DEBUG: FTPS EXPLICIT stream closed successfully");
-            // #endregion
         }
     } else {
-        // #region agent log
-        log:printError("DEBUG: FTPS EXPLICIT GET /tempFtpsFile1.txt failed: " + str.message());
-        // #endregion
         test:assertFail(msg = "Found unexpected response type" + str.message());
     }
 }
@@ -309,33 +202,14 @@ public function testFtpsImplicitPutFileContent() returns error? {
     dependsOn: [testFtpsExplicitPutFileContent]
 }
 public function testFtpsExplicitDeleteFileContent() returns error? {
-    // #region agent log
-    log:printInfo("DEBUG: testFtpsExplicitDeleteFileContent started");
-    // #endregion
-    // #region agent log
-    log:printInfo("DEBUG: About to execute FTPS EXPLICIT DELETE /tempFtpsFile1.txt");
-    // #endregion
     Error? response = (<Client>ftpsExplicitClientEp)->delete("/tempFtpsFile1.txt");
     if response is Error {
-        // #region agent log
-        log:printError("DEBUG: FTPS EXPLICIT DELETE /tempFtpsFile1.txt failed: " + response.message());
-        // #endregion
         test:assertFail(msg = "Error in FTPS EXPLICIT `delete` operation" + response.message());
-    } else {
-        // #region agent log
-        log:printInfo("DEBUG: FTPS EXPLICIT DELETE /tempFtpsFile1.txt succeeded");
-        // #endregion
     }
     log:printInfo("Executed FTPS EXPLICIT `delete` operation");
 
-    // #region agent log
-    log:printInfo("DEBUG: About to verify file deletion with GET /tempFtpsFile1.txt");
-    // #endregion
     stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get("/tempFtpsFile1.txt");
     if str is stream<byte[] & readonly, io:Error?> {
-        // #region agent log
-        log:printError("DEBUG: File still exists after DELETE, this is unexpected");
-        // #endregion
         test:assertFalse(check matchStreamContent(str, "Put content"),
             msg = "File was not deleted with FTPS EXPLICIT `delete` operation");
         io:Error? closeResult = str.close();
@@ -343,9 +217,6 @@ public function testFtpsExplicitDeleteFileContent() returns error? {
             test:assertFail(msg = "Error while closing the stream in FTPS EXPLICIT `get` operation." + closeResult.message());
         }
     } else {
-        // #region agent log
-        log:printInfo("DEBUG: GET after DELETE returned error as expected: " + str.message());
-        // #endregion
         test:assertEquals(str.message(),
             "Failed to read file: ftps://wso2:***@127.0.0.1:21214/tempFtpsFile1.txt not found",
             msg = "Correct error is not given when trying to get a non-existing file.");
@@ -411,7 +282,7 @@ public function testFtpsConnectWithWrongProtocol() returns error? {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
@@ -467,7 +338,7 @@ public function testFtpsConnectWithInvalidKeystorePath() returns error? {
                     path: "tests/invalid_resources/keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
@@ -501,7 +372,7 @@ public function testFtpsConnectWithInvalidTruststorePath() returns error? {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/invalid_resources/truststore.jks",
                     password: "changeit"
                 },
@@ -535,7 +406,7 @@ public function testFtpsConnectWithWrongPort() returns error? {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
@@ -570,7 +441,7 @@ public function testFtpsConnectWithInvalidHost() returns error? {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },
-                trustStore: {
+                cert: {
                     path: "tests/resources/keystore.jks",
                     password: "changeit"
                 },

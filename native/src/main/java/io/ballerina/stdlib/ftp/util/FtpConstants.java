@@ -88,7 +88,7 @@ public class FtpConstants {
 
     // Keys for extracting data from Ballerina Records
     public static final String SECURE_SOCKET_KEY = "key";
-    public static final String SECURE_SOCKET_TRUSTSTORE = "trustStore";
+    public static final String SECURE_SOCKET_TRUSTSTORE = "cert";
     public static final String KEYSTORE_PATH_KEY = "path";
     public static final String KEYSTORE_PASSWORD_KEY = "password";
     

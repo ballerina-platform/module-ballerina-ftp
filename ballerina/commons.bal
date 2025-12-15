@@ -62,14 +62,14 @@ public type PrivateKey record {|
 # Used for configuring SSL/TLS certificates and keystores for FTPS connections.
 #
 # + key - Keystore configuration for client authentication
-# + trustStore - Truststore configuration for server certificate validation
+# + cert - Certificate configuration for server certificate validation
 # + mode - FTPS connection mode (IMPLICIT or EXPLICIT). Defaults to EXPLICIT if not specified.
 # + dataChannelProtection - Data channel protection level (CLEAR, PRIVATE, SAFE, or CONFIDENTIAL).
 #                           Controls encryption of the data channel used for file transfers.
 #                           Defaults to PRIVATE (encrypted) for secure transfers.
 public type SecureSocket record {|
     crypto:KeyStore key?;
-    crypto:TrustStore trustStore?;
+    crypto:TrustStore cert?;
     FtpsMode mode = EXPLICIT;
     FtpsDataChannelProtection dataChannelProtection = PRIVATE;
 |};
