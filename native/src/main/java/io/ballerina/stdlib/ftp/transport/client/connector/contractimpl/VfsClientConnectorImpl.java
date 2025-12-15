@@ -28,6 +28,7 @@ import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
 import io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystem;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
@@ -80,6 +81,26 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
 
     public void addListener(RemoteFileSystemListener listener) {
         this.remoteFileSystemListener = listener;
+    }
+
+    public void close() {
+        if (path == null) {
+            return;
+        }
+        try {
+            FileSystem fileSystem = path.getFileSystem();
+            try {
+                path.close();
+            } finally {
+                if (fsManager != null && fileSystem != null) {
+                    fsManager.closeFileSystem(fileSystem);
+                }
+            }
+        } catch (Exception exception) {
+            logger.error("Error while closing the FTP client connection.", exception);
+        } finally {
+            path = null;
+        }
     }
 
     @Override
