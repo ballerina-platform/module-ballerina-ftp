@@ -41,8 +41,6 @@ public final class FtpsServer {
 
     private static final Logger logger = LoggerFactory.getLogger("ballerina");
     private static FtpServer ftpsServer;
-    private static final String username = "wso2";
-    private static final String password = "wso2123";
 
     public static void main(String args[]) throws InterruptedException {
         // Force Java to use TLS 1.2 globally. 
@@ -79,7 +77,8 @@ public final class FtpsServer {
             throw new RuntimeException("Keystore file not found at: " + keystoreFile.getAbsolutePath());
         }
         ssl.setKeystoreFile(keystoreFile);
-        ssl.setKeystorePassword("changeit");
+        char[] keystorePassword = "changeit".toCharArray();
+        ssl.setKeystorePassword(new String(keystorePassword));
         
         // Note: We removed the specific setSslProtocol call here because the 
         // System.setProperty in main() handles it more reliably for older libraries.
@@ -97,8 +96,10 @@ public final class FtpsServer {
         final PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
         final UserManager userManager = userManagerFactory.createUserManager();
         BaseUser user = new BaseUser();
-        user.setName(username);
-        user.setPassword(password);
+        String finalUsername = "wso2";
+        String finalPassword = "wso2123";
+        user.setName(finalUsername);
+        user.setPassword(finalPassword);
         
         // Set up data directory
         File dataDirectory = new File("src/main/resources/datafiles");

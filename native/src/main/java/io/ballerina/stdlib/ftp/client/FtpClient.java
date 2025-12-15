@@ -390,7 +390,7 @@ public class FtpClient {
      * Handles both BMap and BObject representations. Extracts path/password strings and loads the Java KeyStore.
      * 
      * @param secureSocket The secure socket configuration map
-     * @param storeKey The key name ("key" for KeyStore, "trustStore" for TrustStore)
+     * @param storeKey The key name ("key" for KeyStore, "cert" for TrustStore)
      * @param pathConfigKey The configuration key for the store path (deprecated, kept for backward compatibility)
      * @param passwordConfigKey The configuration key for the store password
      * @param ftpConfig The FTP configuration map to populate
@@ -471,7 +471,7 @@ public class FtpClient {
      * Handles both BMap and BObject representations.
      * 
      * @param secureSocket The secure socket configuration map
-     * @param storeKey The key name ("key" or "trustStore")
+     * @param storeKey The key name ("key" or "cert")
      * @return The store object, or null if not found
      */
     private static Object getStoreObject(BMap secureSocket, String storeKey) {

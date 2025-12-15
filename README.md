@@ -382,7 +382,7 @@ ftp:ClientConfiguration ftpsConfig = {
                 path: "<Path to keystore file>",
                 password: "<Keystore password>"
             },
-            trustStore: {
+            cert: {
                 path: "<Path to truststore file>",
                 password: "<Truststore password>"
             },
@@ -415,7 +415,7 @@ listener ftp:Listener remoteServer = check new({
                 path: "<Path to keystore file>",
                 password: "<Keystore password>"
             },
-            trustStore: {
+            cert: {
                 path: "<Path to truststore file>",
                 password: "<Truststore password>"
             },

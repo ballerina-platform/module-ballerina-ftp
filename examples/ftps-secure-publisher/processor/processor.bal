@@ -26,7 +26,7 @@ ftp:AuthConfiguration authConfig = {
             path: "../resources/resources/keys/client-keystore.jks",
             password: "changeit"
         },
-        trustStore: {
+        cert: {
             path: "../resources/resources/keys/truststore.jks",
             password: "changeit"
         },
