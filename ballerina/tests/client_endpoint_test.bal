@@ -1326,11 +1326,13 @@ public function testCloseThenPutApis() returns error? {
         test:assertEquals(putBytesAsStream.message(), "FTP client is closed");
     }
 
-    stream<string[], error?> csvStream = [
+    string[][] rows = [
         ["id", "name"],
-        ["1", "A"]
-    ].toStream();
-    Error? putCsvAsStream = ftpClient->putCsvAsStream("/home/in/after-close-putCsvAsStream.csv", csvStream);
+        ["1", "A"],
+        ["2", "B"]
+    ];
+    stream<string[], error?> csvStream = rows.toStream();
+    Error? putCsvAsStream = ftpClient->putCsvAsStream("/home/in/after-close-csv-stream.csv", csvStream);
     test:assertTrue(putCsvAsStream is Error);
     if putCsvAsStream is Error {
         test:assertEquals(putCsvAsStream.message(), "FTP client is closed");
