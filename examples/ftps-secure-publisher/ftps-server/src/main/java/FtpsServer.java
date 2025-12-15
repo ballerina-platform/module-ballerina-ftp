@@ -16,6 +16,7 @@
  * under the License.
  */
 
+import org.apache.ftpserver.DataConnectionConfigurationFactory;
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.Authority;
@@ -44,6 +45,11 @@ public final class FtpsServer {
     private static final String password = "wso2123";
 
     public static void main(String args[]) throws InterruptedException {
+        // Force Java to use TLS 1.2 globally. 
+        // This fixes a FileZilla "User canceled (90)" / "GnuTLS error" 
+        // without needing the newer library methods that caused compilation errors.
+        System.setProperty("jdk.tls.server.protocols", "TLSv1.2");
+
         String mode = args.length > 0 ? args[0] : "EXPLICIT";
         initFtpsServer(mode);
         logger.info("Started Example FTPS server in {} mode", mode);
@@ -58,7 +64,7 @@ public final class FtpsServer {
             port = 990;
             implicitSsl = true;
         } else {
-            port = 21214; // Use non-standard port for EXPLICIT to avoid conflicts
+            port = 21214; 
             implicitSsl = false;
         }
 
@@ -74,8 +80,18 @@ public final class FtpsServer {
         }
         ssl.setKeystoreFile(keystoreFile);
         ssl.setKeystorePassword("changeit");
+        
+        // Note: We removed the specific setSslProtocol call here because the 
+        // System.setProperty in main() handles it more reliably for older libraries.
+        
         factory.setSslConfiguration(ssl.createSslConfiguration());
         factory.setImplicitSsl(implicitSsl);
+
+        // Configure Data Connection for Passive Mode (PASV)
+        // This ensures directory listings (MLSD) work correctly.
+        DataConnectionConfigurationFactory dataConfigFactory = new DataConnectionConfigurationFactory();
+        dataConfigFactory.setPassiveExternalAddress("127.0.0.1"); 
+        factory.setDataConnectionConfiguration(dataConfigFactory.createDataConnectionConfiguration());
 
         // Set up user management
         final PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();

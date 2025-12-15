@@ -209,6 +209,11 @@ public class FtpClient {
                     "For SFTP, use privateKey configuration.", Error.errorType());
         }
         
+        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_FTP)) {
+            return FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
+                    "For FTP, do not use secureSocket configuration.", Error.errorType());
+        }
+        
         return null;
     }
 

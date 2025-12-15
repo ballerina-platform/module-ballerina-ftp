@@ -260,6 +260,11 @@ public class FtpListenerHelper {
             throw FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
                     "For SFTP, use privateKey configuration.", Error.errorType());
         }
+        
+        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_FTP)) {
+            throw FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
+                    "For FTP, do not use secureSocket configuration.", Error.errorType());
+        }
     }
 
     /**
@@ -389,8 +394,13 @@ public class FtpListenerHelper {
             }
         }
         
+        // Validate empty path for keystore
+        if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY) && (path == null || path.isEmpty())) {
+            throw new BallerinaFtpException("Failed to load FTPS Server Keystore: KeyStore path cannot be empty");
+        }
+        
         // BRIDGE: Load the Java Object
-        if (path != null) {
+        if (path != null && !path.isEmpty()) {
             try {
                 KeyStore javaKeyStore = FtpUtil.loadKeyStore(path, password);
                 
