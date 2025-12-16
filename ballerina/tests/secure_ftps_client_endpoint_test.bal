@@ -83,6 +83,22 @@ ClientConfiguration ftpsClearDataChannelConfig = {
     }
 };
 
+// Config to test default port logic. 
+// We set port 21, and the backend should detect IMPLICIT mode and swap it to 990.
+ClientConfiguration ftpsImplicitDefaultPortConfig = {
+    protocol: FTPS,
+    host: "127.0.0.1",
+    port: 21, 
+    auth: {
+        credentials: {username: "wso2", password: "wso2123"},
+        secureSocket: {
+            key: {path: "tests/resources/keystore.jks", password: "changeit"},
+            cert: {path: "tests/resources/keystore.jks", password: "changeit"},
+            mode: IMPLICIT
+        }
+    }
+};
+
 Client? ftpsExplicitClientEp = ();
 Client? ftpsImplicitClientEp = ();
 Client? ftpsClearDataChannelClientEp = ();
@@ -101,9 +117,19 @@ function initFtpsTestEnvironment() returns error? {
     check cleanFtpsTarget();
 }
 
+@test:AfterSuite
+function cleanupFtpsTestEnvironment() returns error? {
+    io:println("Cleaning up FTPS test files...");
+    check cleanFtpsTarget();
+}
+
 function cleanFtpsTarget() returns error? {
+    if ftpsExplicitClientEp is () {
+        return;
+    }
     // Helper to clean up specific files used in tests if they exist
-    string[] files = ["file2.txt", "tempFtpsFile1.txt", "tempFtpsFile2.txt", "tempFtpsPrivate.txt", "tempFtpsClear.txt", "tempFtpsFile3.txt", "tempFtpsFile4.txt", "tempFtpsFile5.txt", "tempFtpsFile6.txt"];
+    string[] files = ["file2.txt", "tempFtpsFile1.txt", "tempFtpsFile2.txt", "tempFtpsPrivate.txt", 
+    "tempFtpsClear.txt", "tempFtpsFile3.txt", "tempFtpsFile4.txt", "tempFtpsFile5.txt", "tempFtpsFile6.txt"];
     foreach string f in files {
         var deleteResult = trap (<Client>ftpsExplicitClientEp)->delete(FTPS_CLIENT_ROOT + "/" + f);
         // Ignore errors for files that don't exist
@@ -188,6 +214,23 @@ public function testFtpsImplicitPutFileContent() returns error? {
     }
     
     check (<Client>ftpsImplicitClientEp)->delete(filePath);
+}
+
+@test:Config {}
+public function testFtpsImplicitDefaultsTo990() returns error? {
+    // Uses the config with Port 21 to test the swap logic
+    Client|error client = new (ftpsImplicitDefaultPortConfig);
+    if client is error {
+        test:assertFail("Failed to connect using default IMPLICIT port logic: " + client.message());
+        return;
+    }
+
+    FileInfo[]|error result = client->list(FTPS_CLIENT_ROOT);
+    if result is error {
+        test:assertFail("Connection established but failed to list files: " + result.message());
+    } else {
+        test:assertTrue(result.length() >= 0, "Connected and listed using default port logic (21 -> 990)");
+    }
 }
 
 @test:Config {}
@@ -469,4 +512,3 @@ public function testFtpsLargeFileStreamReuse() returns error? {
     check (<Client>ftpsExplicitClientEp)->delete(path1);
     check (<Client>ftpsExplicitClientEp)->delete(path2);
 }
-
