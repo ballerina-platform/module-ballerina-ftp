@@ -1465,28 +1465,6 @@ public function testCloseThenOtherApis() returns error? {
     }
 }
 
-@test:Config {
-    dependsOn: [testCloseThenOtherApis]
-}
-public function testCallerCloseClosesUnderlyingClient() returns error? {
-    Client ftpClient = check new (config);
-    Caller caller = new (ftpClient);
-    Error? closeResult = caller.close();
-    test:assertEquals(closeResult, ());
-
-    boolean|Error existsResult = caller->exists("/home/in/test1.txt");
-    test:assertTrue(existsResult is Error);
-    if existsResult is Error {
-        test:assertEquals(existsResult.message(), "FTP client is closed");
-    }
-
-    string|Error getTextResult = ftpClient->getText("/home/in/test1.txt");
-    test:assertTrue(getTextResult is Error);
-    if getTextResult is Error {
-        test:assertEquals(getTextResult.message(), "FTP client is closed");
-    }
-}
-
 @test:AfterSuite {}
 public function cleanTestEnvironment() returns error? {
     check (<Listener>callerListener).gracefulStop();

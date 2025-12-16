@@ -375,8 +375,4 @@ public isolated client class Caller {
     remote isolated function delete(string path) returns Error? {
         return self.'client->delete(path);
     }
-
-    function close() returns Error? {
-        return self.'client->close();
-    }
 }
