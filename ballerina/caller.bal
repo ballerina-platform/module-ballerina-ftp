@@ -30,13 +30,13 @@ public isolated client class Caller {
     }
 
     # Retrieves the file content from a remote resource.
-    # Deprecated: Use the format specific get methods(`getJson`, `getXml`, `getCsv`, `getBytes`, `getText`) instead.
     # ```ballerina
     # stream<byte[] & readonly, io:Error?>|ftp:Error channel = caller->get(path);
     # ```
     #
     # + path - The resource path
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
+    # # Deprecated: Use the format specific get methods(`getJson`, `getXml`, `getCsv`, `getBytes`, `getText`) instead.
     @deprecated
     remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error {
         return self.'client->get(path);
@@ -142,7 +142,6 @@ public isolated client class Caller {
     } external;
 
     # Appends the content to an existing file in an FTP server.
-    # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     # ```ballerina
     # ftp:Error? response = caller->append(path, channel);
     # ```
@@ -150,6 +149,7 @@ public isolated client class Caller {
     # + path - The resource path
     # + content - Content to be written to the file in server
     # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
+    # # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     @deprecated
     remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content)
             returns Error? {
@@ -157,7 +157,6 @@ public isolated client class Caller {
     }
 
     # Adds a file to an FTP server.
-    # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     # ```ballerina
     # ftp:Error? response = caller->put(path, channel);
     # ```
@@ -166,6 +165,7 @@ public isolated client class Caller {
     # + content - Content to be written to the file in server
     # + compressionType - Type of the compression to be used if the file should be compressed before uploading
     # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
+    # # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     @deprecated
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
             |string|xml|json content, Compression compressionType = NONE) returns Error? {
