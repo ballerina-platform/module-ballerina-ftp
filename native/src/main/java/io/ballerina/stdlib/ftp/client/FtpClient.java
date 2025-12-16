@@ -185,7 +185,11 @@ public class FtpClient {
      */
     @Deprecated
     public static Object get(BObject clientConnector) {
-        return FtpClientHelper.generateInputStreamEntry((InputStream) clientConnector.getNativeData(READ_INPUT_STREAM));
+        InputStream inputStream = (InputStream) clientConnector.getNativeData(READ_INPUT_STREAM);
+        if (inputStream == null) {
+            return FtpUtil.createError("Error while reading the file: ftp client is closed", FTP_ERROR);
+        }
+        return FtpClientHelper.generateInputStreamEntry(inputStream);
     }
 
     public static Object getBytes(Environment env, BObject clientConnector, BString filePath) {
@@ -244,7 +248,12 @@ public class FtpClient {
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
-            connector.send(null, FtpAction.GET, filePath.getValue(), null);
+            try {
+                connector.send(null, FtpAction.GET, filePath.getValue(), null);
+            } catch (Exception exception) {
+                balFuture.complete(FtpUtil.createError("Error while reading the file: "
+                        + exception.getMessage(), exception, FTP_ERROR));
+            }
             return getResult(balFuture);
         });
     }
@@ -261,7 +270,12 @@ public class FtpClient {
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
-            connector.send(null, FtpAction.GET, filePath.getValue(), null);
+            try {
+                connector.send(null, FtpAction.GET, filePath.getValue(), null);
+            } catch (Exception exception) {
+                balFuture.complete(FtpUtil.createError("Error while reading the file: "
+                        + exception.getMessage(), exception, FTP_ERROR));
+            }
             return getResult(balFuture);
         });
     }
@@ -275,7 +289,12 @@ public class FtpClient {
             VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.
                     getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
-            connector.send(null, FtpAction.GET_ALL, filePath.getValue(), null);
+            try {
+                connector.send(null, FtpAction.GET_ALL, filePath.getValue(), null);
+            } catch (Exception exception) {
+                balFuture.complete(FtpUtil.createError("Error while reading the file: "
+                        + exception.getMessage(), exception, FTP_ERROR));
+            }
             return getResult(balFuture);
         });
     }
@@ -371,7 +390,12 @@ public class FtpClient {
             if (compressInput) {
                 filePath = FtpUtil.getCompressedFileName(filePath);
             }
-            connector.send(message, FtpAction.PUT, filePath, null);
+            try {
+                connector.send(message, FtpAction.PUT, filePath, null);
+            } catch (Exception exception) {
+                balFuture.complete(FtpUtil.createError("Error while sending the file: "
+                        + exception.getMessage(), exception, FTP_ERROR));
+            }
             return getResult(balFuture);
         });
         try {
@@ -567,10 +591,15 @@ public class FtpClient {
                     = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
             connector.addListener(connectorListener);
             String filePath = path.getValue();
-            if (options.getValue().equals(FtpConstants.WRITE_OPTION_OVERWRITE)) {
-                connector.send(message, FtpAction.PUT, filePath, null);
-            } else {
-                connector.send(message, FtpAction.APPEND, filePath, null);
+            try {
+                if (options.getValue().equals(FtpConstants.WRITE_OPTION_OVERWRITE)) {
+                    connector.send(message, FtpAction.PUT, filePath, null);
+                } else {
+                    connector.send(message, FtpAction.APPEND, filePath, null);
+                }
+            } catch (Exception exception) {
+                balFuture.complete(FtpUtil.createError("Error while sending the file: "
+                        + exception.getMessage(), exception, FTP_ERROR));
             }
             return getResult(balFuture);
         });
