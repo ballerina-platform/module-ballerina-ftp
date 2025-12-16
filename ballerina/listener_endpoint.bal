@@ -23,7 +23,7 @@ public isolated class Listener {
 
     private handle EMPTY_JAVA_STRING = java:fromString("");
     private ListenerConfiguration config = {};
-    private task:JobId? jobId = ();
+    private task:Listener? taskListener = ();
 
     # Gets invoked during object initialization.
     #
@@ -32,6 +32,16 @@ public isolated class Listener {
     public isolated function init(*ListenerConfiguration listenerConfig) returns Error? {
         self.config = listenerConfig.clone();
         lock {
+            decimal|string pollingInterval = listenerConfig.pollingInterval;
+            if pollingInterval is decimal {
+                task:Listener|error taskListener = new ({
+                    trigger: {interval: pollingInterval}
+                });
+                if taskListener is error {
+                    return error Error("Failed to create internal task listener: " + taskListener.message());
+                }
+                self.taskListener = taskListener;
+            }
             return initListener(self, self.config);
         }
     }
@@ -101,18 +111,22 @@ public isolated class Listener {
                 // Cron-based scheduling - delegate to native implementation
                 return startCronScheduler(self, pollingInterval);
             } else {
-                // Fixed interval scheduling using task scheduler
-                self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), pollingInterval);
+                task:Listener? taskListener = self.taskListener;
+                if taskListener is task:Listener {
+                    check taskListener.attach(getPollingService(self));
+                    check taskListener.'start();
+                }
+                self.taskListener = taskListener;
             }
         }
     }
 
     isolated function stop() returns error? {
         lock {
-            // Stop task scheduler if used
-            var id = self.jobId;
-            if id is task:JobId {
-                check task:unscheduleJob(id);
+            // Stop task listener if used
+            task:Listener? taskListener = self.taskListener;
+            if taskListener is task:Listener {
+                check taskListener.gracefulStop();
             }
             // Stop cron scheduler if used
             decimal|string pollingInterval = self.config.pollingInterval;
@@ -145,21 +159,17 @@ public isolated class Listener {
     }
 }
 
-class Job {
+isolated function getPollingService(Listener initializedListener) returns task:Service {
+    return service object {
+        private final Listener ftpListener = initializedListener;
 
-    *task:Job;
-    private Listener ftpListener;
-
-    public isolated function execute() {
-        var result = self.ftpListener.poll();
-        if result is error {
-            log:printError("Error while executing poll function", 'error = result);
+        isolated function execute() {
+            var result = self.ftpListener.poll();
+            if result is error {
+                log:printError("Error while executing poll function", 'error = result);
+            }
         }
-    }
-
-    public isolated function init(Listener initializedListener) {
-        self.ftpListener = initializedListener;
-    }
+    };
 }
 
 # Configuration for the FTP listener.
@@ -172,14 +182,14 @@ class Job {
 # + fileNamePattern - File name pattern (regex) to filter which files trigger events
 # + pollingInterval - Polling interval in seconds for checking file changes, or a cron expression for time-based scheduling
 # + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and
-#                   prevents the underlying VFS from attempting to change to the actual server root.
-#                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command
-#                   that can fail on servers restricting root access (e.g., chrooted environments).
+# prevents the underlying VFS from attempting to change to the actual server root.
+# If `false`, treats the actual server root as `/`, which may cause a `CWD /` command
+# that can fail on servers restricting root access (e.g., chrooted environments).
 # + fileAgeFilter - Configuration for filtering files based on age (optional)
 # + fileDependencyConditions - Array of dependency conditions for conditional file processing (default: [])
 # + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
-#                    null values in JSON/XML are allowed to be mapped to optional fields
-#                    missing fields in JSON/XML are allowed to be mapped as null values
+# null values in JSON/XML are allowed to be mapped to optional fields
+# missing fields in JSON/XML are allowed to be mapped as null values
 # + connectTimeout - Connection timeout in seconds 
 # + socketConfig - Socket timeout configurations 
 # + ftpFileTransfer - File transfer type: BINARY or ASCII (FTP only)
