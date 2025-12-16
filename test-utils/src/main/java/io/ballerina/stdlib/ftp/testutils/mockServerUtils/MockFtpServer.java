@@ -39,9 +39,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 /**
  * Creates a Mock FTP Servers
@@ -176,11 +180,25 @@ public final class MockFtpServer {
         BaseUser user = new BaseUser();
         user.setName(username);
         user.setPassword(password);
+        
+        // --- START ROBUST SETUP ---
         File dataDirectory = new File(resources + "/datafiles");
         if (!dataDirectory.exists()) {
             dataDirectory.mkdirs();
         }
+
+        // Clean and create isolated directories for FTPS
+        // This ensures no zombie files from previous runs interfere
+        File ftpsClientDir = new File(dataDirectory, "ftps-client");
+        cleanDirectory(ftpsClientDir);
+        ftpsClientDir.mkdirs();
+
+        File ftpsListenerDir = new File(dataDirectory, "ftps-listener");
+        cleanDirectory(ftpsListenerDir);
+        ftpsListenerDir.mkdirs();
+        
         user.setHomeDirectory(dataDirectory.getAbsolutePath());
+        
         List<Authority> authorities = new ArrayList<>();
         authorities.add(new WritePermission());
         user.setAuthorities(authorities);
@@ -227,6 +245,15 @@ public final class MockFtpServer {
 
     public static Object initSftpServer(String resources) throws Exception {
         final int port = 21213;
+        
+        // --- CLEANUP FOR SFTP TESTS ---
+        // Ensure the directories used by SFTP tests are clean
+        File dataDirectory = new File(resources + "/datafiles");
+        if (dataDirectory.exists()) {
+            cleanDirectory(new File(dataDirectory, "in"));
+            cleanDirectory(new File(dataDirectory, "out"));
+        }
+
         sftpServer = SshServer.setUpDefaultServer();
         SftpServerUtil.setupBasicServerConfig(sftpServer, resources, port);
         try {
@@ -263,9 +290,18 @@ public final class MockFtpServer {
         logger.info("Stopped Mock SFTP server");
     }
 
-    public static void stopFtpsServer() throws IOException {
-        if (ftpsServer != null && !ftpsServer.isSuspended() && !ftpsServer.isStopped()) {
+    public static void stopFtpsServer() {
+        if (ftpsServer != null) {
             ftpsServer.stop();
+            ftpsServer = null;
+        }
+        if (ftpsServerExplicit != null) {
+            ftpsServerExplicit.stop();
+            ftpsServerExplicit = null;
+        }
+        if (ftpsServerImplicit != null) {
+            ftpsServerImplicit.stop();
+            ftpsServerImplicit = null;
         }
         logger.info("Stopped FTPS server");
     }
@@ -282,5 +318,19 @@ public final class MockFtpServer {
             ftpsServerImplicit.stop();
         }
         logger.info("Stopped FTPS server (IMPLICIT mode)");
+    }
+
+    // Helper method to recursively clean a directory
+    private static void cleanDirectory(File dir) {
+        if (dir != null && dir.exists()) {
+            try (Stream<Path> walk = Files.walk(dir.toPath())) {
+                walk.sorted(Comparator.reverseOrder())
+                    .filter(p -> !p.equals(dir.toPath())) // Don't delete the root dir itself, just contents
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+            } catch (IOException e) {
+                logger.warn("Failed to clean directory: " + dir.getAbsolutePath() + " - " + e.getMessage());
+            }
+        }
     }
 }

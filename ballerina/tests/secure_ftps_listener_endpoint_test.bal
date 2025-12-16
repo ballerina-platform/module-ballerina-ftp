@@ -18,17 +18,26 @@ import ballerina/lang.runtime as runtime;
 import ballerina/log;
 import ballerina/test;
 
-int ftpsExplicitAddedFileCount = 0;
-int ftpsExplicitDeletedFileCount = 0;
-boolean ftpsExplicitWatchEventReceived = false;
+// --- Global State for Event Capture (Managed per test) ---
+isolated boolean ftpsEventReceived = false;
+isolated int ftpsFileCount = 0;
 
-int ftpsImplicitAddedFileCount = 0;
-int ftpsImplicitDeletedFileCount = 0;
-boolean ftpsImplicitWatchEventReceived = false;
+function resetFtpsState() {
+    lock {
+        ftpsEventReceived = false;
+    }
+    lock {
+        ftpsFileCount = 0;
+    }
+}
 
-ListenerConfiguration ftpsExplicitRemoteServerConfig = {
+// --- Reusable Configs ---
+
+// 1. Trigger Client Config (To create files that the listener watches)
+ClientConfiguration triggerClientConfig = {
     protocol: FTPS,
     host: "127.0.0.1",
+    port: 21214,
     auth: {
         credentials: {
             username: "wso2",
@@ -46,15 +55,14 @@ ListenerConfiguration ftpsExplicitRemoteServerConfig = {
             mode: EXPLICIT,
             dataChannelProtection: PRIVATE
         }
-    },
-    port: 21214,
-    pollingInterval: 2,
-    fileNamePattern: "(.*).txt"
+    }
 };
 
-ListenerConfiguration ftpsImplicitRemoteServerConfig = {
+// 2. Trigger Client Config for Implicit Mode
+ClientConfiguration triggerImplicitClientConfig = {
     protocol: FTPS,
     host: "127.0.0.1",
+    port: 990,
     auth: {
         credentials: {
             username: "wso2",
@@ -72,91 +80,132 @@ ListenerConfiguration ftpsImplicitRemoteServerConfig = {
             mode: IMPLICIT,
             dataChannelProtection: PRIVATE
         }
-    },
-    port: 990,
-    pollingInterval: 2,
-    fileNamePattern: "(.*).txt"
-};
-
-Service ftpsExplicitRemoteServerService = service object {
-    remote function onFileChange(WatchEvent & readonly event) {
-        ftpsExplicitAddedFileCount = event.addedFiles.length();
-        ftpsExplicitDeletedFileCount = event.deletedFiles.length();
-        ftpsExplicitWatchEventReceived = true;
     }
 };
 
-Service ftpsImplicitRemoteServerService = service object {
-    remote function onFileChange(WatchEvent & readonly event) {
-        ftpsImplicitAddedFileCount = event.addedFiles.length();
-        ftpsImplicitDeletedFileCount = event.deletedFiles.length();
-        ftpsImplicitWatchEventReceived = true;
+// --- Positive Tests ---
+
+@test:Config {}
+function testFtpsExplicitListener() returns error? {
+    // 1. Setup specific path for isolation
+    string watchPath = "/ftps-listener"; 
+    string targetFile = watchPath + "/explicit_trigger.txt";
+    
+    // 2. Initialize Helper Client
+    Client triggerClient = check new(triggerClientConfig);
+    check removeIfExists(triggerClient, targetFile);
+    resetFtpsState();
+
+    // 3. Define Service
+    Service ftpsService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+            if event.addedFiles.length() == 0 { return; }
+            lock {
+                ftpsEventReceived = true;
+            }
+            lock {
+                ftpsFileCount = event.addedFiles.length();
+            }
+            log:printInfo("Explicit Event: " + event.addedFiles.toString());
+        }
+    };
+
+    // 4. Start Listener (Self-Contained)
+    Listener ftpsListener = check new ({
+        protocol: FTPS,
+        host: "127.0.0.1",
+        port: 21214,
+        auth: triggerClientConfig.auth, 
+        path: watchPath, // Watch ONLY this folder
+        pollingInterval: 2,
+        fileNamePattern: "explicit_trigger.txt"
+    });
+
+    check ftpsListener.attach(ftpsService);
+    check ftpsListener.'start();
+    runtime:registerListener(ftpsListener);
+
+    // 5. Trigger Event
+    check triggerClient->put(targetFile, "data");
+
+    // 6. Wait for Event
+    int waitCount = 0;
+    while waitCount < 10 {
+        boolean seen;
+        lock { seen = ftpsEventReceived; }
+        if seen { break; }
+        runtime:sleep(1);
+        waitCount += 1;
     }
-};
 
-Listener? ftpsExplicitRemoteServerListener = ();
-Listener? ftpsImplicitRemoteServerListener = ();
+    // 7. Stop Listener
+    check ftpsListener.gracefulStop();
+    runtime:deregisterListener(ftpsListener);
+    
+    // 8. Assertions
+    boolean eventSeen;
+    lock { eventSeen = ftpsEventReceived; }
+    test:assertTrue(eventSeen, "FTPS Explicit Listener failed to detect file.");
 
-@test:BeforeSuite
-function initFtpsListenerTestEnvironment() returns error? {
-    ftpsExplicitRemoteServerListener = check new (ftpsExplicitRemoteServerConfig);
-    check (<Listener>ftpsExplicitRemoteServerListener).attach(ftpsExplicitRemoteServerService);
-    check (<Listener>ftpsExplicitRemoteServerListener).'start();
-
-    ftpsImplicitRemoteServerListener = check new (ftpsImplicitRemoteServerConfig);
-    check (<Listener>ftpsImplicitRemoteServerListener).attach(ftpsImplicitRemoteServerService);
-    check (<Listener>ftpsImplicitRemoteServerListener).'start();
-}
-
-@test:AfterSuite
-function cleanFtpsListenerTestEnvironment() returns error? {
-    if ftpsExplicitRemoteServerListener is Listener {
-        check (<Listener>ftpsExplicitRemoteServerListener).gracefulStop();
-    }
-    if ftpsImplicitRemoteServerListener is Listener {
-        check (<Listener>ftpsImplicitRemoteServerListener).gracefulStop();
-    }
+    // 9. Cleanup
+    check removeIfExists(triggerClient, targetFile);
 }
 
 @test:Config {}
-public function testFtpsExplicitAddedFileCount() {
-    int timeoutInSeconds = 300;
-    // Test fails in 5 minutes if failed to receive watchEvent
-    while timeoutInSeconds > 0 {
-        if ftpsExplicitWatchEventReceived {
-            log:printInfo("FTPS EXPLICIT added file count: " + ftpsExplicitAddedFileCount.toString());
-            // Be lenient - expect at least 2 files (may have more from previous tests)
-            test:assertTrue(ftpsExplicitAddedFileCount >= 2, "Should have at least 2 added files");
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
+function testFtpsImplicitListener() returns error? {
+    string watchPath = "/ftps-listener"; 
+    string targetFile = watchPath + "/implicit_trigger.txt";
+    
+    Client triggerClient = check new(triggerImplicitClientConfig);
+    check removeIfExists(triggerClient, targetFile);
+    resetFtpsState();
+
+    Service ftpsService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+            if event.addedFiles.length() == 0 { return; }
+            lock {
+                ftpsEventReceived = true;
+            }
+            log:printInfo("Implicit Event: " + event.addedFiles.toString());
         }
+    };
+
+    Listener ftpsListener = check new ({
+        protocol: FTPS,
+        host: "127.0.0.1",
+        port: 990,
+        auth: triggerImplicitClientConfig.auth,
+        path: watchPath,
+        pollingInterval: 2,
+        fileNamePattern: "implicit_trigger.txt"
+    });
+
+    check ftpsListener.attach(ftpsService);
+    check ftpsListener.'start();
+    runtime:registerListener(ftpsListener);
+
+    check triggerClient->put(targetFile, "data");
+
+    int waitCount = 0;
+    while waitCount < 10 {
+        boolean seen;
+        lock { seen = ftpsEventReceived; }
+        if seen { break; }
+        runtime:sleep(1);
+        waitCount += 1;
     }
-    if timeoutInSeconds == 0 {
-        test:assertFail("Failed to receive WatchEvent for 5 minutes.");
-    }
+
+    check ftpsListener.gracefulStop();
+    runtime:deregisterListener(ftpsListener);
+    
+    boolean eventSeen;
+    lock { eventSeen = ftpsEventReceived; }
+    test:assertTrue(eventSeen, "FTPS Implicit Listener failed to detect file.");
+
+    check removeIfExists(triggerClient, targetFile);
 }
 
-@test:Config {}
-public function testFtpsImplicitAddedFileCount() {
-    int timeoutInSeconds = 300;
-    // Test fails in 5 minutes if failed to receive watchEvent
-    while timeoutInSeconds > 0 {
-        if ftpsImplicitWatchEventReceived {
-            log:printInfo("FTPS IMPLICIT added file count: " + ftpsImplicitAddedFileCount.toString());
-            // Be lenient - expect at least 2 files (may have more from previous tests)
-            test:assertTrue(ftpsImplicitAddedFileCount >= 2, "Should have at least 2 added files");
-            break;
-        } else {
-            runtime:sleep(1);
-            timeoutInSeconds = timeoutInSeconds - 1;
-        }
-    }
-    if timeoutInSeconds == 0 {
-        test:assertFail("Failed to receive WatchEvent for 5 minutes.");
-    }
-}
+// --- Negative Tests ---
 
 @test:Config {}
 public function testFtpsConnectWithInvalidKeystore() returns error? {
@@ -178,17 +227,16 @@ public function testFtpsConnectWithInvalidKeystore() returns error? {
                 mode: EXPLICIT
             }
         },
-        path: "/home/in",
-        pollingInterval: 2,
-        fileNamePattern: "(.*).txt"
+        path: "/ftps-listener",
+        pollingInterval: 2
     });
 
     if ftpsServer is Error {
         test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector.") ||
             ftpsServer.message().includes("Failed to load FTPS Server Keystore"),
-            msg = "Expected error for invalid keystore");
+            msg = "Expected error for invalid keystore. Got: " + ftpsServer.message());
     } else {
-        test:assertFail("Non-error result when invalid keystore is used for creating a Listener.");
+        test:assertFail("Non-error result when invalid keystore is used.");
     }
 }
 
@@ -212,9 +260,8 @@ public function testFtpsConnectWithInvalidTruststore() returns error? {
                 mode: EXPLICIT
             }
         },
-        path: "/home/in",
-        pollingInterval: 2,
-        fileNamePattern: "(.*).txt"
+        path: "/ftps-listener",
+        pollingInterval: 2
     });
 
     if ftpsServer is Error {
@@ -222,7 +269,7 @@ public function testFtpsConnectWithInvalidTruststore() returns error? {
             ftpsServer.message().includes("Failed to load FTPS Server Keystore"),
             msg = "Expected error for invalid truststore");
     } else {
-        test:assertFail("Non-error result when invalid truststore is used for creating a Listener.");
+        test:assertFail("Non-error result when invalid truststore is used.");
     }
 }
 
@@ -246,9 +293,8 @@ public function testFtpsConnectToFTPServerWithFTPProtocol() returns error? {
                 mode: EXPLICIT
             }
         },
-        path: "/home/in",
-        pollingInterval: 2,
-        fileNamePattern: "(.*).txt"
+        path: "/ftps-listener",
+        pollingInterval: 2
     });
 
     if ftpsServer is Error {
@@ -256,7 +302,7 @@ public function testFtpsConnectToFTPServerWithFTPProtocol() returns error? {
             ftpsServer.message().includes("secureSocket can only be used with FTPS protocol"),
             msg = "Expected error for wrong protocol");
     } else {
-        test:assertFail("Non-error result when connecting to FTPS server via FTP is used for creating a Listener.");
+        test:assertFail("Non-error result when connecting to FTPS server via FTP.");
     }
 }
 
@@ -269,16 +315,15 @@ public function testFtpsListenerConnectWithEmptySecureSocket() returns error? {
         auth: {
             credentials: {username: "wso2", password: "wso2123"}
         },
-        path: "/home/in",
-        pollingInterval: 2,
-        fileNamePattern: "(.*).txt"
+        path: "/ftps-listener",
+        pollingInterval: 2
     });
 
     if ftpsServer is Error {
         test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector."),
             msg = "Expected error for missing secureSocket");
     } else {
-        test:assertFail("Non-error result when no secureSocket config is provided when creating a Listener.");
+        test:assertFail("Non-error result when no secureSocket config is provided.");
     }
 }
 
@@ -301,16 +346,15 @@ public function testFtpsConnectWithEmptyCredentials() returns error? {
                 mode: EXPLICIT
             }
         },
-        path: "/home/in",
-        pollingInterval: 2,
-        fileNamePattern: "(.*).txt"
+        path: "/ftps-listener",
+        pollingInterval: 2
     });
 
     if ftpsServer is Error {
         test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector."),
             msg = "Expected error for missing credentials");
     } else {
-        test:assertFail("Non-error result when no credentials were provided when creating a Listener.");
+        test:assertFail("Non-error result when no credentials were provided.");
     }
 }
 
@@ -337,8 +381,8 @@ public function testFtpsConnectWithEmptyKeystorePath() returns error? {
                 mode: EXPLICIT
             }
         },
-        pollingInterval: 2,
-        fileNamePattern: "(.*).txt"
+        path: "/ftps-listener",
+        pollingInterval: 2
     });
 
     if result is Error {
@@ -346,7 +390,7 @@ public function testFtpsConnectWithEmptyKeystorePath() returns error? {
             result.message().startsWith("Failed to initialize File server connector."),
             msg = "Expected error for empty keystore path");
     } else {
-        test:assertFail("Non-error result when empty keystore path is provided when creating a Listener.");
+        test:assertFail("Non-error result when empty keystore path is provided.");
     }
 }
 
@@ -373,17 +417,16 @@ public function testFtpsServerConnectWithInvalidHostWithDetails() returns error?
                 mode: EXPLICIT
             }
         },
-        pollingInterval: 2,
-        fileNamePattern: "(.*).txt"
+        path: "/ftps-listener",
+        pollingInterval: 2
     });
 
     if ftpsServer is Error {
         test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector."));
-        // Verify that the error message contains additional details from the root cause
         test:assertTrue(ftpsServer.message().length() > "Failed to initialize File server connector.".length(),
             msg = "Error message should contain detailed root cause information");
     } else {
-        test:assertFail("Non-error result when invalid host is used for creating an FTPS Listener.");
+        test:assertFail("Non-error result when invalid host is used.");
     }
 }
 
@@ -410,17 +453,15 @@ public function testFtpsServerConnectWithInvalidPortWithDetails() returns error?
                 mode: EXPLICIT
             }
         },
-        pollingInterval: 2,
-        fileNamePattern: "(.*).txt"
+        path: "/ftps-listener",
+        pollingInterval: 2
     });
 
     if ftpsServer is Error {
         test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector."));
-        // Verify that the error message contains additional details from the root cause
         test:assertTrue(ftpsServer.message().length() > "Failed to initialize File server connector.".length(),
             msg = "Error message should contain detailed root cause information");
     } else {
-        test:assertFail("Non-error result when invalid port is used for creating an FTPS Listener.");
+        test:assertFail("Non-error result when invalid port is used.");
     }
 }
-
