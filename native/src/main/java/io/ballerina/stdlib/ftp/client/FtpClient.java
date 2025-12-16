@@ -289,7 +289,7 @@ public class FtpClient {
             Object ftpsModeObj = ftpConfig.get(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE);
             if (ftpsModeObj != null && FtpConstants.FTPS_MODE_IMPLICIT.equals(ftpsModeObj.toString())) {
                 Integer currentPort = (Integer) clientEndpoint.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
-                if (currentPort == null || currentPort == -1) {
+                if (currentPort == null || currentPort == -1 || currentPort == 21) {
                     // Default to port 990 for IMPLICIT FTPS when port is not specified
                     clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PORT, 990);
                 }

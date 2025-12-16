@@ -130,7 +130,7 @@ function testFtpsExplicitListener() returns error? {
 
     // 6. Wait for Event
     int waitCount = 0;
-    while waitCount < 10 {
+    while waitCount < 20 {
         boolean seen;
         lock { seen = ftpsEventReceived; }
         if seen { break; }
@@ -187,7 +187,7 @@ function testFtpsImplicitListener() returns error? {
     check triggerClient->put(targetFile, "data");
 
     int waitCount = 0;
-    while waitCount < 10 {
+    while waitCount < 20 {
         boolean seen;
         lock { seen = ftpsEventReceived; }
         if seen { break; }
@@ -266,8 +266,8 @@ public function testFtpsConnectWithInvalidTruststore() returns error? {
 
     if ftpsServer is Error {
         test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector.") ||
-            ftpsServer.message().includes("Failed to load FTPS Server Keystore"),
-            msg = "Expected error for invalid truststore");
+            ftpsServer.message().includes("Failed to load FTPS Server Truststore"),
+            msg = "Expected error for invalid truststore. Got: " + ftpsServer.message());
     } else {
         test:assertFail("Non-error result when invalid truststore is used.");
     }

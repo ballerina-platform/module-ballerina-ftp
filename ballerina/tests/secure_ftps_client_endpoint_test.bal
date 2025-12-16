@@ -219,17 +219,17 @@ public function testFtpsImplicitPutFileContent() returns error? {
 @test:Config {}
 public function testFtpsImplicitDefaultsTo990() returns error? {
     // Uses the config with Port 21 to test the swap logic
-    Client|error client = new (ftpsImplicitDefaultPortConfig);
-    if client is error {
-        test:assertFail("Failed to connect using default IMPLICIT port logic: " + client.message());
-        return;
-    }
-
-    FileInfo[]|error result = client->list(FTPS_CLIENT_ROOT);
-    if result is error {
-        test:assertFail("Connection established but failed to list files: " + result.message());
+    Client|Error ftpClient = new (ftpsImplicitDefaultPortConfig);
+    
+    if ftpClient is Error {
+        test:assertFail("Failed to connect using default IMPLICIT port logic: " + ftpClient.message());
     } else {
-        test:assertTrue(result.length() >= 0, "Connected and listed using default port logic (21 -> 990)");
+        FileInfo[]|error result = ftpClient->list(FTPS_CLIENT_ROOT);
+        if result is error {
+            test:assertFail("Connection established but failed to list files: " + result.message());
+        } else {
+            test:assertTrue(result.length() >= 0, "Connected and listed using default port logic (21 -> 990)");
+        }
     }
 }
 
