@@ -307,17 +307,20 @@ public class FtpListenerHelper {
      * @throws BallerinaFtpException If keystore loading fails
      */
     private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, Object> params) 
-    throws BallerinaFtpException {
+            throws BallerinaFtpException {
         configureServerFtpsMode(secureSocket, params);
         configureServerFtpsDataChannelProtection(secureSocket, params);
+        // For Keystore
         extractAndConfigureServerStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
-                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
-                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
-                params);
+            FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
+            FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
+            params, "Keystore");
+
+        // For Truststore
         extractAndConfigureServerStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
-                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
-                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
-                params);
+            FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
+            FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
+            params, "Truststore");
     }
 
     /**
@@ -365,11 +368,13 @@ public class FtpListenerHelper {
      * @param pathConfigKey The configuration key for the store path
      * @param passwordConfigKey The configuration key for the store password
      * @param params The parameters map to populate
+     * @param storeType The type of store ("Keystore" or "Truststore") for error messaging
      * @throws BallerinaFtpException 
      */
     private static void extractAndConfigureServerStore(BMap secureSocket, String storeKey, 
-                                                        String pathConfigKey, String passwordConfigKey,
-                                                        Map<String, Object> params) throws BallerinaFtpException {
+                                                       String pathConfigKey, String passwordConfigKey,
+                                                       Map<String, Object> params, String storeType) 
+            throws BallerinaFtpException {
         Object storeObj = getServerStoreObject(secureSocket, storeKey);
         if (storeObj == null) {
             return;
@@ -391,12 +396,12 @@ public class FtpListenerHelper {
             }
         }
         
-        // Validate empty path for keystore
+        // Validate empty path for keystore (Mandatory for Key, Optional for Trust)
         if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY) && (path == null || path.isEmpty())) {
-            throw new BallerinaFtpException("Failed to load FTPS Server Keystore: KeyStore path cannot be empty");
+            throw new BallerinaFtpException("Failed to load FTPS Server " + storeType + ": Path cannot be empty");
         }
         
-        // BRIDGE: Load the Java Object
+        // Load the Java KeyStore Object
         if (path != null && !path.isEmpty()) {
             try {
                 KeyStore javaKeyStore = FtpUtil.loadKeyStore(path, password);
@@ -409,8 +414,8 @@ public class FtpListenerHelper {
                     }
                 }
             } catch (BallerinaFtpException e) {
-                // throwing error
-                throw new BallerinaFtpException("Failed to load FTPS Server Keystore: " + e.getMessage(), e);
+                // Uses the storeType ("Keystore" or "Truststore") in the error message
+                throw new BallerinaFtpException("Failed to load FTPS Server " + storeType + ": " + e.getMessage(), e);
             }
         }
         
