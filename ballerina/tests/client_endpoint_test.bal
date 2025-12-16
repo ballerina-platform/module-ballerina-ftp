@@ -1471,8 +1471,7 @@ public function testCloseThenOtherApis() returns error? {
 public function testCallerCloseClosesUnderlyingClient() returns error? {
     Client ftpClient = check new (config);
     Caller caller = new (ftpClient);
-
-    Error? closeResult = caller->close();
+    Error? closeResult = caller.close();
     test:assertEquals(closeResult, ());
 
     boolean|Error existsResult = caller->exists("/home/in/test1.txt");
