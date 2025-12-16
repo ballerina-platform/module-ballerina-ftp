@@ -35,12 +35,9 @@ import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryIm
 import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
 import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.RemoteFileSystemServerConnectorImpl;
-import io.ballerina.stdlib.ftp.util.CronExpression;
-import io.ballerina.stdlib.ftp.util.CronScheduler;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.ftp.util.ModuleUtils;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -320,65 +317,5 @@ public class FtpListenerHelper {
     private static BObject createCaller(BMap<BString, Object> serviceEndpointConfig) {
         BObject client = ValueCreator.createObjectValue(ModuleUtils.getModule(), FTP_CLIENT, serviceEndpointConfig);
         return ValueCreator.createObjectValue(ModuleUtils.getModule(), FTP_CALLER, client);
-    }
-
-    /**
-     * Start the cron-based scheduler for the FTP listener.
-     *
-     * @param ftpListener       The FTP listener object
-     * @param cronExpressionStr The cron expression string
-     * @return null on success, BError on failure
-     */
-    public static Object startCronScheduler(BObject ftpListener, BString cronExpressionStr) {
-        try {
-            String cronExpression = cronExpressionStr.getValue();
-
-            // Create task that polls the FTP server
-            Runnable pollTask = () -> {
-                Object result = poll(ftpListener);
-                if (result instanceof BError) {
-                    // Log error but don't stop scheduler
-                    LoggerFactory.getLogger(FtpListenerHelper.class)
-                            .error("Error during FTP poll: {}", ((BError) result).getMessage());
-                }
-            };
-
-            // Create and start the cron scheduler (validation happens in constructor)
-            CronExpression cron = new CronExpression(cronExpression);
-            CronScheduler scheduler = new CronScheduler(cron, pollTask);
-            scheduler.start();
-
-            // Store scheduler in native data for later cleanup
-            ftpListener.addNativeData(FtpConstants.CRON_EXPRESSION, scheduler);
-
-            return null;
-        } catch (IllegalArgumentException e) {
-            return FtpUtil.createError("Invalid cron expression: " + e.getMessage(),
-                    e, Error.errorType());
-        } catch (Exception e) {
-            return FtpUtil.createError("Failed to start cron scheduler: " + e.getMessage(),
-                    findRootCause(e), Error.errorType());
-        }
-    }
-
-    /**
-     * Stop the cron-based scheduler for the FTP listener.
-     *
-     * @param ftpListener The FTP listener object
-     * @return null on success, BError on failure
-     */
-    public static Object stopCronScheduler(BObject ftpListener) {
-        try {
-            Object schedulerObj = ftpListener.getNativeData(FtpConstants.CRON_EXPRESSION);
-            if (schedulerObj instanceof CronScheduler) {
-                CronScheduler scheduler = (CronScheduler) schedulerObj;
-                scheduler.stop();
-                ftpListener.addNativeData(FtpConstants.CRON_EXPRESSION, null);
-            }
-            return null;
-        } catch (Exception e) {
-            return FtpUtil.createError("Failed to stop cron scheduler: " + e.getMessage(),
-                    findRootCause(e), Error.errorType());
-        }
     }
 }
