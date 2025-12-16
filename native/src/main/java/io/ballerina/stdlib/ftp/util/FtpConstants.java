@@ -82,7 +82,6 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
 
     // Advanced file selection configuration constants
-    public static final String ENDPOINT_CONFIG_POLLING_INTERVAL = "pollingInterval";
     public static final String ENDPOINT_CONFIG_FILE_AGE_FILTER = "fileAgeFilter";
     public static final String ENDPOINT_CONFIG_FILE_DEPENDENCY_CONDITIONS = "fileDependencyConditions";
 
