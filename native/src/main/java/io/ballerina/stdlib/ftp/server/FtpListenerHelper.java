@@ -327,8 +327,8 @@ public class FtpListenerHelper {
     }
 
     public static Object closeCaller(Environment env, BObject ftpListener) {
-        RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) ftpListener.getNativeData(
-                FtpConstants.FTP_SERVER_CONNECTOR);
+        RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) ftpListener
+                .getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         FtpListener listener = ftpConnector.getFtpListener();
         BObject caller = listener.getCaller();
         if (caller == null) {
@@ -346,17 +346,19 @@ public class FtpListenerHelper {
         });
     }
 
-    public static Object cleanup(BObject ftpListener) {
+    public static Object cleanup(Environment env, BObject ftpListener) {
         Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) serverConnectorObject;
         FtpListener listener = ftpConnector.getFtpListener();
         try {
+            closeCaller(env, ftpListener);
             ftpConnector.stop();
+        } catch (Exception e) {
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), FTP_ERROR);
+        } finally {
             if (listener != null) {
                 listener.cleanup();
             }
-        } catch (Exception e) {
-            return FtpUtil.createError(e.getMessage(), findRootCause(e), FTP_ERROR);
         }
         return null;
     }
