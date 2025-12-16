@@ -127,16 +127,6 @@ isolated function deregister(Listener listenerEndpoint, Service ftpService) retu
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
 } external;
 
-isolated function startCronScheduler(Listener listenerEndpoint, string cronExpression) returns Error? = @java:Method {
-    name: "startCronScheduler",
-    'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
-} external;
-
-isolated function stopCronScheduler(Listener listenerEndpoint) returns Error? = @java:Method {
-    name: "stopCronScheduler",
-    'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
-} external;
-
 isolated function closeCaller(Listener listenerEndpoint) returns Error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
 } external;

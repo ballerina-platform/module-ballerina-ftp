@@ -82,7 +82,6 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
 
     // Advanced file selection configuration constants
-    public static final String ENDPOINT_CONFIG_POLLING_INTERVAL = "pollingInterval";
     public static final String ENDPOINT_CONFIG_FILE_AGE_FILTER = "fileAgeFilter";
     public static final String ENDPOINT_CONFIG_FILE_DEPENDENCY_CONDITIONS = "fileDependencyConditions";
 
@@ -146,6 +145,7 @@ public class FtpConstants {
     public static final String ON_FILE_JSON_REMOTE_FUNCTION = "onFileJson";
     public static final String ON_FILE_XML_REMOTE_FUNCTION = "onFileXml";
     public static final String ON_FILE_CSV_REMOTE_FUNCTION = "onFileCsv";
+    public static final String ON_FILE_DELETE_REMOTE_FUNCTION = "onFileDelete";
     public static final String ON_FILE_DELETED_REMOTE_FUNCTION = "onFileDeleted";
 
     public static final String APACHE_VFS2_PACKAGE_NAME = "org.apache.commons.vfs2";

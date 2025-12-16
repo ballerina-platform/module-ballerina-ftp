@@ -44,7 +44,12 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.M
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_VALID_REMOTE_METHOD;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ONLY_PARAMS_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_CHANGE_DEPRECATED;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_DELETE_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_DELETED_MUST_BE_REMOTE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_FILE_DELETE_CALLER_PARAMETER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_FILE_DELETE_PARAMETER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS_ON_FILE_DELETE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.BOTH_ON_FILE_DELETE_METHODS_NOT_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS_ON_FILE_DELETED;
@@ -114,7 +119,7 @@ public class FtpServiceValidationTest {
         Assert.assertNotNull(warning, "Expected a deprecation warning for onFileChange usage.");
         assertDiagnostic(warning, ON_FILE_CHANGE_DEPRECATED,
                 "onFileChange is deprecated. Use format-specific handlers (onFileJson, " +
-                "onFileXml, onFileCsv, onFileText) for automatic type conversion, or onFileDeleted for deletion " +
+                "onFileXml, onFileCsv, onFileText) for automatic type conversion, or onFileDelete for deletion " +
                 "events.");
     }
 
@@ -166,6 +171,14 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
+    @Test(description = "Validation with valid onFileDelete method")
+    public void testValidContentService7() {
+        Package currentPackage = loadPackage("valid_content_service_7");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
     @Test(description = "Validation when no valid remote function is defined")
     public void testInvalidService1() {
         Package currentPackage = loadPackage("invalid_service_1");
@@ -175,7 +188,7 @@ public class FtpServiceValidationTest {
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, NO_VALID_REMOTE_METHOD,
                 "Service must define at least one handler method: onFile, onFileText, onFileJson, " +
-                "onFileXml, onFileCsv (format-specific) or onFileDeleted.");
+                "onFileXml, onFileCsv (format-specific) or onFileDelete.");
     }
 
     @Test(description = "Validation when 2 remote functions are defined")
@@ -187,7 +200,7 @@ public class FtpServiceValidationTest {
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, INVALID_REMOTE_FUNCTION,
                 "Invalid remote method. Allowed handlers: onFile, onFileText, onFileJson, " +
-                "onFileXml, onFileCsv (format-specific), onFileDeleted, or onFileChange (deprecated).");
+                "onFileXml, onFileCsv (format-specific) or onFileDelete.");
     }
 
     @Test(description = "Validation when onFileChange function is not remote")
@@ -465,7 +478,7 @@ public class FtpServiceValidationTest {
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, MULTIPLE_CONTENT_METHODS,
                 "Cannot mix event-based handler (onFileChange) with " +
-                "format-specific handlers (onFile, onFileText, onFileJson, onFileXml, onFileCsv, onFileDeleted).");
+                "format-specific handlers (onFile, onFileText, onFileJson, onFileXml, onFileCsv, onFileDelete).");
     }
 
     @Test(description = "Validation when onFileDeleted method is not remote")
@@ -592,7 +605,7 @@ public class FtpServiceValidationTest {
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, MULTIPLE_CONTENT_METHODS,
                 "Cannot mix event-based handler (onFileChange) with " +
-                "format-specific handlers (onFile, onFileText, onFileJson, onFileXml, onFileCsv, onFileDeleted).");
+                "format-specific handlers (onFile, onFileText, onFileJson, onFileXml, onFileCsv, onFileDelete).");
     }
 
     @Test(description = "Validation when onFile handler uses invalid stream type (stream<byte, error?> " +
@@ -645,6 +658,76 @@ public class FtpServiceValidationTest {
             Diagnostic diagnostic = (Diagnostic) obj;
             assertDiagnostic(diagnostic, INVALID_RETURN_TYPE_ERROR_OR_NIL);
         }
+    }
+
+    @Test(description = "Validation when onFileDelete method is not remote")
+    public void testInvalidContentService22() {
+        Package currentPackage = loadPackage("invalid_content_service_22");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, ON_FILE_DELETE_MUST_BE_REMOTE,
+                "onFileDelete method must be remote.");
+    }
+
+    @Test(description = "Validation when onFileDelete has invalid deleted file parameter")
+    public void testInvalidContentService23() {
+        Package currentPackage = loadPackage("invalid_content_service_23");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_ON_FILE_DELETE_PARAMETER,
+                "Invalid parameter for onFileDelete. First parameter must be " +
+                "string (deleted file path).");
+    }
+
+    @Test(description = "Validation when onFileDelete has invalid caller parameter")
+    public void testInvalidContentService24() {
+        Package currentPackage = loadPackage("invalid_content_service_24");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_ON_FILE_DELETE_CALLER_PARAMETER,
+                "Invalid second parameter for onFileDelete. " +
+                "Optional second parameter must be Caller.");
+    }
+
+    @Test(description = "Validation when onFileDelete has too many parameters")
+    public void testInvalidContentService25() {
+        Package currentPackage = loadPackage("invalid_content_service_25");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, TOO_MANY_PARAMETERS_ON_FILE_DELETE,
+                "Too many parameters for onFileDelete. Accepts at most 2 parameters: " +
+                "(deletedFile, caller?).");
+    }
+
+    @Test(description = "Validation when both onFileDelete and onFileDeleted are present")
+    public void testInvalidContentService26() {
+        Package currentPackage = loadPackage("invalid_content_service_26");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, BOTH_ON_FILE_DELETE_METHODS_NOT_ALLOWED,
+                "Cannot use both onFileDelete and onFileDeleted methods. " +
+                "Use only onFileDelete as onFileDeleted is deprecated.");
+    }
+
+    @Test(description = "Validation when onFileDelete has no parameters")
+    public void testInvalidContentService27() {
+        Package currentPackage = loadPackage("invalid_content_service_27");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, MANDATORY_PARAMETER_NOT_FOUND,
+                "Mandatory parameter missing for onFileDelete. Expected string.");
     }
 
 }

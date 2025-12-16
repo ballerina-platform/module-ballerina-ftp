@@ -94,30 +94,15 @@ public isolated class Listener {
 
     isolated function internalStart() returns error? {
         lock {
-            // Check if pollingInterval is a cron expression (string) or interval (decimal)
-            decimal|string pollingInterval = self.config.pollingInterval;
-
-            if pollingInterval is string {
-                // Cron-based scheduling - delegate to native implementation
-                return startCronScheduler(self, pollingInterval);
-            } else {
-                // Fixed interval scheduling using task scheduler
-                self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), pollingInterval);
-            }
+            self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), self.config.pollingInterval);
         }
     }
 
     isolated function stop() returns error? {
         lock {
-            // Stop task scheduler if used
             var id = self.jobId;
             if id is task:JobId {
                 check task:unscheduleJob(id);
-            }
-            // Stop cron scheduler if used
-            decimal|string pollingInterval = self.config.pollingInterval;
-            if pollingInterval is string {
-                check stopCronScheduler(self);
             }
             check closeCaller(self);
             return cleanup(self);
@@ -172,7 +157,7 @@ class Job {
 # + auth - Authentication options for connecting to the server
 # + path - Directory path on the FTP server to monitor for file changes
 # + fileNamePattern - File name pattern (regex) to filter which files trigger events
-# + pollingInterval - Polling interval in seconds for checking file changes, or a cron expression for time-based scheduling
+# + pollingInterval - Polling interval in seconds for checking file changes
 # + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and
 #                   prevents the underlying VFS from attempting to change to the actual server root.
 #                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command
@@ -195,7 +180,7 @@ public type ListenerConfiguration record {|
     AuthConfiguration auth?;
     string path = "/";
     string fileNamePattern?;
-    decimal|string pollingInterval = 60;
+    decimal pollingInterval = 60;
     boolean userDirIsRoot = false;
     FileAgeFilter fileAgeFilter?;
     FileDependencyCondition[] fileDependencyConditions = [];
