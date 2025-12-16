@@ -376,13 +376,7 @@ public isolated client class Caller {
         return self.'client->delete(path);
     }
 
-    # Closes the FTP client connection.
-    # ```ballerina
-    # ftp:Error? response = caller->close();
-    # ```
-    #
-    # + return - `()` or else an `ftp:Error` if failed to close the connection
-    remote isolated function close() returns Error? {
+    function close() returns Error? {
         return self.'client->close();
     }
 }

@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Environment;
+import io.ballerina.runtime.api.concurrent.StrandMetadata;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.types.Parameter;
@@ -51,8 +52,10 @@ import java.util.Optional;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CLIENT;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVICE_ENDPOINT_CONFIG;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.createError;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractCompressionConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractFileTransferConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractKnownHostsConfiguration;
@@ -65,6 +68,9 @@ import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
  * Helper class for listener functions.
  */
 public class FtpListenerHelper {
+
+    private static final String CLOSE_METHOD = "close";
+    private static final String CLOSE_CALLER_ERROR = "Error occurred while closing the caller: ";
 
     private FtpListenerHelper() {
         // private constructor
@@ -380,5 +386,24 @@ public class FtpListenerHelper {
             return FtpUtil.createError("Failed to stop cron scheduler: " + e.getMessage(),
                     findRootCause(e), Error.errorType());
         }
+    }
+
+    public static Object closeCaller(Environment env, BObject ftpListener) {
+        RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) ftpListener.getNativeData(
+                FtpConstants.FTP_SERVER_CONNECTOR);
+        FtpListener listener = ftpConnector.getFtpListener();
+        BObject caller = listener.getCaller();
+        if (caller == null) {
+            return null;
+        }
+        return env.yieldAndRun(() -> {
+            StrandMetadata strandMetadata = new StrandMetadata(true,
+                    ModuleUtils.getProperties(CLOSE_METHOD));
+            Object result = env.getRuntime().callMethod(caller, CLOSE_METHOD, strandMetadata);
+            if (result instanceof BError error) {
+                return createError(CLOSE_CALLER_ERROR + error.getMessage(), findRootCause(error), FTP_ERROR);
+            }
+            return null;
+        });
     }
 }
