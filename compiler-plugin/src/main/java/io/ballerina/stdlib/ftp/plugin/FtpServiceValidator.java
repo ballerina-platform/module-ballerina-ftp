@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static io.ballerina.compiler.syntax.tree.SyntaxKind.RESOURCE_ACCESSOR_DEFINITION;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.BOTH_ON_FILE_DELETE_METHODS_NOT_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.MULTIPLE_CONTENT_METHODS;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_VALID_REMOTE_METHOD;
@@ -41,6 +42,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.O
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CHANGE_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CSV_FUNC;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_DELETE_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_DELETED_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_JSON_FUNC;
@@ -72,6 +74,7 @@ public class FtpServiceValidator {
         }
 
         FunctionDefinitionNode onFileChange = null;
+        FunctionDefinitionNode onFileDelete = null;
         FunctionDefinitionNode onFileDeleted = null;
         List<FunctionDefinitionNode> contentMethods = new ArrayList<>();
         List<String> contentMethodNames = new ArrayList<>();
@@ -99,6 +102,9 @@ public class FtpServiceValidator {
                 case ON_FILE_CHANGE_FUNC:
                     onFileChange = functionDefinitionNode;
                     break;
+                case ON_FILE_DELETE_FUNC:
+                    onFileDelete = functionDefinitionNode;
+                    break;
                 case ON_FILE_DELETED_FUNC:
                     onFileDeleted = functionDefinitionNode;
                     break;
@@ -120,9 +126,16 @@ public class FtpServiceValidator {
             }
         }
 
+        // Check if both onFileDelete and onFileDeleted are present
+        if (onFileDelete != null && onFileDeleted != null) {
+            context.reportDiagnostic(getDiagnostic(BOTH_ON_FILE_DELETE_METHODS_NOT_ALLOWED,
+                    DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
+            return;
+        }
+
         // Validate method exclusivity
         if (onFileChange != null) {
-            if (!contentMethods.isEmpty() || onFileDeleted != null) {
+            if (!contentMethods.isEmpty() || onFileDelete != null || onFileDeleted != null) {
                 context.reportDiagnostic(getDiagnostic(MULTIPLE_CONTENT_METHODS,
                         DiagnosticSeverity.ERROR, serviceDeclarationNode.location()));
                 return;
@@ -133,7 +146,7 @@ public class FtpServiceValidator {
             return;
         }
 
-        if (contentMethods.isEmpty() && onFileDeleted == null) {
+        if (contentMethods.isEmpty() && onFileDelete == null && onFileDeleted == null) {
             context.reportDiagnostic(getDiagnostic(NO_VALID_REMOTE_METHOD, DiagnosticSeverity.ERROR,
                     serviceDeclarationNode.location()));
             return;
@@ -147,9 +160,14 @@ public class FtpServiceValidator {
             }
         }
 
-        // Validate deletion handler
+        // Validate deletion handlers
+        if (onFileDelete != null) {
+            new FtpFileDeletedValidator(context, onFileDelete,
+                    FtpFileDeletedValidator.DeletionMethodType.ON_FILE_DELETE).validate();
+        }
         if (onFileDeleted != null) {
-            new FtpFileDeletedValidator(context, onFileDeleted).validate();
+            new FtpFileDeletedValidator(context, onFileDeleted,
+                    FtpFileDeletedValidator.DeletionMethodType.ON_FILE_DELETED).validate();
         }
     }
 }
