@@ -140,3 +140,7 @@ isolated function stopCronScheduler(Listener listenerEndpoint) returns Error? = 
 isolated function closeCaller(Listener listenerEndpoint) returns Error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
 } external;
+
+isolated function cleanup(Listener listenerEndpoint) returns Error? = @java:Method {
+    'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
+} external;

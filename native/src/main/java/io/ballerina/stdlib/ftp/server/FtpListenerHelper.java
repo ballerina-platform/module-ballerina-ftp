@@ -71,6 +71,7 @@ public class FtpListenerHelper {
 
     private static final String CLOSE_METHOD = "close";
     private static final String CLOSE_CALLER_ERROR = "Error occurred while closing the caller: ";
+    private static final BString CLIENT_INSTANCE = StringUtils.fromString("client");
 
     private FtpListenerHelper() {
         // private constructor
@@ -396,14 +397,30 @@ public class FtpListenerHelper {
         if (caller == null) {
             return null;
         }
+        BObject ftpClient = caller.getObjectValue(CLIENT_INSTANCE);
         return env.yieldAndRun(() -> {
             StrandMetadata strandMetadata = new StrandMetadata(true,
                     ModuleUtils.getProperties(CLOSE_METHOD));
-            Object result = env.getRuntime().callMethod(caller, CLOSE_METHOD, strandMetadata);
+            Object result = env.getRuntime().callMethod(ftpClient, CLOSE_METHOD, strandMetadata);
             if (result instanceof BError error) {
                 return createError(CLOSE_CALLER_ERROR + error.getMessage(), findRootCause(error), FTP_ERROR);
             }
             return null;
         });
+    }
+
+    public static Object cleanup(BObject ftpListener) {
+        Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+        RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) serverConnectorObject;
+        FtpListener listener = ftpConnector.getFtpListener();
+        try {
+            ftpConnector.stop();
+            if (listener != null) {
+                listener.cleanup();
+            }
+        } catch (Exception e) {
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), FTP_ERROR);
+        }
+        return null;
     }
 }

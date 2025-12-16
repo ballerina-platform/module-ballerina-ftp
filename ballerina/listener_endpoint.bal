@@ -119,7 +119,8 @@ public isolated class Listener {
             if pollingInterval is string {
                 check stopCronScheduler(self);
             }
-            return closeCaller(self);
+            check closeCaller(self);
+            return cleanup(self);
         }
     }
 
