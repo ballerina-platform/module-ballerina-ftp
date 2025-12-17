@@ -28,6 +28,7 @@ string putFilePath = "tests/resources/datafiles/file2.txt";
 string relativePath = "rel-put.txt";
 string relativePathWithSlash = "/rel-path-slash-put.txt";
 string absPath = "//home/in/double-abs.txt";
+string closeErrorMessage = "FTP Client is already closed, hence further operations are not allowed";
 
 // Create the config to access anonymous mock FTP server
 ClientConfiguration anonConfig = {
@@ -1267,13 +1268,13 @@ public function testClientClose() returns error? {
     boolean|Error existsResult = ftpClient->exists(filePath);
     test:assertTrue(existsResult is Error);
     if existsResult is Error {
-        test:assertEquals(existsResult.message(), "FTP client is closed");
+        test:assertEquals(existsResult.message(), closeErrorMessage);
     }
     stream<io:Block, io:Error?> byteStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     Error? putResult = ftpClient->put(newFilePath, byteStream);
     test:assertTrue(putResult is Error);
     if putResult is Error {
-        test:assertEquals(putResult.message(), "FTP client is closed");
+        test:assertEquals(putResult.message(), closeErrorMessage);
     }
 }
 
@@ -1288,32 +1289,32 @@ public function testCloseThenPutApis() returns error? {
     Error? putBytes = ftpClient->putBytes("/home/in/after-close-putBytes.txt", "abc".toBytes());
     test:assertTrue(putBytes is Error);
     if putBytes is Error {
-        test:assertEquals(putBytes.message(), "FTP client is closed");
+        test:assertEquals(putBytes.message(), closeErrorMessage);
     }
 
     Error? putText = ftpClient->putText("/home/in/after-close-putText.txt", "abc");
     test:assertTrue(putText is Error);
     if putText is Error {
-        test:assertEquals(putText.message(), "FTP client is closed");
+        test:assertEquals(putText.message(), closeErrorMessage);
     }
 
     json jsonPayload = {"a": 1};
     Error? putJson = ftpClient->putJson("/home/in/after-close-putJson.json", jsonPayload);
     test:assertTrue(putJson is Error);
     if putJson is Error {
-        test:assertEquals(putJson.message(), "FTP client is closed");
+        test:assertEquals(putJson.message(), closeErrorMessage);
     }
 
     Error? putXml = ftpClient->putXml("/home/in/after-close-putXml.xml", xml `<a>1</a>`);
     test:assertTrue(putXml is Error);
     if putXml is Error {
-        test:assertEquals(putXml.message(), "FTP client is closed");
+        test:assertEquals(putXml.message(), closeErrorMessage);
     }
 
     Error? putCsv = ftpClient->putCsv("/home/in/after-close-putCsv.csv", [["id", "name"], ["1", "A"]]);
     test:assertTrue(putCsv is Error);
     if putCsv is Error {
-        test:assertEquals(putCsv.message(), "FTP client is closed");
+        test:assertEquals(putCsv.message(), closeErrorMessage);
     }
 
     stream<byte[] & readonly, io:Error?> bytesStream = [
@@ -1323,7 +1324,7 @@ public function testCloseThenPutApis() returns error? {
     Error? putBytesAsStream = ftpClient->putBytesAsStream("/home/in/after-close-putBytesAsStream.txt", bytesStream);
     test:assertTrue(putBytesAsStream is Error);
     if putBytesAsStream is Error {
-        test:assertEquals(putBytesAsStream.message(), "FTP client is closed");
+        test:assertEquals(putBytesAsStream.message(), closeErrorMessage);
     }
 
     string[][] rows = [
@@ -1335,7 +1336,7 @@ public function testCloseThenPutApis() returns error? {
     Error? putCsvAsStream = ftpClient->putCsvAsStream("/home/in/after-close-csv-stream.csv", csvStream);
     test:assertTrue(putCsvAsStream is Error);
     if putCsvAsStream is Error {
-        test:assertEquals(putCsvAsStream.message(), "FTP client is closed");
+        test:assertEquals(putCsvAsStream.message(), closeErrorMessage);
     }
 }
 
@@ -1350,49 +1351,49 @@ public function testCloseThenGetApis() returns error? {
     stream<byte[] & readonly, io:Error?>|Error getResult = ftpClient->get("/home/in/test1.txt");
     test:assertTrue(getResult is Error);
     if getResult is Error {
-        test:assertEquals(getResult.message(), "FTP client is closed");
+        test:assertEquals(getResult.message(), closeErrorMessage);
     }
 
     byte[]|Error getBytesResult = ftpClient->getBytes("/home/in/test1.txt");
     test:assertTrue(getBytesResult is Error);
     if getBytesResult is Error {
-        test:assertEquals(getBytesResult.message(), "FTP client is closed");
+        test:assertEquals(getBytesResult.message(), closeErrorMessage);
     }
 
     string|Error getTextResult = ftpClient->getText("/home/in/test1.txt");
     test:assertTrue(getTextResult is Error);
     if getTextResult is Error {
-        test:assertEquals(getTextResult.message(), "FTP client is closed");
+        test:assertEquals(getTextResult.message(), closeErrorMessage);
     }
 
     json|Error getJsonResult = ftpClient->getJson("/home/in/test1.txt");
     test:assertTrue(getJsonResult is Error);
     if getJsonResult is Error {
-        test:assertEquals(getJsonResult.message(), "FTP client is closed");
+        test:assertEquals(getJsonResult.message(), closeErrorMessage);
     }
 
     xml|Error getXmlResult = ftpClient->getXml("/home/in/test1.txt");
     test:assertTrue(getXmlResult is Error);
     if getXmlResult is Error {
-        test:assertEquals(getXmlResult.message(), "FTP client is closed");
+        test:assertEquals(getXmlResult.message(), closeErrorMessage);
     }
 
     string[][]|Error getCsvResult = ftpClient->getCsv("/home/in/test1.txt");
     test:assertTrue(getCsvResult is Error);
     if getCsvResult is Error {
-        test:assertEquals(getCsvResult.message(), "FTP client is closed");
+        test:assertEquals(getCsvResult.message(), closeErrorMessage);
     }
 
     stream<byte[], error?>|Error getBytesAsStreamResult = ftpClient->getBytesAsStream("/home/in/test1.txt");
     test:assertTrue(getBytesAsStreamResult is Error);
     if getBytesAsStreamResult is Error {
-        test:assertEquals(getBytesAsStreamResult.message(), "FTP client is closed");
+        test:assertEquals(getBytesAsStreamResult.message(), closeErrorMessage);
     }
 
     stream<string[], error?>|Error getCsvAsStreamResult = ftpClient->getCsvAsStream("/home/in/test1.txt");
     test:assertTrue(getCsvAsStreamResult is Error);
     if getCsvAsStreamResult is Error {
-        test:assertEquals(getCsvAsStreamResult.message(), "FTP client is closed");
+        test:assertEquals(getCsvAsStreamResult.message(), closeErrorMessage);
     }
 }
 
@@ -1407,61 +1408,61 @@ public function testCloseThenOtherApis() returns error? {
     Error? moveResult = ftpClient->move("/home/in/test1.txt", "/home/in/after-close-move.txt");
     test:assertTrue(moveResult is Error);
     if moveResult is Error {
-        test:assertEquals(moveResult.message(), "FTP client is closed");
+        test:assertEquals(moveResult.message(), closeErrorMessage);
     }
 
     Error? copyResult = ftpClient->copy("/home/in/test1.txt", "/home/in/after-close-copy.txt");
     test:assertTrue(copyResult is Error);
     if copyResult is Error {
-        test:assertEquals(copyResult.message(), "FTP client is closed");
+        test:assertEquals(copyResult.message(), closeErrorMessage);
     }
 
     Error? appendResult = ftpClient->append("/home/in/after-close-append.txt", "abc");
     test:assertTrue(appendResult is Error);
     if appendResult is Error {
-        test:assertEquals(appendResult.message(), "FTP client is closed");
+        test:assertEquals(appendResult.message(), closeErrorMessage);
     }
 
     Error? mkdirResult = ftpClient->mkdir("/home/in/after-close-dir");
     test:assertTrue(mkdirResult is Error);
     if mkdirResult is Error {
-        test:assertEquals(mkdirResult.message(), "FTP client is closed");
+        test:assertEquals(mkdirResult.message(), closeErrorMessage);
     }
 
     Error? rmdirResult = ftpClient->rmdir("/home/in/after-close-dir");
     test:assertTrue(rmdirResult is Error);
     if rmdirResult is Error {
-        test:assertEquals(rmdirResult.message(), "FTP client is closed");
+        test:assertEquals(rmdirResult.message(), closeErrorMessage);
     }
 
     Error? renameResult = ftpClient->rename("/home/in/test1.txt", "/home/in/after-close-rename.txt");
     test:assertTrue(renameResult is Error);
     if renameResult is Error {
-        test:assertEquals(renameResult.message(), "FTP client is closed");
+        test:assertEquals(renameResult.message(), closeErrorMessage);
     }
 
     boolean|Error isDirResult = ftpClient->isDirectory("/home/in");
     test:assertTrue(isDirResult is Error);
     if isDirResult is Error {
-        test:assertEquals(isDirResult.message(), "FTP client is closed");
+        test:assertEquals(isDirResult.message(), closeErrorMessage);
     }
 
     int|Error sizeResult = ftpClient->size("/home/in/test1.txt");
     test:assertTrue(sizeResult is Error);
     if sizeResult is Error {
-        test:assertEquals(sizeResult.message(), "FTP client is closed");
+        test:assertEquals(sizeResult.message(), closeErrorMessage);
     }
 
     FileInfo[]|Error listResult = ftpClient->list("/home/in");
     test:assertTrue(listResult is Error);
     if listResult is Error {
-        test:assertEquals(listResult.message(), "FTP client is closed");
+        test:assertEquals(listResult.message(), closeErrorMessage);
     }
 
     Error? deleteResult = ftpClient->delete("/home/in/test1.txt");
     test:assertTrue(deleteResult is Error);
     if deleteResult is Error {
-        test:assertEquals(deleteResult.message(), "FTP client is closed");
+        test:assertEquals(deleteResult.message(), closeErrorMessage);
     }
 }
 

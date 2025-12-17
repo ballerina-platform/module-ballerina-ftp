@@ -86,7 +86,8 @@ import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
 public class FtpClient {
 
     private static final Logger log = LoggerFactory.getLogger(FtpClient.class);
-    private static final String CLIENT_CLOSED_ERROR_MESSAGE = "FTP client is closed";
+    private static final String CLIENT_CLOSED_ERROR_MESSAGE =
+            "FTP Client is already closed, hence further operations are not allowed";
     private static final String ON_CLOSE_ERROR = "Error occurred while closing the FTP client: ";
 
     private FtpClient() {
@@ -307,10 +308,6 @@ public class FtpClient {
     }
 
     public static Object close(BObject clientConnector) {
-        Object closeStreamResult = closeInputByteStream(clientConnector);
-        if (closeStreamResult instanceof BError error) {
-            return FtpUtil.createError(ON_CLOSE_ERROR + error.getMessage(), error, FTP_ERROR);
-        }
         Object connectorInstance = clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
         if (connectorInstance instanceof VfsClientConnectorImpl connector) {
             try {
@@ -694,8 +691,8 @@ public class FtpClient {
                                                    Function<CompletableFuture<Object>,
                                                            Function<RemoteFileSystemBaseMessage, Boolean>>
                                                            messageHandlerFactory) {
-        Object nativeConnector = clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
-        if (!(nativeConnector instanceof VfsClientConnectorImpl connector)) {
+        VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
+        if (connector == null) {
             return FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR);
         }
         return env.yieldAndRun(() -> {
