@@ -339,7 +339,8 @@ public class FtpListenerHelper {
             StrandMetadata strandMetadata = new StrandMetadata(true,
                     ModuleUtils.getProperties(CLOSE_METHOD));
             Object result = env.getRuntime().callMethod(ftpClient, CLOSE_METHOD, strandMetadata);
-            if (result instanceof BError error) {
+            if (result != null) {
+                BError error = (BError) result;
                 return createError(CLOSE_CALLER_ERROR + error.getMessage(), findRootCause(error), FTP_ERROR);
             }
             return null;

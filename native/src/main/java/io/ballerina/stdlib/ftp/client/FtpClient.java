@@ -308,8 +308,8 @@ public class FtpClient {
     }
 
     public static Object close(BObject clientConnector) {
-        Object connectorInstance = clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
-        if (connectorInstance instanceof VfsClientConnectorImpl connector) {
+        VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
+        if (connector != null) {
             try {
                 connector.close();
             } catch (Exception exception) {
@@ -718,8 +718,8 @@ public class FtpClient {
      */
     private static Object executeTwoPathAction(Environment env, BObject clientConnector, BString sourcePath,
                                                 BString destinationPath, FtpAction action) {
-        Object nativeConnector = clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
-        if (!(nativeConnector instanceof VfsClientConnectorImpl connector)) {
+        VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
+        if (connector == null) {
             return FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR);
         }
         String destinationUrl;
