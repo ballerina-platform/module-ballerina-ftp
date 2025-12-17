@@ -360,52 +360,38 @@ public class FtpListenerHelper {
     }
 
     /**
-     * Extracts a store (KeyStore or TrustStore) from secureSocket configuration and adds it to params.
-     * Handles both BMap and BObject representations. Extracts path/password strings and loads the Java KeyStore.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param storeKey The key name (SECURE_SOCKET_KEY for KeyStore, SECURE_SOCKET_TRUSTSTORE for TrustStore)
-     * @param pathConfigKey The configuration key for the store path
-     * @param passwordConfigKey The configuration key for the store password
-     * @param params The parameters map to populate
-     * @param storeType The type of store ("Keystore" or "Truststore") for error messaging
-     * @throws BallerinaFtpException 
+     * Extracts path/password from the crypto:KeyStore/TrustStore record (BMap) 
+     * and loads the Java KeyStore.
      */
-    private static void extractAndConfigureServerStore(BMap secureSocket, String storeKey, 
-                                                       String pathConfigKey, String passwordConfigKey,
-                                                       Map<String, Object> params, String storeType) 
+    private static void extractAndConfigureServerStore(BMap secureSocket, String storeKey,
+            String pathConfigKey, String passwordConfigKey,
+            Map<String, Object> params, String storeType)
             throws BallerinaFtpException {
-        Object storeObj = getServerStoreObject(secureSocket, storeKey);
-        if (storeObj == null) {
+
+        BMap storeRecord = secureSocket.getMapValue(StringUtils.fromString(storeKey));
+        if (storeRecord == null) {
             return;
         }
-        
-        String path = null;
+
+        // Extract fields from crypto:KeyStore/TrustStore record
+        String path = storeRecord.getStringValue(StringUtils.fromString("path")).getValue();
+
         String password = null;
-        
-        if (storeObj instanceof BMap) {
-            BMap storeRecord = (BMap) storeObj;
-            BString pathBStr = storeRecord.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
-            BString passBStr = storeRecord.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
-            
-            if (pathBStr != null) {
-                path = pathBStr.getValue();
-            }
-            if (passBStr != null) {
-                password = passBStr.getValue();
-            }
+        BString passwordBStr = storeRecord.getStringValue(StringUtils.fromString("password"));
+        if (passwordBStr != null) {
+            password = passwordBStr.getValue();
         }
-        
-        // Validate empty path for keystore (Mandatory for Key, Optional for Trust)
+
+        // Validation: Path cannot be empty for Identity KeyStore
         if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY) && (path == null || path.isEmpty())) {
             throw new BallerinaFtpException("Failed to load FTPS Server " + storeType + ": Path cannot be empty");
         }
-        
-        // Load the Java KeyStore Object
+
+        // Load Java KeyStore
         if (path != null && !path.isEmpty()) {
             try {
                 KeyStore javaKeyStore = FtpUtil.loadKeyStore(path, password);
-                
+
                 if (javaKeyStore != null) {
                     if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY)) {
                         params.put(FtpConstants.KEYSTORE_INSTANCE, javaKeyStore);
@@ -414,11 +400,10 @@ public class FtpListenerHelper {
                     }
                 }
             } catch (BallerinaFtpException e) {
-                // Uses the storeType ("Keystore" or "Truststore") in the error message
                 throw new BallerinaFtpException("Failed to load FTPS Server " + storeType + ": " + e.getMessage(), e);
             }
         }
-        
+
         if (password != null) {
             params.put(passwordConfigKey, password);
         }

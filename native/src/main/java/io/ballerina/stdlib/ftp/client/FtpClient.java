@@ -386,65 +386,35 @@ public class FtpClient {
     }
 
     /**
-     * Extracts a store (KeyStore or TrustStore) from secureSocket configuration and adds it to ftpConfig.
-     * Handles both BMap and BObject representations. Extracts path/password strings and loads the Java KeyStore.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param storeKey The key name ("key" for KeyStore, "cert" for TrustStore)
-     * @param pathConfigKey The configuration key for the store path (deprecated, kept for backward compatibility)
-     * @param passwordConfigKey The configuration key for the store password
-     * @param ftpConfig The FTP configuration map to populate
-     * @return Error object if KeyStore loading fails, null otherwise
+     * Extracts path/password from the crypto:KeyStore/TrustStore record (BMap)
+     * and loads the Java KeyStore.
      */
-    private static Object extractAndConfigureStore(BMap secureSocket, String storeKey, 
-                                                  String pathConfigKey, String passwordConfigKey,
-                                                  Map<String, Object> ftpConfig) {
-        Object storeObj = getStoreObject(secureSocket, storeKey);
-        if (storeObj == null) {
+    private static Object extractAndConfigureStore(BMap secureSocket, String storeKey,
+            String pathConfigKey, String passwordConfigKey,
+            Map<String, Object> ftpConfig) {
+        // 1. Get the record (crypto:KeyStore is a BMap)
+        BMap storeRecord = secureSocket.getMapValue(StringUtils.fromString(storeKey));
+
+        // If the field is missing, do nothing
+        if (storeRecord == null) {
             return null;
         }
-        
-        String path = null;
+
+        // 2. Extract Strings directly from the BMap
+        // Note: Field names in crypto:KeyStore are "path" and "password"
+        String path = storeRecord.getStringValue(StringUtils.fromString("path")).getValue();
+
         String password = null;
-        
-        // Extract Strings from Ballerina Record (BMap)
-        if (storeObj instanceof BMap) {
-            BMap storeRecord = (BMap) storeObj;
-            BString pathBStr = storeRecord.getStringValue(
-                    StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
-            BString passBStr = storeRecord.getStringValue(
-                    StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
-            
-            if (pathBStr != null) {
-                path = pathBStr.getValue();
-            }
-            if (passBStr != null) {
-                password = passBStr.getValue();
-            }
-        } else if (storeObj instanceof BObject) {
-            // Fallback if it's a BObject (unlikely for crypto:KeyStore but safe to keep)
-            try {
-                BObject storeObject = (BObject) storeObj;
-                BString pathBStr = storeObject.getStringValue(
-                        StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
-                BString passBStr = storeObject.getStringValue(
-                        StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
-                if (pathBStr != null) {
-                    path = pathBStr.getValue();
-                }
-                if (passBStr != null) {
-                    password = passBStr.getValue();
-                }
-            } catch (Exception e) {
-                log.debug("Could not extract path/password from BObject: {}", e.getMessage());
-            }
+        BString passwordBStr = storeRecord.getStringValue(StringUtils.fromString("password"));
+        if (passwordBStr != null) {
+            password = passwordBStr.getValue();
         }
-        
-        // BRIDGE: Load the Java Object and put it in the Map
-        if (path != null) {
+
+        // 3. Load the Java KeyStore from disk
+        if (path != null && !path.isEmpty()) {
             try {
                 KeyStore javaKeyStore = FtpUtil.loadKeyStore(path, password);
-                
+
                 if (javaKeyStore != null) {
                     if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY)) {
                         ftpConfig.put(FtpConstants.KEYSTORE_INSTANCE, javaKeyStore);
@@ -457,12 +427,12 @@ public class FtpClient {
                 return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
             }
         }
-        
-        // Backward compatibility: store password string if needed
+
+        // 4. Store the password for later use (KeyManagerFactory)
         if (password != null) {
             ftpConfig.put(passwordConfigKey, password);
         }
-        
+
         return null;
     }
 
