@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -92,10 +93,43 @@ public class FtpClient {
     }
 
     public static Object initClientEndpoint(BObject clientEndpoint, BMap<Object, Object> config) {
-        String protocol = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL)))
-                .getValue();
+        String protocol = extractProtocol(config);
+        configureClientEndpointBasic(clientEndpoint, config, protocol);
+        
+        Map<String, Object> ftpConfig = new HashMap<>(20);
+        Object authError = configureAuthentication(config, protocol, ftpConfig);
+        if (authError != null) {
+            return authError;
+        }
+        
+        applyDefaultFtpConfig(config, ftpConfig);
+        Object vfsError = extractVfsConfigurations(config, ftpConfig);
+        if (vfsError != null) {
+            return vfsError;
+        }
+        
+        return createAndStoreConnector(clientEndpoint, ftpConfig);
+    }
 
-        // Keep databinding config for later
+    /**
+     * Extracts the protocol from the configuration.
+     * 
+     * @param config The client configuration map
+     * @return The protocol string
+     */
+    private static String extractProtocol(BMap<Object, Object> config) {
+        return (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
+    }
+
+    /**
+     * Configures basic client endpoint settings (host, port, auth, etc.).
+     * 
+     * @param clientEndpoint The client endpoint object
+     * @param config The client configuration map
+     * @param protocol The protocol being used
+     */
+    private static void configureClientEndpointBasic(BObject clientEndpoint, BMap<Object, Object> config, 
+                                                     String protocol) {
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING,
                 config.getBooleanValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING)));
 
@@ -110,55 +144,349 @@ public class FtpClient {
                 FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PORT))));
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
-        Map<String, String> ftpConfig = new HashMap<>(20);
+    }
+
+    /**
+     * Configures authentication settings including validation and protocol-specific setup.
+     * 
+     * @param config The client configuration map
+     * @param protocol The protocol being used
+     * @param ftpConfig The FTP configuration map to populate
+     * @return Error object if configuration fails, null otherwise
+     */
+    private static Object configureAuthentication(BMap<Object, Object> config, String protocol, 
+                                                   Map<String, Object> ftpConfig) {
         BMap auth = config.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_AUTH));
-        if (auth != null) {
-            final BMap privateKey = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
-            if (privateKey != null) {
-                final BString privateKeyPath = privateKey.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_KEY_PATH));
-                ftpConfig.put(FtpConstants.IDENTITY, privateKeyPath.getValue());
-                final BString privateKeyPassword = privateKey.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_PASS_KEY));
-                if (privateKeyPassword != null && !privateKeyPassword.getValue().isEmpty()) {
-                    ftpConfig.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
-                }
-            }
-            ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+        if (auth == null) {
+            return null;
         }
+        
+        Object validationError = validateAuthProtocolCombination(auth, protocol);
+        if (validationError != null) {
+            return validationError;
+        }
+        
+        configurePrivateKey(auth, ftpConfig);
+        
+        if (auth.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET)) != null 
+                && protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            Object ftpsError = configureFtpsSecureSocket(
+                    auth.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET)), 
+                    ftpConfig);
+            if (ftpsError != null) {
+                return ftpsError;
+            }
+        }
+        
+        if (protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, 
+                    FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+        }
+        
+        return null;
+    }
+
+    /**
+     * Validates that protocol and authentication method combinations are correct.
+     * 
+     * @param auth The authentication configuration map
+     * @param protocol The protocol being used (SFTP or FTPS)
+     * @return Error object if validation fails, null otherwise
+     */
+    private static Object validateAuthProtocolCombination(BMap auth, String protocol) {
+        final BMap privateKey = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+        final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        
+        if (privateKey != null && protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            return FtpUtil.createError("privateKey can only be used with SFTP protocol. " +
+                    "For FTPS, use secureSocket configuration.", Error.errorType());
+        }
+        
+        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            return FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
+                    "For SFTP, use privateKey configuration.", Error.errorType());
+        }
+        
+        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_FTP)) {
+            return FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
+                    "For FTP, do not use secureSocket configuration.", Error.errorType());
+        }
+        
+        return null;
+    }
+
+    /**
+     * Configures private key authentication for SFTP.
+     * 
+     * @param auth The authentication configuration map
+     * @param ftpConfig The FTP configuration map to populate
+     */
+    private static void configurePrivateKey(BMap auth, Map<String, Object> ftpConfig) {
+        final BMap privateKey = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+        
+        if (privateKey == null) {
+            return;
+        }
+        
+        final BString privateKeyPath = privateKey.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_KEY_PATH));
+        ftpConfig.put(FtpConstants.IDENTITY, privateKeyPath.getValue());
+        
+        final BString privateKeyPassword = privateKey.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PASS_KEY));
+        if (privateKeyPassword != null && !privateKeyPassword.getValue().isEmpty()) {
+            ftpConfig.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
+        }
+    }
+
+    /**
+     * Applies default FTP configuration values.
+     * 
+     * @param config The client configuration map
+     * @param ftpConfig The FTP configuration map to populate
+     */
+    private static void applyDefaultFtpConfig(BMap<Object, Object> config, Map<String, Object> ftpConfig) {
         ftpConfig.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
         boolean userDirIsRoot = config.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
         ftpConfig.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         ftpConfig.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
+    }
 
-        // Extract new VFS configurations
+    /**
+     * Extracts VFS-related configurations (timeout, file transfer, compression, known hosts, proxy).
+     * 
+     * @param config The client configuration map
+     * @param ftpConfig The FTP configuration map to populate
+     * @return Error object if extraction fails, null otherwise
+     */
+    private static Object extractVfsConfigurations(BMap<Object, Object> config, Map<String, Object> ftpConfig) {
         try {
             extractTimeoutConfigurations(config, ftpConfig);
             extractFileTransferConfiguration(config, ftpConfig);
             extractCompressionConfiguration(config, ftpConfig);
             extractKnownHostsConfiguration(config, ftpConfig);
             extractProxyConfiguration(config, ftpConfig);
+            return null;
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
+    }
 
+    /**
+     * Creates the FTP URL, stores configuration, and creates the VFS client connector.
+     * 
+     * @param clientEndpoint The client endpoint object
+     * @param ftpConfig The FTP configuration map
+     * @return Error object if creation fails, null otherwise
+     */
+    private static Object createAndStoreConnector(BObject clientEndpoint, Map<String, Object> ftpConfig) {
+        // Fix: Default port to 990 for IMPLICIT FTPS if no port is specified
+        String protocol = (String) clientEndpoint.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
+        if (FtpConstants.SCHEME_FTPS.equals(protocol)) {
+            Object ftpsModeObj = ftpConfig.get(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE);
+            if (ftpsModeObj != null && FtpConstants.FTPS_MODE_IMPLICIT.equals(ftpsModeObj.toString())) {
+                Integer currentPort = (Integer) clientEndpoint.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
+                if (currentPort == null || currentPort == -1 || currentPort == 21) {
+                    // Default to port 990 for IMPLICIT FTPS when port is not specified
+                    clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PORT, 990);
+                }
+            }
+        }
+        
         String url;
         try {
             url = FtpUtil.createUrl(clientEndpoint, "");
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
+        
         ftpConfig.put(FtpConstants.URI, url);
         clientEndpoint.addNativeData(FtpConstants.PROPERTY_MAP, ftpConfig);
+        
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         try {
             VfsClientConnector connector = fileSystemConnectorFactory.createVfsClientConnector(ftpConfig);
             clientEndpoint.addNativeData(VFS_CLIENT_CONNECTOR, connector);
+            return null;
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         }
+    }
+
+    /**
+     * Configures secure socket settings for FTPS protocol.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param ftpConfig The FTP configuration map to populate
+     * @return Error object if configuration fails, null otherwise
+     */
+    private static Object configureFtpsSecureSocket(BMap secureSocket, Map<String, Object> ftpConfig) {
+        configureFtpsMode(secureSocket, ftpConfig);
+        configureFtpsDataChannelProtection(secureSocket, ftpConfig);
+        
+        // Return error if KeyStore loading fails
+        Object keyError = extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
+                ftpConfig);
+        if (keyError != null) {
+            return keyError;
+        }
+
+        Object trustError = extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
+                ftpConfig);
+        if (trustError != null) {
+            return trustError;
+        }
+
         return null;
+    }
+
+    /**
+     * Configures FTPS mode (IMPLICIT or EXPLICIT).
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param ftpConfig The FTP configuration map to populate
+     */
+    private static void configureFtpsMode(BMap secureSocket, Map<String, Object> ftpConfig) {
+        final BString mode = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
+        
+        if (mode != null && !mode.getValue().isEmpty()) {
+            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode.getValue());
+        } else {
+            // Default to EXPLICIT if not specified
+            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, FtpConstants.FTPS_MODE_EXPLICIT);
+        }
+    }
+
+    /**
+     * Configures FTPS data channel protection level.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param ftpConfig The FTP configuration map to populate
+     */
+    private static void configureFtpsDataChannelProtection(BMap secureSocket, Map<String, Object> ftpConfig) {
+        final BString dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION));
+        
+        if (dataChannelProtection != null && !dataChannelProtection.getValue().isEmpty()) {
+            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
+                    dataChannelProtection.getValue());
+        } else {
+            // Default to PRIVATE (secure) if not specified
+            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
+                    FtpConstants.FTPS_DATA_CHANNEL_PROTECTION_PRIVATE);
+        }
+    }
+
+    /**
+     * Extracts a store (KeyStore or TrustStore) from secureSocket configuration and adds it to ftpConfig.
+     * Handles both BMap and BObject representations. Extracts path/password strings and loads the Java KeyStore.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param storeKey The key name ("key" for KeyStore, "cert" for TrustStore)
+     * @param pathConfigKey The configuration key for the store path (deprecated, kept for backward compatibility)
+     * @param passwordConfigKey The configuration key for the store password
+     * @param ftpConfig The FTP configuration map to populate
+     * @return Error object if KeyStore loading fails, null otherwise
+     */
+    private static Object extractAndConfigureStore(BMap secureSocket, String storeKey, 
+                                                  String pathConfigKey, String passwordConfigKey,
+                                                  Map<String, Object> ftpConfig) {
+        Object storeObj = getStoreObject(secureSocket, storeKey);
+        if (storeObj == null) {
+            return null;
+        }
+        
+        String path = null;
+        String password = null;
+        
+        // Extract Strings from Ballerina Record (BMap)
+        if (storeObj instanceof BMap) {
+            BMap storeRecord = (BMap) storeObj;
+            BString pathBStr = storeRecord.getStringValue(
+                    StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+            BString passBStr = storeRecord.getStringValue(
+                    StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
+            
+            if (pathBStr != null) {
+                path = pathBStr.getValue();
+            }
+            if (passBStr != null) {
+                password = passBStr.getValue();
+            }
+        } else if (storeObj instanceof BObject) {
+            // Fallback if it's a BObject (unlikely for crypto:KeyStore but safe to keep)
+            try {
+                BObject storeObject = (BObject) storeObj;
+                BString pathBStr = storeObject.getStringValue(
+                        StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+                BString passBStr = storeObject.getStringValue(
+                        StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
+                if (pathBStr != null) {
+                    path = pathBStr.getValue();
+                }
+                if (passBStr != null) {
+                    password = passBStr.getValue();
+                }
+            } catch (Exception e) {
+                log.debug("Could not extract path/password from BObject: {}", e.getMessage());
+            }
+        }
+        
+        // BRIDGE: Load the Java Object and put it in the Map
+        if (path != null) {
+            try {
+                KeyStore javaKeyStore = FtpUtil.loadKeyStore(path, password);
+                
+                if (javaKeyStore != null) {
+                    if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY)) {
+                        ftpConfig.put(FtpConstants.KEYSTORE_INSTANCE, javaKeyStore);
+                    } else {
+                        ftpConfig.put(FtpConstants.TRUSTSTORE_INSTANCE, javaKeyStore);
+                    }
+                }
+            } catch (BallerinaFtpException e) {
+                log.error("Failed to load FTPS Keystore from path {}: {}", path, e.getMessage());
+                return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
+            }
+        }
+        
+        // Backward compatibility: store password string if needed
+        if (password != null) {
+            ftpConfig.put(passwordConfigKey, password);
+        }
+        
+        return null;
+    }
+
+    /**
+     * Attempts to retrieve a store object from secureSocket using multiple methods.
+     * Handles both BMap and BObject representations.
+     * 
+     * @param secureSocket The secure socket configuration map
+     * @param storeKey The key name ("key" or "cert")
+     * @return The store object, or null if not found
+     */
+    private static Object getStoreObject(BMap secureSocket, String storeKey) {
+        BString keyString = StringUtils.fromString(storeKey);
+        Object storeObj = secureSocket.get(keyString);
+        if (storeObj != null) {
+            return storeObj;
+        }
+        
+        storeObj = secureSocket.getMapValue(keyString);
+        if (storeObj != null) {
+            return storeObj;
+        }
+        
+        return secureSocket.getObjectValue(keyString);
     }
 
     /**
