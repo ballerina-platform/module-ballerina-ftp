@@ -39,10 +39,12 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,7 +76,7 @@ public class FtpUtil {
         // private constructor
     }
 
-    public static void extractTimeoutConfigurations(BMap<Object, Object> config, Map<String, String> ftpProperties)
+    public static void extractTimeoutConfigurations(BMap<Object, Object> config, Map<String, Object> ftpProperties)
             throws BallerinaFtpException {
         // Extract connectTimeout
         Object connectTimeoutObj = config.get(StringUtils.fromString(FtpConstants.CONNECT_TIMEOUT));
@@ -117,14 +119,14 @@ public class FtpUtil {
     }
 
     public static void extractFileTransferConfiguration(BMap<Object, Object> config,
-                                                        Map<String, String> ftpProperties) {
+                                                        Map<String, Object> ftpProperties) {
         BString ftpFileTransfer = config.getStringValue(StringUtils.fromString(FtpConstants.FTP_FILE_TYPE));
         if (ftpFileTransfer != null && !ftpFileTransfer.getValue().isEmpty()) {
             ftpProperties.put(FtpConstants.FTP_FILE_TYPE, ftpFileTransfer.getValue());
         }
     }
 
-    public static void extractCompressionConfiguration(BMap<Object, Object> config, Map<String, String> ftpProperties) {
+    public static void extractCompressionConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties) {
         BArray sftpCompression = config.getArrayValue(StringUtils.fromString(FtpConstants.SFTP_COMPRESSION));
         if (sftpCompression != null && !sftpCompression.isEmpty()) {
             StringBuilder compressionValues = new StringBuilder();
@@ -141,14 +143,14 @@ public class FtpUtil {
         }
     }
 
-    public static void extractKnownHostsConfiguration(BMap<Object, Object> config, Map<String, String> ftpProperties) {
+    public static void extractKnownHostsConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties) {
         BString knownHosts = config.getStringValue(StringUtils.fromString(FtpConstants.SFTP_KNOWN_HOSTS));
         if (knownHosts != null && !knownHosts.getValue().isEmpty()) {
             ftpProperties.put(FtpConstants.SFTP_KNOWN_HOSTS, knownHosts.getValue());
         }
     }
 
-    public static void extractProxyConfiguration(BMap<Object, Object> config, Map<String, String> ftpProperties)
+    public static void extractProxyConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties)
             throws BallerinaFtpException {
         BMap proxyConfig = config.getMapValue(StringUtils.fromString(FtpConstants.PROXY));
         if (proxyConfig == null) {
@@ -222,8 +224,23 @@ public class FtpUtil {
         int port = extractPortValue(config.getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
+        if (protocol.equals(FtpConstants.SCHEME_FTPS) && (port <= 0 || port == 21)) {
+            if (auth != null) {
+                final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                        FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+                if (secureSocket != null) {
+                    final BString mode = secureSocket.getStringValue(StringUtils.fromString(
+                            FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
+                    // Check if mode is IMPLICIT
+                    if (mode != null && FtpConstants.FTPS_MODE_IMPLICIT.equalsIgnoreCase(mode.getValue())) {
+                        port = 990; 
+                    }
+                }
+            }
+        }
         String username = FTP_ANONYMOUS_USERNAME;
-        String password = protocol.equals(FtpConstants.SCHEME_FTP) ? FTP_ANONYMOUS_PASSWORD : null;
+        String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) //
+                ? FTP_ANONYMOUS_PASSWORD : null;
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
@@ -240,6 +257,23 @@ public class FtpUtil {
                 }
             }
         }
+        
+        // Fix: Default port to 990 for IMPLICIT FTPS if no port is specified
+        if (FtpConstants.SCHEME_FTPS.equals(protocol) && (port == -1 || port == 0)) {
+            if (auth != null) {
+                final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                        FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+                if (secureSocket != null) {
+                    final BString mode = secureSocket.getStringValue(StringUtils.fromString(
+                            FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
+                    if (mode != null && FtpConstants.FTPS_MODE_IMPLICIT.equals(mode.getValue())) {
+                        // Default to port 990 for IMPLICIT FTPS when port is not specified
+                        port = 990;
+                    }
+                }
+            }
+        }
+        
         return createUrl(protocol, host, port, username, password, filePath);
     }
 
@@ -277,7 +311,8 @@ public class FtpUtil {
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = FTP_ANONYMOUS_USERNAME;
-        String password = protocol.equals(FtpConstants.SCHEME_FTP) ? FTP_ANONYMOUS_PASSWORD : null;
+        String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) //
+                ? FTP_ANONYMOUS_PASSWORD : null;
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
@@ -412,7 +447,7 @@ public class FtpUtil {
     }
 
     /**
-     * Gets all content handler methods from a service.
+s     * Gets all content handler methods from a service.
      *
      * @param service The BObject service
      * @return Array of MethodType objects representing all content handler methods
@@ -515,5 +550,83 @@ public class FtpUtil {
      */
     public static Module getFtpPackage() {
         return getModule();
+    }
+
+    /**
+     * Loads a Java KeyStore from a file path and password.
+     * 
+     * @param path The file path to the KeyStore
+     * @param password The password for the KeyStore
+     * @return The loaded java.security.KeyStore object
+     * @throws BallerinaFtpException If loading fails
+     */
+    public static KeyStore loadKeyStore(String path, String password) throws BallerinaFtpException {
+        if (path == null || path.isEmpty()) {
+            return null;
+        }
+        try {
+            // Auto-detect type based on extension
+            String type = KeyStore.getDefaultType();
+            if (path.toLowerCase().endsWith(".jks")) {
+                type = "JKS";
+            } else if (path.toLowerCase().endsWith(".p12") || path.toLowerCase().endsWith(".pfx")) {
+                type = "PKCS12";
+            }
+
+            KeyStore keyStore = KeyStore.getInstance(type);
+            char[] passChars = (password != null) ? password.toCharArray() : null;
+            
+            try (FileInputStream fis = new FileInputStream(new File(path))) {
+                keyStore.load(fis, passChars);
+            }
+            return keyStore;
+        } catch (Exception e) {
+            throw new BallerinaFtpException("Failed to load KeyStore from path: " + path + ". " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Extracts path and password from a crypto:KeyStore or crypto:TrustStore BObject/BMap.
+     * Handles both BMap (record) and BObject (typed object) cases.
+     * 
+     * @deprecated This method is deprecated. Use extractJavaKeyStore instead to get the KeyStore object directly.
+     * @param keyStoreObj The KeyStore/TrustStore object (can be BMap or BObject)
+     * @return Map with "path" and "password" keys, or empty map if extraction fails
+     */
+    @Deprecated
+    public static Map<String, String> extractKeyStoreInfo(Object keyStoreObj) { //
+        if (keyStoreObj == null) {
+            return new HashMap<>();
+        }
+        
+        Map<String, String> result = new HashMap<>(2);
+        
+        try {
+            BString path = null;
+            BString password = null;
+            
+            // Try as BMap first (record type)
+            if (keyStoreObj instanceof BMap) {
+                BMap keyStoreMap = (BMap) keyStoreObj;
+                path = keyStoreMap.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+                password = keyStoreMap.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
+            } else if (keyStoreObj instanceof BObject) { // Try as BObject (typed object from crypto module)
+                BObject keyStoreObject = (BObject) keyStoreObj;
+                path = keyStoreObject.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PATH_KEY));
+                password = keyStoreObject.getStringValue(StringUtils.fromString(FtpConstants.KEYSTORE_PASSWORD_KEY));
+            }
+            
+            if (path != null && !path.getValue().isEmpty()) {
+                result.put(FtpConstants.KEYSTORE_PATH_KEY, path.getValue());
+            }
+            if (password != null && !password.getValue().isEmpty()) {
+                result.put(FtpConstants.KEYSTORE_PASSWORD_KEY, password.getValue());
+            }
+            
+            return result;
+        } catch (Exception e) {
+            log.warn("Failed to extract KeyStore/TrustStore information: {}", e.getMessage());
+            return new HashMap<>();
+        }
     }
 }

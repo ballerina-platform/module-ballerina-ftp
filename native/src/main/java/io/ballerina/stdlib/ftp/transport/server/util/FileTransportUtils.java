@@ -25,20 +25,30 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
 import org.apache.commons.vfs2.provider.ftp.FtpFileType;
+import org.apache.commons.vfs2.provider.ftps.FtpsDataChannelProtectionLevel;
+import org.apache.commons.vfs2.provider.ftps.FtpsFileSystemConfigBuilder;
+import org.apache.commons.vfs2.provider.ftps.FtpsMode;
 import org.apache.commons.vfs2.provider.sftp.IdentityInfo;
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.security.KeyStore;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.IDENTITY_PASS_PHRASE;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_FTP;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_FTPS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_SFTP;
 
 /**
@@ -59,55 +69,65 @@ public final class FileTransportUtils {
      * @param options Options to be used with the file system manager
      * @return A FileSystemOptions instance
      */
-    public static FileSystemOptions attachFileSystemOptions(Map<String, String> options)
+    public static FileSystemOptions attachFileSystemOptions(Map<String, Object> options)
             throws RemoteFileSystemConnectorException {
         if (options == null) {
             return null;
         }
         FileSystemOptions opts = new FileSystemOptions();
-        String listeningDirURI = options.get(FtpConstants.URI);
-        if (listeningDirURI.toLowerCase(Locale.getDefault()).startsWith(SCHEME_FTP)) {
+        String listeningDirURI = (String) options.get(FtpConstants.URI);
+        String lowerCaseUri = listeningDirURI.toLowerCase(Locale.getDefault());
+        if (lowerCaseUri.startsWith(SCHEME_FTPS)) { //
+            setFtpsOptions(options, opts);
+        } else if (lowerCaseUri.startsWith(SCHEME_FTP)) {
             setFtpOptions(options, opts);
-        } else if (listeningDirURI.toLowerCase(Locale.getDefault()).startsWith(SCHEME_SFTP)) {
+        } else if (lowerCaseUri.startsWith(SCHEME_SFTP)) { 
             setSftpOptions(options, opts);
         }
         return opts;
     }
 
-    private static void setFtpOptions(Map<String, String> options, FileSystemOptions opts)
+    private static void setFtpOptions(Map<String, Object> options, FileSystemOptions opts)
             throws RemoteFileSystemConnectorException {
         final FtpFileSystemConfigBuilder configBuilder = FtpFileSystemConfigBuilder.getInstance();
 
-        if (options.get(FtpConstants.PASSIVE_MODE) != null) {
-            configBuilder.setPassiveMode(opts, Boolean.parseBoolean(options.get(FtpConstants.PASSIVE_MODE)));
+        Object passiveModeObj = options.get(FtpConstants.PASSIVE_MODE);
+        if (passiveModeObj != null) {
+            configBuilder.setPassiveMode(opts, Boolean.parseBoolean(passiveModeObj.toString()));
         }
-        if (options.get(FtpConstants.USER_DIR_IS_ROOT) != null) {
-            configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT)));
+        Object userDirIsRootObj = options.get(FtpConstants.USER_DIR_IS_ROOT);
+        if (userDirIsRootObj != null) {
+            configBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(userDirIsRootObj.toString()));
         }
 
-        if (options.get(FtpConstants.CONNECT_TIMEOUT) != null) {
-            double connectTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.CONNECT_TIMEOUT));
+
+        Object connectTimeoutObj = options.get(FtpConstants.CONNECT_TIMEOUT);
+        if (connectTimeoutObj != null) {
+            double connectTimeoutSeconds = Double.parseDouble(connectTimeoutObj.toString());
             Duration connectTimeout = Duration.ofMillis((long) (connectTimeoutSeconds * 1000));
             configBuilder.setConnectTimeout(opts, connectTimeout);
             log.debug("FTP connectTimeout set to {} seconds", connectTimeoutSeconds);
         }
 
-        if (options.get(FtpConstants.FTP_DATA_TIMEOUT) != null) {
-            double dataTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.FTP_DATA_TIMEOUT));
+        Object dataTimeoutObj = options.get(FtpConstants.FTP_DATA_TIMEOUT);
+        if (dataTimeoutObj != null) {
+            double dataTimeoutSeconds = Double.parseDouble(dataTimeoutObj.toString());
             Duration dataTimeout = Duration.ofMillis((long) (dataTimeoutSeconds * 1000));
             configBuilder.setDataTimeout(opts, dataTimeout);
             log.debug("FTP dataTimeout set to {} seconds", dataTimeoutSeconds);
         }
 
-        if (options.get(FtpConstants.FTP_SOCKET_TIMEOUT) != null) {
-            double socketTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.FTP_SOCKET_TIMEOUT));
+        Object socketTimeoutObj = options.get(FtpConstants.FTP_SOCKET_TIMEOUT);
+        if (socketTimeoutObj != null) {
+            double socketTimeoutSeconds = Double.parseDouble(socketTimeoutObj.toString());
             Duration socketTimeout = Duration.ofMillis((long) (socketTimeoutSeconds * 1000));
             configBuilder.setSoTimeout(opts, socketTimeout);
             log.debug("FTP socketTimeout set to {} seconds", socketTimeoutSeconds);
         }
 
-        if (options.get(FtpConstants.FTP_FILE_TYPE) != null) {
-            String fileTypeStr = options.get(FtpConstants.FTP_FILE_TYPE);
+        Object fileTypeObj = options.get(FtpConstants.FTP_FILE_TYPE);
+        if (fileTypeObj != null) {
+            String fileTypeStr = fileTypeObj.toString();
             if (FtpConstants.FILE_TYPE_ASCII.equalsIgnoreCase(fileTypeStr)) {
                 configBuilder.setFileType(opts, FtpFileType.ASCII);
                 log.debug("FTP file type set to ASCII");
@@ -121,24 +141,212 @@ public final class FileTransportUtils {
         }
     }
 
-    private static void setSftpOptions(Map<String, String> options, FileSystemOptions opts)
+    private static void setFtpsOptions(Map<String, Object> options, FileSystemOptions opts)
+            throws RemoteFileSystemConnectorException {
+        // Use FTPS-specific config builder for proper FTPS configuration
+        final FtpsFileSystemConfigBuilder ftpsConfigBuilder = FtpsFileSystemConfigBuilder.getInstance();
+        
+        // Set common FTP options (passive mode, user dir as root) using FTPS builder
+        // These methods are inherited from FtpFileSystemConfigBuilder 
+        // but must be called on the FTPS builder to ensure they are applied to the ftps. namespace
+        Object passiveModeObj = options.get(FtpConstants.PASSIVE_MODE);
+        if (passiveModeObj != null) {
+            ftpsConfigBuilder.setPassiveMode(opts, Boolean.parseBoolean(passiveModeObj.toString()));
+        }
+        Object userDirIsRootObj = options.get(FtpConstants.USER_DIR_IS_ROOT);
+        if (userDirIsRootObj != null) {
+            ftpsConfigBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(userDirIsRootObj.toString()));
+        }
+
+        Object connectTimeoutObj = options.get(FtpConstants.CONNECT_TIMEOUT);
+        if (connectTimeoutObj != null) {
+            double connectTimeoutSeconds = Double.parseDouble(connectTimeoutObj.toString());
+            Duration connectTimeout = Duration.ofMillis((long) (connectTimeoutSeconds * 1000));
+            ftpsConfigBuilder.setConnectTimeout(opts, connectTimeout);
+            log.debug("FTPS connectTimeout set to {} seconds", connectTimeoutSeconds);
+        }
+
+        Object dataTimeoutObj = options.get(FtpConstants.FTP_DATA_TIMEOUT);
+        if (dataTimeoutObj != null) {
+            double dataTimeoutSeconds = Double.parseDouble(dataTimeoutObj.toString());
+            Duration dataTimeout = Duration.ofMillis((long) (dataTimeoutSeconds * 1000));
+            ftpsConfigBuilder.setDataTimeout(opts, dataTimeout);
+            log.debug("FTPS dataTimeout set to {} seconds", dataTimeoutSeconds);
+        }
+
+        Object socketTimeoutObj = options.get(FtpConstants.FTP_SOCKET_TIMEOUT);
+        if (socketTimeoutObj != null) {
+            double socketTimeoutSeconds = Double.parseDouble(socketTimeoutObj.toString());
+            Duration socketTimeout = Duration.ofMillis((long) (socketTimeoutSeconds * 1000));
+            ftpsConfigBuilder.setSoTimeout(opts, socketTimeout);
+            log.debug("FTPS socketTimeout set to {} seconds", socketTimeoutSeconds);
+        }
+
+        Object fileTypeObj = options.get(FtpConstants.FTP_FILE_TYPE);
+        if (fileTypeObj != null) {
+            String fileTypeStr = fileTypeObj.toString();
+            if (FtpConstants.FILE_TYPE_ASCII.equalsIgnoreCase(fileTypeStr)) {
+                ftpsConfigBuilder.setFileType(opts, FtpFileType.ASCII);
+                log.debug("FTPS file type set to ASCII");
+            } else if (FtpConstants.FILE_TYPE_BINARY.equalsIgnoreCase(fileTypeStr)) {
+                ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
+                log.debug("FTPS file type set to BINARY");
+            } else {
+                log.warn("Unknown FTPS file type: {}, defaulting to BINARY", fileTypeStr);
+                ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
+            }
+        } else {
+            // Default to BINARY when file type is not specified
+            // This is required for VFS to determine file type, especially with CLEAR data channel protection
+            ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
+            log.debug("FTPS file type defaulting to BINARY");
+        }
+        
+        // Handle implicit vs explicit FTPS mode using the recommended VFS2 API
+        Object ftpsModeObj = options.get(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE);
+        if (ftpsModeObj != null && FtpConstants.FTPS_MODE_IMPLICIT.equalsIgnoreCase(ftpsModeObj.toString())) {
+            // For implicit FTPS, set implicit SSL mode
+            ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.IMPLICIT);
+        } else {
+            // For explicit FTPS (default), set explicit mode
+            ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.EXPLICIT);
+        }
+        
+        // Configure data channel protection
+        configureFtpsSecurityOptions(ftpsConfigBuilder, opts, options);
+        
+        // Configure SSL/TLS certificates (KeyStore/TrustStore) for FTPS
+        configureFtpsSslCertificates(ftpsConfigBuilder, opts, options);
+    }
+    
+    /**
+     * Configures SSL/TLS certificates for FTPS by using pre-loaded KeyStore and TrustStore objects
+     * and setting KeyManager and TrustManager in VFS2.
+     *
+     * @param ftpsConfigBuilder The FTPS config builder
+     * @param opts The file system options
+     * @param options The configuration options map
+     * @throws RemoteFileSystemConnectorException If configuration fails
+     */
+    private static void configureFtpsSslCertificates(FtpsFileSystemConfigBuilder ftpsConfigBuilder,
+                                                     FileSystemOptions opts,
+                                                     Map<String, Object> options) 
+            throws RemoteFileSystemConnectorException { //
+        try {
+            // 1. Configure KeyStore (Client Certificate)
+            Object keystoreObj = options.get(FtpConstants.KEYSTORE_INSTANCE);
+            if (keystoreObj instanceof KeyStore) {
+                KeyStore keyStore = (KeyStore) keystoreObj;
+                Object passwordObj = options.get(FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD);
+                String password = (passwordObj != null) ? passwordObj.toString() : null;
+                
+                // Init KeyManagerFactory with the pre-loaded KeyStore
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                char[] passChars = (password != null) ? password.toCharArray() : null;
+                
+                kmf.init(keyStore, passChars);
+                KeyManager[] keyManagers = kmf.getKeyManagers();
+                
+                if (keyManagers != null && keyManagers.length > 0) {
+                    ftpsConfigBuilder.setKeyManager(opts, keyManagers[0]);
+                } else {
+                    log.warn("FTPS configured with Keystore but no KeyManagers were found.");
+                }
+            }
+            
+            // 2. Configure TrustStore (Server Validation)
+            Object truststoreObj = options.get(FtpConstants.TRUSTSTORE_INSTANCE);
+            if (truststoreObj instanceof KeyStore) {
+                KeyStore trustStore = (KeyStore) truststoreObj;
+                
+                // Init TrustManagerFactory with the pre-loaded TrustStore
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                tmf.init(trustStore);
+                TrustManager[] trustManagers = tmf.getTrustManagers();
+                
+                if (trustManagers != null && trustManagers.length > 0) {
+                    ftpsConfigBuilder.setTrustManager(opts, trustManagers[0]);
+                } else {
+                    log.warn("FTPS configured with TrustStore but no TrustManagers were found.");
+                }
+            }
+        } catch (Exception e) {
+            throw new RemoteFileSystemConnectorException(
+                    "Failed to configure SSL/TLS certificates for FTPS: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Configures FTPS security options including data channel protection.
+     *
+     * @param ftpsConfigBuilder The FTPS config builder
+     * @param opts The file system options
+     * @param options The configuration options map
+     */
+    private static void configureFtpsSecurityOptions(FtpsFileSystemConfigBuilder ftpsConfigBuilder,
+                                                     FileSystemOptions opts,
+                                                     Map<String, Object> options) {
+        // Configure data channel protection level
+        Object protectionLevelObj = options.get(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION);
+        if (protectionLevelObj != null) {
+            String protectionLevel = protectionLevelObj.toString();
+            FtpsDataChannelProtectionLevel level = mapToVfs2ProtectionLevel(protectionLevel);
+            ftpsConfigBuilder.setDataChannelProtectionLevel(opts, level);
+            log.debug("FTPS data channel protection set to: {}", protectionLevel);
+        } else {
+            // Default to PRIVATE (secure)
+            ftpsConfigBuilder.setDataChannelProtectionLevel(opts, FtpsDataChannelProtectionLevel.P);
+            log.debug("FTPS data channel protection defaulting to PRIVATE");
+        }
+    }
+    
+    /**
+     * Maps Ballerina data channel protection level string to VFS2 enum value.
+     *
+     * @param level The protection level string (CLEAR, PRIVATE, SAFE, or CONFIDENTIAL)
+     * @return The corresponding VFS2 FtpsDataChannelProtectionLevel enum value
+     */
+    private static FtpsDataChannelProtectionLevel mapToVfs2ProtectionLevel(String level) {
+        switch (level.toUpperCase()) {
+            case "CLEAR":
+                return FtpsDataChannelProtectionLevel.C;
+            case "PRIVATE":
+                return FtpsDataChannelProtectionLevel.P;
+            case "SAFE":
+                return FtpsDataChannelProtectionLevel.S;
+            case "CONFIDENTIAL":
+                return FtpsDataChannelProtectionLevel.E;
+            default:
+                log.warn("Unknown data channel protection level: {}, defaulting to PRIVATE", level);
+                return FtpsDataChannelProtectionLevel.P;
+        }
+    }
+    
+
+    private static void setSftpOptions(Map<String, Object> options, FileSystemOptions opts)
             throws RemoteFileSystemConnectorException {
         final SftpFileSystemConfigBuilder configBuilder = SftpFileSystemConfigBuilder.getInstance();
-        String value = options.get(ENDPOINT_CONFIG_PREFERRED_METHODS);
-        configBuilder.setPreferredAuthentications(opts, value);
-        boolean userDirIsRoot = Boolean.parseBoolean(options.get(FtpConstants.USER_DIR_IS_ROOT));
+        Object preferredMethodsObj = options.get(ENDPOINT_CONFIG_PREFERRED_METHODS);
+        if (preferredMethodsObj != null) {
+            configBuilder.setPreferredAuthentications(opts, preferredMethodsObj.toString());
+        }
+        Object userDirIsRootObj = options.get(FtpConstants.USER_DIR_IS_ROOT);
+        boolean userDirIsRoot = userDirIsRootObj != null && Boolean.parseBoolean(userDirIsRootObj.toString());
         configBuilder.setUserDirIsRoot(opts, userDirIsRoot);
-        if (options.get(FtpConstants.IDENTITY) != null) {
+        Object identityObj = options.get(FtpConstants.IDENTITY);
+        if (identityObj != null) {
             IdentityInfo identityInfo;
-            if (options.containsKey(IDENTITY_PASS_PHRASE)) {
-                identityInfo = new IdentityInfo(new File(options.get(FtpConstants.IDENTITY)),
-                        options.get(IDENTITY_PASS_PHRASE).getBytes());
+            Object passPhraseObj = options.get(IDENTITY_PASS_PHRASE);
+            if (passPhraseObj != null) {
+                identityInfo = new IdentityInfo(new File(identityObj.toString()),
+                        passPhraseObj.toString().getBytes());
             } else {
-                identityInfo = new IdentityInfo(new File(options.get(FtpConstants.IDENTITY)));
+                identityInfo = new IdentityInfo(new File(identityObj.toString()));
             }
             configBuilder.setIdentityInfo(opts, identityInfo);
         }
-        if (options.get(FtpConstants.AVOID_PERMISSION_CHECK) != null) {
+        Object avoidPermissionCheckObj = options.get(FtpConstants.AVOID_PERMISSION_CHECK);
+        if (avoidPermissionCheckObj != null) {
             try {
                 configBuilder.setStrictHostKeyChecking(opts, "no");
             } catch (FileSystemException e) {
@@ -146,30 +354,34 @@ public final class FileTransportUtils {
             }
         }
 
-        if (options.get(FtpConstants.CONNECT_TIMEOUT) != null) {
-            double connectTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.CONNECT_TIMEOUT));
+        Object connectTimeoutObj = options.get(FtpConstants.CONNECT_TIMEOUT);
+        if (connectTimeoutObj != null) {
+            double connectTimeoutSeconds = Double.parseDouble(connectTimeoutObj.toString());
             Duration connectTimeout = Duration.ofMillis((long) (connectTimeoutSeconds * 1000));
             configBuilder.setConnectTimeout(opts, connectTimeout);
             log.debug("SFTP connectTimeout set to {} seconds", connectTimeoutSeconds);
         }
 
-        if (options.get(FtpConstants.SFTP_SESSION_TIMEOUT) != null) {
-            double sessionTimeoutSeconds = Double.parseDouble(options.get(FtpConstants.SFTP_SESSION_TIMEOUT));
+        Object sessionTimeoutObj = options.get(FtpConstants.SFTP_SESSION_TIMEOUT);
+        if (sessionTimeoutObj != null) {
+            double sessionTimeoutSeconds = Double.parseDouble(sessionTimeoutObj.toString());
             Duration sessionTimeoutMillis = Duration.ofMillis((long) (sessionTimeoutSeconds * 1000));
             configBuilder.setSessionTimeout(opts, sessionTimeoutMillis);
             log.debug("SFTP sessionTimeout set to {} seconds", sessionTimeoutSeconds);
         }
 
         // Compression configuration
-        if (options.get(FtpConstants.SFTP_COMPRESSION) != null) {
-            String compression = options.get(FtpConstants.SFTP_COMPRESSION);
+        Object compressionObj = options.get(FtpConstants.SFTP_COMPRESSION);
+        if (compressionObj != null) {
+            String compression = compressionObj.toString();
             configBuilder.setCompression(opts, compression);
             log.debug("SFTP compression set to: {}", compression);
         }
 
         // Known hosts configuration
-        if (options.get(FtpConstants.SFTP_KNOWN_HOSTS) != null) {
-            String knownHostsPath = options.get(FtpConstants.SFTP_KNOWN_HOSTS);
+        Object knownHostsObj = options.get(FtpConstants.SFTP_KNOWN_HOSTS);
+        if (knownHostsObj != null) {
+            String knownHostsPath = knownHostsObj.toString();
             String expandedPath = expandTildePath(knownHostsPath);
             File knownHostsFile = new File(expandedPath);
             if (knownHostsFile.exists()) {
@@ -186,10 +398,13 @@ public final class FileTransportUtils {
         }
 
         // Proxy configuration
-        if (options.get(FtpConstants.PROXY_HOST) != null) {
-            String proxyHost = options.get(FtpConstants.PROXY_HOST);
-            String proxyPortStr = options.get(FtpConstants.PROXY_PORT);
-            String proxyType = options.getOrDefault(FtpConstants.PROXY_TYPE, FtpConstants.PROXY_TYPE_HTTP);
+        Object proxyHostObj = options.get(FtpConstants.PROXY_HOST);
+        if (proxyHostObj != null) {
+            String proxyHost = proxyHostObj.toString();
+            Object proxyPortObj = options.get(FtpConstants.PROXY_PORT);
+            String proxyPortStr = proxyPortObj != null ? proxyPortObj.toString() : null;
+            Object proxyTypeObj = options.get(FtpConstants.PROXY_TYPE);
+            String proxyType = proxyTypeObj != null ? proxyTypeObj.toString() : FtpConstants.PROXY_TYPE_HTTP;
 
             if (!proxyHost.isEmpty()) {
                 int proxyPort = proxyPortStr != null ? Integer.parseInt(proxyPortStr) : 8080;
@@ -200,12 +415,13 @@ public final class FileTransportUtils {
                 configBuilder.setProxyType(opts, SftpFileSystemConfigBuilder.PROXY_HTTP);
 
                 // Set proxy authentication if provided
-                String proxyUsername = options.get(FtpConstants.PROXY_USERNAME);
-                String proxyPassword = options.get(FtpConstants.PROXY_PASSWORD);
-                if (proxyUsername != null && !proxyUsername.isEmpty()) {
+                Object proxyUsernameObj = options.get(FtpConstants.PROXY_USERNAME);
+                Object proxyPasswordObj = options.get(FtpConstants.PROXY_PASSWORD);
+                if (proxyUsernameObj != null && !proxyUsernameObj.toString().isEmpty()) {
+                    String proxyUsername = proxyUsernameObj.toString();
                     configBuilder.setProxyUser(opts, proxyUsername);
-                    if (proxyPassword != null) {
-                        configBuilder.setProxyPassword(opts, proxyPassword);
+                    if (proxyPasswordObj != null) {
+                        configBuilder.setProxyPassword(opts, proxyPasswordObj.toString());
                     }
                     log.debug("SFTP proxy authentication configured for user: {}", proxyUsername);
                 }
