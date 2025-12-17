@@ -263,6 +263,8 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             remoteFileSystemListener.done();
         } catch (BallerinaFtpException | RemoteFileSystemConnectorException | IOException e) {
             remoteFileSystemListener.onError(e);
+        } catch (Throwable throwable) {
+            remoteFileSystemListener.onError(throwable); // This is to handle other runtime exceptions
         } finally {
             if (fileObject != null && pathClose) {
                 try {
