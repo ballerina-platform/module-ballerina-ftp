@@ -104,6 +104,7 @@ public isolated class Listener {
             if id is task:JobId {
                 check task:unscheduleJob(id);
             }
+            return cleanup(self);
         }
     }
 

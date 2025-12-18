@@ -488,4 +488,11 @@ public class FtpListener implements RemoteFileSystemListener {
     public BObject getCaller() {
         return caller;
     }
+
+    void cleanup() {
+        registeredServices.clear();
+        caller = null;
+        fileSystemManager = null;
+        fileSystemOptions = null;
+    }
 }

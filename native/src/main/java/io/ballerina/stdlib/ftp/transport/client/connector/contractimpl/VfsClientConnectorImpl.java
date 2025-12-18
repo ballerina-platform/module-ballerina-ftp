@@ -82,6 +82,17 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
         this.remoteFileSystemListener = listener;
     }
 
+    public void close() throws FileSystemException {
+        if (path == null) {
+            return;
+        }
+        try {
+            path.close();
+        } finally {
+            path = null;
+        }
+    }
+
     @Override
     public void send(RemoteFileSystemMessage message, FtpAction action, String filePath, String destination) {
         InputStream inputStream;
@@ -252,6 +263,8 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             remoteFileSystemListener.done();
         } catch (BallerinaFtpException | RemoteFileSystemConnectorException | IOException e) {
             remoteFileSystemListener.onError(e);
+        } catch (Throwable throwable) {
+            remoteFileSystemListener.onError(throwable); // This is to handle other runtime exceptions
         } finally {
             if (fileObject != null && pathClose) {
                 try {

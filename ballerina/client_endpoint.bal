@@ -401,6 +401,16 @@ public isolated client class Client {
     remote isolated function delete(string path) returns Error? {
         return delete(self, path);
     }
+
+    # Closes the FTP client connection.
+    # ```ballerina
+    # ftp:Error? response = client->close();
+    # ```
+    #
+    # + return - `()` or else an `ftp:Error` if failed to close the connection
+    remote isolated function close() returns Error? = @java:Method {
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+    } external;
 }
 
 # File write options for write operations.

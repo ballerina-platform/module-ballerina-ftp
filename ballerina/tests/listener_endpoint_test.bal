@@ -26,6 +26,8 @@ boolean watchEventReceived = false;
 string deletedFilesNames = "";
 FileInfo[] fileInfos = [];
 isolated string addedFilename = "";
+boolean immediateStopWatchEventReceived = false;
+isolated string immediateStopAddedFilename = "";
 
 ListenerConfiguration remoteServerConfiguration = {
     protocol: FTP,
@@ -459,4 +461,74 @@ public function testIsolatedService() returns error? {
     lock {
         test:assertEquals(addedFilename, "isolatedTestFile.isolated");
     }
+}
+
+@test:Config {}
+public function testImmediateStop() returns error? {
+    lock {
+        immediateStopWatchEventReceived = false;
+        immediateStopAddedFilename = "";
+    }
+
+    Service ftpService = service object {
+        remote function onFileChange(WatchEvent event) {
+            event.addedFiles.forEach(function (FileInfo fileInfo) {
+                lock {
+                    immediateStopWatchEventReceived = true;
+                    immediateStopAddedFilename = fileInfo.name;
+                }
+            });
+        }
+    };
+
+    Listener ftpListener = check new ({
+        protocol: FTP,
+        host: "localhost",
+        port: 21212,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"}
+        },
+        path: "/home/in",
+        pollingInterval: 1,
+        fileNamePattern: "(.*).immediateStop"
+    });
+    check ftpListener.attach(ftpService);
+    check ftpListener.'start();
+    runtime:registerListener(ftpListener);
+
+    // Ensure the job is scheduled before stopping.
+    runtime:sleep(2);
+
+    runtime:deregisterListener(ftpListener);
+    check ftpListener.immediateStop();
+
+    // Validate that no watch events are received after `immediateStop()`.
+    string remotePath = "/home/in/immediateStopTestFile.immediateStop";
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>clientEp)->put(remotePath, bStream);
+    runtime:sleep(3);
+
+    lock {
+        test:assertFalse(immediateStopWatchEventReceived,
+            msg = "Listener should not receive events after immediateStop(), but received for: " +
+                immediateStopAddedFilename);
+    }
+
+    check (<Client>clientEp)->delete(remotePath);
+}
+
+@test:Config {}
+public function testClientPutJson() returns error? {
+    string path = "/home/in/generic-put-json.json";
+    json data = {name: "wso2", count: 2, ok: true};
+
+    Error? putRes = (<Client>clientEp)->put(path, data);
+    if putRes is Error {
+        test:assertFail(msg = "Generic put(path, json) failed: " + putRes.message());
+    }
+
+    json getValue = check (<Client>clientEp)->getJson(path);
+    test:assertEquals(getValue, data, msg = "Generic put(path, json) content mismatch");
+
+    check (<Client>clientEp)->delete(path);
 }
