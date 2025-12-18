@@ -17,6 +17,11 @@
 import ballerina/io;
 import ballerina/test;
 
+// Constants for test configuration
+const string KEYSTORE_PATH = "tests/resources/keystore.jks";
+const string KEYSTORE_PASSWORD = "changeit";
+const string FTPS_CLIENT_ROOT = "/ftps-client";
+
 // Create the config to access mock FTPS server in EXPLICIT mode
 ClientConfiguration ftpsExplicitConfig = {
     protocol: FTPS,
@@ -26,12 +31,12 @@ ClientConfiguration ftpsExplicitConfig = {
         credentials: {username: "wso2", password: "wso2123"},
         secureSocket: {
             key: {
-                path: "tests/resources/keystore.jks",
-                password: "changeit"
+                path: KEYSTORE_PATH,
+                password: KEYSTORE_PASSWORD
             },
             cert: {
-                path: "tests/resources/keystore.jks",
-                password: "changeit"
+                path: KEYSTORE_PATH,
+                password: KEYSTORE_PASSWORD
             },
             mode: EXPLICIT,
             dataChannelProtection: PRIVATE
@@ -48,12 +53,12 @@ ClientConfiguration ftpsImplicitConfig = {
         credentials: {username: "wso2", password: "wso2123"},
         secureSocket: {
             key: {
-                path: "tests/resources/keystore.jks",
-                password: "changeit"
+                path: KEYSTORE_PATH,
+                password: KEYSTORE_PASSWORD
             },
             cert: {
-                path: "tests/resources/keystore.jks",
-                password: "changeit"
+                path: KEYSTORE_PATH,
+                password: KEYSTORE_PASSWORD
             },
             mode: IMPLICIT,
             dataChannelProtection: PRIVATE
@@ -70,12 +75,12 @@ ClientConfiguration ftpsClearDataChannelConfig = {
         credentials: {username: "wso2", password: "wso2123"},
         secureSocket: {
             key: {
-                path: "tests/resources/keystore.jks",
-                password: "changeit"
+                path: KEYSTORE_PATH,
+                password: KEYSTORE_PASSWORD
             },
             cert: {
-                path: "tests/resources/keystore.jks",
-                password: "changeit"
+                path: KEYSTORE_PATH,
+                password: KEYSTORE_PASSWORD
             },
             mode: EXPLICIT,
             dataChannelProtection: CLEAR
@@ -86,9 +91,6 @@ ClientConfiguration ftpsClearDataChannelConfig = {
 Client? ftpsExplicitClientEp = ();
 Client? ftpsImplicitClientEp = ();
 Client? ftpsClearDataChannelClientEp = ();
-
-// Root path for client isolation
-const string FTPS_CLIENT_ROOT = "/ftps-client";
 
 @test:BeforeSuite
 function initFtpsTestEnvironment() returns error? {
@@ -280,12 +282,12 @@ public function testFtpsConnectWithWrongProtocol() returns error? {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
                 key: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
@@ -332,12 +334,12 @@ public function testFtpsConnectWithInvalidKeystorePath() returns error? {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
                 key: {
-                    path: "tests/invalid_resources/keystore.jks",
-                    password: "changeit"
+                    path: "tests/invalid_resources/keystore.jks", // Only change the bad part
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH, // Use constant for the "good" part
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
@@ -364,12 +366,12 @@ public function testFtpsConnectWithInvalidTruststorePath() returns error? {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
                 key: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH, // Use constant for the "good" part
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/invalid_resources/truststore.jks",
-                    password: "changeit"
+                    path: "tests/invalid_resources/truststore.jks", // Only change the bad part
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
@@ -396,12 +398,12 @@ public function testFtpsConnectWithWrongPort() returns error? {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
                 key: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
@@ -430,12 +432,12 @@ public function testFtpsConnectWithInvalidHost() returns error? {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
                 key: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }

@@ -18,6 +18,10 @@ import ballerina/lang.runtime as runtime;
 import ballerina/log;
 import ballerina/test;
 
+// Constants for test configuration
+const string KEYSTORE_PATH = "tests/resources/keystore.jks";
+const string KEYSTORE_PASSWORD = "changeit";
+
 // --- Global State for Event Capture (Managed per test) ---
 isolated boolean ftpsEventReceived = false;
 isolated int ftpsFileCount = 0;
@@ -45,12 +49,12 @@ ClientConfiguration triggerClientConfig = {
         },
         secureSocket: {
             key: {
-                path: "tests/resources/keystore.jks",
-                password: "changeit"
+                path: KEYSTORE_PATH,
+                password: KEYSTORE_PASSWORD
             },
             cert: {
-                path: "tests/resources/keystore.jks",
-                password: "changeit"
+                path: KEYSTORE_PATH,
+                password: KEYSTORE_PASSWORD
             },
             mode: EXPLICIT,
             dataChannelProtection: PRIVATE
@@ -70,12 +74,12 @@ ClientConfiguration triggerImplicitClientConfig = {
         },
         secureSocket: {
             key: {
-                path: "tests/resources/keystore.jks",
-                password: "changeit"
+                path: KEYSTORE_PATH,
+                password: KEYSTORE_PASSWORD
             },
             cert: {
-                path: "tests/resources/keystore.jks",
-                password: "changeit"
+                path: KEYSTORE_PATH,
+                password: KEYSTORE_PASSWORD
             },
             mode: IMPLICIT,
             dataChannelProtection: PRIVATE
@@ -224,12 +228,12 @@ public function testFtpsConnectWithInvalidKeystore() returns error? {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
                 key: {
-                    path: "tests/resources/invalid.keystore.jks",
-                    password: "changeit"
+                    path: "tests/resources/invalid.keystore.jks", // Only change the bad part
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH, // Use constant for the "good" part
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
@@ -257,12 +261,12 @@ public function testFtpsConnectWithInvalidTruststore() returns error? {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
                 key: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH, // Use constant for the "good" part
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/invalid.truststore.jks",
-                    password: "changeit"
+                    path: "tests/resources/invalid.truststore.jks", // Only change the bad part
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
@@ -290,12 +294,12 @@ public function testFtpsConnectToFTPServerWithFTPProtocol() returns error? {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
                 key: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
@@ -343,12 +347,12 @@ public function testFtpsConnectWithEmptyCredentials() returns error? {
         auth: {
             secureSocket: {
                 key: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
@@ -382,8 +386,8 @@ public function testFtpsConnectWithEmptyKeystorePath() returns error? {
                     password: ""
                 },
                 cert: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
@@ -414,12 +418,12 @@ public function testFtpsServerConnectWithInvalidHostWithDetails() returns error?
             },
             secureSocket: {
                 key: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
@@ -451,12 +455,12 @@ public function testFtpsServerConnectWithInvalidPortWithDetails() returns error?
             },
             secureSocket: {
                 key: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/keystore.jks",
-                    password: "changeit"
+                    path: KEYSTORE_PATH,
+                    password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
             }
