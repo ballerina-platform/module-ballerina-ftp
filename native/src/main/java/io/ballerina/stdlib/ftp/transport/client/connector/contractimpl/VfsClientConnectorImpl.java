@@ -110,27 +110,31 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         fileObject.createFile();
                         fileObject.refresh();
                     }
-                    // Use a try-with-resources or explicit close for FileContent
+                    
+                    // Use try-with-resources for FileContent to ensure it closes and releases Windows file locks
                     try (org.apache.commons.vfs2.FileContent content = fileObject.getContent()) {
                         if (FtpAction.APPEND.equals(action)) {
                             outputStream = content.getOutputStream(true);
                         } else {
                             outputStream = content.getOutputStream();
                         }
-                        
+
                         inputStream = message.getInputStream();
-                        if (inputStream != null) {
+                        byteBuffer = message.getBytes();
+                        if (byteBuffer != null) {
+                            outputStream.write(byteBuffer.array());
+                        } else if (inputStream != null) {
                             int n;
                             byte[] buffer = new byte[16384];
                             while ((n = inputStream.read(buffer)) > -1) {
                                 outputStream.write(buffer, 0, n);
                             }
-                            outputStream.flush();
                         }
-                        // IMPORTANT: Close the stream BEFORE the content handle closes
-                        outputStream.close(); 
-                        outputStream = null; // Prevent double-close in finally
-                    } 
+                        outputStream.flush();
+                        // Explicitly close the stream BEFORE the FileContent closes
+                        outputStream.close();
+                        outputStream = null; 
+                    }
                     break;
                 case DELETE:
                     if (fileObject.exists()) {

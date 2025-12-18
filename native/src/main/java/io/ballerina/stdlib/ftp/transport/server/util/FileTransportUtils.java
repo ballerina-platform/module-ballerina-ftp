@@ -213,6 +213,16 @@ public final class FileTransportUtils {
             ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.EXPLICIT);
         }
         
+        // Force binary for all transfers to avoid CRLF translation issues on Windows
+        ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
+
+        // Increase the data timeout specifically for Windows handshake delays
+        ftpsConfigBuilder.setDataTimeout(opts, Duration.ofSeconds(15));
+
+        // This is a "magic" setting for Windows loopback FTPS
+        // It prevents VFS from trying to resolve the hostname again for the data channel
+        ftpsConfigBuilder.setPassiveMode(opts, true);
+        
         // Configure data channel protection
         configureFtpsSecurityOptions(ftpsConfigBuilder, opts, options);
         
