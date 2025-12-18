@@ -54,7 +54,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -327,22 +326,15 @@ public class FtpClient {
         configureFtpsMode(secureSocket, ftpConfig);
         configureFtpsDataChannelProtection(secureSocket, ftpConfig);
         
-        // Return error if KeyStore loading fails
-        Object keyError = extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
+        extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
                 ftpConfig);
-        if (keyError != null) {
-            return keyError;
-        }
 
-        Object trustError = extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
+        extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
                 FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
                 ftpConfig);
-        if (trustError != null) {
-            return trustError;
-        }
 
         return null;
     }
@@ -354,15 +346,10 @@ public class FtpClient {
      * @param ftpConfig The FTP configuration map to populate
      */
     private static void configureFtpsMode(BMap secureSocket, Map<String, Object> ftpConfig) {
-        final BString mode = secureSocket.getStringValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
-        
-        if (mode != null && !mode.getValue().isEmpty()) {
-            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode.getValue());
-        } else {
-            // Default to EXPLICIT if not specified
-            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, FtpConstants.FTPS_MODE_EXPLICIT);
-        }
+        // Ballerina record has default value 'EXPLICIT', so this is never null.
+        String mode = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_MODE)).getValue();
+        ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode);
     }
 
     /**
@@ -372,66 +359,36 @@ public class FtpClient {
      * @param ftpConfig The FTP configuration map to populate
      */
     private static void configureFtpsDataChannelProtection(BMap secureSocket, Map<String, Object> ftpConfig) {
-        final BString dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION));
-        
-        if (dataChannelProtection != null && !dataChannelProtection.getValue().isEmpty()) {
-            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
-                    dataChannelProtection.getValue());
-        } else {
-            // Default to PRIVATE (secure) if not specified
-            ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
-                    FtpConstants.FTPS_DATA_CHANNEL_PROTECTION_PRIVATE);
-        }
+        // Ballerina record has default value 'PRIVATE', so this is never null.
+        String dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION)).getValue();
+        ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, dataChannelProtection);
     }
 
     /**
      * Extracts path/password from the crypto:KeyStore/TrustStore record (BMap)
-     * and loads the Java KeyStore.
+     * and stores them as strings in the configuration map.
      */
     private static Object extractAndConfigureStore(BMap secureSocket, String storeKey,
             String pathConfigKey, String passwordConfigKey,
             Map<String, Object> ftpConfig) {
+        
         // 1. Get the record (crypto:KeyStore is a BMap)
+        // This CAN be null because 'crypto:KeyStore key?' is optional in SecureSocket
         BMap storeRecord = secureSocket.getMapValue(StringUtils.fromString(storeKey));
 
-        // If the field is missing, do nothing
         if (storeRecord == null) {
             return null;
         }
 
-        // 2. Extract Strings directly from the BMap
-        // Note: Field names in crypto:KeyStore are "path" and "password"
+        // 2. Extract Strings directly. 
+        // 'path' and 'password' are mandatory in crypto:KeyStore/TrustStore, so they are guaranteed to exist.
         String path = storeRecord.getStringValue(StringUtils.fromString("path")).getValue();
+        String password = storeRecord.getStringValue(StringUtils.fromString("password")).getValue();
 
-        String password = null;
-        BString passwordBStr = storeRecord.getStringValue(StringUtils.fromString("password"));
-        if (passwordBStr != null) {
-            password = passwordBStr.getValue();
-        }
-
-        // 3. Load the Java KeyStore from disk
-        if (path != null && !path.isEmpty()) {
-            try {
-                KeyStore javaKeyStore = FtpUtil.loadKeyStore(path, password);
-
-                if (javaKeyStore != null) {
-                    if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY)) {
-                        ftpConfig.put(FtpConstants.KEYSTORE_INSTANCE, javaKeyStore);
-                    } else {
-                        ftpConfig.put(FtpConstants.TRUSTSTORE_INSTANCE, javaKeyStore);
-                    }
-                }
-            } catch (BallerinaFtpException e) {
-                log.error("Failed to load FTPS Keystore from path {}: {}", path, e.getMessage());
-                return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
-            }
-        }
-
-        // 4. Store the password for later use (KeyManagerFactory)
-        if (password != null) {
-            ftpConfig.put(passwordConfigKey, password);
-        }
+        // 3. Store Strings
+        ftpConfig.put(pathConfigKey, path);
+        ftpConfig.put(passwordConfigKey, password);
 
         return null;
     }

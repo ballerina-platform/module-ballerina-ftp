@@ -39,7 +39,6 @@ import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.ftp.util.ModuleUtils;
 
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -304,7 +303,7 @@ public class FtpListenerHelper {
      * 
      * @param secureSocket The secure socket configuration map
      * @param params The parameters map to populate
-     * @throws BallerinaFtpException If keystore loading fails
+     * @throws BallerinaFtpException If configuration fails
      */
     private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, Object> params) 
             throws BallerinaFtpException {
@@ -330,14 +329,10 @@ public class FtpListenerHelper {
      * @param params The parameters map to populate
      */
     private static void configureServerFtpsMode(BMap secureSocket, Map<String, Object> params) {
-        final BString mode = secureSocket.getStringValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
-        
-        if (mode != null && !mode.getValue().isEmpty()) {
-            params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode.getValue());
-        } else {
-            params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, FtpConstants.FTPS_MODE_EXPLICIT);
-        }
+        // Ballerina record has default value 'EXPLICIT', so this is never null.
+        String mode = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_MODE)).getValue();
+        params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode);
     }
 
     /**
@@ -347,66 +342,42 @@ public class FtpListenerHelper {
      * @param params The parameters map to populate
      */
     private static void configureServerFtpsDataChannelProtection(BMap secureSocket, Map<String, Object> params) {
-        final BString dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION));
-        
-        if (dataChannelProtection != null && !dataChannelProtection.getValue().isEmpty()) {
-            params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
-                    dataChannelProtection.getValue());
-        } else {
-            params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, 
-                    FtpConstants.FTPS_DATA_CHANNEL_PROTECTION_PRIVATE);
-        }
+        // Ballerina record has default value 'PRIVATE', so this is never null.
+        String dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION)).getValue();
+        params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, dataChannelProtection);
     }
 
     /**
      * Extracts path/password from the crypto:KeyStore/TrustStore record (BMap) 
-     * and loads the Java KeyStore.
+     * and stores them as strings in the parameter map.
      */
     private static void extractAndConfigureServerStore(BMap secureSocket, String storeKey,
             String pathConfigKey, String passwordConfigKey,
             Map<String, Object> params, String storeType)
             throws BallerinaFtpException {
 
+        // This CAN be null because 'crypto:KeyStore key?' is optional in SecureSocket
         BMap storeRecord = secureSocket.getMapValue(StringUtils.fromString(storeKey));
         if (storeRecord == null) {
             return;
         }
 
         // Extract fields from crypto:KeyStore/TrustStore record
+        // 'path' and 'password' are mandatory in crypto:KeyStore, guaranteed to exist.
         String path = storeRecord.getStringValue(StringUtils.fromString("path")).getValue();
+        String password = storeRecord.getStringValue(StringUtils.fromString("password")).getValue();
 
-        String password = null;
-        BString passwordBStr = storeRecord.getStringValue(StringUtils.fromString("password"));
-        if (passwordBStr != null) {
-            password = passwordBStr.getValue();
-        }
-
-        // Validation: Path cannot be empty for Identity KeyStore
-        if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY) && (path == null || path.isEmpty())) {
+        // Validation: Path cannot be empty for Identity KeyStore (Business logic check, not type check)
+        if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY) && path.isEmpty()) {
             throw new BallerinaFtpException("Failed to load FTPS Server " + storeType + ": Path cannot be empty");
         }
 
-        // Load Java KeyStore
-        if (path != null && !path.isEmpty()) {
-            try {
-                KeyStore javaKeyStore = FtpUtil.loadKeyStore(path, password);
-
-                if (javaKeyStore != null) {
-                    if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY)) {
-                        params.put(FtpConstants.KEYSTORE_INSTANCE, javaKeyStore);
-                    } else {
-                        params.put(FtpConstants.TRUSTSTORE_INSTANCE, javaKeyStore);
-                    }
-                }
-            } catch (BallerinaFtpException e) {
-                throw new BallerinaFtpException("Failed to load FTPS Server " + storeType + ": " + e.getMessage(), e);
-            }
+        // Store strings in params
+        if (!path.isEmpty()) {
+            params.put(pathConfigKey, path);
         }
-
-        if (password != null) {
-            params.put(passwordConfigKey, password);
-        }
+        params.put(passwordConfigKey, password);
     }
 
     /**

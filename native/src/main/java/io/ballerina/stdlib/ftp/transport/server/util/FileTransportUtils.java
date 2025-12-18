@@ -21,6 +21,7 @@ package io.ballerina.stdlib.ftp.transport.server.util;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.util.ExcludeCoverageFromGeneratedReport;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
+import io.ballerina.stdlib.ftp.util.FtpUtil;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
@@ -220,57 +221,68 @@ public final class FileTransportUtils {
     }
     
     /**
-     * Configures SSL/TLS certificates for FTPS by using pre-loaded KeyStore and TrustStore objects
+     * Configures SSL/TLS certificates for FTPS by loading KeyStore and TrustStore
+     * from paths
      * and setting KeyManager and TrustManager in VFS2.
      *
      * @param ftpsConfigBuilder The FTPS config builder
-     * @param opts The file system options
-     * @param options The configuration options map
+     * @param opts              The file system options
+     * @param options           The configuration options map
      * @throws RemoteFileSystemConnectorException If configuration fails
      */
     private static void configureFtpsSslCertificates(FtpsFileSystemConfigBuilder ftpsConfigBuilder,
-                                                     FileSystemOptions opts,
-                                                     Map<String, Object> options) 
-            throws RemoteFileSystemConnectorException { //
+            FileSystemOptions opts,
+            Map<String, Object> options)
+            throws RemoteFileSystemConnectorException {
         try {
             // 1. Configure KeyStore (Client Certificate)
-            Object keystoreObj = options.get(FtpConstants.KEYSTORE_INSTANCE);
-            if (keystoreObj instanceof KeyStore) {
-                KeyStore keyStore = (KeyStore) keystoreObj;
+            Object keystorePathObj = options.get(FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH);
+            if (keystorePathObj != null) {
+                String keyStorePath = (String) keystorePathObj;
                 Object passwordObj = options.get(FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD);
                 String password = (passwordObj != null) ? passwordObj.toString() : null;
-                
-                // Init KeyManagerFactory with the pre-loaded KeyStore
+
+                // Load KeyStore here
+                KeyStore keyStore = FtpUtil.loadKeyStore(keyStorePath, password);
+
+                // Init KeyManagerFactory
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 char[] passChars = (password != null) ? password.toCharArray() : null;
-                
+
                 kmf.init(keyStore, passChars);
                 KeyManager[] keyManagers = kmf.getKeyManagers();
-                
+
                 if (keyManagers != null && keyManagers.length > 0) {
                     ftpsConfigBuilder.setKeyManager(opts, keyManagers[0]);
                 } else {
-                    log.warn("FTPS configured with Keystore but no KeyManagers were found.");
+                    log.warn("FTPS configured with Keystore path {} but no KeyManagers were found.", keyStorePath);
                 }
             }
-            
+
             // 2. Configure TrustStore (Server Validation)
-            Object truststoreObj = options.get(FtpConstants.TRUSTSTORE_INSTANCE);
-            if (truststoreObj instanceof KeyStore) {
-                KeyStore trustStore = (KeyStore) truststoreObj;
-                
-                // Init TrustManagerFactory with the pre-loaded TrustStore
+            Object truststorePathObj = options.get(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH);
+            if (truststorePathObj != null) {
+                String trustStorePath = (String) truststorePathObj;
+                Object passwordObj = options.get(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD);
+                String password = (passwordObj != null) ? passwordObj.toString() : null;
+
+                // Load TrustStore here
+                KeyStore trustStore = FtpUtil.loadKeyStore(trustStorePath, password);
+
+                // Init TrustManagerFactory
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                 tmf.init(trustStore);
                 TrustManager[] trustManagers = tmf.getTrustManagers();
-                
+
                 if (trustManagers != null && trustManagers.length > 0) {
                     ftpsConfigBuilder.setTrustManager(opts, trustManagers[0]);
                 } else {
-                    log.warn("FTPS configured with TrustStore but no TrustManagers were found.");
+                    log.warn("FTPS configured with TrustStore path {} but no TrustManagers were found.",
+                            trustStorePath);
                 }
             }
         } catch (Exception e) {
+            // Wrap FtpUtil.loadKeyStore exceptions (BallerinaFtpException) and others
             throw new RemoteFileSystemConnectorException(
                     "Failed to configure SSL/TLS certificates for FTPS: " + e.getMessage(), e);
         }
