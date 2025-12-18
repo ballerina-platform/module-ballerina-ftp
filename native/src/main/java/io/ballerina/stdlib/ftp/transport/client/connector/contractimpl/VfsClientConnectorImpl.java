@@ -110,23 +110,27 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         fileObject.createFile();
                         fileObject.refresh();
                     }
-                    if (FtpAction.APPEND.equals(action)) {
-                        outputStream = fileObject.getContent().getOutputStream(true);
-                    } else {
-                        outputStream = fileObject.getContent().getOutputStream();
-                    }
-                    inputStream = message.getInputStream();
-                    byteBuffer = message.getBytes();
-                    if (byteBuffer != null) {
-                        outputStream.write(byteBuffer.array());
-                    } else if (inputStream != null) {
-                        int n;
-                        byte[] buffer = new byte[16384];
-                        while ((n = inputStream.read(buffer)) > -1) {
-                            outputStream.write(buffer, 0, n);
+                    // Use a try-with-resources or explicit close for FileContent
+                    try (org.apache.commons.vfs2.FileContent content = fileObject.getContent()) {
+                        if (FtpAction.APPEND.equals(action)) {
+                            outputStream = content.getOutputStream(true);
+                        } else {
+                            outputStream = content.getOutputStream();
                         }
-                    }
-                    outputStream.flush();
+                        
+                        inputStream = message.getInputStream();
+                        if (inputStream != null) {
+                            int n;
+                            byte[] buffer = new byte[16384];
+                            while ((n = inputStream.read(buffer)) > -1) {
+                                outputStream.write(buffer, 0, n);
+                            }
+                            outputStream.flush();
+                        }
+                        // IMPORTANT: Close the stream BEFORE the content handle closes
+                        outputStream.close(); 
+                        outputStream = null; // Prevent double-close in finally
+                    } 
                     break;
                 case DELETE:
                     if (fileObject.exists()) {
