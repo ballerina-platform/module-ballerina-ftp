@@ -108,21 +108,28 @@ function cleanupFtpsTestEnvironment() returns error? {
 }
 
 function cleanFtpsTarget() returns error? {
-    if ftpsExplicitClientEp is () {
-        return;
-    }
-    // Helper to clean up specific files used in tests if they exist
-    string[] files = ["file2.txt", "tempFtpsFile1.txt", "tempFtpsFile2.txt", "tempFtpsPrivate.txt", 
-    "tempFtpsClear.txt", "tempFtpsFile3.txt", "tempFtpsFile4.txt", "tempFtpsFile5.txt", "tempFtpsFile6.txt"];
+    // Cast once for efficiency
+    Client clientEp = <Client>ftpsExplicitClientEp;
+
+    string[] files = [
+        "file2.txt", "tempFtpsFile1.txt", "tempFtpsFile2.txt", 
+        "tempFtpsPrivate.txt", "tempFtpsClear.txt", "tempFtpsFile3.txt", 
+        "tempFtpsFile4.txt", "tempFtpsFile5.txt", "tempFtpsFile6.txt"
+    ];
+
     foreach string f in files {
-        var deleteResult = trap (<Client>ftpsExplicitClientEp)->delete(FTPS_CLIENT_ROOT + "/" + f);
-        // Ignore errors for files that don't exist
-        if deleteResult is error {
-            // Silently ignore - file may not exist
+        string path = FTPS_CLIENT_ROOT + "/" + f;
+        
+        // 1. Perform the action and propagate error via 'check'
+        // This is a statement, which is allowed.
+        boolean fileExists = check clientEp->exists(path);
+
+        // 2. Use the resulting boolean in the 'if' condition
+        if fileExists {
+            check clientEp->delete(path);
         }
     }
 }
-
 
 @test:Config { dependsOn: [testFtpsExplicitPutFileContent] }
 public function testFtpsExplicitGetFileContent() returns error? {
