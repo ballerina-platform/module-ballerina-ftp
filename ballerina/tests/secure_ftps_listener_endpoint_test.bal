@@ -85,7 +85,10 @@ ClientConfiguration triggerImplicitClientConfig = {
 
 // --- Positive Tests ---
 
-@test:Config {}
+// 1. First Listener test depends on the last Client test
+@test:Config { 
+    dependsOn: [testFtpsConnectWithInvalidHost] 
+}
 function testFtpsExplicitListener() returns error? {
     // 1. Setup specific path for isolation
     string watchPath = "/ftps-listener"; 
@@ -151,7 +154,10 @@ function testFtpsExplicitListener() returns error? {
     check removeIfExists(triggerClient, targetFile);
 }
 
-@test:Config {}
+// 2. Implicit Listener (Added dependency)
+@test:Config { 
+    dependsOn: [testFtpsExplicitListener] 
+}
 function testFtpsImplicitListener() returns error? {
     string watchPath = "/ftps-listener"; 
     string targetFile = watchPath + "/implicit_trigger.txt";
@@ -207,7 +213,8 @@ function testFtpsImplicitListener() returns error? {
 
 // --- Negative Tests ---
 
-@test:Config {}
+// 3. Listener Negative Tests
+@test:Config { dependsOn: [testFtpsImplicitListener] }
 public function testFtpsConnectWithInvalidKeystore() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,
@@ -240,7 +247,7 @@ public function testFtpsConnectWithInvalidKeystore() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsConnectWithInvalidKeystore] }
 public function testFtpsConnectWithInvalidTruststore() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,
@@ -273,7 +280,7 @@ public function testFtpsConnectWithInvalidTruststore() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsConnectWithInvalidTruststore] }
 public function testFtpsConnectToFTPServerWithFTPProtocol() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTP,
@@ -306,7 +313,7 @@ public function testFtpsConnectToFTPServerWithFTPProtocol() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsConnectToFTPServerWithFTPProtocol] }
 public function testFtpsListenerConnectWithEmptySecureSocket() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,
@@ -327,7 +334,7 @@ public function testFtpsListenerConnectWithEmptySecureSocket() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsListenerConnectWithEmptySecureSocket] }
 public function testFtpsConnectWithEmptyCredentials() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,
@@ -358,7 +365,7 @@ public function testFtpsConnectWithEmptyCredentials() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsConnectWithEmptyCredentials] }
 public function testFtpsConnectWithEmptyKeystorePath() returns error? {
     Listener|Error result = new ({
         protocol: FTPS,
@@ -394,7 +401,7 @@ public function testFtpsConnectWithEmptyKeystorePath() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsConnectWithEmptyKeystorePath] }
 public function testFtpsServerConnectWithInvalidHostWithDetails() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,
@@ -430,7 +437,8 @@ public function testFtpsServerConnectWithInvalidHostWithDetails() returns error?
     }
 }
 
-@test:Config {}
+// The very last test
+@test:Config { dependsOn: [testFtpsServerConnectWithInvalidHostWithDetails] }
 public function testFtpsServerConnectWithInvalidPortWithDetails() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,

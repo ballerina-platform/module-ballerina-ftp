@@ -124,7 +124,7 @@ function cleanFtpsTarget() returns error? {
 }
 
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsExplicitPutFileContent] }
 public function testFtpsExplicitGetFileContent() returns error? {
     string filePath = FTPS_CLIENT_ROOT + "/file2.txt";
     
@@ -142,7 +142,7 @@ public function testFtpsExplicitGetFileContent() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsImplicitPutFileContent] }
 public function testFtpsImplicitGetFileContent() returns error? {
     string filePath = FTPS_CLIENT_ROOT + "/file2.txt";
     
@@ -160,6 +160,7 @@ public function testFtpsImplicitGetFileContent() returns error? {
     }
 }
 
+// 1. Start with the most basic Explicit Put
 @test:Config {}
 public function testFtpsExplicitPutFileContent() returns error? {
     string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile1.txt";
@@ -179,7 +180,8 @@ public function testFtpsExplicitPutFileContent() returns error? {
     }
 }
 
-@test:Config {}
+// 4. Move to Implicit
+@test:Config { dependsOn: [testFtpsExplicitDeleteFileContent] }
 public function testFtpsImplicitPutFileContent() returns error? {
     string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile2.txt";
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
@@ -200,7 +202,8 @@ public function testFtpsImplicitPutFileContent() returns error? {
     check (<Client>ftpsImplicitClientEp)->delete(filePath);
 }
 
-@test:Config {}
+// 3. New test mentioned in your logs - Cleanup
+@test:Config { dependsOn: [testFtpsExplicitGetFileContent] }
 public function testFtpsExplicitDeleteFileContent() returns error? {
     string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile1.txt";
     
@@ -224,7 +227,8 @@ public function testFtpsExplicitDeleteFileContent() returns error? {
     }
 }
 
-@test:Config {}
+// 5. Data Channel Protection tests
+@test:Config { dependsOn: [testFtpsImplicitGetFileContent] }
 public function testFtpsDataChannelProtectionPrivate() returns error? {
     string filePath = FTPS_CLIENT_ROOT + "/tempFtpsPrivate.txt";
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
@@ -241,7 +245,7 @@ public function testFtpsDataChannelProtectionPrivate() returns error? {
     check (<Client>ftpsExplicitClientEp)->delete(filePath);
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsDataChannelProtectionPrivate] }
 public function testFtpsDataChannelProtectionClear() returns error? {
     string filePath = FTPS_CLIENT_ROOT + "/tempFtpsClear.txt";
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
@@ -258,7 +262,8 @@ public function testFtpsDataChannelProtectionClear() returns error? {
     check (<Client>ftpsClearDataChannelClientEp)->delete(filePath);
 }
 
-@test:Config {}
+// 7. Negative Tests (Grouped at the end of Client suite)
+@test:Config { dependsOn: [testFtpsLargeFileStreamReuse] }
 public function testFtpsConnectWithWrongProtocol() returns error? {
     ClientConfiguration ftpsConfig = {
         protocol: FTP,
@@ -290,7 +295,7 @@ public function testFtpsConnectWithWrongProtocol() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsConnectWithWrongProtocol] }
 public function testFtpsConnectWithEmptySecureSocket() returns error? {
     ClientConfiguration emptyFtpsConfig = {
         protocol: FTPS,
@@ -310,7 +315,7 @@ public function testFtpsConnectWithEmptySecureSocket() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsConnectWithEmptySecureSocket] }
 public function testFtpsConnectWithInvalidKeystorePath() returns error? {
     ClientConfiguration ftpsConfig = {
         protocol: FTPS,
@@ -342,7 +347,7 @@ public function testFtpsConnectWithInvalidKeystorePath() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsConnectWithInvalidKeystorePath] }
 public function testFtpsConnectWithInvalidTruststorePath() returns error? {
     ClientConfiguration ftpsConfig = {
         protocol: FTPS,
@@ -374,7 +379,7 @@ public function testFtpsConnectWithInvalidTruststorePath() returns error? {
     }
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsConnectWithInvalidTruststorePath] }
 public function testFtpsConnectWithWrongPort() returns error? {
     ClientConfiguration ftpsConfig = {
         protocol: FTPS,
@@ -407,7 +412,8 @@ public function testFtpsConnectWithWrongPort() returns error? {
     }
 }
 
-@test:Config {}
+// The FINAL test in the client file
+@test:Config { dependsOn: [testFtpsConnectWithWrongPort] }
 public function testFtpsConnectWithInvalidHost() returns error? {
     ClientConfiguration ftpsConfig = {
         protocol: FTPS,
@@ -440,7 +446,8 @@ public function testFtpsConnectWithInvalidHost() returns error? {
     }
 }
 
-@test:Config {}
+// 6. Stream Reuse (Complex data handling)
+@test:Config { dependsOn: [testFtpsDataChannelProtectionClear] }
 public function testFtpsFileStreamReuse() returns error? {
     string path1 = FTPS_CLIENT_ROOT + "/tempFtpsFile3.txt";
     string path2 = FTPS_CLIENT_ROOT + "/tempFtpsFile4.txt";
@@ -459,7 +466,7 @@ public function testFtpsFileStreamReuse() returns error? {
     check (<Client>ftpsExplicitClientEp)->delete(path2);
 }
 
-@test:Config {}
+@test:Config { dependsOn: [testFtpsFileStreamReuse] }
 public function testFtpsLargeFileStreamReuse() returns error? {
     string path1 = FTPS_CLIENT_ROOT + "/tempFtpsFile5.txt";
     string path2 = FTPS_CLIENT_ROOT + "/tempFtpsFile6.txt";
