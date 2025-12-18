@@ -62,7 +62,7 @@ ClientConfiguration triggerClientConfig = {
 ClientConfiguration triggerImplicitClientConfig = {
     protocol: FTPS,
     host: "127.0.0.1",
-    port: 990,
+    port: 21217,
     auth: {
         credentials: {
             username: "wso2",
@@ -173,7 +173,7 @@ function testFtpsImplicitListener() returns error? {
     Listener ftpsListener = check new ({
         protocol: FTPS,
         host: "127.0.0.1",
-        port: 990,
+        port: 21217,
         auth: triggerImplicitClientConfig.auth,
         path: watchPath,
         pollingInterval: 2,

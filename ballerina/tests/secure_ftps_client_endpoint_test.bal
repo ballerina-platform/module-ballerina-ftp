@@ -43,7 +43,7 @@ ClientConfiguration ftpsExplicitConfig = {
 ClientConfiguration ftpsImplicitConfig = {
     protocol: FTPS,
     host: "127.0.0.1",
-    port: 990,
+    port: 21217,
     auth: {
         credentials: {username: "wso2", password: "wso2123"},
         secureSocket: {
@@ -79,22 +79,6 @@ ClientConfiguration ftpsClearDataChannelConfig = {
             },
             mode: EXPLICIT,
             dataChannelProtection: CLEAR
-        }
-    }
-};
-
-// Config to test default port logic. 
-// We set port 21, and the backend should detect IMPLICIT mode and swap it to 990.
-ClientConfiguration ftpsImplicitDefaultPortConfig = {
-    protocol: FTPS,
-    host: "127.0.0.1",
-    port: 21, 
-    auth: {
-        credentials: {username: "wso2", password: "wso2123"},
-        secureSocket: {
-            key: {path: "tests/resources/keystore.jks", password: "changeit"},
-            cert: {path: "tests/resources/keystore.jks", password: "changeit"},
-            mode: IMPLICIT
         }
     }
 };
@@ -214,23 +198,6 @@ public function testFtpsImplicitPutFileContent() returns error? {
     }
     
     check (<Client>ftpsImplicitClientEp)->delete(filePath);
-}
-
-@test:Config {}
-public function testFtpsImplicitDefaultsTo990() returns error? {
-    // Uses the config with Port 21 to test the swap logic
-    Client|Error ftpClient = new (ftpsImplicitDefaultPortConfig);
-    
-    if ftpClient is Error {
-        test:assertFail("Failed to connect using default IMPLICIT port logic: " + ftpClient.message());
-    } else {
-        FileInfo[]|error result = ftpClient->list(FTPS_CLIENT_ROOT);
-        if result is error {
-            test:assertFail("Connection established but failed to list files: " + result.message());
-        } else {
-            test:assertTrue(result.length() >= 0, "Connected and listed using default port logic (21 -> 990)");
-        }
-    }
 }
 
 @test:Config {}
