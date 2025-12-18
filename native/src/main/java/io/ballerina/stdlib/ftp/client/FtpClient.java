@@ -198,19 +198,14 @@ public class FtpClient {
         final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
         
-        if (privateKey != null && protocol.equals(FtpConstants.SCHEME_FTPS)) {
-            return FtpUtil.createError("privateKey can only be used with SFTP protocol. " +
-                    "For FTPS, use secureSocket configuration.", Error.errorType());
+        // If private key is present, protocol MUST be SFTP
+        if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            return FtpUtil.createError("privateKey can only be used with SFTP protocol.", Error.errorType());
         }
         
-        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_SFTP)) {
-            return FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
-                    "For SFTP, use privateKey configuration.", Error.errorType());
-        }
-        
-        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_FTP)) {
-            return FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
-                    "For FTP, do not use secureSocket configuration.", Error.errorType());
+        // If secure socket is present, protocol MUST be FTPS
+        if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            return FtpUtil.createError("secureSocket can only be used with FTPS protocol.", Error.errorType());
         }
         
         return null;
@@ -323,97 +318,20 @@ public class FtpClient {
      * @return Error object if configuration fails, null otherwise
      */
     private static Object configureFtpsSecureSocket(BMap secureSocket, Map<String, Object> ftpConfig) {
-        configureFtpsMode(secureSocket, ftpConfig);
-        configureFtpsDataChannelProtection(secureSocket, ftpConfig);
+        FtpUtil.configureFtpsMode(secureSocket, ftpConfig);
+        FtpUtil.configureFtpsDataChannelProtection(secureSocket, ftpConfig);
         
-        extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
+        FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
                 ftpConfig);
 
-        extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
+        FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
                 FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
                 ftpConfig);
 
         return null;
-    }
-
-    /**
-     * Configures FTPS mode (IMPLICIT or EXPLICIT).
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param ftpConfig The FTP configuration map to populate
-     */
-    private static void configureFtpsMode(BMap secureSocket, Map<String, Object> ftpConfig) {
-        // Ballerina record has default value 'EXPLICIT', so this is never null.
-        String mode = secureSocket.getStringValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_FTPS_MODE)).getValue();
-        ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode);
-    }
-
-    /**
-     * Configures FTPS data channel protection level.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param ftpConfig The FTP configuration map to populate
-     */
-    private static void configureFtpsDataChannelProtection(BMap secureSocket, Map<String, Object> ftpConfig) {
-        // Ballerina record has default value 'PRIVATE', so this is never null.
-        String dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION)).getValue();
-        ftpConfig.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, dataChannelProtection);
-    }
-
-    /**
-     * Extracts path/password from the crypto:KeyStore/TrustStore record (BMap)
-     * and stores them as strings in the configuration map.
-     */
-    private static Object extractAndConfigureStore(BMap secureSocket, String storeKey,
-            String pathConfigKey, String passwordConfigKey,
-            Map<String, Object> ftpConfig) {
-        
-        // 1. Get the record (crypto:KeyStore is a BMap)
-        // This CAN be null because 'crypto:KeyStore key?' is optional in SecureSocket
-        BMap storeRecord = secureSocket.getMapValue(StringUtils.fromString(storeKey));
-
-        if (storeRecord == null) {
-            return null;
-        }
-
-        // 2. Extract Strings directly. 
-        // 'path' and 'password' are mandatory in crypto:KeyStore/TrustStore, so they are guaranteed to exist.
-        String path = storeRecord.getStringValue(StringUtils.fromString("path")).getValue();
-        String password = storeRecord.getStringValue(StringUtils.fromString("password")).getValue();
-
-        // 3. Store Strings
-        ftpConfig.put(pathConfigKey, path);
-        ftpConfig.put(passwordConfigKey, password);
-
-        return null;
-    }
-
-    /**
-     * Attempts to retrieve a store object from secureSocket using multiple methods.
-     * Handles both BMap and BObject representations.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param storeKey The key name ("key" or "cert")
-     * @return The store object, or null if not found
-     */
-    private static Object getStoreObject(BMap secureSocket, String storeKey) {
-        BString keyString = StringUtils.fromString(storeKey);
-        Object storeObj = secureSocket.get(keyString);
-        if (storeObj != null) {
-            return storeObj;
-        }
-        
-        storeObj = secureSocket.getMapValue(keyString);
-        if (storeObj != null) {
-            return storeObj;
-        }
-        
-        return secureSocket.getObjectValue(keyString);
     }
 
     /**

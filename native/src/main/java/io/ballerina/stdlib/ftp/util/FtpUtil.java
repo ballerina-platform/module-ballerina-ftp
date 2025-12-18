@@ -201,6 +201,63 @@ public class FtpUtil {
         }
     }
 
+    /**
+     * Configures FTPS mode (IMPLICIT or EXPLICIT).
+     *
+     * @param secureSocket The secure socket configuration map
+     * @param config The configuration map to populate
+     */
+    public static void configureFtpsMode(BMap secureSocket, Map<String, Object> config) {
+        // Ballerina record has default value 'EXPLICIT', so this is never null.
+        String mode = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_MODE)).getValue();
+        config.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode);
+    }
+
+    /**
+     * Configures FTPS data channel protection level.
+     *
+     * @param secureSocket The secure socket configuration map
+     * @param config The configuration map to populate
+     */
+    public static void configureFtpsDataChannelProtection(BMap secureSocket, Map<String, Object> config) {
+        // Ballerina record has default value 'PRIVATE', so this is never null.
+        String dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION)).getValue();
+        config.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, dataChannelProtection);
+    }
+
+    /**
+     * Extracts path/password from the crypto:KeyStore/TrustStore record (BMap)
+     * and stores them as strings in the configuration map.
+     *
+     * @param secureSocket The secure socket configuration map
+     * @param storeKey The key identifying the store in secureSocket ("key" or "cert")
+     * @param pathConfigKey The key to store the path in the config map
+     * @param passwordConfigKey The key to store the password in the config map
+     * @param config The configuration map to populate
+     * @return The path of the store, or null if the store record is missing.
+     */
+    public static String extractAndConfigureStore(BMap secureSocket, String storeKey,
+                                                  String pathConfigKey, String passwordConfigKey,
+                                                  Map<String, Object> config) {
+        // This CAN be null because 'crypto:KeyStore key?' is optional in SecureSocket
+        BMap storeRecord = secureSocket.getMapValue(StringUtils.fromString(storeKey));
+
+        if (storeRecord == null) {
+            return null;
+        }
+
+        // 'path' and 'password' are mandatory in crypto:KeyStore/TrustStore, so they are guaranteed to exist.
+        String path = storeRecord.getStringValue(StringUtils.fromString("path")).getValue();
+        String password = storeRecord.getStringValue(StringUtils.fromString("password")).getValue();
+
+        config.put(pathConfigKey, path);
+        config.put(passwordConfigKey, password);
+
+        return path;
+    }
+
     public static String createUrl(BObject clientConnector, String filePath) throws BallerinaFtpException {
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = null;

@@ -247,19 +247,14 @@ public class FtpListenerHelper {
         final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
         
-        if (privateKey != null && protocol.equals(FtpConstants.SCHEME_FTPS)) {
-            throw FtpUtil.createError("privateKey can only be used with SFTP protocol. " +
-                    "For FTPS, use secureSocket configuration.", Error.errorType());
+        // If private key is present, protocol MUST be SFTP
+        if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            throw FtpUtil.createError("privateKey can only be used with SFTP protocol.", Error.errorType());
         }
         
-        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_SFTP)) {
-            throw FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
-                    "For SFTP, use privateKey configuration.", Error.errorType());
-        }
-        
-        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_FTP)) {
-            throw FtpUtil.createError("secureSocket can only be used with FTPS protocol. " +
-                    "For FTP, do not use secureSocket configuration.", Error.errorType());
+        // If secure socket is present, protocol MUST be FTPS
+        if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            throw FtpUtil.createError("secureSocket can only be used with FTPS protocol.", Error.errorType());
         }
     }
 
@@ -307,100 +302,30 @@ public class FtpListenerHelper {
      */
     private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, Object> params) 
             throws BallerinaFtpException {
-        configureServerFtpsMode(secureSocket, params);
-        configureServerFtpsDataChannelProtection(secureSocket, params);
+        FtpUtil.configureFtpsMode(secureSocket, params);
+        FtpUtil.configureFtpsDataChannelProtection(secureSocket, params);
+        
         // For Keystore
-        extractAndConfigureServerStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
-            FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
-            FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
-            params, "Keystore");
+        String keyStorePath = FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
+                params);
+        
+        // Server-specific validation: Path cannot be empty for Identity KeyStore
+        if (keyStorePath != null && keyStorePath.isEmpty()) {
+            throw new BallerinaFtpException("Failed to load FTPS Server Keystore: Path cannot be empty");
+        }
 
         // For Truststore
-        extractAndConfigureServerStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
-            FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
-            FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
-            params, "Truststore");
-    }
-
-    /**
-     * Configures FTPS mode (IMPLICIT or EXPLICIT) for server.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param params The parameters map to populate
-     */
-    private static void configureServerFtpsMode(BMap secureSocket, Map<String, Object> params) {
-        // Ballerina record has default value 'EXPLICIT', so this is never null.
-        String mode = secureSocket.getStringValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_FTPS_MODE)).getValue();
-        params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode);
-    }
-
-    /**
-     * Configures FTPS data channel protection level for server.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param params The parameters map to populate
-     */
-    private static void configureServerFtpsDataChannelProtection(BMap secureSocket, Map<String, Object> params) {
-        // Ballerina record has default value 'PRIVATE', so this is never null.
-        String dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION)).getValue();
-        params.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, dataChannelProtection);
-    }
-
-    /**
-     * Extracts path/password from the crypto:KeyStore/TrustStore record (BMap) 
-     * and stores them as strings in the parameter map.
-     */
-    private static void extractAndConfigureServerStore(BMap secureSocket, String storeKey,
-            String pathConfigKey, String passwordConfigKey,
-            Map<String, Object> params, String storeType)
-            throws BallerinaFtpException {
-
-        // This CAN be null because 'crypto:KeyStore key?' is optional in SecureSocket
-        BMap storeRecord = secureSocket.getMapValue(StringUtils.fromString(storeKey));
-        if (storeRecord == null) {
-            return;
-        }
-
-        // Extract fields from crypto:KeyStore/TrustStore record
-        // 'path' and 'password' are mandatory in crypto:KeyStore, guaranteed to exist.
-        String path = storeRecord.getStringValue(StringUtils.fromString("path")).getValue();
-        String password = storeRecord.getStringValue(StringUtils.fromString("password")).getValue();
-
-        // Validation: Path cannot be empty for Identity KeyStore (Business logic check, not type check)
-        if (storeKey.equals(FtpConstants.SECURE_SOCKET_KEY) && path.isEmpty()) {
-            throw new BallerinaFtpException("Failed to load FTPS Server " + storeType + ": Path cannot be empty");
-        }
-
-        // Store strings in params
-        if (!path.isEmpty()) {
-            params.put(pathConfigKey, path);
-        }
-        params.put(passwordConfigKey, password);
-    }
-
-    /**
-     * Attempts to retrieve a store object from secureSocket using multiple methods.
-     * Handles both BMap and BObject representations.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param storeKey The key name (SECURE_SOCKET_KEY or SECURE_SOCKET_TRUSTSTORE)
-     * @return The store object, or null if not found
-     */
-    private static Object getServerStoreObject(BMap secureSocket, String storeKey) {
-        BString keyString = StringUtils.fromString(storeKey);
-        Object storeObj = secureSocket.get(keyString);
-        if (storeObj != null) {
-            return storeObj;
-        }
+        String trustStorePath = FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
+                params);
         
-        storeObj = secureSocket.getMapValue(keyString);
-        if (storeObj != null) {
-            return storeObj;
+        // Only store path if not empty (server-specific behavior)
+        if (trustStorePath != null && trustStorePath.isEmpty()) {
+            params.remove(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH);
         }
-        
-        return secureSocket.getObjectValue(keyString);
     }
 
     /**
