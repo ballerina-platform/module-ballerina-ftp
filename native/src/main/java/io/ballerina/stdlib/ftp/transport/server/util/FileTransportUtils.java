@@ -126,18 +126,16 @@ public final class FileTransportUtils {
             log.debug("FTP socketTimeout set to {} seconds", socketTimeoutSeconds);
         }
 
-        Object fileTypeObj = options.get(FtpConstants.FTP_FILE_TYPE);
-        if (fileTypeObj != null) {
-            String fileTypeStr = fileTypeObj.toString();
-            if (FtpConstants.FILE_TYPE_ASCII.equalsIgnoreCase(fileTypeStr)) {
+        // Use the renamed constant
+        Object fileModeObj = options.get(FtpConstants.FILE_TRANSFER_MODE);
+        if (fileModeObj != null) {
+            String fileModeStr = fileModeObj.toString();
+            if (FtpConstants.FILE_TYPE_ASCII.equalsIgnoreCase(fileModeStr)) {
                 configBuilder.setFileType(opts, FtpFileType.ASCII);
                 log.debug("FTP file type set to ASCII");
-            } else if (FtpConstants.FILE_TYPE_BINARY.equalsIgnoreCase(fileTypeStr)) {
+            } else {
                 configBuilder.setFileType(opts, FtpFileType.BINARY);
                 log.debug("FTP file type set to BINARY");
-            } else {
-                log.warn("Unknown FTP file type: {}, defaulting to BINARY", fileTypeStr);
-                configBuilder.setFileType(opts, FtpFileType.BINARY);
             }
         }
     }
@@ -183,19 +181,13 @@ public final class FileTransportUtils {
             log.debug("FTPS socketTimeout set to {} seconds", socketTimeoutSeconds);
         }
 
-        Object fileTypeObj = options.get(FtpConstants.FTP_FILE_TYPE);
-        if (fileTypeObj != null) {
-            String fileTypeStr = fileTypeObj.toString();
-            if (FtpConstants.FILE_TYPE_ASCII.equalsIgnoreCase(fileTypeStr)) {
-                ftpsConfigBuilder.setFileType(opts, FtpFileType.ASCII);
-                log.debug("FTPS file type set to ASCII");
-            } else if (FtpConstants.FILE_TYPE_BINARY.equalsIgnoreCase(fileTypeStr)) {
-                ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
-                log.debug("FTPS file type set to BINARY");
-            } else {
-                log.warn("Unknown FTPS file type: {}, defaulting to BINARY", fileTypeStr);
-                ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
-            }
+        // Logic for FTPS using the generic mode
+        Object fileModeObj = options.get(FtpConstants.FILE_TRANSFER_MODE);
+        if (fileModeObj != null) {
+            String mode = fileModeObj.toString();
+            ftpsConfigBuilder.setFileType(opts, mode.equalsIgnoreCase("ASCII") ? 
+                FtpFileType.ASCII : FtpFileType.BINARY);
+            log.debug("FTPS file type set to {}", mode);
         } else {
             // Default to BINARY when file type is not specified
             // This is required for VFS to determine file type, especially with CLEAR data channel protection

@@ -120,9 +120,10 @@ public class FtpUtil {
 
     public static void extractFileTransferConfiguration(BMap<Object, Object> config,
                                                         Map<String, Object> ftpProperties) {
-        BString ftpFileTransfer = config.getStringValue(StringUtils.fromString(FtpConstants.FTP_FILE_TYPE));
-        if (ftpFileTransfer != null && !ftpFileTransfer.getValue().isEmpty()) {
-            ftpProperties.put(FtpConstants.FTP_FILE_TYPE, ftpFileTransfer.getValue());
+        // Update to the new constant
+        BString fileTransferMode = config.getStringValue(StringUtils.fromString(FtpConstants.FILE_TRANSFER_MODE));
+        if (fileTransferMode != null && !fileTransferMode.getValue().isEmpty()) {
+            ftpProperties.put(FtpConstants.FILE_TRANSFER_MODE, fileTransferMode.getValue());
         }
     }
 

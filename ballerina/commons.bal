@@ -109,11 +109,11 @@ public enum PreferredMethod {
     PUBLICKEY
 }
 
-# FTP file transfer type
+# File transfer mode
 #
 # + BINARY - Binary mode (no conversion, suitable for all file types)
 # + ASCII - ASCII mode (CRLF conversion for text files)
-public enum FtpFileTransfer {
+public enum FileTransferMode {
     BINARY,
     ASCII
 }

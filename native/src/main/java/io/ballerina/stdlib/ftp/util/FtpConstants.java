@@ -135,7 +135,7 @@ public class FtpConstants {
     public static final String FTP_DATA_TIMEOUT = "ftpDataTimeout";
     public static final String FTP_SOCKET_TIMEOUT = "ftpSocketTimeout";
     public static final String SFTP_SESSION_TIMEOUT = "sftpSessionTimeout";
-    public static final String FTP_FILE_TYPE = "ftpFileTransfer";
+    public static final String FILE_TRANSFER_MODE = "fileTransferMode";
     public static final String SFTP_COMPRESSION = "sftpCompression";
     public static final String SFTP_KNOWN_HOSTS = "sftpSshKnownHosts";
     public static final String PROXY = "proxy";
