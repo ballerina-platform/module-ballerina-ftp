@@ -281,23 +281,12 @@ public class FtpUtil {
         int port = extractPortValue(config.getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
-        if (protocol.equals(FtpConstants.SCHEME_FTPS) && (port <= 0 || port == 21)) {
-            if (auth != null) {
-                final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
-                if (secureSocket != null) {
-                    final BString mode = secureSocket.getStringValue(StringUtils.fromString(
-                            FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
-                    // Check if mode is IMPLICIT
-                    if (mode != null && FtpConstants.FTPS_MODE_IMPLICIT.equalsIgnoreCase(mode.getValue())) {
-                        port = 990; 
-                    }
-                }
-            }
-        }
+        
+
         String username = FTP_ANONYMOUS_USERNAME;
         String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) //
                 ? FTP_ANONYMOUS_PASSWORD : null;
+        
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
@@ -311,22 +300,6 @@ public class FtpUtil {
                         StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY));
                 if (tempPassword != null) {
                     password = tempPassword.getValue();
-                }
-            }
-        }
-        
-        // Fix: Default port to 990 for IMPLICIT FTPS if no port is specified
-        if (FtpConstants.SCHEME_FTPS.equals(protocol) && (port == -1 || port == 0)) {
-            if (auth != null) {
-                final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
-                if (secureSocket != null) {
-                    final BString mode = secureSocket.getStringValue(StringUtils.fromString(
-                            FtpConstants.ENDPOINT_CONFIG_FTPS_MODE));
-                    if (mode != null && FtpConstants.FTPS_MODE_IMPLICIT.equals(mode.getValue())) {
-                        // Default to port 990 for IMPLICIT FTPS when port is not specified
-                        port = 990;
-                    }
                 }
             }
         }
@@ -622,7 +595,7 @@ s     * Gets all content handler methods from a service.
             return null;
         }
         try {
-            // Auto-detect type based on extension
+            // JKS extension checking
             String type = KeyStore.getDefaultType();
             if (path.toLowerCase().endsWith(".jks")) {
                 type = "JKS";
