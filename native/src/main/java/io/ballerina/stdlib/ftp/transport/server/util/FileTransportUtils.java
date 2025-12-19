@@ -144,6 +144,15 @@ public final class FileTransportUtils {
             throws RemoteFileSystemConnectorException {
         // Use FTPS-specific config builder for proper FTPS configuration
         final FtpsFileSystemConfigBuilder ftpsConfigBuilder = FtpsFileSystemConfigBuilder.getInstance();
+
+        //Start with these to ensure stability
+        // Force binary for all transfers to avoid CRLF translation issues on Windows
+        ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
+        // Increase the data timeout specifically for Windows handshake delays
+        ftpsConfigBuilder.setDataTimeout(opts, Duration.ofSeconds(15));
+        // This is a setting for Windows loopback FTPS
+        // It prevents VFS from trying to resolve the hostname again for the data channel
+        ftpsConfigBuilder.setPassiveMode(opts, true);
         
         // Set common FTP options (passive mode, user dir as root) using FTPS builder
         // These methods are inherited from FtpFileSystemConfigBuilder 
@@ -204,16 +213,6 @@ public final class FileTransportUtils {
             // For explicit FTPS (default), set explicit mode
             ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.EXPLICIT);
         }
-        
-        // Force binary for all transfers to avoid CRLF translation issues on Windows
-        ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
-
-        // Increase the data timeout specifically for Windows handshake delays
-        ftpsConfigBuilder.setDataTimeout(opts, Duration.ofSeconds(15));
-
-        // This is a "magic" setting for Windows loopback FTPS
-        // It prevents VFS from trying to resolve the hostname again for the data channel
-        ftpsConfigBuilder.setPassiveMode(opts, true);
         
         // Configure data channel protection
         configureFtpsSecurityOptions(ftpsConfigBuilder, opts, options);

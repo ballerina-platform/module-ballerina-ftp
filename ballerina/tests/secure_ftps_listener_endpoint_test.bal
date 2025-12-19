@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/lang.runtime as runtime;
+import ballerina/lang.'string as strings;
 import ballerina/log;
 import ballerina/test;
 
@@ -32,6 +33,17 @@ function resetFtpsState() {
     }
     lock {
         ftpsFileCount = 0;
+    }
+}
+
+function removeFtpsFileIfExists(Client ftpClient, string path) returns error? {
+    var deleteResult = trap ftpClient->delete(path);
+    if deleteResult is error {
+        string message = strings:toLowerAscii(deleteResult.message());
+        if !(message.includes("no such file") || message.includes("not found")
+                || message.includes("cannot find") || message.includes("does not exist")) {
+            return deleteResult;
+        }
     }
 }
 
@@ -89,10 +101,7 @@ ClientConfiguration triggerImplicitClientConfig = {
 
 // --- Positive Tests ---
 
-// 1. First Listener test depends on the last Client test
-@test:Config { 
-    dependsOn: [testFtpsConnectWithInvalidHost] 
-}
+@test:Config {}
 function testFtpsExplicitListener() returns error? {
     // 1. Setup specific path for isolation
     string watchPath = "/ftps-listener"; 
@@ -100,7 +109,7 @@ function testFtpsExplicitListener() returns error? {
     
     // 2. Initialize Helper Client
     Client triggerClient = check new(triggerClientConfig);
-    check removeIfExists(triggerClient, targetFile);
+    check removeFtpsFileIfExists(triggerClient, targetFile);
     resetFtpsState();
 
     // 3. Define Service
@@ -155,19 +164,16 @@ function testFtpsExplicitListener() returns error? {
     test:assertTrue(eventSeen, "FTPS Explicit Listener failed to detect file.");
 
     // 9. Cleanup
-    check removeIfExists(triggerClient, targetFile);
+    check removeFtpsFileIfExists(triggerClient, targetFile);
 }
 
-// 2. Implicit Listener (Added dependency)
-@test:Config { 
-    dependsOn: [testFtpsExplicitListener] 
-}
+@test:Config {}
 function testFtpsImplicitListener() returns error? {
     string watchPath = "/ftps-listener"; 
     string targetFile = watchPath + "/implicit_trigger.txt";
     
     Client triggerClient = check new(triggerImplicitClientConfig);
-    check removeIfExists(triggerClient, targetFile);
+    check removeFtpsFileIfExists(triggerClient, targetFile);
     resetFtpsState();
 
     Service ftpsService = service object {
@@ -212,13 +218,12 @@ function testFtpsImplicitListener() returns error? {
     lock { eventSeen = ftpsEventReceived; }
     test:assertTrue(eventSeen, "FTPS Implicit Listener failed to detect file.");
 
-    check removeIfExists(triggerClient, targetFile);
+    check removeFtpsFileIfExists(triggerClient, targetFile);
 }
 
-// --- Negative Tests ---
+// --- Negative Tests (Independent) ---
 
-// 3. Listener Negative Tests
-@test:Config { dependsOn: [testFtpsImplicitListener] }
+@test:Config {}
 public function testFtpsConnectWithInvalidKeystore() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,
@@ -251,7 +256,7 @@ public function testFtpsConnectWithInvalidKeystore() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsConnectWithInvalidKeystore] }
+@test:Config {}
 public function testFtpsConnectWithInvalidTruststore() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,
@@ -284,7 +289,7 @@ public function testFtpsConnectWithInvalidTruststore() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsConnectWithInvalidTruststore] }
+@test:Config {}
 public function testFtpsConnectToFTPServerWithFTPProtocol() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTP,
@@ -317,7 +322,7 @@ public function testFtpsConnectToFTPServerWithFTPProtocol() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsConnectToFTPServerWithFTPProtocol] }
+@test:Config {}
 public function testFtpsListenerConnectWithEmptySecureSocket() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,
@@ -338,7 +343,7 @@ public function testFtpsListenerConnectWithEmptySecureSocket() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsListenerConnectWithEmptySecureSocket] }
+@test:Config {}
 public function testFtpsConnectWithEmptyCredentials() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,
@@ -369,7 +374,7 @@ public function testFtpsConnectWithEmptyCredentials() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsConnectWithEmptyCredentials] }
+@test:Config {}
 public function testFtpsConnectWithEmptyKeystorePath() returns error? {
     Listener|Error result = new ({
         protocol: FTPS,
@@ -405,7 +410,7 @@ public function testFtpsConnectWithEmptyKeystorePath() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsConnectWithEmptyKeystorePath] }
+@test:Config {}
 public function testFtpsServerConnectWithInvalidHostWithDetails() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,
@@ -441,8 +446,7 @@ public function testFtpsServerConnectWithInvalidHostWithDetails() returns error?
     }
 }
 
-// The very last test
-@test:Config { dependsOn: [testFtpsServerConnectWithInvalidHostWithDetails] }
+@test:Config {}
 public function testFtpsServerConnectWithInvalidPortWithDetails() returns error? {
     Listener|Error ftpsServer = new ({
         protocol: FTPS,

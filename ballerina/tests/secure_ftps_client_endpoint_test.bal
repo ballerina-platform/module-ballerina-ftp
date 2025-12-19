@@ -15,6 +15,8 @@
 // under the License.
 
 import ballerina/io;
+import ballerina/lang.'string as strings;
+import ballerina/lang.runtime as runtime;
 import ballerina/test;
 
 // Constants for test configuration
@@ -94,9 +96,14 @@ Client? ftpsClearDataChannelClientEp = ();
 
 @test:BeforeSuite
 function initFtpsTestEnvironment() returns error? {
-    io:println("Initializing FTPS test clients");
+    io:println("Initializing FTPS test clients...");
+    
     ftpsExplicitClientEp = check new (ftpsExplicitConfig);
+    runtime:sleep(1); // Give the mock server 1s to stabilize
+    
     ftpsImplicitClientEp = check new (ftpsImplicitConfig);
+    runtime:sleep(1);
+    
     ftpsClearDataChannelClientEp = check new (ftpsClearDataChannelConfig);
     
     // Clean the sandbox
@@ -133,146 +140,27 @@ function cleanFtpsTarget() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsExplicitPutFileContent] }
-public function testFtpsExplicitGetFileContent() returns error? {
-    string filePath = FTPS_CLIENT_ROOT + "/file2.txt";
-    
-    // Setup: Put file first
-    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>ftpsExplicitClientEp)->put(filePath, bStream);
-
-    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get(filePath);
-    if str is stream<byte[] & readonly, io:Error?> {
-        test:assertTrue(check matchStreamContent(str, "Put content"),
-            msg = "Found unexpected content from FTPS EXPLICIT `get` operation");
-        check str.close();
-    } else {
-        test:assertFail("Found unexpected response type" + str.message());
+function matchFtpsStreamContent(stream<byte[] & readonly, io:Error?> binaryStream, string matchedString) returns boolean|error {
+    string fullContent = "";
+    string tempContent = "";
+    int maxLoopCount = 100000;
+    while maxLoopCount > 0 {
+        record {|byte[] value;|}|io:Error? binaryArray = binaryStream.next();
+        if binaryArray is io:Error {
+            break;
+        } else if binaryArray is () {
+            break;
+        } else {
+            tempContent = check strings:fromBytes(binaryArray.value);
+            fullContent = fullContent + tempContent;
+            maxLoopCount -= 1;
+        }
     }
+    return matchedString == fullContent;
 }
 
-@test:Config { dependsOn: [testFtpsImplicitPutFileContent] }
-public function testFtpsImplicitGetFileContent() returns error? {
-    string filePath = FTPS_CLIENT_ROOT + "/file2.txt";
-    
-    // Setup: Put file first using implicit client
-    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>ftpsImplicitClientEp)->put(filePath, bStream);
-
-    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsImplicitClientEp)->get(filePath);
-    if str is stream<byte[] & readonly, io:Error?> {
-        test:assertTrue(check matchStreamContent(str, "Put content"),
-            msg = "Found unexpected content from FTPS IMPLICIT `get` operation");
-        check str.close();
-    } else {
-        test:assertFail("Found unexpected response type" + str.message());
-    }
-}
-
-// 1. Start with the most basic Explicit Put
+// --- Negative Tests (Now Independent & First) ---
 @test:Config {}
-public function testFtpsExplicitPutFileContent() returns error? {
-    string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile1.txt";
-    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-
-    Error? response = (<Client>ftpsExplicitClientEp)->put(filePath, bStream);
-    if response is Error {
-        test:assertFail(msg = "Error in FTPS EXPLICIT `put`: " + response.message());
-    }
-
-    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get(filePath);
-    if str is stream<byte[] & readonly, io:Error?> {
-        test:assertTrue(check matchStreamContent(str, "Put content"));
-        check str.close();
-    } else {
-        test:assertFail(msg = "Found unexpected response type" + str.message());
-    }
-}
-
-// 4. Move to Implicit
-@test:Config { dependsOn: [testFtpsExplicitDeleteFileContent] }
-public function testFtpsImplicitPutFileContent() returns error? {
-    string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile2.txt";
-    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-
-    Error? response = (<Client>ftpsImplicitClientEp)->put(filePath, bStream);
-    if response is Error {
-        test:assertFail(msg = "Error in FTPS IMPLICIT `put`: " + response.message());
-    }
-
-    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsImplicitClientEp)->get(filePath);
-    if str is stream<byte[] & readonly, io:Error?> {
-        test:assertTrue(check matchStreamContent(str, "Put content"));
-        check str.close();
-    } else {
-        test:assertFail(msg = "Found unexpected response type" + str.message());
-    }
-    
-    check (<Client>ftpsImplicitClientEp)->delete(filePath);
-}
-
-// 3. New test mentioned in your logs - Cleanup
-@test:Config { dependsOn: [testFtpsExplicitGetFileContent] }
-public function testFtpsExplicitDeleteFileContent() returns error? {
-    string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile1.txt";
-    
-    // Ensure file exists first (robustness)
-    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-    check (<Client>ftpsExplicitClientEp)->put(filePath, bStream);
-
-    Error? response = (<Client>ftpsExplicitClientEp)->delete(filePath);
-    if response is Error {
-        test:assertFail(msg = "Error in FTPS EXPLICIT `delete`: " + response.message());
-    }
-
-    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get(filePath);
-    if str is stream<byte[] & readonly, io:Error?> {
-        check str.close();
-        test:assertFail(msg = "File was not deleted with FTPS EXPLICIT `delete` operation");
-    } else {
-        // Assert specific error message if possible, or just that it failed
-        test:assertTrue(str.message().includes("not found"), 
-            msg = "Expected 'not found' error, got: " + str.message());
-    }
-}
-
-// 5. Data Channel Protection tests
-@test:Config { dependsOn: [testFtpsImplicitGetFileContent] }
-public function testFtpsDataChannelProtectionPrivate() returns error? {
-    string filePath = FTPS_CLIENT_ROOT + "/tempFtpsPrivate.txt";
-    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-
-    check (<Client>ftpsExplicitClientEp)->put(filePath, bStream);
-
-    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get(filePath);
-    if str is stream<byte[] & readonly, io:Error?> {
-        test:assertTrue(check matchStreamContent(str, "Put content"));
-        check str.close();
-    } else {
-        test:assertFail(msg = "Failed to get file with PRIVATE protection: " + str.message());
-    }
-    check (<Client>ftpsExplicitClientEp)->delete(filePath);
-}
-
-@test:Config { dependsOn: [testFtpsDataChannelProtectionPrivate] }
-public function testFtpsDataChannelProtectionClear() returns error? {
-    string filePath = FTPS_CLIENT_ROOT + "/tempFtpsClear.txt";
-    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
-
-    check (<Client>ftpsClearDataChannelClientEp)->put(filePath, bStream);
-
-    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsClearDataChannelClientEp)->get(filePath);
-    if str is stream<byte[] & readonly, io:Error?> {
-        test:assertTrue(check matchStreamContent(str, "Put content"));
-        check str.close();
-    } else {
-        test:assertFail(msg = "Failed to get file with CLEAR protection: " + str.message());
-    }
-    check (<Client>ftpsClearDataChannelClientEp)->delete(filePath);
-}
-
-// 7. Negative Tests (Grouped at the end of Client suite)
-@test:Config { dependsOn: [testFtpsLargeFileStreamReuse] }
 public function testFtpsConnectWithWrongProtocol() returns error? {
     ClientConfiguration ftpsConfig = {
         protocol: FTP,
@@ -304,7 +192,7 @@ public function testFtpsConnectWithWrongProtocol() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsConnectWithWrongProtocol] }
+@test:Config {}
 public function testFtpsConnectWithEmptySecureSocket() returns error? {
     ClientConfiguration emptyFtpsConfig = {
         protocol: FTPS,
@@ -324,7 +212,7 @@ public function testFtpsConnectWithEmptySecureSocket() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsConnectWithEmptySecureSocket] }
+@test:Config {}
 public function testFtpsConnectWithInvalidKeystorePath() returns error? {
     ClientConfiguration ftpsConfig = {
         protocol: FTPS,
@@ -356,7 +244,7 @@ public function testFtpsConnectWithInvalidKeystorePath() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsConnectWithInvalidKeystorePath] }
+@test:Config {}
 public function testFtpsConnectWithInvalidTruststorePath() returns error? {
     ClientConfiguration ftpsConfig = {
         protocol: FTPS,
@@ -388,7 +276,7 @@ public function testFtpsConnectWithInvalidTruststorePath() returns error? {
     }
 }
 
-@test:Config { dependsOn: [testFtpsConnectWithInvalidTruststorePath] }
+@test:Config {}
 public function testFtpsConnectWithWrongPort() returns error? {
     ClientConfiguration ftpsConfig = {
         protocol: FTPS,
@@ -421,8 +309,7 @@ public function testFtpsConnectWithWrongPort() returns error? {
     }
 }
 
-// The FINAL test in the client file
-@test:Config { dependsOn: [testFtpsConnectWithWrongPort] }
+@test:Config {}
 public function testFtpsConnectWithInvalidHost() returns error? {
     ClientConfiguration ftpsConfig = {
         protocol: FTPS,
@@ -455,8 +342,147 @@ public function testFtpsConnectWithInvalidHost() returns error? {
     }
 }
 
-// 6. Stream Reuse (Complex data handling)
-@test:Config { dependsOn: [testFtpsDataChannelProtectionClear] }
+// --- Explicit Mode Group ---
+@test:Config {}
+public function testFtpsExplicitPutFileContent() returns error? {
+    string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile1.txt";
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+
+    Error? response = (<Client>ftpsExplicitClientEp)->put(filePath, bStream);
+    if response is Error {
+        test:assertFail(msg = "Error in FTPS EXPLICIT `put`: " + response.message());
+    }
+
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get(filePath);
+    if str is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check matchFtpsStreamContent(str, "Put content"));
+        check str.close();
+    } else {
+        test:assertFail(msg = "Found unexpected response type" + str.message());
+    }
+}
+
+@test:Config { dependsOn: [testFtpsExplicitPutFileContent] }
+public function testFtpsExplicitGetFileContent() returns error? {
+    string filePath = FTPS_CLIENT_ROOT + "/file2.txt";
+    
+    // Setup: Put file first
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>ftpsExplicitClientEp)->put(filePath, bStream);
+
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get(filePath);
+    if str is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check matchFtpsStreamContent(str, "Put content"),
+            msg = "Found unexpected content from FTPS EXPLICIT `get` operation");
+        check str.close();
+    } else {
+        test:assertFail("Found unexpected response type" + str.message());
+    }
+}
+
+@test:Config { dependsOn: [testFtpsExplicitGetFileContent] }
+public function testFtpsExplicitDeleteFileContent() returns error? {
+    string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile1.txt";
+    
+    // Ensure file exists first (robustness)
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>ftpsExplicitClientEp)->put(filePath, bStream);
+
+    Error? response = (<Client>ftpsExplicitClientEp)->delete(filePath);
+    if response is Error {
+        test:assertFail(msg = "Error in FTPS EXPLICIT `delete`: " + response.message());
+    }
+
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get(filePath);
+    if str is stream<byte[] & readonly, io:Error?> {
+        check str.close();
+        test:assertFail(msg = "File was not deleted with FTPS EXPLICIT `delete` operation");
+    } else {
+        // Assert specific error message if possible, or just that it failed
+        test:assertTrue(str.message().includes("not found"), 
+            msg = "Expected 'not found' error, got: " + str.message());
+    }
+}
+
+// --- Implicit Mode Group (Independent of Explicit) ---
+@test:Config {}
+public function testFtpsImplicitPutFileContent() returns error? {
+    string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile2.txt";
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+
+    Error? response = (<Client>ftpsImplicitClientEp)->put(filePath, bStream);
+    if response is Error {
+        test:assertFail(msg = "Error in FTPS IMPLICIT `put`: " + response.message());
+    }
+
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsImplicitClientEp)->get(filePath);
+    if str is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check matchFtpsStreamContent(str, "Put content"));
+        check str.close();
+    } else {
+        test:assertFail(msg = "Found unexpected response type" + str.message());
+    }
+    
+    check (<Client>ftpsImplicitClientEp)->delete(filePath);
+}
+
+@test:Config { dependsOn: [testFtpsImplicitPutFileContent] }
+public function testFtpsImplicitGetFileContent() returns error? {
+    string filePath = FTPS_CLIENT_ROOT + "/file2.txt";
+    
+    // Setup: Put file first using implicit client
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<Client>ftpsImplicitClientEp)->put(filePath, bStream);
+
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsImplicitClientEp)->get(filePath);
+    if str is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check matchFtpsStreamContent(str, "Put content"),
+            msg = "Found unexpected content from FTPS IMPLICIT `get` operation");
+        check str.close();
+    } else {
+        test:assertFail("Found unexpected response type" + str.message());
+    }
+}
+
+// --- Data Channel Group ---
+@test:Config {}
+public function testFtpsDataChannelProtectionPrivate() returns error? {
+    string filePath = FTPS_CLIENT_ROOT + "/tempFtpsPrivate.txt";
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+
+    check (<Client>ftpsExplicitClientEp)->put(filePath, bStream);
+
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsExplicitClientEp)->get(filePath);
+    if str is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check matchFtpsStreamContent(str, "Put content"));
+        check str.close();
+    } else {
+        test:assertFail(msg = "Failed to get file with PRIVATE protection: " + str.message());
+    }
+    check (<Client>ftpsExplicitClientEp)->delete(filePath);
+}
+
+@test:Config { dependsOn: [testFtpsDataChannelProtectionPrivate] }
+public function testFtpsDataChannelProtectionClear() returns error? {
+    string filePath = FTPS_CLIENT_ROOT + "/tempFtpsClear.txt";
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+
+    check (<Client>ftpsClearDataChannelClientEp)->put(filePath, bStream);
+
+    stream<byte[] & readonly, io:Error?>|Error str = (<Client>ftpsClearDataChannelClientEp)->get(filePath);
+    if str is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check matchFtpsStreamContent(str, "Put content"));
+        check str.close();
+    } else {
+        test:assertFail(msg = "Failed to get file with CLEAR protection: " + str.message());
+    }
+    check (<Client>ftpsClearDataChannelClientEp)->delete(filePath);
+}
+
+// --- Advanced / Flaky Group ---
+@test:Config { 
+    dependsOn: [testFtpsExplicitDeleteFileContent]
+}
 public function testFtpsFileStreamReuse() returns error? {
     string path1 = FTPS_CLIENT_ROOT + "/tempFtpsFile3.txt";
     string path2 = FTPS_CLIENT_ROOT + "/tempFtpsFile4.txt";
@@ -469,14 +495,17 @@ public function testFtpsFileStreamReuse() returns error? {
     
     stream<byte[] & readonly, io:Error?> remoteFileStream2 = check (<Client>ftpsExplicitClientEp)->get(path2);
 
-    test:assertTrue(check matchStreamContent(remoteFileStream2, "Put content"));
+    test:assertTrue(check matchFtpsStreamContent(remoteFileStream2, "Put content"));
     
     check (<Client>ftpsExplicitClientEp)->delete(path1);
     check (<Client>ftpsExplicitClientEp)->delete(path2);
 }
 
-@test:Config { dependsOn: [testFtpsFileStreamReuse] }
+@test:Config { 
+    dependsOn: [testFtpsFileStreamReuse]
+}
 public function testFtpsLargeFileStreamReuse() returns error? {
+    runtime:sleep(2); // Give the OS a breather
     string path1 = FTPS_CLIENT_ROOT + "/tempFtpsFile5.txt";
     string path2 = FTPS_CLIENT_ROOT + "/tempFtpsFile6.txt";
     
@@ -491,7 +520,7 @@ public function testFtpsLargeFileStreamReuse() returns error? {
     check (<Client>ftpsExplicitClientEp)->put(path2, remoteFileStream);
     stream<byte[] & readonly, io:Error?> remoteFileStream2 = check (<Client>ftpsExplicitClientEp)->get(path2);
 
-    test:assertTrue(check matchStreamContent(remoteFileStream2, nonFittingContent));
+    test:assertTrue(check matchFtpsStreamContent(remoteFileStream2, nonFittingContent));
     check (<Client>ftpsExplicitClientEp)->delete(path1);
     check (<Client>ftpsExplicitClientEp)->delete(path2);
 }
