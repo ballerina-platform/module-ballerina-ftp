@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Environment;
+import io.ballerina.runtime.api.concurrent.StrandMetadata;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.types.Parameter;
@@ -48,8 +49,10 @@ import java.util.Optional;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CLIENT;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVICE_ENDPOINT_CONFIG;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.createError;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractCompressionConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractFileTransferConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractKnownHostsConfiguration;
@@ -62,6 +65,10 @@ import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
  * Helper class for listener functions.
  */
 public class FtpListenerHelper {
+
+    private static final String CLOSE_METHOD = "close";
+    private static final String CLOSE_CALLER_ERROR = "Error occurred while closing the caller: ";
+    private static final BString CLIENT_INSTANCE = StringUtils.fromString("client");
 
     private FtpListenerHelper() {
         // private constructor
@@ -404,5 +411,43 @@ public class FtpListenerHelper {
     private static BObject createCaller(BMap<BString, Object> serviceEndpointConfig) {
         BObject client = ValueCreator.createObjectValue(ModuleUtils.getModule(), FTP_CLIENT, serviceEndpointConfig);
         return ValueCreator.createObjectValue(ModuleUtils.getModule(), FTP_CALLER, client);
+    }
+
+    public static Object closeCaller(Environment env, BObject ftpListener) {
+        RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) ftpListener
+                .getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+        FtpListener listener = ftpConnector.getFtpListener();
+        BObject caller = listener.getCaller();
+        if (caller == null) {
+            return null;
+        }
+        BObject ftpClient = caller.getObjectValue(CLIENT_INSTANCE);
+        return env.yieldAndRun(() -> {
+            StrandMetadata strandMetadata = new StrandMetadata(true,
+                    ModuleUtils.getProperties(CLOSE_METHOD));
+            Object result = env.getRuntime().callMethod(ftpClient, CLOSE_METHOD, strandMetadata);
+            if (result != null) {
+                BError error = (BError) result;
+                return createError(CLOSE_CALLER_ERROR + error.getMessage(), findRootCause(error), FTP_ERROR);
+            }
+            return null;
+        });
+    }
+
+    public static Object cleanup(Environment env, BObject ftpListener) {
+        Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+        RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) serverConnectorObject;
+        FtpListener listener = ftpConnector.getFtpListener();
+        try {
+            closeCaller(env, ftpListener);
+            ftpConnector.stop();
+        } catch (Exception e) {
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), FTP_ERROR);
+        } finally {
+            if (listener != null) {
+                listener.cleanup();
+            }
+        }
+        return null;
     }
 }
