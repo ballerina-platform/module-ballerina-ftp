@@ -111,18 +111,17 @@ ClientConfiguration triggerImplicitClientConfig = {
 
 // --- Positive Tests ---
 
-@test:Config {}
+@test:Config { 
+    dependsOn: [testFtpsConnectWithInvalidHost] 
+}
 function testFtpsExplicitListener() returns error? {
-    // 1. Setup specific path for isolation
     string watchPath = "/ftps-listener"; 
     string targetFile = watchPath + "/explicit_trigger.txt";
     
-    // 2. Initialize Helper Client
     Client triggerClient = check new(triggerClientConfig);
     check removeFtpsFileIfExists(triggerClient, targetFile);
     resetFtpsState();
 
-    // 3. Define Service
     Service ftpsService = service object {
         remote function onFileChange(WatchEvent & readonly event) {
             if event.addedFiles.length() == 0 { return; }
@@ -132,17 +131,16 @@ function testFtpsExplicitListener() returns error? {
             lock {
                 ftpsFileCount = event.addedFiles.length();
             }
-            log:printInfo("Explicit Event: " + event.addedFiles.toString());
+            log:printInfo("Explicit Event Captured: " + event.addedFiles.toString());
         }
     };
 
-    // 4. Start Listener (Self-Contained)
     Listener ftpsListener = check new ({
         protocol: FTPS,
         host: "127.0.0.1",
         port: 21214,
         auth: triggerClientConfig.auth, 
-        path: watchPath, // Watch ONLY this folder
+        path: watchPath,
         pollingInterval: 2,
         fileNamePattern: "explicit_trigger.txt",
         connectTimeout: 60.0, // Increase to 60s for GraalVM/CI stability
@@ -156,29 +154,25 @@ function testFtpsExplicitListener() returns error? {
     check ftpsListener.'start();
     runtime:registerListener(ftpsListener);
 
-    // 5. Trigger Event
     check triggerClient->put(targetFile, "data");
 
-    // 6. Wait for Event
-    int waitCount = 0;
-    while waitCount < 20 {
-        boolean seen;
-        lock { seen = ftpsEventReceived; }
-        if seen { break; }
+    // Polling for the event
+    int attempts = 0;
+    while attempts < 20 {
+        boolean captured;
+        lock { captured = ftpsEventReceived; }
+        if captured { break; }
         runtime:sleep(1);
-        waitCount += 1;
+        attempts += 1;
     }
 
-    // 7. Stop Listener
     check ftpsListener.gracefulStop();
     runtime:deregisterListener(ftpsListener);
     
-    // 8. Assertions
-    boolean eventSeen;
-    lock { eventSeen = ftpsEventReceived; }
-    test:assertTrue(eventSeen, "FTPS Explicit Listener failed to detect file.");
+    boolean isCaptured;
+    lock { isCaptured = ftpsEventReceived; }
+    test:assertTrue(isCaptured, "FTPS Explicit Listener failed to detect file.");
 
-    // 9. Cleanup
     check removeFtpsFileIfExists(triggerClient, targetFile);
 }
 
@@ -222,26 +216,27 @@ function testFtpsImplicitListener() returns error? {
 
     check triggerClient->put(targetFile, "data");
 
-    int waitCount = 0;
-    while waitCount < 20 {
-        boolean seen;
-        lock { seen = ftpsEventReceived; }
-        if seen { break; }
+    // Polling for the event
+    int attempts = 0;
+    while attempts < 20 {
+        boolean captured;
+        lock { captured = ftpsEventReceived; }
+        if captured { break; }
         runtime:sleep(1);
-        waitCount += 1;
+        attempts += 1;
     }
 
     check ftpsListener.gracefulStop();
     runtime:deregisterListener(ftpsListener);
     
-    boolean eventSeen;
-    lock { eventSeen = ftpsEventReceived; }
-    test:assertTrue(eventSeen, "FTPS Implicit Listener failed to detect file.");
+    boolean isCaptured;
+    lock { isCaptured = ftpsEventReceived; }
+    test:assertTrue(isCaptured, "FTPS Implicit Listener failed to detect file.");
 
     check removeFtpsFileIfExists(triggerClient, targetFile);
 }
 
-// --- Negative Tests (Independent) ---
+// Negative Tests (Independent)
 
 @test:Config {}
 public function testFtpsConnectWithInvalidKeystore() returns error? {
@@ -253,11 +248,11 @@ public function testFtpsConnectWithInvalidKeystore() returns error? {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
                 key: {
-                    path: "tests/resources/invalid.keystore.jks", // Only change the bad part
+                    path: "tests/resources/invalid.keystore.jks",
                     password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: KEYSTORE_PATH, // Use constant for the "good" part
+                    path: KEYSTORE_PATH,
                     password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT
@@ -286,11 +281,11 @@ public function testFtpsConnectWithInvalidTruststore() returns error? {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
                 key: {
-                    path: KEYSTORE_PATH, // Use constant for the "good" part
+                    path: KEYSTORE_PATH,
                     password: KEYSTORE_PASSWORD
                 },
                 cert: {
-                    path: "tests/resources/invalid.truststore.jks", // Only change the bad part
+                    path: "tests/resources/invalid.truststore.jks",
                     password: KEYSTORE_PASSWORD
                 },
                 mode: EXPLICIT

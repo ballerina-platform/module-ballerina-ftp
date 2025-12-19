@@ -173,22 +173,19 @@ public final class MockFtpServer {
         user.setName(username);
         user.setPassword(password);
         
-        // Point directly to datafiles without manual Java-side cleanup
         File dataDirectory = new File(resources + "/datafiles");
         if (!dataDirectory.exists()) {
             dataDirectory.mkdirs();
         }
-
+        // Ensure folders for listener tests exist to prevent "Not a folder" errors
         new File(dataDirectory, "ftps-client").mkdirs();
         new File(dataDirectory, "ftps-listener").mkdirs();
         
         user.setHomeDirectory(dataDirectory.getAbsolutePath());
-        
         List<Authority> authorities = new ArrayList<>();
         authorities.add(new WritePermission());
         user.setAuthorities(authorities);
         userManager.save(user);
-
         serverFactory.setUserManager(userManager);
         factory.setPort(port);
         serverFactory.addListener("default", factory.createListener());
@@ -196,19 +193,28 @@ public final class MockFtpServer {
         FtpServer server = serverFactory.createServer();
         server.start();
 
-        // Robust wait logic from "Before" state
         int i = 0;
         while ((server.isStopped() || server.isSuspended()) && i < 10) {
-            TimeUnit.MILLISECONDS.sleep(500);
-            i++;
+            try {
+                TimeUnit.MILLISECONDS.sleep(500);
+                i++;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new Exception("Error in starting Apache FTPS server");
+            }
         }
-
-        if (implicitMode) {
-            ftpsServerImplicit = server;
+        
+        if (i < 10) {
+            if (implicitMode) {
+                ftpsServerImplicit = server;
+                logger.info("Started Apache FTPS server in IMPLICIT mode on port {}", port);
+            } else {
+                ftpsServerExplicit = server;
+                logger.info("Started Apache FTPS server in EXPLICIT mode on port {}", port);
+            }
         } else {
-            ftpsServerExplicit = server;
+            throw new Exception("Could not start Apache FTPS server on port " + port);
         }
-        logger.info("Started FTPS server (Mode: {}, Port: {})", implicitMode ? "IMPLICIT" : "EXPLICIT", port);
     }
 
     public static void startFtpsServerExplicit(String resources) throws Exception {
@@ -223,9 +229,16 @@ public final class MockFtpServer {
         final int port = 21213;
         sftpServer = SshServer.setUpDefaultServer();
         SftpServerUtil.setupBasicServerConfig(sftpServer, resources, port);
-        SftpServerUtil.setupAuthentication(sftpServer, resources, sftpAuthStatusHolder, username, password);
-        sftpServer.start();
+        try {
+            SftpServerUtil.setupAuthentication(sftpServer, resources, sftpAuthStatusHolder,
+                    username, password);
+            sftpServer.start();
+        } catch (Exception e) {
+            throw new Exception("Error while starting SFTP server: " + e.getMessage());
+        }
+
         SftpServerUtil.waitForServerStart(sftpServer);
+        logger.info("Started Mock SFTP server");
         return null;
     }
 

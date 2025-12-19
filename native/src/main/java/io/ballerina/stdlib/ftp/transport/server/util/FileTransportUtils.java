@@ -272,13 +272,6 @@ public final class FileTransportUtils {
         }
     }
     
-    /**
-     * Configures FTPS security options including data channel protection.
-     *
-     * @param ftpsConfigBuilder The FTPS config builder
-     * @param opts The file system options
-     * @param options The configuration options map
-     */
     private static void configureFtpsSecurityOptions(FtpsFileSystemConfigBuilder ftpsConfigBuilder,
                                                      FileSystemOptions opts,
                                                      Map<String, Object> options) {
@@ -296,12 +289,6 @@ public final class FileTransportUtils {
         }
     }
     
-    /**
-     * Maps Ballerina data channel protection level string to VFS2 enum value.
-     *
-     * @param level The protection level string (CLEAR, PRIVATE, SAFE, or CONFIDENTIAL)
-     * @return The corresponding VFS2 FtpsDataChannelProtectionLevel enum value
-     */
     private static FtpsDataChannelProtectionLevel mapToVfs2ProtectionLevel(String level) {
         switch (level.toUpperCase()) {
             case "CLEAR":

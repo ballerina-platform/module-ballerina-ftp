@@ -122,7 +122,6 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         fileObject.refresh();
                     }
                     
-                    // Use try-with-resources for FileContent to ensure it closes and releases Windows file locks
                     try (org.apache.commons.vfs2.FileContent content = fileObject.getContent()) {
                         if (FtpAction.APPEND.equals(action)) {
                             outputStream = content.getOutputStream(true);
@@ -142,7 +141,6 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                             }
                         }
                         outputStream.flush();
-                        // Explicitly close the stream BEFORE the FileContent closes
                         outputStream.close();
                         outputStream = null; 
                     }

@@ -173,12 +173,10 @@ public class FtpClient {
         final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
         
-        // If private key is present, protocol MUST be SFTP
         if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) {
             return FtpUtil.createError("privateKey can only be used with SFTP protocol.", Error.errorType());
         }
         
-        // If secure socket is present, protocol MUST be FTPS
         if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) {
             return FtpUtil.createError("secureSocket can only be used with FTPS protocol.", Error.errorType());
         }

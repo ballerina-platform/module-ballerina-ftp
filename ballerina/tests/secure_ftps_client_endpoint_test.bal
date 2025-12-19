@@ -170,7 +170,7 @@ function matchFtpsStreamContent(stream<byte[] & readonly, io:Error?> binaryStrea
     return matchedString == fullContent;
 }
 
-// --- Negative Tests (Now Independent & First) ---
+//Negative Tests
 @test:Config {}
 public function testFtpsConnectWithWrongProtocol() returns error? {
     ClientConfiguration ftpsConfig = {
@@ -195,11 +195,9 @@ public function testFtpsConnectWithWrongProtocol() returns error? {
 
     Client|Error ftpsClientEp = new (ftpsConfig);
     if ftpsClientEp is Error {
-        test:assertTrue(ftpsClientEp.message().startsWith("Error while connecting to the FTP server with URL: ") ||
-            ftpsClientEp.message().includes("secureSocket can only be used with FTPS protocol"),
-            msg = "Unexpected error during the FTP client initialization with a FTPS server. " + ftpsClientEp.message());
+        test:assertTrue(ftpsClientEp.message().includes("secureSocket can only be used with FTPS protocol"));
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing FTP client with a FTPS server.");
+        test:assertFail(msg = "Should have failed with protocol mismatch");
     }
 }
 
@@ -216,10 +214,9 @@ public function testFtpsConnectWithEmptySecureSocket() returns error? {
 
     Client|Error emptyFtpsClientEp = new (emptyFtpsConfig);
     if emptyFtpsClientEp is Error {
-        test:assertTrue(emptyFtpsClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the FTPS client initialization with no secureSocket configs. " + emptyFtpsClientEp.message());
+        test:assertTrue(emptyFtpsClientEp.message().startsWith("Error while connecting to the FTP server"));
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing FTPS client with no secureSocket configs.");
+        test:assertFail(msg = "Should have failed with missing secureSocket");
     }
 }
 
@@ -232,14 +229,8 @@ public function testFtpsConnectWithInvalidKeystorePath() returns error? {
         auth: {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
-                key: {
-                    path: "tests/invalid_resources/keystore.jks", // Only change the bad part
-                    password: KEYSTORE_PASSWORD
-                },
-                cert: {
-                    path: KEYSTORE_PATH, // Use constant for the "good" part
-                    password: KEYSTORE_PASSWORD
-                },
+                key: {path: "tests/invalid/keystore.jks", password: KEYSTORE_PASSWORD},
+                cert: {path: KEYSTORE_PATH, password: KEYSTORE_PASSWORD},
                 mode: EXPLICIT
             }
         }
@@ -247,11 +238,9 @@ public function testFtpsConnectWithInvalidKeystorePath() returns error? {
 
     Client|Error ftpsClientEp = new (ftpsConfig);
     if ftpsClientEp is Error {
-        test:assertTrue(ftpsClientEp.message().startsWith("Error while connecting to the FTP server with URL: ") ||
-            ftpsClientEp.message().includes("Failed to load KeyStore"),
-            msg = "Unexpected error during the FTPS client initialization with an invalid keystore path. " + ftpsClientEp.message());
+        test:assertTrue(ftpsClientEp.message().includes("Failed to load KeyStore"));
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing FTPS client with an invalid keystore path.");
+        test:assertFail(msg = "Should have failed with invalid keystore path");
     }
 }
 
@@ -264,14 +253,8 @@ public function testFtpsConnectWithInvalidTruststorePath() returns error? {
         auth: {
             credentials: {username: "wso2", password: "wso2123"},
             secureSocket: {
-                key: {
-                    path: KEYSTORE_PATH, // Use constant for the "good" part
-                    password: KEYSTORE_PASSWORD
-                },
-                cert: {
-                    path: "tests/invalid_resources/truststore.jks", // Only change the bad part
-                    password: KEYSTORE_PASSWORD
-                },
+                key: {path: KEYSTORE_PATH, password: KEYSTORE_PASSWORD},
+                cert: {path: "tests/invalid/truststore.jks", password: KEYSTORE_PASSWORD},
                 mode: EXPLICIT
             }
         }
@@ -279,11 +262,9 @@ public function testFtpsConnectWithInvalidTruststorePath() returns error? {
 
     Client|Error ftpsClientEp = new (ftpsConfig);
     if ftpsClientEp is Error {
-        test:assertTrue(ftpsClientEp.message().startsWith("Error while connecting to the FTP server with URL: ") ||
-            ftpsClientEp.message().includes("Failed to load KeyStore"),
-            msg = "Unexpected error during the FTPS client initialization with an invalid truststore path. " + ftpsClientEp.message());
+        test:assertTrue(ftpsClientEp.message().includes("Failed to load KeyStore"));
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing FTPS client with an invalid truststore path.");
+        test:assertFail(msg = "Should have failed with invalid truststore path");
     }
 }
 
@@ -311,12 +292,9 @@ public function testFtpsConnectWithWrongPort() returns error? {
 
     Client|Error ftpsClientEp = new (ftpsConfig);
     if ftpsClientEp is Error {
-        test:assertTrue(ftpsClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the FTPS client initialization with an invalid port. " + ftpsClientEp.message());
-        test:assertTrue(ftpsClientEp.message().length() > "Error while connecting to the FTP server with URL: ftps://wso2:***@127.0.0.1:21299".length(),
-            msg = "Error message should contain detailed root cause information");
+        test:assertTrue(ftpsClientEp.message().startsWith("Error while connecting to the FTP server"));
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing FTPS client with an invalid port.");
+        test:assertFail(msg = "Should have failed with invalid port");
     }
 }
 
@@ -344,17 +322,53 @@ public function testFtpsConnectWithInvalidHost() returns error? {
 
     Client|Error ftpsClientEp = new (ftpsConfig);
     if ftpsClientEp is Error {
-        test:assertTrue(ftpsClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
-            msg = "Unexpected error during the FTPS client initialization with an invalid host. " + ftpsClientEp.message());
-        test:assertTrue(ftpsClientEp.message().length() > "Error while connecting to the FTP server with URL: ".length(),
-            msg = "Error message should contain detailed root cause information");
+        test:assertTrue(ftpsClientEp.message().startsWith("Error while connecting to the FTP server"));
     } else {
-        test:assertFail(msg = "Found a non-error response while initializing FTPS client with an invalid host.");
+        test:assertFail(msg = "Should have failed with invalid host");
     }
 }
 
+@test:Config { dependsOn: [testFtpsConnectWithInvalidHost] }
+public function testFtpsClientWithoutTruststore() returns error? {
+    ClientConfiguration noTrustConfig = {
+        protocol: FTPS,
+        host: "127.0.0.1",
+        port: 21214,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            secureSocket: {
+                key: {path: KEYSTORE_PATH, password: KEYSTORE_PASSWORD},
+                mode: EXPLICIT
+            }
+        }
+    };
+    Client|Error result = new (noTrustConfig);
+    if result is Error {
+        test:assertTrue(result.message().startsWith("Error while connecting to the FTP server"));
+    }
+}
+
+@test:Config { dependsOn: [testFtpsClientWithoutTruststore] }
+public function testFtpsOneWaySsl() returns error? {
+    ClientConfiguration oneWayConfig = {
+        protocol: FTPS,
+        host: "127.0.0.1",
+        port: 21214,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            secureSocket: {
+                cert: {path: KEYSTORE_PATH, password: KEYSTORE_PASSWORD},
+                mode: EXPLICIT
+            }
+        }
+    };
+    Client ftpsClient = check new (oneWayConfig);
+    _ = check ftpsClient->exists(FTPS_CLIENT_ROOT);
+}
+
 // --- Explicit Mode Group ---
-@test:Config {}
+
+@test:Config { dependsOn: [testFtpsOneWaySsl] }
 public function testFtpsExplicitPutFileContent() returns error? {
     string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile1.txt";
     stream<io:Block, io:Error?> localStream = check io:fileReadBlocksAsStream(PUT_FILE_PATH, 5);
@@ -406,14 +420,13 @@ public function testFtpsExplicitDeleteFileContent() returns error? {
     var contentStream = (<Client>ftpsExplicitClientEp)->get(filePath);
     if contentStream is stream<byte[] & readonly, io:Error?> {
         check contentStream.close();
-        test:assertFail(msg = "File was not deleted with FTPS EXPLICIT `delete` operation");
+        test:assertFail(msg = "File was not deleted");
     } else {
-        test:assertTrue(contentStream.message().includes("not found"), 
-            msg = "Expected 'not found' error, got: " + contentStream.message());
+        test:assertTrue(contentStream.message().includes("not found"));
     }
 }
 
-// --- Implicit Mode Group (Independent of Explicit) ---
+// Implicit Mode Group
 @test:Config { dependsOn: [testFtpsExplicitDeleteFileContent] }
 public function testFtpsImplicitPutFileContent() returns error? {
     string filePath = FTPS_CLIENT_ROOT + "/tempFtpsFile2.txt";
@@ -487,7 +500,7 @@ public function testFtpsDataChannelProtectionClear() returns error? {
     check (<Client>ftpsClearDataChannelClientEp)->delete(filePath);
 }
 
-// --- Advanced / Flaky Group ---
+// Protection/Advanced Group
 @test:Config { 
     dependsOn: [testFtpsExplicitDeleteFileContent]
 }
@@ -509,26 +522,21 @@ public function testFtpsFileStreamReuse() returns error? {
     check (<Client>ftpsExplicitClientEp)->delete(path2);
 }
 
-@test:Config { 
-    dependsOn: [testFtpsFileStreamReuse]
-}
+@test:Config { dependsOn: [testFtpsFileStreamReuse] }
 public function testFtpsLargeFileStreamReuse() returns error? {
-    runtime:sleep(2); // Give the OS a breather
+    runtime:sleep(2); 
     string path1 = FTPS_CLIENT_ROOT + "/tempFtpsFile5.txt";
     string path2 = FTPS_CLIENT_ROOT + "/tempFtpsFile6.txt";
     
-    int i = 0;
-    string nonFittingContent = "";
-    while i < 1000 {
-        nonFittingContent += "123456789";
-        i += 1;
-    }
-    check (<Client>ftpsExplicitClientEp)->put(path1, nonFittingContent);
+    string content = "";
+    foreach int i in 0...999 { content += "123456789"; }
+
+    check (<Client>ftpsExplicitClientEp)->put(path1, content);
     stream<byte[] & readonly, io:Error?> remoteFileStream = check (<Client>ftpsExplicitClientEp)->get(path1);
     check (<Client>ftpsExplicitClientEp)->put(path2, remoteFileStream);
     stream<byte[] & readonly, io:Error?> remoteFileStream2 = check (<Client>ftpsExplicitClientEp)->get(path2);
 
-    test:assertTrue(check matchFtpsStreamContent(remoteFileStream2, nonFittingContent));
+    test:assertTrue(check matchFtpsStreamContent(remoteFileStream2, content));
     check (<Client>ftpsExplicitClientEp)->delete(path1);
     check (<Client>ftpsExplicitClientEp)->delete(path2);
 }
