@@ -306,14 +306,11 @@ public final class FileTransportUtils {
         switch (level.toUpperCase()) {
             case "CLEAR":
                 return FtpsDataChannelProtectionLevel.C;
-            case "PRIVATE":
-                return FtpsDataChannelProtectionLevel.P;
             case "SAFE":
                 return FtpsDataChannelProtectionLevel.S;
             case "CONFIDENTIAL":
                 return FtpsDataChannelProtectionLevel.E;
             default:
-                log.warn("Unknown data channel protection level: {}, defaulting to PRIVATE", level);
                 return FtpsDataChannelProtectionLevel.P;
         }
     }
