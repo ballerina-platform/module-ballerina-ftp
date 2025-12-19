@@ -93,23 +93,47 @@ listener ftp:Listener ftpsListener = check new({
 
 ## Secure Access with SFTP (SSH File Transfer Protocol)
 
-SFTP runs over the SSH protocol. It supports password-based authentication and public-key authentication via private key files.
+SFTP is a secure protocol alternative to the FTP, which runs on top of the SSH protocol.
+There are several ways to authenticate an SFTP server. One is using the username and the password.
+Another way is using the client's private key. The Ballerina SFTP client and the listener support only those authentication standards.
+An authentication-related configuration can be given to the SFTP client/listener with the `auth` configuration.
+Password-based authentication is defined with the `credentials` configuration while the private key based authentication is defined with the `privateKey` configuration.
 
 ### SFTP Client Configuration
 
 ```ballerina
 ftp:ClientConfiguration sftpConfig = {
     protocol: ftp:SFTP,
-    host: "sftp.example.com",
-    port: 22,
+    host: "<The SFTP host>",
+    port: <The SFTP port>,
     auth: {
-        credentials: { username: "ssh-user", password: "password" },
+        credentials: {username: "<The SFTP username>", password: "<The SFTP password>"},
         privateKey: {
-            path: "/home/user/.ssh/id_rsa",
-            password: "key-passphrase" // Optional
+            path: "<The private key file path>",
+            password: "<The private key file password>"
         }
     }
 };
+```
+
+### SFTP Listener Configuration
+
+```ballerina
+listener ftp:Listener remoteServer = check new({
+    protocol: ftp:SFTP,
+    host: "<The SFTP host>",
+    port: <The SFTP port>,
+    path: "<The remote SFTP directory location>",
+    pollingInterval: <Polling interval>,
+    fileNamePattern: "<File name pattern>",
+    auth: {
+        credentials: {username: "<The SFTP username>", password: "<The SFTP password>"},
+        privateKey: {
+            path: "<The private key file path>",
+            password: "<The private key file password>"
+        }
+    }
+});
 ```
 
 ## Operations and Data Handling
@@ -331,6 +355,13 @@ For instance, if the listener gets invoked for text files, the value `(.*).txt` 
 
 An authentication-related configuration can be given to the FTP listener with the `auth` configuration.
 
+##### Create a listener
+
+The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and
+notify on file addition and deletion periodically.
+
+The FTP listener supports content handler methods that automatically deserialize file content based on the file type. The listener supports text, JSON, XML, CSV, and binary data types with automatic extension-based routing.
+
 ### Example Service
 
 Handle text files:
@@ -453,14 +484,21 @@ Issues and Projects tabs are disabled for this repository as this is part of the
 
 This repository only contains the source code for the library.
 
-## Build from Source
+## Build from the source
 
-### Prerequisites
+### Set up the prerequisites
 
-Download and install Java SE Development Kit (JDK) version 21.
-Set the JAVA_HOME environment variable to the JDK installation directory.
+1. Download and install Java SE Development Kit (JDK) version 21 (from one of the following locations).
 
-### Build Commands
+   * [Oracle](https://www.oracle.com/java/technologies/downloads/)
+
+   * [OpenJDK](https://adoptium.net/)
+
+        > **Note:** Set the JAVA_HOME environment variable to the path name of the directory into which you installed JDK.
+     
+### Build the source
+
+Execute the commands below to build from source.
 
 1. To build the library:
    ```    
