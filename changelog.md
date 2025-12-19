@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- [Added FTPS with SSL/TLS configuration](https://github.com/ballerina-platform/module-ballerina-ftp/pull/1523)
 - [Added support for advanced file selection and processing](https://github.com/ballerina-platform/ballerina-library/issues/8376)
 - [Improving Ballerina FTP Client with Copy, Move and IsExist API](https://github.com/ballerina-platform/ballerina-library/issues/8438)
 - [Review Library/Connector API docs in BI editor](https://github.com/ballerina-platform/ballerina-library/issues/7736)

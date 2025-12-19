@@ -8,25 +8,19 @@ Ballerina FTP Library
   [![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/module-ballerina-ftp.svg?label=Last%20Commit)](https://github.com/ballerina-platform/module-ballerina-ftp/commits/master)
   [![Github issues](https://img.shields.io/github/issues/ballerina-platform/ballerina-standard-library/module/ftp.svg?label=Open%20Issues)](https://github.com/ballerina-platform/ballerina-standard-library/labels/module%2Fftp)
 
-This module provides an FTP/SFTP client and an FTP/SFTP server listener implementation to facilitate an FTP/SFTP connection connected to a remote location.
+This module provides a client and listener implementation for FTP, FTPS (FTP over SSL/TLS), and SFTP (SSH File Transfer Protocol) to facilitate secure and unsecure file transfers with remote servers.
 
-### FTP client
+## FTP Client
 
-The `ftp:Client` connects to an FTP server and performs various operations on the files. Currently, it supports the
-generic FTP operations; `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and
- `list`. The client also provides typed data operations for reading and writing files as text, JSON, XML, CSV, and binary data, with streaming support for handling large files efficiently.
+The `ftp:Client` connects to a remote server and performs various operations. It supports generic operations such as `get`, `delete`, `put`, `append`, `mkdir`, `rmdir`, `isDirectory`, `rename`, `size`, and `list`.
 
-An FTP client is defined using the `protocol` and `host` parameters and optionally, the `port` and
-`auth`. Authentication configuration can be configured using the `auth` parameter for Basic Auth and
-private key.
+The client also provides typed operations for reading and writing files as text, JSON, XML, CSV, and binary data, with streaming support for large files.
 
-An authentication-related configuration can be given to the FTP client with the `auth` configuration.
+An FTP client is defined using the `protocol` and `host` parameters and optionally, the `port` and `auth`. Authentication configuration can be configured using the `auth` parameter for Basic Auth and private key. 
 
-##### Create a client
+### Create an FTP Client (Unsecure)
 
-The following code creates an FTP client and performs the I/O operations, which connect to the FTP server with Basic Auth.
 ```ballerina
-// Define the FTP client configuration.
 ftp:ClientConfiguration ftpConfig = {
     protocol: ftp:FTP,
     host: "<The FTP host>",
@@ -43,7 +37,110 @@ ftp:ClientConfiguration ftpConfig = {
 ftp:Client|ftp:Error ftpClient = new(ftpConfig);
 ```
 
-##### Create a directory
+## Secure Access with FTPS (FTP over SSL/TLS)
+
+FTPS provides security by encrypting the control and data channels using SSL/TLS. This module supports both Explicit (starts as regular FTP and upgrades via AUTH TLS) and Implicit (SSL/TLS established immediately) modes.
+
+### FTPS Client Configuration
+
+To use FTPS, set the protocol to FTPS and provide the secureSocket configuration including your keystore and truststore.
+
+```ballerina
+ftp:ClientConfiguration ftpsConfig = {
+    protocol: ftp:FTPS,
+    host: "ftps.example.com",
+    port: 21, // 21 for EXPLICIT, 990 for IMPLICIT
+    auth: {
+        credentials: { username: "user", password: "password" },
+        secureSocket: {
+            key: {
+                path: "/path/to/keystore.p12",
+                password: "keystore-password"
+            },
+            cert: {
+                path: "/path/to/truststore.p12",
+                password: "truststore-password"
+            },
+            mode: ftp:EXPLICIT, // or ftp:IMPLICIT
+            dataChannelProtection: ftp:PRIVATE // PROT P (Encrypted data channel)
+        }
+    }
+};
+
+ftp:Client ftpsClient = check new(ftpsConfig);
+```
+
+### FTPS Listener Configuration
+
+The listener can monitor an FTPS-enabled directory and trigger service remote functions.
+
+```ballerina
+listener ftp:Listener ftpsListener = check new({
+    protocol: ftp:FTPS,
+    host: "ftps.example.com",
+    port: 990,
+    path: "/upload",
+    pollingInterval: 5,
+    auth: {
+        credentials: { username: "user", password: "password" },
+        secureSocket: {
+            cert: { path: "/path/to/truststore.jks", password: "password" },
+            mode: ftp:IMPLICIT
+        }
+    }
+});
+```
+
+## Secure Access with SFTP (SSH File Transfer Protocol)
+
+SFTP runs over the SSH protocol. It supports password-based authentication and public-key authentication via private key files.
+
+### SFTP Client Configuration
+
+```ballerina
+ftp:ClientConfiguration sftpConfig = {
+    protocol: ftp:SFTP,
+    host: "sftp.example.com",
+    port: 22,
+    auth: {
+        credentials: { username: "ssh-user", password: "password" },
+        privateKey: {
+            path: "/home/user/.ssh/id_rsa",
+            password: "key-passphrase" // Optional
+        }
+    }
+};
+```
+
+## Operations and Data Handling
+
+### Uploading Content
+
+The client supports uploading streams or typed data.
+
+```ballerina
+// Upload XML
+xml data = xml `<order><id>123</id></order>`;
+check ftpClient->putXml("/orders/123.xml", data);
+
+// Upload CSV from records
+Person[] people = [{name: "John", age: 30}, {name: "Jane", age: 25}];
+check ftpClient->putCsv("/data/people.csv", people);
+```
+
+### Reading Content
+
+You can read files directly into Ballerina types or as a stream.
+
+```ballerina
+// Read as text
+string content = check ftpClient->getText("/notes.txt");
+
+// Read as a stream of bytes (ideal for large files)
+stream<byte[], io:Error?> byteStream = check ftpClient->getBytesAsStream("/large-file.dat");
+```
+
+### Create a directory
 
 The following code creates a directory in the remote FTP server.
 
@@ -220,25 +317,21 @@ The following code removes a directory in a remote FTP server.
 ftp:Error? rmdirResponse = ftpClient->rmdir("<The directory path>");
 ```
 
-### FTP listener
+## FTP Listener and Event Handling
+
+The `ftp:Listener` supports format-specific content handlers. Files are automatically routed to handlers based on their extensions or custom patterns defined via `@ftp:FunctionConfig`.
 
 The `ftp:Listener` is used to listen to a remote FTP location and trigger events when new files are added to or deleted from the directory. The listener supports both a generic `onFileChange` handler for file system events and format-specific content handlers (`onFileText`, `onFileJson`, `onFileXml`, `onFileCsv`, `onFile`) that automatically deserialize file content based on the file type.
 
 An FTP listener is defined using the mandatory `protocol`, `host`, and  `path` parameters. The authentication
-configuration can be done using the `auth` parameter and the polling interval can be configured using the `pollingInterval` parameter.
-The default polling interval is 60 seconds.
+configuration can be done using the `auth` parameter and the polling interval can be configured using the `pollingInterval` parameter. The default polling interval is 60 seconds.
 
 The `fileNamePattern` parameter can be used to define the type of files the FTP listener will listen to.
 For instance, if the listener gets invoked for text files, the value `(.*).txt` can be given for the config.
 
 An authentication-related configuration can be given to the FTP listener with the `auth` configuration.
 
-##### Create a listener
-
-The FTP Listener can be used to listen to a remote directory. It will keep listening to the specified directory and
-notify on file addition and deletion periodically.
-
-The FTP listener supports content handler methods that automatically deserialize file content based on the file type. The listener supports text, JSON, XML, CSV, and binary data types with automatic extension-based routing.
+### Example Service
 
 Handle text files:
 ```ballerina
@@ -353,50 +446,6 @@ service on remoteServer {
 
 The FTP listener automatically routes files to the appropriate content handler based on file extension: `.txt` → `onFileText()`, `.json` → `onFileJson()`, `.xml` → `onFileXml()`, `.csv` → `onFileCsv()`, and other extensions → `onFile()` (fallback handler). You can override the default routing using the `@ftp:FunctionConfig` annotation to specify a custom file name pattern for each handler method.
 
-### Secure access with SFTP
-
-SFTP is a secure protocol alternative to the FTP, which runs on top of the SSH protocol.
-There are several ways to authenticate an SFTP server. One is using the username and the password.
-Another way is using the client's private key. The Ballerina SFTP client and the listener support only those authentication standards.
-An authentication-related configuration can be given to the SFTP client/listener with the `auth` configuration.
-Password-based authentication is defined with the `credentials` configuration while the private key based authentication is defined with the `privateKey` configuration.
-
-#### SFTP client configuration
-
-```ballerina
-ftp:ClientConfiguration sftpConfig = {
-    protocol: ftp:SFTP,
-    host: "<The SFTP host>",
-    port: <The SFTP port>,
-    auth: {
-        credentials: {username: "<The SFTP username>", password: "<The SFTP password>"},
-        privateKey: {
-            path: "<The private key file path>",
-            password: "<The private key file password>"
-        }
-    }
-};
-```
-
-#### SFTP listener configuration
-
-```ballerina
-listener ftp:Listener remoteServer = check new({
-    protocol: ftp:SFTP,
-    host: "<The SFTP host>",
-    port: <The SFTP port>,
-    path: "<The remote SFTP directory location>",
-    pollingInterval: <Polling interval>,
-    fileNamePattern: "<File name pattern>",
-    auth: {
-        credentials: {username: "<The SFTP username>", password: "<The SFTP password>"},
-        privateKey: {
-            path: "<The private key file path>",
-            password: "<The private key file password>"
-        }
-    }
-});
-```
 
 ## Issues and projects 
 
@@ -404,21 +453,14 @@ Issues and Projects tabs are disabled for this repository as this is part of the
 
 This repository only contains the source code for the library.
 
-## Build from the source
+## Build from Source
 
-### Set up the prerequisites
+### Prerequisites
 
-1. Download and install Java SE Development Kit (JDK) version 21 (from one of the following locations).
+Download and install Java SE Development Kit (JDK) version 21.
+Set the JAVA_HOME environment variable to the JDK installation directory.
 
-   * [Oracle](https://www.oracle.com/java/technologies/downloads/)
-
-   * [OpenJDK](https://adoptium.net/)
-
-        > **Note:** Set the JAVA_HOME environment variable to the path name of the directory into which you installed JDK.
-     
-### Build the source
-
-Execute the commands below to build from source.
+### Build Commands
 
 1. To build the library:
    ```    
