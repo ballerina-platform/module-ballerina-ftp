@@ -433,7 +433,9 @@ public enum Compression {
 #
 # + protocol - Protocol to use for the connection: FTP (unsecure) or SFTP (over SSH)
 # + host - Target server hostname or IP address
-# + port - Port number of the remote service
+# + port - Port number of the remote service. 
+#          For FTPS IMPLICIT, this is typically 990. 
+#          For FTPS EXPLICIT and FTP, this is typically 21.
 # + auth - Authentication options for connecting to the server
 # + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and
 #                   prevents the underlying VFS from attempting to change to the actual server root.
@@ -444,7 +446,7 @@ public enum Compression {
 #                    missing fields in JSON/XML are allowed to be mapped as null values
 # + connectTimeout - Connection timeout in seconds 
 # + socketConfig - Socket timeout configurations 
-# + ftpFileTransfer - File transfer type: BINARY or ASCII (FTP only)
+# + fileTransferMode - File transfer mode: BINARY or ASCII (FTP only)
 # + sftpCompression - Compression algorithms (SFTP only)
 # + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
 # + proxy - Proxy configuration for SFTP connections (SFTP only)
@@ -458,7 +460,7 @@ public type ClientConfiguration record {|
     decimal connectTimeout = 30.0;
     SocketConfig socketConfig?;
     ProxyConfiguration proxy?;
-    FtpFileTransfer ftpFileTransfer = BINARY;
+    FileTransferMode fileTransferMode = BINARY;
     TransferCompression[] sftpCompression = [NO];
     string sftpSshKnownHosts?;
 |};

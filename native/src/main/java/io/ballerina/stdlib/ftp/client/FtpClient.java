@@ -95,10 +95,30 @@ public class FtpClient {
     }
 
     public static Object initClientEndpoint(BObject clientEndpoint, BMap<Object, Object> config) {
-        String protocol = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL)))
-                .getValue();
+        String protocol = extractProtocol(config);
+        configureClientEndpointBasic(clientEndpoint, config, protocol);
+        
+        Map<String, Object> ftpConfig = new HashMap<>(20);
+        Object authError = configureAuthentication(config, protocol, ftpConfig);
+        if (authError != null) {
+            return authError;
+        }
+        
+        applyDefaultFtpConfig(config, ftpConfig);
+        Object vfsError = extractVfsConfigurations(config, ftpConfig);
+        if (vfsError != null) {
+            return vfsError;
+        }
+        
+        return createAndStoreConnector(clientEndpoint, ftpConfig);
+    }
 
-        // Keep databinding config for later
+    private static String extractProtocol(BMap<Object, Object> config) {
+        return (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
+    }
+
+    private static void configureClientEndpointBasic(BObject clientEndpoint, BMap<Object, Object> config, 
+                                                     String protocol) {
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING,
                 config.getBooleanValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING)));
 
@@ -113,54 +133,132 @@ public class FtpClient {
                 FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PORT))));
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
-        Map<String, String> ftpConfig = new HashMap<>(20);
+    }
+
+    private static Object configureAuthentication(BMap<Object, Object> config, String protocol, 
+                                                   Map<String, Object> ftpConfig) {
         BMap auth = config.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_AUTH));
-        if (auth != null) {
-            final BMap privateKey = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
-            if (privateKey != null) {
-                final BString privateKeyPath = privateKey.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_KEY_PATH));
-                ftpConfig.put(FtpConstants.IDENTITY, privateKeyPath.getValue());
-                final BString privateKeyPassword = privateKey.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_PASS_KEY));
-                if (privateKeyPassword != null && !privateKeyPassword.getValue().isEmpty()) {
-                    ftpConfig.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
-                }
-            }
-            ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+        if (auth == null) {
+            return null;
         }
+        
+        Object validationError = validateAuthProtocolCombination(auth, protocol);
+        if (validationError != null) {
+            return validationError;
+        }
+        
+        configurePrivateKey(auth, ftpConfig);
+        
+        if (auth.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET)) != null 
+                && protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            Object ftpsError = configureFtpsSecureSocket(
+                    auth.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET)), 
+                    ftpConfig);
+            if (ftpsError != null) {
+                return ftpsError;
+            }
+        }
+        
+        if (protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            ftpConfig.put(ENDPOINT_CONFIG_PREFERRED_METHODS, 
+                    FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+        }
+        
+        return null;
+    }
+
+    private static Object validateAuthProtocolCombination(BMap auth, String protocol) {
+        final BMap privateKey = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+        final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        
+        if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            return FtpUtil.createError("privateKey can only be used with SFTP protocol.", Error.errorType());
+        }
+        
+        if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            return FtpUtil.createError("secureSocket can only be used with FTPS protocol.", Error.errorType());
+        }
+        
+        return null;
+    }
+
+    private static void configurePrivateKey(BMap auth, Map<String, Object> ftpConfig) {
+        final BMap privateKey = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+        
+        if (privateKey == null) {
+            return;
+        }
+        
+        final BString privateKeyPath = privateKey.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_KEY_PATH));
+        ftpConfig.put(FtpConstants.IDENTITY, privateKeyPath.getValue());
+        
+        final BString privateKeyPassword = privateKey.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PASS_KEY));
+        if (privateKeyPassword != null && !privateKeyPassword.getValue().isEmpty()) {
+            ftpConfig.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword.getValue());
+        }
+    }
+
+    private static void applyDefaultFtpConfig(BMap<Object, Object> config, Map<String, Object> ftpConfig) {
         ftpConfig.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
         boolean userDirIsRoot = config.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
         ftpConfig.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         ftpConfig.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
+    }
 
-        // Extract new VFS configurations
+    private static Object extractVfsConfigurations(BMap<Object, Object> config, Map<String, Object> ftpConfig) {
         try {
             extractTimeoutConfigurations(config, ftpConfig);
             extractFileTransferConfiguration(config, ftpConfig);
             extractCompressionConfiguration(config, ftpConfig);
             extractKnownHostsConfiguration(config, ftpConfig);
             extractProxyConfiguration(config, ftpConfig);
+            return null;
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
+    }
 
+    private static Object createAndStoreConnector(BObject clientEndpoint, Map<String, Object> ftpConfig) {
+        
         String url;
         try {
             url = FtpUtil.createUrl(clientEndpoint, "");
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
+        
         ftpConfig.put(FtpConstants.URI, url);
         clientEndpoint.addNativeData(FtpConstants.PROPERTY_MAP, ftpConfig);
+        
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         try {
             VfsClientConnector connector = fileSystemConnectorFactory.createVfsClientConnector(ftpConfig);
             clientEndpoint.addNativeData(VFS_CLIENT_CONNECTOR, connector);
+            return null;
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         }
+    }
+
+    private static Object configureFtpsSecureSocket(BMap secureSocket, Map<String, Object> ftpConfig) {
+        FtpUtil.configureFtpsMode(secureSocket, ftpConfig);
+        FtpUtil.configureFtpsDataChannelProtection(secureSocket, ftpConfig);
+        
+        FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
+                ftpConfig);
+
+        FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
+                ftpConfig);
+
         return null;
     }
 

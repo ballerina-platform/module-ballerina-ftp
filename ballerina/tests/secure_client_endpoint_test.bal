@@ -54,7 +54,7 @@ public function testSecureConnectWithWrongProtocol() returns error? {
 
     Client|Error sftpClientEp = new (sftpConfig);
     if sftpClientEp is Error {
-        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+        test:assertTrue(sftpClientEp.message().includes("privateKey can only be used with SFTP protocol"),
             msg = "Unexpected error during the FTP client initialization with a SFTP server. " + sftpClientEp.message());
     } else {
         test:assertFail(msg = "Found a non-error response while initializing FTP client with a SFTP server.");

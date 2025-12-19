@@ -82,7 +82,7 @@ public class FtpListenerHelper {
      */
     public static Object init(Environment env, BObject ftpListener, BMap<BString, Object> serviceEndpointConfig) {
         try {
-            Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
+            Map<String, Object> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
             final FtpListener listener = new FtpListener(env.getRuntime());
 
@@ -169,54 +169,141 @@ public class FtpListenerHelper {
         return null;
     }
 
-    private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
+    private static Map<String, Object> getServerConnectorParamMap(BMap serviceEndpointConfig)
             throws BallerinaFtpException {
-        Map<String, String> params = new HashMap<>(25);
+        Map<String, Object> params = new HashMap<>(25);
+        
+        String protocol = extractProtocol(serviceEndpointConfig);
+        configureBasicServerParams(serviceEndpointConfig, params);
+        
+        configureServerAuthentication(serviceEndpointConfig, protocol, params);
+        applyDefaultServerParams(serviceEndpointConfig, params);
+        addFileAgeFilterParams(serviceEndpointConfig, params);
+        extractServerVfsConfigurations(serviceEndpointConfig, params);
+        
+        return params;
+    }
 
-        BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_AUTH));
+    private static String extractProtocol(BMap serviceEndpointConfig) {
+        return (serviceEndpointConfig.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
+    }
+
+    private static void configureBasicServerParams(BMap serviceEndpointConfig, Map<String, Object> params)
+            throws BallerinaFtpException {
         String url = FtpUtil.createUrl(serviceEndpointConfig);
         params.put(FtpConstants.URI, url);
         addStringProperty(serviceEndpointConfig, params);
-        if (auth != null) {
-            final BMap privateKey = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
-            if (privateKey != null) {
-                final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
-                if (privateKeyPath.isEmpty()) {
-                    throw FtpUtil.createError("Private key path cannot be empty", null, Error.errorType());
-                }
-                params.put(FtpConstants.IDENTITY, privateKeyPath);
-                String privateKeyPassword = null;
-                if (privateKey.containsKey(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY))) {
-                    privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
-                            FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
-                }
-                if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
-                    params.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword);
-                }
-            }
-            params.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+    }
+
+    private static void configureServerAuthentication(BMap serviceEndpointConfig, String protocol,
+                                                       Map<String, Object> params) throws BallerinaFtpException {
+        BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_AUTH));
+        if (auth == null) {
+            return;
         }
+        
+        validateServerAuthProtocolCombination(auth, protocol);
+        configureServerPrivateKey(auth, params);
+        
+        BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            configureServerFtpsSecureSocket(secureSocket, params);
+        }
+        
+        if (protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            params.put(ENDPOINT_CONFIG_PREFERRED_METHODS, 
+                    FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+        }
+    }
+
+    private static void validateServerAuthProtocolCombination(BMap auth, String protocol)
+            throws BallerinaFtpException {
+        final BMap privateKey = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+        final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        
+        if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            throw FtpUtil.createError("privateKey can only be used with SFTP protocol.", Error.errorType());
+        }
+        
+        if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            throw FtpUtil.createError("secureSocket can only be used with FTPS protocol.", Error.errorType());
+        }
+    }
+
+    private static void configureServerPrivateKey(BMap auth, Map<String, Object> params)
+            throws BallerinaFtpException {
+        final BMap privateKey = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+        
+        if (privateKey == null) {
+            return;
+        }
+        
+        final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
+        if (privateKeyPath.isEmpty()) {
+            throw FtpUtil.createError("Private key path cannot be empty", null, Error.errorType());
+        }
+        
+        params.put(FtpConstants.IDENTITY, privateKeyPath);
+        
+        String privateKeyPassword = null;
+        if (privateKey.containsKey(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY))) {
+            privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
+                    FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
+        }
+        
+        if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
+            params.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword);
+        }
+    }
+
+    private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, Object> params) 
+            throws BallerinaFtpException {
+        FtpUtil.configureFtpsMode(secureSocket, params);
+        FtpUtil.configureFtpsDataChannelProtection(secureSocket, params);
+        
+        String keyStorePath = FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
+                params);
+        
+        if (keyStorePath != null && keyStorePath.isEmpty()) {
+            throw new BallerinaFtpException("Failed to load FTPS Server Keystore: Path cannot be empty");
+        }
+
+        String trustStorePath = FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
+                params);
+        
+        if (trustStorePath != null && trustStorePath.isEmpty()) {
+            params.remove(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH);
+        }
+    }
+
+    private static void applyDefaultServerParams(BMap serviceEndpointConfig, Map<String, Object> params) {
         boolean userDirIsRoot = serviceEndpointConfig.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
         params.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         params.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
         params.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
+    }
 
-        // Add file age filter parameters
-        addFileAgeFilterParams(serviceEndpointConfig, params);
-
+    private static void extractServerVfsConfigurations(BMap serviceEndpointConfig, Map<String, Object> params)
+            throws BallerinaFtpException {
         extractTimeoutConfigurations(serviceEndpointConfig, params);
         extractFileTransferConfiguration(serviceEndpointConfig, params);
         extractCompressionConfiguration(serviceEndpointConfig, params);
         extractKnownHostsConfiguration(serviceEndpointConfig, params);
         extractProxyConfiguration(serviceEndpointConfig, params);
-
-        return params;
     }
 
-    private static void addFileAgeFilterParams(BMap serviceEndpointConfig, Map<String, String> params) {
+    private static void addFileAgeFilterParams(BMap serviceEndpointConfig, Map<String, Object> params) {
         BMap fileAgeFilter = serviceEndpointConfig.getMapValue(
                 StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_AGE_FILTER));
         if (fileAgeFilter != null) {
@@ -282,7 +369,7 @@ public class FtpListenerHelper {
         return conditions;
     }
 
-    private static void addStringProperty(BMap config, Map<String, String> params) {
+    private static void addStringProperty(BMap config, Map<String, Object> params) {
         BString namePatternString = config.getStringValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN));
         String fileNamePattern = (namePatternString != null && !namePatternString.getValue().isEmpty()) ?

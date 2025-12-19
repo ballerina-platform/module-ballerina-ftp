@@ -15,17 +15,43 @@
 // under the License.
 
 import ballerina/io;
+import ballerina/crypto;
 
 # Protocol to use for FTP server connections.
-# Determines whether to use basic FTP (unsecure) or SFTP (secure over SSH).
+# Determines whether to use basic FTP, FTPS, or SFTP.
 # FTP - Unsecure File Transfer Protocol
+# FTPS - Secure File Transfer Protocol (FTP over SSL/TLS)
 # SFTP - File Transfer Protocol over SSH
 public enum Protocol {
     FTP = "ftp",
+    FTPS = "ftps",
     SFTP = "sftp"
 }
 
-# Private key configuration for SSH-based authentication.
+# FTPS connection mode.
+# IMPLICIT - SSL/TLS connection is established immediately upon connection. 
+#            Note: The port must be explicitly set (standard port is 990).
+# EXPLICIT - Starts as regular FTP, then upgrades to SSL/TLS using AUTH TLS command.
+#            Note: The port must be explicitly set (standard port is 21).
+public enum FtpsMode {
+    IMPLICIT,
+    EXPLICIT
+}
+
+# FTPS data channel protection level.
+# Controls whether the data channel (file transfers) is encrypted.
+# CLEAR - Data channel is not encrypted (PROT C). Not recommended for security.
+# PRIVATE - Data channel is encrypted (PROT P). Recommended for secure transfers.
+# SAFE - Data channel has integrity protection only (PROT S). Rarely used.
+# CONFIDENTIAL - Data channel is encrypted (PROT E). Similar to PRIVATE.
+public enum FtpsDataChannelProtection {
+    CLEAR,
+    PRIVATE,
+    SAFE,
+    CONFIDENTIAL
+}
+
+# Private key configuration for SSH-based authentication (used with SFTP).
 #
 # + path - Path to the private key file
 # + password - Optional password for the private key
@@ -34,7 +60,23 @@ public type PrivateKey record {|
     string password?;
 |};
 
-# Basic authentication credentials for connecting to FTP servers using username and password.
+# Secure socket configuration for FTPS (FTP over SSL/TLS).
+# Used for configuring SSL/TLS certificates and keystores for FTPS connections.
+#
+# + key - Keystore configuration for client authentication
+# + cert - Certificate configuration for server certificate validation
+# + mode - FTPS connection mode (IMPLICIT or EXPLICIT). Defaults to EXPLICIT if not specified.
+# + dataChannelProtection - Data channel protection level (CLEAR, PRIVATE, SAFE, or CONFIDENTIAL).
+#                           Controls encryption of the data channel used for file transfers.
+#                           Defaults to PRIVATE (encrypted) for secure transfers.
+public type SecureSocket record {|
+    crypto:KeyStore key?;
+    crypto:TrustStore cert?;
+    FtpsMode mode = EXPLICIT;
+    FtpsDataChannelProtection dataChannelProtection = PRIVATE;
+|};
+
+# Basic authentication credentials for connecting to FTP/FTPS servers using username and password.
 #
 # + username - Username for authentication
 # + password - Optional password for authentication
@@ -46,11 +88,13 @@ public type Credentials record {|
 # Specifies authentication options for FTP server connections.
 #
 # + credentials - Username and password for basic authentication
-# + privateKey - Private key and password for key-based authentication
-# + preferredMethods - Preferred authentication methods
+# + privateKey - Private key and password for SSH-based authentication (used with SFTP protocol)
+# + secureSocket - Secure socket configuration for SSL/TLS (used with FTPS protocol)
+# + preferredMethods - Preferred authentication methods (used with SFTP protocol)
 public type AuthConfiguration record {|
     Credentials credentials?;
     PrivateKey privateKey?;
+    SecureSocket secureSocket?;
     PreferredMethod[] preferredMethods = [PUBLICKEY, PASSWORD];
 |};
 
@@ -67,11 +111,11 @@ public enum PreferredMethod {
     PUBLICKEY
 }
 
-# FTP file transfer type
+# File transfer mode
 #
 # + BINARY - Binary mode (no conversion, suitable for all file types)
 # + ASCII - ASCII mode (CRLF conversion for text files)
-public enum FtpFileTransfer {
+public enum FileTransferMode {
     BINARY,
     ASCII
 }

@@ -38,7 +38,7 @@ public interface RemoteFileSystemConnectorFactory {
      * @return RemoteFileSystemServerConnector RemoteFileSystemServerConnector instance.
      * @throws RemoteFileSystemConnectorException if any error occurred when creating the server connector.
      */
-    RemoteFileSystemServerConnector createServerConnector(Map<String, String> connectorConfig,
+    RemoteFileSystemServerConnector createServerConnector(Map<String, Object> connectorConfig,
                                                           RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException;
 
@@ -48,7 +48,7 @@ public interface RemoteFileSystemConnectorFactory {
      * @return VFSClientConnector instance
      * @throws RemoteFileSystemConnectorException if any error occurred when initializing the server connector.
      */
-    RemoteFileSystemServerConnector createServerConnector(Map<String, String> connectorConfig,
+    RemoteFileSystemServerConnector createServerConnector(Map<String, Object> connectorConfig,
                                                           List<FileDependencyCondition> dependencyConditions,
                                                           RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException;
@@ -58,6 +58,6 @@ public interface RemoteFileSystemConnectorFactory {
      * @return VFSClientConnector instance
      * @throws RemoteFileSystemConnectorException if any error occurred when initializing the server connector.
      */
-    VfsClientConnector createVfsClientConnector(Map<String, String> connectorConfig)
+    VfsClientConnector createVfsClientConnector(Map<String, Object> connectorConfig)
             throws RemoteFileSystemConnectorException;
 }

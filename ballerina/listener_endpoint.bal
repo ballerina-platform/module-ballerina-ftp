@@ -168,7 +168,7 @@ class Job {
 #                    missing fields in JSON/XML are allowed to be mapped as null values
 # + connectTimeout - Connection timeout in seconds 
 # + socketConfig - Socket timeout configurations 
-# + ftpFileTransfer - File transfer type: BINARY or ASCII (FTP only)
+# + fileTransferMode - File transfer mode: BINARY or ASCII (FTP only)
 # + sftpCompression - Compression algorithms (SFTP only)
 # + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
 # + proxy - Proxy configuration for SFTP connections (SFTP only)
@@ -187,7 +187,7 @@ public type ListenerConfiguration record {|
     decimal connectTimeout = 30.0;
     SocketConfig socketConfig?;
     ProxyConfiguration proxy?;
-    FtpFileTransfer ftpFileTransfer = BINARY;
+    FileTransferMode fileTransferMode = BINARY;
     TransferCompression[] sftpCompression = [NO];
     string sftpSshKnownHosts?;
 |};

@@ -1,6 +1,6 @@
 ## Overview
 
-This module provides an FTP/SFTP client and an FTP/SFTP server listener implementation to facilitate an FTP/SFTP connection connected to a remote location.
+This module provides an FTP/SFTP client and an FTP/SFTP server listener implementation to facilitate an FTP/SFTP connection connected to a remote location. Additionally, it supports FTPS (FTP over SSL/TLS) to facilitate secure file transfers.
 
 ### FTP client
 
@@ -344,6 +344,60 @@ service on remoteServer {
 ```
 
 The FTP listener automatically routes files to the appropriate content handler based on file extension: `.txt` → `onFileText()`, `.json` → `onFileJson()`, `.xml` → `onFileXml()`, `.csv` → `onFileCsv()`, and other extensions → `onFile()` (fallback handler). You can override the default routing using the `@ftp:FunctionConfig` annotation to specify a custom file name pattern for each handler method.
+
+### Secure access with FTPS
+
+FTPS provides security by encrypting the control and data channels using SSL/TLS. This module supports both Explicit (starts as regular FTP and upgrades via AUTH TLS) and Implicit (SSL/TLS established immediately) modes.
+
+##### FTPS client configuration
+
+To use FTPS, set the protocol to FTPS and provide the secureSocket configuration including your keystore and truststore.
+
+```ballerina
+ftp:ClientConfiguration ftpsConfig = {
+    protocol: ftp:FTPS,
+    host: "ftps.example.com",
+    port: 21, // 21 for EXPLICIT, 990 for IMPLICIT
+    auth: {
+        credentials: { username: "user", password: "password" },
+        secureSocket: {
+            key: {
+                path: "/path/to/keystore.p12",
+                password: "keystore-password"
+            },
+            cert: {
+                path: "/path/to/truststore.p12",
+                password: "truststore-password"
+            },
+            mode: ftp:EXPLICIT, // or ftp:IMPLICIT
+            dataChannelProtection: ftp:PRIVATE // PROT P (Encrypted data channel)
+        }
+    }
+};
+
+ftp:Client ftpsClient = check new(ftpsConfig);
+```
+
+##### FTPS listener configuration
+
+The listener can monitor an FTPS-enabled directory and trigger service remote functions.
+
+```ballerina
+listener ftp:Listener ftpsListener = check new({
+    protocol: ftp:FTPS,
+    host: "ftps.example.com",
+    port: 990,
+    path: "/upload",
+    pollingInterval: 5,
+    auth: {
+        credentials: { username: "user", password: "password" },
+        secureSocket: {
+            cert: { path: "/path/to/truststore.jks", password: "password" },
+            mode: ftp:IMPLICIT
+        }
+    }
+});
+```
 
 ### Secure access with SFTP
 

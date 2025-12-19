@@ -54,20 +54,21 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
     private static final Logger logger = LoggerFactory.getLogger(
             VfsClientConnectorImpl.class);
 
-    private Map<String, String> connectorConfig;
+    private Map<String, Object> connectorConfig;
     private RemoteFileSystemListener remoteFileSystemListener;
     private FileSystemOptions opts;
     private FileObject path;
     private FileSystemManager fsManager;
 
-    public VfsClientConnectorImpl(Map<String, String> config)
+    public VfsClientConnectorImpl(Map<String, Object> config)
             throws RemoteFileSystemConnectorException {
         this.connectorConfig = config;
         opts = FileTransportUtils.attachFileSystemOptions(config);
         String fileURI = null;
         try {
             fsManager = VFS.getManager();
-            fileURI = connectorConfig.get(FtpConstants.URI);
+            Object uri = connectorConfig.get(FtpConstants.URI);
+            fileURI = (uri != null) ? uri.toString() : null;
             path = fsManager.resolveFile(fileURI, opts);
         } catch (FileSystemException e) {
             String safeUri = maskUrlPassword(fileURI);
@@ -120,23 +121,29 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         fileObject.createFile();
                         fileObject.refresh();
                     }
-                    if (FtpAction.APPEND.equals(action)) {
-                        outputStream = fileObject.getContent().getOutputStream(true);
-                    } else {
-                        outputStream = fileObject.getContent().getOutputStream();
-                    }
-                    inputStream = message.getInputStream();
-                    byteBuffer = message.getBytes();
-                    if (byteBuffer != null) {
-                        outputStream.write(byteBuffer.array());
-                    } else if (inputStream != null) {
-                        int n;
-                        byte[] buffer = new byte[16384];
-                        while ((n = inputStream.read(buffer)) > -1) {
-                            outputStream.write(buffer, 0, n);
+                    
+                    try (org.apache.commons.vfs2.FileContent content = fileObject.getContent()) {
+                        if (FtpAction.APPEND.equals(action)) {
+                            outputStream = content.getOutputStream(true);
+                        } else {
+                            outputStream = content.getOutputStream();
                         }
+
+                        inputStream = message.getInputStream();
+                        byteBuffer = message.getBytes();
+                        if (byteBuffer != null) {
+                            outputStream.write(byteBuffer.array());
+                        } else if (inputStream != null) {
+                            int n;
+                            byte[] buffer = new byte[16384];
+                            while ((n = inputStream.read(buffer)) > -1) {
+                                outputStream.write(buffer, 0, n);
+                            }
+                        }
+                        outputStream.flush();
+                        outputStream.close();
+                        outputStream = null; 
                     }
-                    outputStream.flush();
                     break;
                 case DELETE:
                     if (fileObject.exists()) {
