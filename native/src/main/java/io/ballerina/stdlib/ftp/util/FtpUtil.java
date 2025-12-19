@@ -478,7 +478,7 @@ public class FtpUtil {
     }
 
     /**
-s     * Gets all content handler methods from a service.
+      * Gets all content handler methods from a service.
      *
      * @param service The BObject service
      * @return Array of MethodType objects representing all content handler methods
