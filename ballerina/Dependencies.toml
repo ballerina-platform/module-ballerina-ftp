@@ -10,13 +10,10 @@ distribution-version = "2201.12.0"
 [[package]]
 org = "ballerina"
 name = "crypto"
-version = "2.10.0"
+version = "2.9.2"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "time"}
-]
-modules = [
-	{org = "ballerina", packageName = "crypto", moduleName = "crypto"}
 ]
 
 [[package]]
@@ -59,7 +56,6 @@ org = "ballerina"
 name = "ftp"
 version = "2.16.0"
 dependencies = [
-	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "data.csv"},
 	{org = "ballerina", name = "data.jsondata"},
 	{org = "ballerina", name = "data.xmldata"},
@@ -198,7 +194,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "observe"
-version = "1.5.1"
+version = "1.5.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
