@@ -29,8 +29,10 @@ public enum Protocol {
 }
 
 # FTPS connection mode.
-# IMPLICIT - SSL/TLS connection is established immediately upon connection (typically port 990)
-# EXPLICIT - Starts as regular FTP, then upgrades to SSL/TLS using AUTH TLS command (typically port 21)
+# IMPLICIT - SSL/TLS connection is established immediately upon connection. 
+#            Note: The port must be explicitly set (standard port is 990).
+# EXPLICIT - Starts as regular FTP, then upgrades to SSL/TLS using AUTH TLS command.
+#            Note: The port must be explicitly set (standard port is 21).
 public enum FtpsMode {
     IMPLICIT,
     EXPLICIT

@@ -142,36 +142,30 @@ public final class FileTransportUtils {
 
     private static void setFtpsOptions(Map<String, Object> options, FileSystemOptions opts)
             throws RemoteFileSystemConnectorException {
-        // Use FTPS-specific config builder for proper FTPS configuration
         final FtpsFileSystemConfigBuilder ftpsConfigBuilder = FtpsFileSystemConfigBuilder.getInstance();
-
-        //Start with these to ensure stability
-        // Force binary for all transfers to avoid CRLF translation issues on Windows
-        ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
-        // Increase the data timeout specifically for Windows handshake delays
-        ftpsConfigBuilder.setDataTimeout(opts, Duration.ofSeconds(15));
-        // This is a setting for Windows loopback FTPS
-        // It prevents VFS from trying to resolve the hostname again for the data channel
-        ftpsConfigBuilder.setPassiveMode(opts, true);
         
-        // Set common FTP options (passive mode, user dir as root) using FTPS builder
-        // These methods are inherited from FtpFileSystemConfigBuilder 
-        // but must be called on the FTPS builder to ensure they are applied to the ftps. namespace
+        // 1. Hardcoded Robust Defaults for Windows/CI
+        ftpsConfigBuilder.setPassiveMode(opts, true);
+        ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
+        ftpsConfigBuilder.setDataTimeout(opts, Duration.ofSeconds(15));
+
+        // 2. Apply User Overwrites from Ballerina Configuration
+        Object connectTimeoutObj = options.get(FtpConstants.CONNECT_TIMEOUT);
+        if (connectTimeoutObj != null) {
+            double connectTimeoutSeconds = Double.parseDouble(connectTimeoutObj.toString());
+            // Use higher timeout from Ballerina to prevent GraalVM "Read timed out"
+            ftpsConfigBuilder.setConnectTimeout(opts, Duration.ofMillis((long) (connectTimeoutSeconds * 1000)));
+            log.debug("FTPS connectTimeout set to {} seconds", connectTimeoutSeconds);
+        }
+        
         Object passiveModeObj = options.get(FtpConstants.PASSIVE_MODE);
         if (passiveModeObj != null) {
             ftpsConfigBuilder.setPassiveMode(opts, Boolean.parseBoolean(passiveModeObj.toString()));
         }
+        
         Object userDirIsRootObj = options.get(FtpConstants.USER_DIR_IS_ROOT);
         if (userDirIsRootObj != null) {
             ftpsConfigBuilder.setUserDirIsRoot(opts, Boolean.parseBoolean(userDirIsRootObj.toString()));
-        }
-
-        Object connectTimeoutObj = options.get(FtpConstants.CONNECT_TIMEOUT);
-        if (connectTimeoutObj != null) {
-            double connectTimeoutSeconds = Double.parseDouble(connectTimeoutObj.toString());
-            Duration connectTimeout = Duration.ofMillis((long) (connectTimeoutSeconds * 1000));
-            ftpsConfigBuilder.setConnectTimeout(opts, connectTimeout);
-            log.debug("FTPS connectTimeout set to {} seconds", connectTimeoutSeconds);
         }
 
         Object dataTimeoutObj = options.get(FtpConstants.FTP_DATA_TIMEOUT);
@@ -190,34 +184,23 @@ public final class FileTransportUtils {
             log.debug("FTPS socketTimeout set to {} seconds", socketTimeoutSeconds);
         }
 
-        // Logic for FTPS using the generic mode
         Object fileModeObj = options.get(FtpConstants.FILE_TRANSFER_MODE);
         if (fileModeObj != null) {
             String mode = fileModeObj.toString();
             ftpsConfigBuilder.setFileType(opts, mode.equalsIgnoreCase("ASCII") ? 
                 FtpFileType.ASCII : FtpFileType.BINARY);
             log.debug("FTPS file type set to {}", mode);
-        } else {
-            // Default to BINARY when file type is not specified
-            // This is required for VFS to determine file type, especially with CLEAR data channel protection
-            ftpsConfigBuilder.setFileType(opts, FtpFileType.BINARY);
-            log.debug("FTPS file type defaulting to BINARY");
         }
         
-        // Handle implicit vs explicit FTPS mode using the recommended VFS2 API
+        // 3. Handle mode, data channel, and certificates
         Object ftpsModeObj = options.get(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE);
         if (ftpsModeObj != null && FtpConstants.FTPS_MODE_IMPLICIT.equalsIgnoreCase(ftpsModeObj.toString())) {
-            // For implicit FTPS, set implicit SSL mode
             ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.IMPLICIT);
         } else {
-            // For explicit FTPS (default), set explicit mode
             ftpsConfigBuilder.setFtpsMode(opts, FtpsMode.EXPLICIT);
         }
         
-        // Configure data channel protection
         configureFtpsSecurityOptions(ftpsConfigBuilder, opts, options);
-        
-        // Configure SSL/TLS certificates (KeyStore/TrustStore) for FTPS
         configureFtpsSslCertificates(ftpsConfigBuilder, opts, options);
     }
     

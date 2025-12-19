@@ -423,7 +423,9 @@ public enum Compression {
 #
 # + protocol - Protocol to use for the connection: FTP (unsecure) or SFTP (over SSH)
 # + host - Target server hostname or IP address
-# + port - Port number of the remote service
+# + port - Port number of the remote service. 
+#          For FTPS IMPLICIT, this is typically 990. 
+#          For FTPS EXPLICIT and FTP, this is typically 21.
 # + auth - Authentication options for connecting to the server
 # + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and
 #                   prevents the underlying VFS from attempting to change to the actual server root.

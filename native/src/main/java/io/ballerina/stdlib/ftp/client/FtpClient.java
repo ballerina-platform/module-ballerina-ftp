@@ -277,18 +277,6 @@ public class FtpClient {
      * @return Error object if creation fails, null otherwise
      */
     private static Object createAndStoreConnector(BObject clientEndpoint, Map<String, Object> ftpConfig) {
-        // Fix: Default port to 990 for IMPLICIT FTPS if no port is specified
-        String protocol = (String) clientEndpoint.getNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL);
-        if (FtpConstants.SCHEME_FTPS.equals(protocol)) {
-            Object ftpsModeObj = ftpConfig.get(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE);
-            if (ftpsModeObj != null && FtpConstants.FTPS_MODE_IMPLICIT.equals(ftpsModeObj.toString())) {
-                Integer currentPort = (Integer) clientEndpoint.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
-                if (currentPort == null || currentPort == -1 || currentPort == 21) {
-                    // Default to port 990 for IMPLICIT FTPS when port is not specified
-                    clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PORT, 990);
-                }
-            }
-        }
         
         String url;
         try {
