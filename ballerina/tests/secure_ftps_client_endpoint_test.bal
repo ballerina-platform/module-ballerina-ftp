@@ -29,6 +29,11 @@ ClientConfiguration ftpsExplicitConfig = {
     protocol: FTPS,
     host: "127.0.0.1",
     port: 21214,
+    connectTimeout: 60.0, // Increase to 60s for GraalVM/CI stability
+    socketConfig: {
+        ftpDataTimeout: 60.0,
+        ftpSocketTimeout: 60.0
+    },
     auth: {
         credentials: {username: "wso2", password: "wso2123"},
         secureSocket: {
@@ -51,6 +56,11 @@ ClientConfiguration ftpsImplicitConfig = {
     protocol: FTPS,
     host: "127.0.0.1",
     port: 21217,
+    connectTimeout: 60.0, // Increase to 60s for GraalVM/CI stability
+    socketConfig: {
+        ftpDataTimeout: 60.0,
+        ftpSocketTimeout: 60.0
+    },
     auth: {
         credentials: {username: "wso2", password: "wso2123"},
         secureSocket: {

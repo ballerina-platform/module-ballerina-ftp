@@ -54,6 +54,11 @@ ClientConfiguration triggerClientConfig = {
     protocol: FTPS,
     host: "127.0.0.1",
     port: 21214,
+    connectTimeout: 60.0, // Increase to 60s for GraalVM/CI stability
+    socketConfig: {
+        ftpDataTimeout: 60.0,
+        ftpSocketTimeout: 60.0
+    },
     auth: {
         credentials: {
             username: "wso2",
@@ -79,6 +84,11 @@ ClientConfiguration triggerImplicitClientConfig = {
     protocol: FTPS,
     host: "127.0.0.1",
     port: 21217,
+    connectTimeout: 60.0, // Increase to 60s for GraalVM/CI stability
+    socketConfig: {
+        ftpDataTimeout: 60.0,
+        ftpSocketTimeout: 60.0
+    },
     auth: {
         credentials: {
             username: "wso2",
@@ -134,7 +144,12 @@ function testFtpsExplicitListener() returns error? {
         auth: triggerClientConfig.auth, 
         path: watchPath, // Watch ONLY this folder
         pollingInterval: 2,
-        fileNamePattern: "explicit_trigger.txt"
+        fileNamePattern: "explicit_trigger.txt",
+        connectTimeout: 60.0, // Increase to 60s for GraalVM/CI stability
+        socketConfig: {
+            ftpDataTimeout: 60.0,
+            ftpSocketTimeout: 60.0
+        }
     });
 
     check ftpsListener.attach(ftpsService);
@@ -193,7 +208,12 @@ function testFtpsImplicitListener() returns error? {
         auth: triggerImplicitClientConfig.auth,
         path: watchPath,
         pollingInterval: 2,
-        fileNamePattern: "implicit_trigger.txt"
+        fileNamePattern: "implicit_trigger.txt",
+        connectTimeout: 60.0, // Increase to 60s for GraalVM/CI stability
+        socketConfig: {
+            ftpDataTimeout: 60.0,
+            ftpSocketTimeout: 60.0
+        }
     });
 
     check ftpsListener.attach(ftpsService);
