@@ -110,23 +110,10 @@ public class FtpClient {
         return createAndStoreConnector(clientEndpoint, ftpConfig);
     }
 
-    /**
-     * Extracts the protocol from the configuration.
-     * 
-     * @param config The client configuration map
-     * @return The protocol string
-     */
     private static String extractProtocol(BMap<Object, Object> config) {
         return (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
     }
 
-    /**
-     * Configures basic client endpoint settings (host, port, auth, etc.).
-     * 
-     * @param clientEndpoint The client endpoint object
-     * @param config The client configuration map
-     * @param protocol The protocol being used
-     */
     private static void configureClientEndpointBasic(BObject clientEndpoint, BMap<Object, Object> config, 
                                                      String protocol) {
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING,
@@ -145,14 +132,6 @@ public class FtpClient {
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
     }
 
-    /**
-     * Configures authentication settings including validation and protocol-specific setup.
-     * 
-     * @param config The client configuration map
-     * @param protocol The protocol being used
-     * @param ftpConfig The FTP configuration map to populate
-     * @return Error object if configuration fails, null otherwise
-     */
     private static Object configureAuthentication(BMap<Object, Object> config, String protocol, 
                                                    Map<String, Object> ftpConfig) {
         BMap auth = config.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_AUTH));
@@ -185,13 +164,6 @@ public class FtpClient {
         return null;
     }
 
-    /**
-     * Validates that protocol and authentication method combinations are correct.
-     * 
-     * @param auth The authentication configuration map
-     * @param protocol The protocol being used (SFTP or FTPS)
-     * @return Error object if validation fails, null otherwise
-     */
     private static Object validateAuthProtocolCombination(BMap auth, String protocol) {
         final BMap privateKey = auth.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
@@ -211,12 +183,6 @@ public class FtpClient {
         return null;
     }
 
-    /**
-     * Configures private key authentication for SFTP.
-     * 
-     * @param auth The authentication configuration map
-     * @param ftpConfig The FTP configuration map to populate
-     */
     private static void configurePrivateKey(BMap auth, Map<String, Object> ftpConfig) {
         final BMap privateKey = auth.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
@@ -236,12 +202,6 @@ public class FtpClient {
         }
     }
 
-    /**
-     * Applies default FTP configuration values.
-     * 
-     * @param config The client configuration map
-     * @param ftpConfig The FTP configuration map to populate
-     */
     private static void applyDefaultFtpConfig(BMap<Object, Object> config, Map<String, Object> ftpConfig) {
         ftpConfig.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
         boolean userDirIsRoot = config.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
@@ -249,13 +209,6 @@ public class FtpClient {
         ftpConfig.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
     }
 
-    /**
-     * Extracts VFS-related configurations (timeout, file transfer, compression, known hosts, proxy).
-     * 
-     * @param config The client configuration map
-     * @param ftpConfig The FTP configuration map to populate
-     * @return Error object if extraction fails, null otherwise
-     */
     private static Object extractVfsConfigurations(BMap<Object, Object> config, Map<String, Object> ftpConfig) {
         try {
             extractTimeoutConfigurations(config, ftpConfig);
@@ -269,13 +222,6 @@ public class FtpClient {
         }
     }
 
-    /**
-     * Creates the FTP URL, stores configuration, and creates the VFS client connector.
-     * 
-     * @param clientEndpoint The client endpoint object
-     * @param ftpConfig The FTP configuration map
-     * @return Error object if creation fails, null otherwise
-     */
     private static Object createAndStoreConnector(BObject clientEndpoint, Map<String, Object> ftpConfig) {
         
         String url;
@@ -298,13 +244,6 @@ public class FtpClient {
         }
     }
 
-    /**
-     * Configures secure socket settings for FTPS protocol.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param ftpConfig The FTP configuration map to populate
-     * @return Error object if configuration fails, null otherwise
-     */
     private static Object configureFtpsSecureSocket(BMap secureSocket, Map<String, Object> ftpConfig) {
         FtpUtil.configureFtpsMode(secureSocket, ftpConfig);
         FtpUtil.configureFtpsDataChannelProtection(secureSocket, ftpConfig);

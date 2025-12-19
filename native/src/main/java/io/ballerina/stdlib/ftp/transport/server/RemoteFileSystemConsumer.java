@@ -78,8 +78,8 @@ public class RemoteFileSystemConsumer {
     public RemoteFileSystemConsumer(Map<String, Object> fileProperties, RemoteFileSystemListener listener)
             throws RemoteFileSystemConnectorException {
         this.remoteFileSystemListener = listener;
-        Object uriObj = fileProperties.get(FtpConstants.URI);
-        listeningDirURI = (uriObj != null) ? uriObj.toString() : null;
+        Object uri = fileProperties.get(FtpConstants.URI);
+        listeningDirURI = (uri != null) ? uri.toString() : null;
         try {
             this.fileSystemManager = VFS.getManager();
             this.fileSystemOptions = FileTransportUtils.attachFileSystemOptions(fileProperties);

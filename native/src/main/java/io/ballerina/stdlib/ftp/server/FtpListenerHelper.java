@@ -177,24 +177,11 @@ public class FtpListenerHelper {
         return params;
     }
 
-    /**
-     * Extracts the protocol from the service endpoint configuration.
-     * 
-     * @param serviceEndpointConfig The service endpoint configuration map
-     * @return The protocol string
-     */
     private static String extractProtocol(BMap serviceEndpointConfig) {
         return (serviceEndpointConfig.getStringValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
     }
 
-    /**
-     * Configures basic server parameters (URL, file pattern).
-     * 
-     * @param serviceEndpointConfig The service endpoint configuration map
-     * @param params The parameters map to populate
-     * @throws BallerinaFtpException If URL creation fails
-     */
     private static void configureBasicServerParams(BMap serviceEndpointConfig, Map<String, Object> params)
             throws BallerinaFtpException {
         String url = FtpUtil.createUrl(serviceEndpointConfig);
@@ -202,14 +189,6 @@ public class FtpListenerHelper {
         addStringProperty(serviceEndpointConfig, params);
     }
 
-    /**
-     * Configures server authentication settings including validation and protocol-specific setup.
-     * 
-     * @param serviceEndpointConfig The service endpoint configuration map
-     * @param protocol The protocol being used
-     * @param params The parameters map to populate
-     * @throws BallerinaFtpException If authentication configuration fails
-     */
     private static void configureServerAuthentication(BMap serviceEndpointConfig, String protocol,
                                                        Map<String, Object> params) throws BallerinaFtpException {
         BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
@@ -233,13 +212,6 @@ public class FtpListenerHelper {
         }
     }
 
-    /**
-     * Validates that protocol and authentication method combinations are correct for server.
-     * 
-     * @param auth The authentication configuration map
-     * @param protocol The protocol being used (SFTP or FTPS)
-     * @throws BallerinaFtpException If validation fails
-     */
     private static void validateServerAuthProtocolCombination(BMap auth, String protocol)
             throws BallerinaFtpException {
         final BMap privateKey = auth.getMapValue(StringUtils.fromString(
@@ -247,24 +219,15 @@ public class FtpListenerHelper {
         final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
         
-        // If private key is present, protocol MUST be SFTP
         if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) {
             throw FtpUtil.createError("privateKey can only be used with SFTP protocol.", Error.errorType());
         }
         
-        // If secure socket is present, protocol MUST be FTPS
         if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) {
             throw FtpUtil.createError("secureSocket can only be used with FTPS protocol.", Error.errorType());
         }
     }
 
-    /**
-     * Configures private key authentication for SFTP server.
-     * 
-     * @param auth The authentication configuration map
-     * @param params The parameters map to populate
-     * @throws BallerinaFtpException If private key configuration is invalid
-     */
     private static void configureServerPrivateKey(BMap auth, Map<String, Object> params)
             throws BallerinaFtpException {
         final BMap privateKey = auth.getMapValue(StringUtils.fromString(
@@ -293,47 +256,30 @@ public class FtpListenerHelper {
         }
     }
 
-    /**
-     * Configures secure socket settings for FTPS protocol on server.
-     * 
-     * @param secureSocket The secure socket configuration map
-     * @param params The parameters map to populate
-     * @throws BallerinaFtpException If configuration fails
-     */
     private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, Object> params) 
             throws BallerinaFtpException {
         FtpUtil.configureFtpsMode(secureSocket, params);
         FtpUtil.configureFtpsDataChannelProtection(secureSocket, params);
         
-        // For Keystore
         String keyStorePath = FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
                 params);
         
-        // Server-specific validation: Path cannot be empty for Identity KeyStore
         if (keyStorePath != null && keyStorePath.isEmpty()) {
             throw new BallerinaFtpException("Failed to load FTPS Server Keystore: Path cannot be empty");
         }
 
-        // For Truststore
         String trustStorePath = FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
                 FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
                 FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
                 params);
         
-        // Only store path if not empty (server-specific behavior)
         if (trustStorePath != null && trustStorePath.isEmpty()) {
             params.remove(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH);
         }
     }
 
-    /**
-     * Applies default server configuration values.
-     * 
-     * @param serviceEndpointConfig The service endpoint configuration map
-     * @param params The parameters map to populate
-     */
     private static void applyDefaultServerParams(BMap serviceEndpointConfig, Map<String, Object> params) {
         boolean userDirIsRoot = serviceEndpointConfig.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
         params.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
@@ -341,13 +287,6 @@ public class FtpListenerHelper {
         params.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
     }
 
-    /**
-     * Extracts VFS-related configurations for server (timeout, file transfer, compression, known hosts, proxy).
-     * 
-     * @param serviceEndpointConfig The service endpoint configuration map
-     * @param params The parameters map to populate
-     * @throws BallerinaFtpException If extraction fails
-     */
     private static void extractServerVfsConfigurations(BMap serviceEndpointConfig, Map<String, Object> params)
             throws BallerinaFtpException {
         extractTimeoutConfigurations(serviceEndpointConfig, params);

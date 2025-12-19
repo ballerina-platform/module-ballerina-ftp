@@ -67,8 +67,8 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
         String fileURI = null;
         try {
             fsManager = VFS.getManager();
-            Object uriObj = connectorConfig.get(FtpConstants.URI);
-            fileURI = (uriObj != null) ? uriObj.toString() : null;
+            Object uri = connectorConfig.get(FtpConstants.URI);
+            fileURI = (uri != null) ? uri.toString() : null;
             path = fsManager.resolveFile(fileURI, opts);
         } catch (FileSystemException e) {
             String safeUri = maskUrlPassword(fileURI);
