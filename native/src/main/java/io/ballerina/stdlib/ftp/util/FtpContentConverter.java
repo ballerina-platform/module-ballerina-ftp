@@ -36,6 +36,7 @@ import org.apache.commons.vfs2.FileObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 
 import static io.ballerina.lib.data.csvdata.csv.Native.parseBytes;
@@ -209,7 +210,7 @@ public final class FtpContentConverter {
             BMap<BString, Object> fileOutputMode =
                     ValueCreator.createRecordValue(io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(),
                             FILE_OUTPUT_MODE_TYPE);
-            String filePath = CURRENT_DIRECTORY_PATH + "/" + fileNamePrefix + "_" + ERROR_LOG_FILE_NAME;
+            String filePath = CURRENT_DIRECTORY_PATH + File.separator + fileNamePrefix + "_" + ERROR_LOG_FILE_NAME;
             fileOutputMode.put(FILE_PATH, StringUtils.fromString(filePath));
             fileOutputMode.put(FILE_WRITE_OPTION, APPEND);
             fileOutputMode.put(CONTENT_TYPE, contentType);
