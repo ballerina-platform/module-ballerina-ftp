@@ -36,14 +36,14 @@ import java.util.Map;
 public class RemoteFileSystemConnectorFactoryImpl implements RemoteFileSystemConnectorFactory {
 
     @Override
-    public RemoteFileSystemServerConnector createServerConnector(Map<String, String> connectorConfig,
+    public RemoteFileSystemServerConnector createServerConnector(Map<String, Object> connectorConfig,
                                                                  RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException {
         return new RemoteFileSystemServerConnectorImpl(connectorConfig, remoteFileSystemListener);
     }
 
     @Override
-    public RemoteFileSystemServerConnector createServerConnector(Map<String, String> connectorConfig,
+    public RemoteFileSystemServerConnector createServerConnector(Map<String, Object> connectorConfig,
                                                                  List<FileDependencyCondition> dependencyConditions,
                                                                  RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException {
@@ -51,7 +51,7 @@ public class RemoteFileSystemConnectorFactoryImpl implements RemoteFileSystemCon
     }
 
     @Override
-    public VfsClientConnector createVfsClientConnector(Map<String, String> connectorConfig)
+    public VfsClientConnector createVfsClientConnector(Map<String, Object> connectorConfig)
             throws RemoteFileSystemConnectorException {
         return new VfsClientConnectorImpl(connectorConfig);
     }

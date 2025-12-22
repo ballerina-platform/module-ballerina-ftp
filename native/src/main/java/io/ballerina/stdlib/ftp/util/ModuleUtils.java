@@ -21,6 +21,8 @@ package io.ballerina.stdlib.ftp.util;
 import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Module;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -58,5 +60,14 @@ public class ModuleUtils {
 
     public static Module getModule() {
         return ftpModule;
+    }
+
+    public static Map<String, Object> getProperties(String resourceName) {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("moduleOrg", getModule().getOrg());
+        properties.put("moduleName", getModule().getName());
+        properties.put("moduleVersion", getModule().getMajorVersion());
+        properties.put("parentFunctionName", resourceName);
+        return properties;
     }
 }

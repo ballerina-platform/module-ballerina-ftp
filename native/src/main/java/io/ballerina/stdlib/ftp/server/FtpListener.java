@@ -29,6 +29,7 @@ import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.types.ObjectType;
 import io.ballerina.runtime.api.types.Parameter;
 import io.ballerina.runtime.api.types.Type;
+import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BArray;
@@ -63,6 +64,7 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVER_EVENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_ADDED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_DELETE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_DELETED_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.findRootCause;
@@ -134,7 +136,7 @@ public class FtpListener implements RemoteFileSystemListener {
             processContentBasedCallbacks(env, service, event, formatMethodHolder);
         } else if (onFileDeletedMethodType.isPresent()) {
             if (!event.getDeletedFiles().isEmpty()) {
-                processFileDeletedCallback(service, event, onFileDeletedMethodType.get());
+                processDeletionCallback(service, event, onFileDeletedMethodType.get());
             }
         } else {
             // Strategy 3: Fall back to legacy onFileChange handler
@@ -177,7 +179,7 @@ public class FtpListener implements RemoteFileSystemListener {
         if (!event.getDeletedFiles().isEmpty()) {
             Optional<MethodType> onFileDeletedMethodType = getOnFileDeletedMethod(service);
             if (onFileDeletedMethodType.isPresent()) {
-                processFileDeletedCallback(service, event, onFileDeletedMethodType.get());
+                processDeletionCallback(service, event, onFileDeletedMethodType.get());
             } else {
                 log.debug("No onFileDeleted method found. Skipping deletion event processing for {} deleted files.",
                         event.getDeletedFiles().size());
@@ -185,8 +187,44 @@ public class FtpListener implements RemoteFileSystemListener {
         }
     }
 
+    private void processDeletionCallback(BObject service, RemoteFileSystemEvent event,
+                                        MethodType methodType) {
+        Parameter[] params = methodType.getParameters();
+
+        // Check first parameter type to determine method variant
+        Type firstParamType = TypeUtils.getReferredType(params[0].type);
+        boolean isArrayType = firstParamType.getTag() == TypeTags.ARRAY_TAG;
+
+        if (isArrayType) {
+            // onFileDeleted(string[] deletedFiles) - call once with all files
+            processFileDeletedCallback(service, event, methodType);
+        } else {
+            // onFileDelete(string deletedFile) - call once per file
+            processFileDeleteCallback(service, event, methodType);
+        }
+    }
+
     /**
-     * Processes file deletion callback for onFileDeleted method.
+     * Processes file deletion callback for onFileDelete method.
+     * Calls the method once per deleted file with a single string parameter.
+     */
+    private void processFileDeleteCallback(BObject service, RemoteFileSystemEvent event,
+                                          MethodType methodType) {
+        List<String> deletedFilesList = event.getDeletedFiles();
+        Parameter[] params = methodType.getParameters();
+
+        // Call onFileDelete once per deleted file
+        for (String deletedFile : deletedFilesList) {
+            BString deletedFileBString = StringUtils.fromString(deletedFile);
+            Object[] args = getOnFileDeleteMethodArguments(params, deletedFileBString);
+            if (args != null) {
+                invokeOnFileDeleteAsync(service, args);
+            }
+        }
+    }
+
+    /**
+     * Processes file deletion callback for onFileDeleted method (deprecated).
      */
     private void processFileDeletedCallback(BObject service, RemoteFileSystemEvent event,
                                            MethodType methodType) {
@@ -238,6 +276,19 @@ public class FtpListener implements RemoteFileSystemListener {
         return null;
     }
 
+    private Object[] getOnFileDeleteMethodArguments(Parameter[] params, BString deletedFile) {
+        if (params.length == 1) {
+            // Only deletedFile parameter
+            return new Object[] {deletedFile};
+        } else if (params.length == 2) {
+            // deletedFile and caller parameters
+            return new Object[] {deletedFile, caller};
+        } else {
+            log.error("Invalid parameter count in onFileDelete method");
+        }
+        return null;
+    }
+
     private Object[] getOnFileDeletedMethodArguments(Parameter[] params, BArray deletedFiles) {
         if (params.length == 1) {
             // Only deletedFiles parameter
@@ -249,6 +300,23 @@ public class FtpListener implements RemoteFileSystemListener {
             log.error("Invalid parameter count in onFileDeleted method");
         }
         return null;
+    }
+
+    private void invokeOnFileDeleteAsync(BObject service, Object ...args) {
+        Thread.startVirtualThread(() -> {
+            try {
+                ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
+                boolean isConcurrentSafe = serviceType.isIsolated() &&
+                        serviceType.isIsolated(ON_FILE_DELETE_REMOTE_FUNCTION);
+                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, null);
+                Object result = runtime.callMethod(service, ON_FILE_DELETE_REMOTE_FUNCTION, strandMetadata, args);
+                if (result instanceof BError) {
+                    ((BError) result).printStackTrace();
+                }
+            } catch (BError error) {
+                error.printStackTrace();
+            }
+        });
     }
 
     private void invokeOnFileDeletedAsync(BObject service, Object ...args) {
@@ -431,5 +499,12 @@ public class FtpListener implements RemoteFileSystemListener {
 
     public BObject getCaller() {
         return caller;
+    }
+
+    void cleanup() {
+        registeredServices.clear();
+        caller = null;
+        fileSystemManager = null;
+        fileSystemOptions = null;
     }
 }

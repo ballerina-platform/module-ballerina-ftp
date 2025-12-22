@@ -75,10 +75,11 @@ public class RemoteFileSystemConsumer {
      * @param listener       RemoteFileSystemListener instance to send callback
      * @throws RemoteFileSystemConnectorException if unable to start the connect to the remote server
      */
-    public RemoteFileSystemConsumer(Map<String, String> fileProperties, RemoteFileSystemListener listener)
+    public RemoteFileSystemConsumer(Map<String, Object> fileProperties, RemoteFileSystemListener listener)
             throws RemoteFileSystemConnectorException {
         this.remoteFileSystemListener = listener;
-        listeningDirURI = fileProperties.get(FtpConstants.URI);
+        Object uri = fileProperties.get(FtpConstants.URI);
+        listeningDirURI = (uri != null) ? uri.toString() : null;
         try {
             this.fileSystemManager = VFS.getManager();
             this.fileSystemOptions = FileTransportUtils.attachFileSystemOptions(fileProperties);
@@ -98,32 +99,42 @@ public class RemoteFileSystemConsumer {
             throw new RemoteFileSystemConnectorException(
                     "Unable to initialize the connection with the server. " + rootCauseMessage, e);
         }
-        if (fileProperties.get(FtpConstants.FILE_NAME_PATTERN) != null) {
-            fileNamePattern = fileProperties.get(FtpConstants.FILE_NAME_PATTERN);
+        Object fileNamePatternObj = fileProperties.get(FtpConstants.FILE_NAME_PATTERN);
+        if (fileNamePatternObj != null) {
+            fileNamePattern = fileNamePatternObj.toString();
         }
 
         // Parse file age filter configuration
         if (fileProperties.containsKey(FtpConstants.FILE_AGE_FILTER_MIN_AGE)) {
-            String minAgeStr = fileProperties.get(FtpConstants.FILE_AGE_FILTER_MIN_AGE);
-            if (minAgeStr != null && !minAgeStr.isEmpty()) {
-                this.minAge = Double.parseDouble(minAgeStr);
+            Object minAgeObj = fileProperties.get(FtpConstants.FILE_AGE_FILTER_MIN_AGE);
+            if (minAgeObj != null) {
+                String minAgeStr = minAgeObj.toString();
+                if (!minAgeStr.isEmpty()) {
+                    this.minAge = Double.parseDouble(minAgeStr);
+                }
             }
         }
         if (fileProperties.containsKey(FtpConstants.FILE_AGE_FILTER_MAX_AGE)) {
-            String maxAgeStr = fileProperties.get(FtpConstants.FILE_AGE_FILTER_MAX_AGE);
-            if (maxAgeStr != null && !maxAgeStr.isEmpty()) {
-                this.maxAge = Double.parseDouble(maxAgeStr);
+            Object maxAgeObj = fileProperties.get(FtpConstants.FILE_AGE_FILTER_MAX_AGE);
+            if (maxAgeObj != null) {
+                String maxAgeStr = maxAgeObj.toString();
+                if (!maxAgeStr.isEmpty()) {
+                    this.maxAge = Double.parseDouble(maxAgeStr);
+                }
             }
         }
         if (fileProperties.containsKey(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE)) {
-            String mode = fileProperties.get(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE);
-            if (mode != null && !mode.isEmpty()) {
-                this.ageCalculationMode = mode;
+            Object modeObj = fileProperties.get(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE);
+            if (modeObj != null) {
+                String mode = modeObj.toString();
+                if (!mode.isEmpty()) {
+                    this.ageCalculationMode = mode;
+                }
             }
         }
     }
 
-    public RemoteFileSystemConsumer(Map<String, String> fileProperties,
+    public RemoteFileSystemConsumer(Map<String, Object> fileProperties,
                                     List<FileDependencyCondition> conditions,
                                     RemoteFileSystemListener listener)
             throws RemoteFileSystemConnectorException {

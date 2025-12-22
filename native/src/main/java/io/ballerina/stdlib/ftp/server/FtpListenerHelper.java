@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.server;
 
 import io.ballerina.runtime.api.Environment;
+import io.ballerina.runtime.api.concurrent.StrandMetadata;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.types.Parameter;
@@ -35,12 +36,9 @@ import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryIm
 import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
 import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.RemoteFileSystemServerConnectorImpl;
-import io.ballerina.stdlib.ftp.util.CronExpression;
-import io.ballerina.stdlib.ftp.util.CronScheduler;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.ftp.util.ModuleUtils;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,8 +49,10 @@ import java.util.Optional;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ENDPOINT_CONFIG_PREFERRED_METHODS;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CALLER;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CLIENT;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVICE_ENDPOINT_CONFIG;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.createError;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractCompressionConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractFileTransferConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractKnownHostsConfiguration;
@@ -65,6 +65,10 @@ import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
  * Helper class for listener functions.
  */
 public class FtpListenerHelper {
+
+    private static final String CLOSE_METHOD = "close";
+    private static final String CLOSE_CALLER_ERROR = "Error occurred while closing the caller: ";
+    private static final BString CLIENT_INSTANCE = StringUtils.fromString("client");
 
     public static final BString CSV_FAIL_SAFE = StringUtils.fromString("csvFailSafe");
 
@@ -80,7 +84,7 @@ public class FtpListenerHelper {
      */
     public static Object init(Environment env, BObject ftpListener, BMap<BString, Object> serviceEndpointConfig) {
         try {
-            Map<String, String> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
+            Map<String, Object> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
             final FtpListener listener = new FtpListener(env);
 
@@ -169,54 +173,141 @@ public class FtpListenerHelper {
         return null;
     }
 
-    private static Map<String, String> getServerConnectorParamMap(BMap serviceEndpointConfig)
+    private static Map<String, Object> getServerConnectorParamMap(BMap serviceEndpointConfig)
             throws BallerinaFtpException {
-        Map<String, String> params = new HashMap<>(25);
+        Map<String, Object> params = new HashMap<>(25);
+        
+        String protocol = extractProtocol(serviceEndpointConfig);
+        configureBasicServerParams(serviceEndpointConfig, params);
+        
+        configureServerAuthentication(serviceEndpointConfig, protocol, params);
+        applyDefaultServerParams(serviceEndpointConfig, params);
+        addFileAgeFilterParams(serviceEndpointConfig, params);
+        extractServerVfsConfigurations(serviceEndpointConfig, params);
+        
+        return params;
+    }
 
-        BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
-                FtpConstants.ENDPOINT_CONFIG_AUTH));
+    private static String extractProtocol(BMap serviceEndpointConfig) {
+        return (serviceEndpointConfig.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
+    }
+
+    private static void configureBasicServerParams(BMap serviceEndpointConfig, Map<String, Object> params)
+            throws BallerinaFtpException {
         String url = FtpUtil.createUrl(serviceEndpointConfig);
         params.put(FtpConstants.URI, url);
         addStringProperty(serviceEndpointConfig, params);
-        if (auth != null) {
-            final BMap privateKey = auth.getMapValue(StringUtils.fromString(
-                    FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
-            if (privateKey != null) {
-                final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
-                if (privateKeyPath.isEmpty()) {
-                    throw FtpUtil.createError("Private key path cannot be empty", null, Error.errorType());
-                }
-                params.put(FtpConstants.IDENTITY, privateKeyPath);
-                String privateKeyPassword = null;
-                if (privateKey.containsKey(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY))) {
-                    privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
-                            FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
-                }
-                if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
-                    params.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword);
-                }
-            }
-            params.put(ENDPOINT_CONFIG_PREFERRED_METHODS, FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+    }
+
+    private static void configureServerAuthentication(BMap serviceEndpointConfig, String protocol,
+                                                       Map<String, Object> params) throws BallerinaFtpException {
+        BMap auth = serviceEndpointConfig.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_AUTH));
+        if (auth == null) {
+            return;
         }
+        
+        validateServerAuthProtocolCombination(auth, protocol);
+        configureServerPrivateKey(auth, params);
+        
+        BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        if (secureSocket != null && protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            configureServerFtpsSecureSocket(secureSocket, params);
+        }
+        
+        if (protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            params.put(ENDPOINT_CONFIG_PREFERRED_METHODS, 
+                    FtpUtil.getPreferredMethodsFromAuthConfig(auth));
+        }
+    }
+
+    private static void validateServerAuthProtocolCombination(BMap auth, String protocol)
+            throws BallerinaFtpException {
+        final BMap privateKey = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+        final BMap secureSocket = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_SECURE_SOCKET));
+        
+        if (privateKey != null && !protocol.equals(FtpConstants.SCHEME_SFTP)) {
+            throw FtpUtil.createError("privateKey can only be used with SFTP protocol.", Error.errorType());
+        }
+        
+        if (secureSocket != null && !protocol.equals(FtpConstants.SCHEME_FTPS)) {
+            throw FtpUtil.createError("secureSocket can only be used with FTPS protocol.", Error.errorType());
+        }
+    }
+
+    private static void configureServerPrivateKey(BMap auth, Map<String, Object> params)
+            throws BallerinaFtpException {
+        final BMap privateKey = auth.getMapValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PRIVATE_KEY));
+        
+        if (privateKey == null) {
+            return;
+        }
+        
+        final String privateKeyPath = (privateKey.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_KEY_PATH))).getValue();
+        if (privateKeyPath.isEmpty()) {
+            throw FtpUtil.createError("Private key path cannot be empty", null, Error.errorType());
+        }
+        
+        params.put(FtpConstants.IDENTITY, privateKeyPath);
+        
+        String privateKeyPassword = null;
+        if (privateKey.containsKey(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PASS_KEY))) {
+            privateKeyPassword = (privateKey.getStringValue(StringUtils.fromString(
+                    FtpConstants.ENDPOINT_CONFIG_PASS_KEY))).getValue();
+        }
+        
+        if (privateKeyPassword != null && !privateKeyPassword.isEmpty()) {
+            params.put(FtpConstants.IDENTITY_PASS_PHRASE, privateKeyPassword);
+        }
+    }
+
+    private static void configureServerFtpsSecureSocket(BMap secureSocket, Map<String, Object> params) 
+            throws BallerinaFtpException {
+        FtpUtil.configureFtpsMode(secureSocket, params);
+        FtpUtil.configureFtpsDataChannelProtection(secureSocket, params);
+        
+        String keyStorePath = FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_KEY, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_KEYSTORE_PASSWORD, 
+                params);
+        
+        if (keyStorePath != null && keyStorePath.isEmpty()) {
+            throw new BallerinaFtpException("Failed to load FTPS Server Keystore: Path cannot be empty");
+        }
+
+        String trustStorePath = FtpUtil.extractAndConfigureStore(secureSocket, FtpConstants.SECURE_SOCKET_TRUSTSTORE, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH, 
+                FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD, 
+                params);
+        
+        if (trustStorePath != null && trustStorePath.isEmpty()) {
+            params.remove(FtpConstants.ENDPOINT_CONFIG_TRUSTSTORE_PATH);
+        }
+    }
+
+    private static void applyDefaultServerParams(BMap serviceEndpointConfig, Map<String, Object> params) {
         boolean userDirIsRoot = serviceEndpointConfig.getBooleanValue(FtpConstants.USER_DIR_IS_ROOT_FIELD);
         params.put(FtpConstants.USER_DIR_IS_ROOT, String.valueOf(userDirIsRoot));
         params.put(FtpConstants.AVOID_PERMISSION_CHECK, String.valueOf(true));
         params.put(FtpConstants.PASSIVE_MODE, String.valueOf(true));
+    }
 
-        // Add file age filter parameters
-        addFileAgeFilterParams(serviceEndpointConfig, params);
-
+    private static void extractServerVfsConfigurations(BMap serviceEndpointConfig, Map<String, Object> params)
+            throws BallerinaFtpException {
         extractTimeoutConfigurations(serviceEndpointConfig, params);
         extractFileTransferConfiguration(serviceEndpointConfig, params);
         extractCompressionConfiguration(serviceEndpointConfig, params);
         extractKnownHostsConfiguration(serviceEndpointConfig, params);
         extractProxyConfiguration(serviceEndpointConfig, params);
-
-        return params;
     }
 
-    private static void addFileAgeFilterParams(BMap serviceEndpointConfig, Map<String, String> params) {
+    private static void addFileAgeFilterParams(BMap serviceEndpointConfig, Map<String, Object> params) {
         BMap fileAgeFilter = serviceEndpointConfig.getMapValue(
                 StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_AGE_FILTER));
         if (fileAgeFilter != null) {
@@ -282,7 +373,7 @@ public class FtpListenerHelper {
         return conditions;
     }
 
-    private static void addStringProperty(BMap config, Map<String, String> params) {
+    private static void addStringProperty(BMap config, Map<String, Object> params) {
         BString namePatternString = config.getStringValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN));
         String fileNamePattern = (namePatternString != null && !namePatternString.getValue().isEmpty()) ?
@@ -326,63 +417,41 @@ public class FtpListenerHelper {
         return ValueCreator.createObjectValue(ModuleUtils.getModule(), FTP_CALLER, client);
     }
 
-    /**
-     * Start the cron-based scheduler for the FTP listener.
-     *
-     * @param ftpListener       The FTP listener object
-     * @param cronExpressionStr The cron expression string
-     * @return null on success, BError on failure
-     */
-    public static Object startCronScheduler(BObject ftpListener, BString cronExpressionStr) {
-        try {
-            String cronExpression = cronExpressionStr.getValue();
-
-            // Create task that polls the FTP server
-            Runnable pollTask = () -> {
-                Object result = poll(ftpListener);
-                if (result instanceof BError) {
-                    // Log error but don't stop scheduler
-                    LoggerFactory.getLogger(FtpListenerHelper.class)
-                            .error("Error during FTP poll: {}", ((BError) result).getMessage());
-                }
-            };
-
-            // Create and start the cron scheduler (validation happens in constructor)
-            CronExpression cron = new CronExpression(cronExpression);
-            CronScheduler scheduler = new CronScheduler(cron, pollTask);
-            scheduler.start();
-
-            // Store scheduler in native data for later cleanup
-            ftpListener.addNativeData(FtpConstants.CRON_EXPRESSION, scheduler);
-
+    public static Object closeCaller(Environment env, BObject ftpListener) {
+        RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) ftpListener
+                .getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+        FtpListener listener = ftpConnector.getFtpListener();
+        BObject caller = listener.getCaller();
+        if (caller == null) {
             return null;
-        } catch (IllegalArgumentException e) {
-            return FtpUtil.createError("Invalid cron expression: " + e.getMessage(),
-                    e, Error.errorType());
-        } catch (Exception e) {
-            return FtpUtil.createError("Failed to start cron scheduler: " + e.getMessage(),
-                    findRootCause(e), Error.errorType());
         }
-    }
-
-    /**
-     * Stop the cron-based scheduler for the FTP listener.
-     *
-     * @param ftpListener The FTP listener object
-     * @return null on success, BError on failure
-     */
-    public static Object stopCronScheduler(BObject ftpListener) {
-        try {
-            Object schedulerObj = ftpListener.getNativeData(FtpConstants.CRON_EXPRESSION);
-            if (schedulerObj instanceof CronScheduler) {
-                CronScheduler scheduler = (CronScheduler) schedulerObj;
-                scheduler.stop();
-                ftpListener.addNativeData(FtpConstants.CRON_EXPRESSION, null);
+        BObject ftpClient = caller.getObjectValue(CLIENT_INSTANCE);
+        return env.yieldAndRun(() -> {
+            StrandMetadata strandMetadata = new StrandMetadata(true,
+                    ModuleUtils.getProperties(CLOSE_METHOD));
+            Object result = env.getRuntime().callMethod(ftpClient, CLOSE_METHOD, strandMetadata);
+            if (result != null) {
+                BError error = (BError) result;
+                return createError(CLOSE_CALLER_ERROR + error.getMessage(), findRootCause(error), FTP_ERROR);
             }
             return null;
+        });
+    }
+
+    public static Object cleanup(Environment env, BObject ftpListener) {
+        Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+        RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) serverConnectorObject;
+        FtpListener listener = ftpConnector.getFtpListener();
+        try {
+            closeCaller(env, ftpListener);
+            ftpConnector.stop();
         } catch (Exception e) {
-            return FtpUtil.createError("Failed to stop cron scheduler: " + e.getMessage(),
-                    findRootCause(e), Error.errorType());
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), FTP_ERROR);
+        } finally {
+            if (listener != null) {
+                listener.cleanup();
+            }
         }
+        return null;
     }
 }

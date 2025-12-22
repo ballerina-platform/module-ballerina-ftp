@@ -33,7 +33,6 @@ import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
 import org.mockftpserver.fake.filesystem.FileEntry;
 import org.mockftpserver.fake.filesystem.FileSystem;
-import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +57,8 @@ public final class MockFtpServer {
     private static FakeFtpServer anonFtpServer;
     private static FakeFtpServer ftpServer;
     private static SshServer sftpServer;
-    private static FtpServer ftpsServer;
+    private static FtpServer ftpsServerExplicit;
+    private static FtpServer ftpsServerImplicit;
     private static SftpAuthStatusHolder sftpAuthStatusHolder = new SftpAuthStatusHolder();
 
     public static Object initAnonymousFtpServer() throws Exception {
@@ -156,22 +156,31 @@ public final class MockFtpServer {
         return null;
     }
 
-    public static void startFtpsServer(String resources) throws Exception {
+    public static void startFtpsServer(String resources, boolean implicitMode, int port) throws Exception {
         final FtpServerFactory serverFactory = new FtpServerFactory();
-        int port = 21214;
         final ListenerFactory factory = new ListenerFactory();
+        
         SslConfigurationFactory ssl = new SslConfigurationFactory();
         ssl.setKeystoreFile(new File(resources + "/keystore.jks"));
         ssl.setKeystorePassword("changeit");
         factory.setSslConfiguration(ssl.createSslConfiguration());
-        factory.setImplicitSsl(true);
+        factory.setImplicitSsl(implicitMode);
 
         final PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
         final UserManager userManager = userManagerFactory.createUserManager();
+        
         BaseUser user = new BaseUser();
         user.setName(username);
         user.setPassword(password);
+        
         File dataDirectory = new File(resources + "/datafiles");
+        if (!dataDirectory.exists()) {
+            dataDirectory.mkdirs();
+        }
+        // Ensure folders for listener tests exist to prevent "Not a folder" errors
+        new File(dataDirectory, "ftps-client").mkdirs();
+        new File(dataDirectory, "ftps-listener").mkdirs();
+        
         user.setHomeDirectory(dataDirectory.getAbsolutePath());
         List<Authority> authorities = new ArrayList<>();
         authorities.add(new WritePermission());
@@ -180,11 +189,12 @@ public final class MockFtpServer {
         serverFactory.setUserManager(userManager);
         factory.setPort(port);
         serverFactory.addListener("default", factory.createListener());
-        ftpsServer = serverFactory.createServer();
-        ftpsServer.start();
+        
+        FtpServer server = serverFactory.createServer();
+        server.start();
 
         int i = 0;
-        while ((ftpsServer.isStopped() || ftpsServer.isSuspended()) && i < 10) {
+        while ((server.isStopped() || server.isSuspended()) && i < 10) {
             try {
                 TimeUnit.MILLISECONDS.sleep(500);
                 i++;
@@ -193,11 +203,26 @@ public final class MockFtpServer {
                 throw new Exception("Error in starting Apache FTPS server");
             }
         }
+        
         if (i < 10) {
-            logger.info("Started Apache FTPS server");
+            if (implicitMode) {
+                ftpsServerImplicit = server;
+                logger.info("Started Apache FTPS server in IMPLICIT mode on port {}", port);
+            } else {
+                ftpsServerExplicit = server;
+                logger.info("Started Apache FTPS server in EXPLICIT mode on port {}", port);
+            }
         } else {
-            logger.info("Could not start Apache FTPS server");
+            throw new Exception("Could not start Apache FTPS server on port " + port);
         }
+    }
+
+    public static void startFtpsServerExplicit(String resources) throws Exception {
+        startFtpsServer(resources, false, 21214);
+    }
+
+    public static void startFtpsServerImplicit(String resources) throws Exception {
+        startFtpsServer(resources, true, 21217);
     }
 
     public static Object initSftpServer(String resources) throws Exception {
@@ -218,30 +243,40 @@ public final class MockFtpServer {
     }
 
     public static void stopAnonymousFtpServer() {
-        if (anonFtpServer.isStarted()) {
+        if (anonFtpServer != null && anonFtpServer.isStarted()) {
             anonFtpServer.stop();
         }
-        logger.info("Stopped Anonymous Mock FTP server");
     }
 
     public static void stopFtpServer() {
-        if (ftpServer.isStarted()) {
+        if (ftpServer != null && ftpServer.isStarted()) {
             ftpServer.stop();
         }
-        logger.info("Stopped Mock FTP server");
     }
 
     public static void stopSftpServer() throws IOException {
-        if (sftpServer.isOpen()) {
+        if (sftpServer != null && sftpServer.isOpen()) {
             sftpServer.stop();
         }
-        logger.info("Stopped Mock SFTP server");
     }
 
-    public static void stopFtpsServer() throws IOException {
-        if (!ftpsServer.isSuspended() && !ftpsServer.isStopped()) {
-            ftpsServer.stop();
-        }
-        logger.info("Stopped FTPS server");
+    public static void stopFtpsServer() {
+        stopFtpsServerExplicit();
+        stopFtpsServerImplicit();
     }
+
+    public static void stopFtpsServerExplicit() {
+        if (ftpsServerExplicit != null && !ftpsServerExplicit.isStopped()) {
+            ftpsServerExplicit.stop();
+            ftpsServerExplicit = null;
+        }
+    }
+
+    public static void stopFtpsServerImplicit() {
+        if (ftpsServerImplicit != null && !ftpsServerImplicit.isStopped()) {
+            ftpsServerImplicit.stop();
+            ftpsServerImplicit = null;
+        }
+    }
+
 }

@@ -35,6 +35,7 @@ public class FtpConstants {
     public static final String FILE_NAME_PATTERN = "fileNamePattern";
     public static final String SCHEME_SFTP = "sftp";
     public static final String SCHEME_FTP = "ftp";
+    public static final String SCHEME_FTPS = "ftps";
     public static final String URI = "uri";
     public static final String PASSIVE_MODE = "PASSIVE_MODE";
     public static final String USER_DIR_IS_ROOT = "USER_DIR_IS_ROOT";
@@ -78,12 +79,35 @@ public class FtpConstants {
     public static final String ENDPOINT_CONFIG_AUTH = "auth";
     public static final String ENDPOINT_CONFIG_CREDENTIALS = "credentials";
     public static final String ENDPOINT_CONFIG_PRIVATE_KEY = "privateKey";
+    public static final String ENDPOINT_CONFIG_SECURE_SOCKET = "secureSocket";
+    public static final String ENDPOINT_CONFIG_FTPS_MODE = "mode";
+    public static final String ENDPOINT_CONFIG_KEYSTORE_PATH = "keystorePath";
+    public static final String ENDPOINT_CONFIG_KEYSTORE_PASSWORD = "keystorePassword";
+    public static final String ENDPOINT_CONFIG_TRUSTSTORE_PATH = "truststorePath";
+    public static final String ENDPOINT_CONFIG_TRUSTSTORE_PASSWORD = "truststorePassword";
+
+    // Keys for extracting data from Ballerina Records
+    public static final String SECURE_SOCKET_KEY = "key";
+    public static final String SECURE_SOCKET_TRUSTSTORE = "cert";
+    public static final String KEYSTORE_PATH_KEY = "path";
+    public static final String KEYSTORE_PASSWORD_KEY = "password";
+
     public static final String ENDPOINT_CONFIG_PREFERRED_METHODS = "preferredMethods";
     public static final String ENDPOINT_CONFIG_LAX_DATABINDING = "laxDataBinding";
+    
+    // FTPS mode constants
+    public static final String FTPS_MODE_IMPLICIT = "IMPLICIT";
+    public static final String FTPS_MODE_EXPLICIT = "EXPLICIT";
+    
+    // FTPS data channel protection constants
+    public static final String ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION = "dataChannelProtection";
+    public static final String FTPS_DATA_CHANNEL_PROTECTION_CLEAR = "CLEAR";
+    public static final String FTPS_DATA_CHANNEL_PROTECTION_PRIVATE = "PRIVATE";
+    public static final String FTPS_DATA_CHANNEL_PROTECTION_SAFE = "SAFE";
+    public static final String FTPS_DATA_CHANNEL_PROTECTION_CONFIDENTIAL = "CONFIDENTIAL";
     public static final String ENDPOINT_CONFIG_CSV_FAIL_SAFE = "csvFailSafe";
 
     // Advanced file selection configuration constants
-    public static final String ENDPOINT_CONFIG_POLLING_INTERVAL = "pollingInterval";
     public static final String ENDPOINT_CONFIG_FILE_AGE_FILTER = "fileAgeFilter";
     public static final String ENDPOINT_CONFIG_FILE_DEPENDENCY_CONDITIONS = "fileDependencyConditions";
 
@@ -112,7 +136,7 @@ public class FtpConstants {
     public static final String FTP_DATA_TIMEOUT = "ftpDataTimeout";
     public static final String FTP_SOCKET_TIMEOUT = "ftpSocketTimeout";
     public static final String SFTP_SESSION_TIMEOUT = "sftpSessionTimeout";
-    public static final String FTP_FILE_TYPE = "ftpFileTransfer";
+    public static final String FILE_TRANSFER_MODE = "fileTransferMode";
     public static final String SFTP_COMPRESSION = "sftpCompression";
     public static final String SFTP_KNOWN_HOSTS = "sftpSshKnownHosts";
     public static final String PROXY = "proxy";
@@ -147,6 +171,7 @@ public class FtpConstants {
     public static final String ON_FILE_JSON_REMOTE_FUNCTION = "onFileJson";
     public static final String ON_FILE_XML_REMOTE_FUNCTION = "onFileXml";
     public static final String ON_FILE_CSV_REMOTE_FUNCTION = "onFileCsv";
+    public static final String ON_FILE_DELETE_REMOTE_FUNCTION = "onFileDelete";
     public static final String ON_FILE_DELETED_REMOTE_FUNCTION = "onFileDeleted";
 
     public static final String APACHE_VFS2_PACKAGE_NAME = "org.apache.commons.vfs2";

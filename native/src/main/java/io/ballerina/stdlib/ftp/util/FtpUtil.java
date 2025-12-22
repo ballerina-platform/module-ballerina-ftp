@@ -39,10 +39,12 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,7 +76,7 @@ public class FtpUtil {
         // private constructor
     }
 
-    public static void extractTimeoutConfigurations(BMap<Object, Object> config, Map<String, String> ftpProperties)
+    public static void extractTimeoutConfigurations(BMap<Object, Object> config, Map<String, Object> ftpProperties)
             throws BallerinaFtpException {
         // Extract connectTimeout
         Object connectTimeoutObj = config.get(StringUtils.fromString(FtpConstants.CONNECT_TIMEOUT));
@@ -117,14 +119,15 @@ public class FtpUtil {
     }
 
     public static void extractFileTransferConfiguration(BMap<Object, Object> config,
-                                                        Map<String, String> ftpProperties) {
-        BString ftpFileTransfer = config.getStringValue(StringUtils.fromString(FtpConstants.FTP_FILE_TYPE));
-        if (ftpFileTransfer != null && !ftpFileTransfer.getValue().isEmpty()) {
-            ftpProperties.put(FtpConstants.FTP_FILE_TYPE, ftpFileTransfer.getValue());
+                                                        Map<String, Object> ftpProperties) {
+        // Update to the new constant
+        BString fileTransferMode = config.getStringValue(StringUtils.fromString(FtpConstants.FILE_TRANSFER_MODE));
+        if (fileTransferMode != null && !fileTransferMode.getValue().isEmpty()) {
+            ftpProperties.put(FtpConstants.FILE_TRANSFER_MODE, fileTransferMode.getValue());
         }
     }
 
-    public static void extractCompressionConfiguration(BMap<Object, Object> config, Map<String, String> ftpProperties) {
+    public static void extractCompressionConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties) {
         BArray sftpCompression = config.getArrayValue(StringUtils.fromString(FtpConstants.SFTP_COMPRESSION));
         if (sftpCompression != null && !sftpCompression.isEmpty()) {
             StringBuilder compressionValues = new StringBuilder();
@@ -141,14 +144,14 @@ public class FtpUtil {
         }
     }
 
-    public static void extractKnownHostsConfiguration(BMap<Object, Object> config, Map<String, String> ftpProperties) {
+    public static void extractKnownHostsConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties) {
         BString knownHosts = config.getStringValue(StringUtils.fromString(FtpConstants.SFTP_KNOWN_HOSTS));
         if (knownHosts != null && !knownHosts.getValue().isEmpty()) {
             ftpProperties.put(FtpConstants.SFTP_KNOWN_HOSTS, knownHosts.getValue());
         }
     }
 
-    public static void extractProxyConfiguration(BMap<Object, Object> config, Map<String, String> ftpProperties)
+    public static void extractProxyConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties)
             throws BallerinaFtpException {
         BMap proxyConfig = config.getMapValue(StringUtils.fromString(FtpConstants.PROXY));
         if (proxyConfig == null) {
@@ -199,6 +202,63 @@ public class FtpUtil {
         }
     }
 
+    /**
+     * Configures FTPS mode (IMPLICIT or EXPLICIT).
+     *
+     * @param secureSocket The secure socket configuration map
+     * @param config The configuration map to populate
+     */
+    public static void configureFtpsMode(BMap secureSocket, Map<String, Object> config) {
+        // Ballerina record has default value 'EXPLICIT', so this is never null.
+        String mode = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_MODE)).getValue();
+        config.put(FtpConstants.ENDPOINT_CONFIG_FTPS_MODE, mode);
+    }
+
+    /**
+     * Configures FTPS data channel protection level.
+     *
+     * @param secureSocket The secure socket configuration map
+     * @param config The configuration map to populate
+     */
+    public static void configureFtpsDataChannelProtection(BMap secureSocket, Map<String, Object> config) {
+        // Ballerina record has default value 'PRIVATE', so this is never null.
+        String dataChannelProtection = secureSocket.getStringValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION)).getValue();
+        config.put(FtpConstants.ENDPOINT_CONFIG_FTPS_DATA_CHANNEL_PROTECTION, dataChannelProtection);
+    }
+
+    /**
+     * Extracts path/password from the crypto:KeyStore/TrustStore record (BMap)
+     * and stores them as strings in the configuration map.
+     *
+     * @param secureSocket The secure socket configuration map
+     * @param storeKey The key identifying the store in secureSocket ("key" or "cert")
+     * @param pathConfigKey The key to store the path in the config map
+     * @param passwordConfigKey The key to store the password in the config map
+     * @param config The configuration map to populate
+     * @return The path of the store, or null if the store record is missing.
+     */
+    public static String extractAndConfigureStore(BMap secureSocket, String storeKey,
+                                                  String pathConfigKey, String passwordConfigKey,
+                                                  Map<String, Object> config) {
+        // This CAN be null because 'crypto:KeyStore key?' is optional in SecureSocket
+        BMap storeRecord = secureSocket.getMapValue(StringUtils.fromString(storeKey));
+
+        if (storeRecord == null) {
+            return null;
+        }
+
+        // 'path' and 'password' are mandatory in crypto:KeyStore/TrustStore, so they are guaranteed to exist.
+        String path = storeRecord.getStringValue(StringUtils.fromString("path")).getValue();
+        String password = storeRecord.getStringValue(StringUtils.fromString("password")).getValue();
+
+        config.put(pathConfigKey, path);
+        config.put(passwordConfigKey, password);
+
+        return path;
+    }
+
     public static String createUrl(BObject clientConnector, String filePath) throws BallerinaFtpException {
         String username = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME);
         String password = null;
@@ -222,8 +282,12 @@ public class FtpUtil {
         int port = extractPortValue(config.getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
+        
+
         String username = FTP_ANONYMOUS_USERNAME;
-        String password = protocol.equals(FtpConstants.SCHEME_FTP) ? FTP_ANONYMOUS_PASSWORD : null;
+        String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) //
+                ? FTP_ANONYMOUS_PASSWORD : null;
+        
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
@@ -240,6 +304,7 @@ public class FtpUtil {
                 }
             }
         }
+        
         return createUrl(protocol, host, port, username, password, filePath);
     }
 
@@ -277,7 +342,8 @@ public class FtpUtil {
         final BMap auth = config.getMapValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_AUTH));
         String username = FTP_ANONYMOUS_USERNAME;
-        String password = protocol.equals(FtpConstants.SCHEME_FTP) ? FTP_ANONYMOUS_PASSWORD : null;
+        String password = (protocol.equals(FtpConstants.SCHEME_FTP) || protocol.equals(FtpConstants.SCHEME_FTPS)) //
+                ? FTP_ANONYMOUS_PASSWORD : null;
         if (auth != null) {
             final BMap credentials = auth.getMapValue(StringUtils.fromString(
                     FtpConstants.ENDPOINT_CONFIG_CREDENTIALS));
@@ -412,7 +478,7 @@ public class FtpUtil {
     }
 
     /**
-     * Gets all content handler methods from a service.
+      * Gets all content handler methods from a service.
      *
      * @param service The BObject service
      * @return Array of MethodType objects representing all content handler methods
@@ -465,7 +531,9 @@ public class FtpUtil {
     public static Optional<MethodType> getOnFileDeletedMethod(BObject service) {
         MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
         return Stream.of(methodTypes)
-                .filter(methodType -> FtpConstants.ON_FILE_DELETED_REMOTE_FUNCTION.equals(methodType.getName()))
+                .filter(methodType ->
+                        (FtpConstants.ON_FILE_DELETED_REMOTE_FUNCTION.equals(methodType.getName()) ||
+                        FtpConstants.ON_FILE_DELETE_REMOTE_FUNCTION.equals(methodType.getName())))
                 .findFirst();
     }
 
@@ -514,4 +582,38 @@ public class FtpUtil {
     public static Module getFtpPackage() {
         return getModule();
     }
+
+    /**
+     * Loads a Java KeyStore from a file path and password.
+     * 
+     * @param path The file path to the KeyStore
+     * @param password The password for the KeyStore
+     * @return The loaded java.security.KeyStore object
+     * @throws BallerinaFtpException If loading fails
+     */
+    public static KeyStore loadKeyStore(String path, String password) throws BallerinaFtpException {
+        if (path == null || path.isEmpty()) {
+            return null;
+        }
+        try {
+            // JKS extension checking
+            String type = KeyStore.getDefaultType();
+            if (path.toLowerCase().endsWith(".jks")) {
+                type = "JKS";
+            } else if (path.toLowerCase().endsWith(".p12") || path.toLowerCase().endsWith(".pfx")) {
+                type = "PKCS12";
+            }
+
+            KeyStore keyStore = KeyStore.getInstance(type);
+            char[] passChars = (password != null) ? password.toCharArray() : null;
+            
+            try (FileInputStream fis = new FileInputStream(new File(path))) {
+                keyStore.load(fis, passChars);
+            }
+            return keyStore;
+        } catch (Exception e) {
+            throw new BallerinaFtpException("Failed to load KeyStore from path: " + path + ". " + e.getMessage(), e);
+        }
+    }
 }
+

@@ -114,7 +114,7 @@ public function testBinaryModeIntegrity() returns error? {
         host: "127.0.0.1",
         port: 21212,
         auth: {credentials: {username: "wso2", password: "wso2123"}},
-        ftpFileTransfer: BINARY  // Explicit BINARY mode
+        fileTransferMode: BINARY  // Explicit BINARY mode
     };
 
     Client|Error ftpClient = new(binaryConfig);
@@ -174,7 +174,7 @@ public function testAsciiModeCrlfTranslation() returns error? {
         host: "127.0.0.1",
         port: 21212,
         auth: {credentials: {username: "wso2", password: "wso2123"}},
-        ftpFileTransfer: ASCII  // Explicit ASCII mode
+        fileTransferMode: ASCII  // Explicit ASCII mode
     };
 
     Client|Error ftpClient = new(asciiConfig);
@@ -232,10 +232,10 @@ public function testDefaultFileTransferIsBinary() returns error? {
         host: "127.0.0.1",
         port: 21212,
         auth: {credentials: {username: "wso2", password: "wso2123"}}
-        // ftpFileTransfer not specified - should default to BINARY
+        // fileTransferMode not specified - should default to BINARY
     };
 
-    test:assertEquals(defaultConfig.ftpFileTransfer, BINARY,
+    test:assertEquals(defaultConfig.fileTransferMode, BINARY,
         msg = "Default file type should be BINARY");
 
     Client|Error ftpClient = new(defaultConfig);
@@ -405,7 +405,7 @@ public function testCombinedVfsConfigsFtp() returns error? {
         port: 21212,
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         connectTimeout: 20.0,
-        ftpFileTransfer: BINARY,
+        fileTransferMode: BINARY,
         socketConfig: {
             ftpDataTimeout: 90.0,
             ftpSocketTimeout: 45.0
@@ -474,7 +474,7 @@ public function testListenerBinaryModeIntegrity() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         path: "/home/in",
         pollingInterval: 2,
-        ftpFileTransfer: BINARY
+        fileTransferMode: BINARY
     };
 
     Listener|Error ftpListener = new(binaryListenerConfig);

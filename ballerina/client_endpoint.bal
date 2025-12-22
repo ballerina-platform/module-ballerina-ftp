@@ -38,13 +38,13 @@ public isolated client class Client {
     }
 
     # Retrieves the file content from a remote resource.
-    # Deprecated: Use the format specific get methods(`getJson`, `getXml`, `getCsv`, `getBytes`, `getText`) instead.
     # ```ballerina
     # stream<byte[] & readonly, io:Error?>|ftp:Error channel = client->get(path);
     # ```
     #
     # + path - The resource path
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
+    # # Deprecated: Use the format specific get methods(`getJson`, `getXml`, `getCsv`, `getBytes`, `getText`) instead.
     @deprecated
     remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error {
         ByteStream|Error byteStream = new (self, path);
@@ -156,7 +156,6 @@ public isolated client class Client {
     } external;
 
     # Appends the content to an existing file in an FTP server.
-    # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     # ```ballerina
     # ftp:Error? response = client->append(path, channel);
     # ```
@@ -164,6 +163,7 @@ public isolated client class Client {
     # + path - The resource path
     # + content - Content to be written to the file in server
     # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
+    # # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     @deprecated
     remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content)
             returns Error? {
@@ -171,7 +171,6 @@ public isolated client class Client {
     }
 
     # Adds a file to an FTP server.
-    # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     # ```ballerina
     # ftp:Error? response = client->put(path, channel);
     # ```
@@ -180,6 +179,7 @@ public isolated client class Client {
     # + content - Content to be written to the file in server
     # + compressionType - Type of the compression to be used if the file should be compressed before uploading
     # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
+    # # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     @deprecated
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
             |string|xml|json content, Compression compressionType = NONE) returns Error? {
@@ -401,6 +401,16 @@ public isolated client class Client {
     remote isolated function delete(string path) returns Error? {
         return delete(self, path);
     }
+
+    # Closes the FTP client connection.
+    # ```ballerina
+    # ftp:Error? response = client->close();
+    # ```
+    #
+    # + return - `()` or else an `ftp:Error` if failed to close the connection
+    remote isolated function close() returns Error? = @java:Method {
+        'class: "io.ballerina.stdlib.ftp.client.FtpClient"
+    } external;
 }
 
 # File write options for write operations.
@@ -423,7 +433,9 @@ public enum Compression {
 #
 # + protocol - Protocol to use for the connection: FTP (unsecure) or SFTP (over SSH)
 # + host - Target server hostname or IP address
-# + port - Port number of the remote service
+# + port - Port number of the remote service. 
+#          For FTPS IMPLICIT, this is typically 990. 
+#          For FTPS EXPLICIT and FTP, this is typically 21.
 # + auth - Authentication options for connecting to the server
 # + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and
 #                   prevents the underlying VFS from attempting to change to the actual server root.
@@ -434,7 +446,7 @@ public enum Compression {
 #                    missing fields in JSON/XML are allowed to be mapped as null values
 # + connectTimeout - Connection timeout in seconds 
 # + socketConfig - Socket timeout configurations 
-# + ftpFileTransfer - File transfer type: BINARY or ASCII (FTP only)
+# + fileTransferMode - File transfer mode: BINARY or ASCII (FTP only)
 # + sftpCompression - Compression algorithms (SFTP only)
 # + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
 # + proxy - Proxy configuration for SFTP connections (SFTP only)
@@ -450,7 +462,7 @@ public type ClientConfiguration record {|
     decimal connectTimeout = 30.0;
     SocketConfig socketConfig?;
     ProxyConfiguration proxy?;
-    FtpFileTransfer ftpFileTransfer = BINARY;
+    FileTransferMode fileTransferMode = BINARY;
     TransferCompression[] sftpCompression = [NO];
     string sftpSshKnownHosts?;
     FailSafeOptions csvFailSafe?;
