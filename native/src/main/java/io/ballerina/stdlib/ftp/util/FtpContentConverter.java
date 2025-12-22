@@ -32,6 +32,7 @@ import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.runtime.api.values.BTypedesc;
+import org.apache.commons.vfs2.FileObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,7 @@ public final class FtpContentConverter {
     private static final BString ALLOW_DATA_PROJECTION = StringUtils.fromString("allowDataProjection");
     public static final BString FILE_PATH = StringUtils.fromString("filePath");
     public static final String CURRENT_DIRECTORY_PATH = System.getProperty("user.dir");
-    public static final String ERROR_LOG_FILE_NAME = "/error.log";
+    public static final String ERROR_LOG_FILE_NAME = "error.log";
     public static final BString APPEND = StringUtils.fromString("APPEND");
     public static final BString FILE_WRITE_OPTION = StringUtils.fromString("fileWriteOption");
     public static final BString CONTENT_TYPE = StringUtils.fromString("contentType");
@@ -134,10 +135,10 @@ public final class FtpContentConverter {
      * @return Ballerina CSV data (string[][], record[][], or custom type) or BError
      */
     public static Object convertBytesToCsv(Environment env, byte[] content, Type targetType, boolean laxDataBinding,
-                                           BMap<?, ?> csvFailSafeConfigs) {
+                                           BMap<?, ?> csvFailSafeConfigs, String fileNamePrefix) {
         try {
             BArray byteArray = ValueCreator.createArrayValue(content);
-            BMap<BString, Object> options = createCsvParseOptions(laxDataBinding, csvFailSafeConfigs);
+            BMap<BString, Object> options = createCsvParseOptions(laxDataBinding, csvFailSafeConfigs, fileNamePrefix);
 
             Type referredType = TypeUtils.getReferredType(targetType);
             BTypedesc typedesc = ValueCreator.createTypedescValue(referredType);
@@ -196,7 +197,8 @@ public final class FtpContentConverter {
      *
      * @return BMap containing parse options
      */
-    private static BMap<BString, Object> createCsvParseOptions(boolean laxDataBinding, BMap<?, ?> csvFailSafeConfigs) {
+    private static BMap<BString, Object> createCsvParseOptions(boolean laxDataBinding,
+                                                               BMap<?, ?> csvFailSafeConfigs, String fileNamePrefix) {
         BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
                 io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(), "ParseOptions");
         if (csvFailSafeConfigs != null) {
@@ -207,7 +209,8 @@ public final class FtpContentConverter {
             BMap<BString, Object> fileOutputMode =
                     ValueCreator.createRecordValue(io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(),
                             FILE_OUTPUT_MODE_TYPE);
-            fileOutputMode.put(FILE_PATH, StringUtils.fromString(CURRENT_DIRECTORY_PATH + ERROR_LOG_FILE_NAME));
+            String filePath = CURRENT_DIRECTORY_PATH + "/" + fileNamePrefix + "_" + ERROR_LOG_FILE_NAME;
+            fileOutputMode.put(FILE_PATH, StringUtils.fromString(filePath));
             fileOutputMode.put(FILE_WRITE_OPTION, APPEND);
             fileOutputMode.put(CONTENT_TYPE, contentType);
             failSafe.put(FILE_OUTPUT_MODE, fileOutputMode);
@@ -222,6 +225,16 @@ public final class FtpContentConverter {
             mapValue.put(StringUtils.fromString("allowDataProjection"), Boolean.FALSE);
         }
         return mapValue;
+    }
+
+    public static String deriveFileNamePrefix(Object fileDetails) {
+        if (fileDetails instanceof FileObject fileObject) {
+            String baseName = fileObject.getName().getBaseName();
+            String extension = fileObject.getName().getExtension();
+            return extension.isEmpty() ? baseName : baseName.substring(0, baseName.length() - extension.length() - 1);
+        }
+        String filePath = fileDetails.toString();
+        return filePath.replaceAll("\\.[^.]+$", "");
     }
 
     /**

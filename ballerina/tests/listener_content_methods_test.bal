@@ -743,6 +743,7 @@ public function testOnFileCsvStreamWithFailSafe() returns error? {
 
     FileInfo fileInfo = check lastFileInfo.ensureType();
     test:assertTrue(fileInfo.name.endsWith(".csv"), "Should process .csvstream files");
+    check file:remove("csvrecord_error.log");
 }
 
 @test:Config {
@@ -855,7 +856,7 @@ public function testOnFileCsvRecordArrayWithFailSafe() returns error? {
     Employee firstEmployee = csvRecordArrayReceived[0];
     test:assertEquals(firstEmployee.name, "Bob Williams", "First employee's name should match");
     test:assertEquals(firstEmployee.age, 35, "First employee's age should match");
-    check file:remove("error.log");
+    check file:remove("csvrecord_error.log");
 }
 
 @test:Config {

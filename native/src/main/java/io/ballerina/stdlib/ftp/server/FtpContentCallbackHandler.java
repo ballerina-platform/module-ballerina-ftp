@@ -66,6 +66,7 @@ import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToJso
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToString;
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToXml;
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertToBallerinaByteArray;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.deriveFileNamePrefix;
 
 /**
  * Handles content-based callbacks for FTP listener.
@@ -77,7 +78,7 @@ public class FtpContentCallbackHandler {
     private final FileSystemManager fileSystemManager;
     private final FileSystemOptions fileSystemOptions;
     private final boolean laxDataBinding;
-    private BMap<?, ?> csvFailSafe = ValueCreator.createMapValue();
+    private final BMap<?, ?> csvFailSafe;
 
     public FtpContentCallbackHandler(Runtime ballerinaRuntime, FileSystemManager fileSystemManager,
                                      FileSystemOptions fileSystemOptions, boolean laxDataBinding,
@@ -183,13 +184,14 @@ public class FtpContentCallbackHandler {
             }
         } else {
             byte[] fileContent = fetchAllFileContentFromRemote(fileObject, inputStream);
+            String fileNamePrefix = deriveFileNamePrefix(fileObject);
             return switch (methodName) {
                 case ON_FILE_REMOTE_FUNCTION -> convertToBallerinaByteArray(fileContent);
                 case ON_FILE_TEXT_REMOTE_FUNCTION -> convertBytesToString(fileContent);
                 case ON_FILE_JSON_REMOTE_FUNCTION -> convertBytesToJson(fileContent, firstParamType, laxDataBinding);
                 case ON_FILE_XML_REMOTE_FUNCTION -> convertBytesToXml(fileContent, firstParamType, laxDataBinding);
                 case ON_FILE_CSV_REMOTE_FUNCTION -> convertBytesToCsv(environment, fileContent, firstParamType,
-                        laxDataBinding, csvFailSafe);
+                        laxDataBinding, csvFailSafe, fileNamePrefix);
                 default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
             };
         }
