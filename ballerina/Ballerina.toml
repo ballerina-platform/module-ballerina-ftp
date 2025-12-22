@@ -1,7 +1,7 @@
 [package]
 org = "ballerina"
 name = "ftp"
-version = "2.16.0"
+version = "2.16.1"
 authors = ["Ballerina"]
 keywords = ["FTP", "SFTP", "remote file", "file transfer", "client", "service"]
 repository = "https://github.com/ballerina-platform/module-ballerina-ftp"
@@ -45,8 +45,8 @@ path = "./lib/commons-lang3-3.18.0.jar"
 [[platform.java21.dependency]]
 groupId = "io.ballerina.stdlib"
 artifactId = "ftp-native"
-version = "2.16.0"
-path = "../native/build/libs/ftp-native-2.16.0.jar"
+version = "2.16.1"
+path = "../native/build/libs/ftp-native-2.16.1-SNAPSHOT.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib"
@@ -64,5 +64,5 @@ path = "./lib/data.xmldata-native-1.5.2.jar"
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib"
 artifactId = "data.csv-native"
-version = "0.9.0-SNAPSHOT"
-path = "./lib/data.csv-native-0.9.0-SNAPSHOT.jar"
+version = "0.9.0-20251209-183500-7b18d54"
+path = "./lib/data.csv-native-0.9.0-20251209-183500-7b18d54.jar"
