@@ -158,6 +158,76 @@ task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
     standardOutput = new File("$buildDir/tempUtilLogs.log")
 }
 
+task waitForFtpsTestServer() {
+    dependsOn startTestUtilAsDaemon
+    doLast {
+        def host = "127.0.0.1"
+        def explicitPort = 21214
+        def implicitPort = 21217
+
+        def connectTimeoutMs = 500
+        def readTimeoutMs = 500
+        def maxWaitMs = 30_000
+        def pollIntervalMs = 500
+
+        def isExplicitFtpsReady = { ->
+            java.net.Socket socket = null
+            try {
+                socket = new java.net.Socket()
+                socket.connect(new java.net.InetSocketAddress(host, explicitPort as int), connectTimeoutMs)
+                socket.setSoTimeout(readTimeoutMs)
+                def reader = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream()))
+                def line = reader.readLine()
+                try {
+                    if (line != null && line.startsWith("220")) {
+                        def out = new java.io.OutputStreamWriter(socket.getOutputStream())
+                        out.write("QUIT\r\n")
+                        out.flush()
+                    }
+                } catch (Exception ignored) {
+                    // ignore
+                }
+                return (line != null && line.startsWith("220"))
+            } catch (Exception ignored) {
+                return false
+            } finally {
+                try {
+                    socket?.close()
+                } catch (Exception ignored) {
+                    // ignore
+                }
+            }
+        }
+
+        def isTcpPortOpen = { int port ->
+            java.net.Socket socket = null
+            try {
+                socket = new java.net.Socket()
+                socket.connect(new java.net.InetSocketAddress(host, port as int), connectTimeoutMs)
+                return true
+            } catch (Exception ignored) {
+                return false
+            } finally {
+                try {
+                    socket?.close()
+                } catch (Exception ignored) {
+                    // ignore
+                }
+            }
+        }
+
+        long start = System.currentTimeMillis()
+        while (System.currentTimeMillis() - start < maxWaitMs) {
+            if (isExplicitFtpsReady() && isTcpPortOpen(implicitPort)) {
+                return
+            }
+            sleep(pollIntervalMs)
+        }
+
+        throw new GradleException("FTPS mock server was not ready on ${host}:${explicitPort} after waiting ${maxWaitMs / 1000} seconds")
+    }
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
@@ -188,6 +258,7 @@ test.dependsOn ":${packageName}-native:build"
 populateTestUtilExecutableName.dependsOn ":${packageName}-test-utils:build"
 startTestUtilAsDaemon.dependsOn populateTestUtilExecutableName
 test.dependsOn startTestUtilAsDaemon
+test.dependsOn waitForFtpsTestServer
 test.dependsOn ":${packageName}-compiler-plugin:build"
 
 publishToMavenLocal.dependsOn build

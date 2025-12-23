@@ -743,7 +743,6 @@ public function testOnFileCsvStreamWithFailSafe() returns error? {
 
     FileInfo fileInfo = check lastFileInfo.ensureType();
     test:assertTrue(fileInfo.name.endsWith(".csv"), "Should process .csvstream files");
-    check file:remove("csvstream_error.log");
 }
 
 @test:Config {
