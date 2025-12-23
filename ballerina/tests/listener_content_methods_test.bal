@@ -685,7 +685,8 @@ public function testOnFileCsvStream() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testOptionalParametersWithoutCaller]
+    groups: ["aa"]
+    // dependsOn: [testOptionalParametersWithoutCaller]
 }
 public function testOnFileCsvStreamWithFailSafe() returns error? {
     // Reset state
@@ -743,7 +744,6 @@ public function testOnFileCsvStreamWithFailSafe() returns error? {
 
     FileInfo fileInfo = check lastFileInfo.ensureType();
     test:assertTrue(fileInfo.name.endsWith(".csv"), "Should process .csvstream files");
-    check file:remove("csvstream_error.log");
 }
 
 @test:Config {
