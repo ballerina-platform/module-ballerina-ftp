@@ -407,6 +407,36 @@ listener ftp:Listener ftpsListener = check new({
 });
 ```
 
+##### CSV fail-safe mode
+
+The FTP listener supports a fail-safe mode for CSV file processing When enabled, malformed CSV records are automatically skipped and written to a separate error log file in the current directory (`<filename>_error.log`), allowing the processing to continue without interruption.
+
+This is only supported in `onFileCsv` trigger methods in ftp listener.
+
+**Listener Configuration**:
+
+```ballerina
+listener ftp:Listener remoteServer = check new({
+    protocol: ftp:FTP,
+    host: "<The FTP host>",
+    port: <The FTP port>,
+    path: "<The remote FTP directory location>",
+    pollingInterval: <Polling interval>,
+    auth: {
+        credentials: {username: "<The FTP username>", password: "<The FTP password>"}
+    },
+    csvFailSafe: {
+        contentType: ftp:RAW_AND_METADATA
+    }
+});
+```
+
+The `contentType` field in `csvFailSafe` specifies what information to log when a malformed CSV record is encountered.
+
+- `METADATA` (default) - Logs only metadata about the error (location, error message)
+- `RAW` - Logs the raw content of the malformed record (offending row)
+- `RAW_AND_METADATA` - Logs both the raw content and metadata for comprehensive debugging
+
 ### Secure access with SFTP
 
 SFTP is a secure protocol alternative to the FTP, which runs on top of the SSH protocol.

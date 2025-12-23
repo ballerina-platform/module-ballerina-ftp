@@ -72,6 +72,7 @@ import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToJso
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToString;
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToXml;
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertToBallerinaByteArray;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.deriveFileNamePrefix;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractCompressionConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractFileTransferConfiguration;
@@ -121,6 +122,8 @@ public class FtpClient {
                                                      String protocol) {
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING,
                 config.getBooleanValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING)));
+        clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_CSV_FAIL_SAFE,
+                config.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_CSV_FAIL_SAFE)));
 
         Map<String, String> authMap = FtpUtil.getAuthMap(config, protocol);
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME,
@@ -333,7 +336,10 @@ public class FtpClient {
         }
 
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
-        return convertBytesToCsv((byte[]) content, typeDesc.getDescribingType(), laxDataBinding);
+        BMap<?, ?> csvFailSafe = (BMap<?, ?>) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_CSV_FAIL_SAFE);
+        String fileNamePrefix = deriveFileNamePrefix(filePath);
+        return convertBytesToCsv(env, (byte[]) content, typeDesc.getDescribingType(),
+                laxDataBinding, csvFailSafe, fileNamePrefix);
     }
 
     public static Object getBytesAsStream(Environment env, BObject clientConnector, BString filePath) {
