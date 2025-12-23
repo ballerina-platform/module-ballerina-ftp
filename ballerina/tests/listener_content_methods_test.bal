@@ -743,7 +743,7 @@ public function testOnFileCsvStreamWithFailSafe() returns error? {
 
     FileInfo fileInfo = check lastFileInfo.ensureType();
     test:assertTrue(fileInfo.name.endsWith(".csv"), "Should process .csvstream files");
-    check file:remove("csvrecord_error.log");
+    check file:remove("csvstream_error.log");
 }
 
 @test:Config {
@@ -802,7 +802,6 @@ public function testOnFileCsvRecordArray() returns error? {
 }
 
 @test:Config {
-    groups: ["csv"],
     dependsOn: [testOnFileCsvStream]
 }
 public function testOnFileCsvRecordArrayWithFailSafe() returns error? {
@@ -831,7 +830,7 @@ public function testOnFileCsvRecordArrayWithFailSafe() returns error? {
         port: 21212,
         path: CONTENT_TEST_DIR,
         pollingInterval: 4,
-        fileNamePattern: "csvrecord.*\\.csv",
+        fileNamePattern: "csvstream.*\\.csv",
         csvFailSafe: {}
     });
 
@@ -841,7 +840,7 @@ public function testOnFileCsvRecordArrayWithFailSafe() returns error? {
 
     // Upload CSV file for record deserialization
     stream<io:Block, io:Error?> csvStream = check io:fileReadBlocksAsStream(CSV_TEST_FILE_WITH_ERROR);
-    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/csvrecord.csv", csvStream);
+    check (<Client>clientEp)->put(CONTENT_TEST_DIR + "/csvstream.csv", csvStream);
     runtime:sleep(15);
 
     // Cleanup
@@ -856,7 +855,7 @@ public function testOnFileCsvRecordArrayWithFailSafe() returns error? {
     Employee firstEmployee = csvRecordArrayReceived[0];
     test:assertEquals(firstEmployee.name, "Bob Williams", "First employee's name should match");
     test:assertEquals(firstEmployee.age, 35, "First employee's age should match");
-    check file:remove("csvrecord_error.log");
+    check file:remove("csvstream_error.log");
 }
 
 @test:Config {
