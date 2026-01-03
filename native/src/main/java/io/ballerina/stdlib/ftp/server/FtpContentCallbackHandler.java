@@ -18,6 +18,7 @@
 
 package io.ballerina.stdlib.ftp.server;
 
+import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.Runtime;
 import io.ballerina.runtime.api.concurrent.StrandMetadata;
@@ -65,6 +66,7 @@ import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToJso
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToString;
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToXml;
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertToBallerinaByteArray;
+import static io.ballerina.stdlib.ftp.util.FtpContentConverter.deriveFileNamePrefix;
 
 /**
  * Handles content-based callbacks for FTP listener.
@@ -76,20 +78,23 @@ public class FtpContentCallbackHandler {
     private final FileSystemManager fileSystemManager;
     private final FileSystemOptions fileSystemOptions;
     private final boolean laxDataBinding;
+    private final BMap<?, ?> csvFailSafe;
 
     public FtpContentCallbackHandler(Runtime ballerinaRuntime, FileSystemManager fileSystemManager,
-                                     FileSystemOptions fileSystemOptions, boolean laxDataBinding) {
+                                     FileSystemOptions fileSystemOptions, boolean laxDataBinding,
+                                     BMap<?, ?> csvFailSafe) {
         this.ballerinaRuntime = ballerinaRuntime;
         this.fileSystemManager = fileSystemManager;
         this.fileSystemOptions = fileSystemOptions;
         this.laxDataBinding = laxDataBinding;
+        this.csvFailSafe = csvFailSafe;
     }
 
     /**
      * Processes content callbacks for added files in the event.
      * Routes each file to the appropriate content handler based on file extension and annotations.
      */
-    public void processContentCallbacks(BObject service, RemoteFileSystemEvent event,
+    public void processContentCallbacks(Environment env, BObject service, RemoteFileSystemEvent event,
                                         FormatMethodsHolder holder, BObject callerObject) {
         List<FileInfo> addedFiles = event.getAddedFiles();
 
@@ -110,7 +115,7 @@ public class FtpContentCallbackHandler {
 
                 // Convert content based on method signature
                 MethodType methodType = methodTypeOpt.get();
-                Object convertedContent = convertFileContent(fileObject, inputStream, methodType);
+                Object convertedContent = convertFileContent(env, fileObject, inputStream, methodType);
 
                 // Prepare method arguments
                 Object[] methodArguments = prepareContentMethodArguments(methodType, convertedContent,
@@ -153,7 +158,8 @@ public class FtpContentCallbackHandler {
     /**
      * Converts file content to the appropriate Ballerina type based on the method signature.
      */
-    private Object convertFileContent(FileObject fileObject, InputStream inputStream, MethodType methodType)
+    private Object convertFileContent(Environment environment, FileObject fileObject, InputStream inputStream,
+                                      MethodType methodType)
             throws Exception {
         String methodName = methodType.getName();
         Parameter firstParameter = methodType.getParameters()[0];
@@ -178,12 +184,14 @@ public class FtpContentCallbackHandler {
             }
         } else {
             byte[] fileContent = fetchAllFileContentFromRemote(fileObject, inputStream);
+            String fileNamePrefix = deriveFileNamePrefix(fileObject);
             return switch (methodName) {
                 case ON_FILE_REMOTE_FUNCTION -> convertToBallerinaByteArray(fileContent);
                 case ON_FILE_TEXT_REMOTE_FUNCTION -> convertBytesToString(fileContent);
                 case ON_FILE_JSON_REMOTE_FUNCTION -> convertBytesToJson(fileContent, firstParamType, laxDataBinding);
                 case ON_FILE_XML_REMOTE_FUNCTION -> convertBytesToXml(fileContent, firstParamType, laxDataBinding);
-                case ON_FILE_CSV_REMOTE_FUNCTION -> convertBytesToCsv(fileContent, firstParamType, laxDataBinding);
+                case ON_FILE_CSV_REMOTE_FUNCTION -> convertBytesToCsv(environment, fileContent, firstParamType,
+                        laxDataBinding, csvFailSafe, fileNamePrefix);
                 default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
             };
         }

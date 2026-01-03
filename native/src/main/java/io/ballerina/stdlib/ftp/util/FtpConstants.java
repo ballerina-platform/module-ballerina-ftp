@@ -105,6 +105,7 @@ public class FtpConstants {
     public static final String FTPS_DATA_CHANNEL_PROTECTION_PRIVATE = "PRIVATE";
     public static final String FTPS_DATA_CHANNEL_PROTECTION_SAFE = "SAFE";
     public static final String FTPS_DATA_CHANNEL_PROTECTION_CONFIDENTIAL = "CONFIDENTIAL";
+    public static final String ENDPOINT_CONFIG_CSV_FAIL_SAFE = "csvFailSafe";
 
     // Advanced file selection configuration constants
     public static final String ENDPOINT_CONFIG_FILE_AGE_FILTER = "fileAgeFilter";
