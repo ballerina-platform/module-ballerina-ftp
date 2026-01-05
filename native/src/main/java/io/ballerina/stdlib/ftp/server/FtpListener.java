@@ -18,6 +18,7 @@
 
 package io.ballerina.stdlib.ftp.server;
 
+import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Module;
 import io.ballerina.runtime.api.Runtime;
 import io.ballerina.runtime.api.concurrent.StrandMetadata;
@@ -77,14 +78,21 @@ public class FtpListener implements RemoteFileSystemListener {
 
     private static final Logger log = LoggerFactory.getLogger(FtpListener.class);
     private final Runtime runtime;
+    private Environment environment = null;
     private Map<String, BObject> registeredServices = new HashMap<>();
     private BObject caller;
     private FileSystemManager fileSystemManager;
     private FileSystemOptions fileSystemOptions;
     private boolean laxDataBinding;
+    private BMap<?, ?> csvFailSafe = ValueCreator.createMapValue();
 
     FtpListener(Runtime runtime) {
         this.runtime = runtime;
+    }
+
+    FtpListener(Environment environment) {
+        this.environment = environment;
+        this.runtime = environment.getRuntime();
     }
 
     public void setFileSystemManager(FileSystemManager fileSystemManager) {
@@ -99,6 +107,10 @@ public class FtpListener implements RemoteFileSystemListener {
         this.laxDataBinding = laxDataBinding;
     }
 
+    public void setCsvFailSafeConfigs(BMap<?, ?> csvFailSafe) {
+        this.csvFailSafe = csvFailSafe;
+    }
+
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
@@ -106,7 +118,7 @@ public class FtpListener implements RemoteFileSystemListener {
 
             if (runtime != null) {
                 for (BObject service : registeredServices.values()) {
-                    dispatchFileEventToService(service, event);
+                    dispatchFileEventToService(this.environment, service, event);
                 }
             } else {
                 log.error("Runtime should not be null.");
@@ -115,13 +127,13 @@ public class FtpListener implements RemoteFileSystemListener {
         return true;
     }
 
-    private void dispatchFileEventToService(BObject service, RemoteFileSystemEvent event) {
+    private void dispatchFileEventToService(Environment env, BObject service, RemoteFileSystemEvent event) {
         FormatMethodsHolder formatMethodHolder = new FormatMethodsHolder(service);
         Optional<MethodType> onFileDeletedMethodType = getOnFileDeletedMethod(service);
 
         // Dispatch Strategy: Check handler availability in order
         if (formatMethodHolder.hasContentMethods()) {
-            processContentBasedCallbacks(service, event, formatMethodHolder);
+            processContentBasedCallbacks(env, service, event, formatMethodHolder);
         } else if (onFileDeletedMethodType.isPresent()) {
             if (!event.getDeletedFiles().isEmpty()) {
                 processDeletionCallback(service, event, onFileDeletedMethodType.get());
@@ -145,7 +157,7 @@ public class FtpListener implements RemoteFileSystemListener {
      * Uses ContentMethodRouter to dispatch files to appropriate handlers.
      * Also handles file deletion events via onFileDeleted method if available.
      */
-    private void processContentBasedCallbacks(BObject service, RemoteFileSystemEvent event,
+    private void processContentBasedCallbacks(Environment env, BObject service, RemoteFileSystemEvent event,
                                               FormatMethodsHolder holder) {
         // Process added files with content methods
         if (!event.getAddedFiles().isEmpty()) {
@@ -155,8 +167,8 @@ public class FtpListener implements RemoteFileSystemListener {
             } else {
                 try {
                     FtpContentCallbackHandler contentHandler = new FtpContentCallbackHandler(
-                            runtime, fileSystemManager, fileSystemOptions, laxDataBinding);
-                    contentHandler.processContentCallbacks(service, event, holder, caller);
+                            runtime, fileSystemManager, fileSystemOptions, laxDataBinding, csvFailSafe);
+                    contentHandler.processContentCallbacks(env, service, event, holder, caller);
                 } catch (Exception e) {
                     log.error("Error in content callback processing for added files", e);
                 }

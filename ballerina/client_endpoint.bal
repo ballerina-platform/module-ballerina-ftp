@@ -450,6 +450,8 @@ public enum Compression {
 # + sftpCompression - Compression algorithms (SFTP only)
 # + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
 # + proxy - Proxy configuration for SFTP connections (SFTP only)
+# + csvFailSafe - Configuration for fail-safe CSV content processing. In the fail-safe mode, 
+#                 malformed CSV records are skipped and written to a separate file in the current directory
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -463,6 +465,7 @@ public type ClientConfiguration record {|
     FileTransferMode fileTransferMode = BINARY;
     TransferCompression[] sftpCompression = [NO];
     string sftpSshKnownHosts?;
+    FailSafeOptions csvFailSafe?;
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,
