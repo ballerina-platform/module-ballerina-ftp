@@ -23,7 +23,7 @@ public isolated class Listener {
 
     private handle EMPTY_JAVA_STRING = java:fromString("");
     private ListenerConfiguration config = {};
-    private task:JobId? jobId = ();
+    private task:Listener taskListener;
 
     # Gets invoked during object initialization.
     #
@@ -32,6 +32,13 @@ public isolated class Listener {
     public isolated function init(*ListenerConfiguration listenerConfig) returns Error? {
         self.config = listenerConfig.clone();
         lock {
+            task:Listener|error taskListener = new ({
+                    trigger: {interval: listenerConfig.pollingInterval}
+            });
+            if taskListener is error {
+                return error Error("Failed to create internal task listener: " + taskListener.message());
+            }
+            self.taskListener = taskListener;
             return initListener(self, self.config);
         }
     }
@@ -94,16 +101,14 @@ public isolated class Listener {
 
     isolated function internalStart() returns error? {
         lock {
-            self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), self.config.pollingInterval);
+            check self.taskListener.attach(getPollingService(self));
+            check self.taskListener.'start();
         }
     }
 
     isolated function stop() returns error? {
         lock {
-            var id = self.jobId;
-            if id is task:JobId {
-                check task:unscheduleJob(id);
-            }
+            check self.taskListener.gracefulStop();
             return cleanup(self);
         }
     }
@@ -131,21 +136,17 @@ public isolated class Listener {
     }
 }
 
-class Job {
+isolated function getPollingService(Listener initializedListener) returns task:Service {
+    return service object {
+        private final Listener ftpListener = initializedListener;
 
-    *task:Job;
-    private Listener ftpListener;
-
-    public isolated function execute() {
-        var result = self.ftpListener.poll();
-        if result is error {
-            log:printError("Error while executing poll function", 'error = result);
+        isolated function execute() {
+            var result = self.ftpListener.poll();
+            if result is error {
+                log:printError("Error while executing poll function", 'error = result);
+            }
         }
-    }
-
-    public isolated function init(Listener initializedListener) {
-        self.ftpListener = initializedListener;
-    }
+    };
 }
 
 # Configuration for the FTP listener.
