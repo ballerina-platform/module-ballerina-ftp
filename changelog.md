@@ -7,6 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- [Add FTP Listener Coordination Support](https://github.com/ballerina-platform/ballerina-library/issues/8490)
+- [Incorporate the csv fail safe support in the FTP listener](https://github.com/ballerina-platform/ballerina-library/issues/8502)
+
+### Fixed
+
+
+## [2.16.0] - 2025-12-19
+
+### Added
+
 - [Added FTPS with SSL/TLS configuration](https://github.com/ballerina-platform/module-ballerina-ftp/pull/1523)
 - [Added support for advanced file selection and processing](https://github.com/ballerina-platform/ballerina-library/issues/8376)
 - [Improving Ballerina FTP Client with Copy, Move and IsExist API](https://github.com/ballerina-platform/ballerina-library/issues/8438)
