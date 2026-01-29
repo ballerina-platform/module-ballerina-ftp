@@ -7,6 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- [Add distinct error types](https://github.com/ballerina-platform/ballerina-library/issues/8597)
+- [Incorporate the csv fail safe support in the FTP listener](https://github.com/ballerina-platform/ballerina-library/issues/8502)
+
+### Fixed
+
+### Added
+
+## [2.16.0] - 2025-12-19
+
+- [Add close API for the FTP clients](https://github.com/ballerina-platform/module-ballerina-ftp/pull/1519)
 - [Added FTPS with SSL/TLS configuration](https://github.com/ballerina-platform/module-ballerina-ftp/pull/1523)
 - [Added support for advanced file selection and processing](https://github.com/ballerina-platform/ballerina-library/issues/8376)
 - [Improving Ballerina FTP Client with Copy, Move and IsExist API](https://github.com/ballerina-platform/ballerina-library/issues/8438)
@@ -15,6 +25,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add functionality for streaming put methods in ftp:Client
 - Add functionality for type based put and get in ftp:Caller
 - Deprecate `onFileDeleted` method and introduced `onFileDelete`
+- Add typed error types for better error handling:
+  - `ConnectionError` for connection failures
+  - `FileNotFoundError` for file/directory not found errors
+  - `FileAlreadyExistsError` for file/directory already exists errors
+  - `InvalidConfigurationError` for configuration validation errors
 
 ### Fixed
 
