@@ -244,7 +244,8 @@ public class FtpClient {
             clientEndpoint.addNativeData(VFS_CLIENT_CONNECTOR, connector);
             return null;
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
+            String errorType = FtpUtil.getErrorTypeForException(e);
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), errorType);
         }
     }
 

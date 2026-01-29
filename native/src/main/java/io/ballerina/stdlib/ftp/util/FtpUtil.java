@@ -33,6 +33,11 @@ import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
+import io.ballerina.stdlib.ftp.exception.FtpConnectionException;
+import io.ballerina.stdlib.ftp.exception.FtpFileAlreadyExistsException;
+import io.ballerina.stdlib.ftp.exception.FtpFileNotFoundException;
+import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigurationException;
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +55,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -109,12 +116,32 @@ public class FtpUtil {
         ftpProperties.put(FtpConstants.SFTP_SESSION_TIMEOUT, String.valueOf(sftpSessionTimeout));
     }
 
-    private static void validateTimeout(double timeout, String fieldName) throws BallerinaFtpException {
+    private static void validateTimeout(double timeout, String fieldName) throws FtpInvalidConfigurationException {
         if (timeout < 0) {
-            throw new BallerinaFtpException(fieldName + " must be positive or zero (got: " + timeout + ")");
+            throw new FtpInvalidConfigurationException(fieldName + " must be positive or zero (got: " + timeout + ")");
         }
         if (timeout > 600) {
-            throw new BallerinaFtpException(fieldName + " must not exceed 600 seconds (got: " + timeout + ")");
+            throw new FtpInvalidConfigurationException(
+                    fieldName + " must not exceed 600 seconds (got: " + timeout + ")");
+        }
+    }
+
+    /**
+     * Validates that a regex pattern is syntactically correct.
+     *
+     * @param pattern the regex pattern to validate
+     * @param fieldName the name of the field for error messages
+     * @throws FtpInvalidConfigurationException if the pattern is invalid
+     */
+    public static void validateRegexPattern(String pattern, String fieldName) throws FtpInvalidConfigurationException {
+        if (pattern == null || pattern.isEmpty()) {
+            return; // Empty pattern is allowed
+        }
+        try {
+            Pattern.compile(pattern);
+        } catch (PatternSyntaxException e) {
+            throw new FtpInvalidConfigurationException(
+                    "Invalid regex pattern for " + fieldName + ": " + e.getDescription(), e);
         }
     }
 
@@ -152,7 +179,7 @@ public class FtpUtil {
     }
 
     public static void extractProxyConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties)
-            throws BallerinaFtpException {
+            throws FtpInvalidConfigurationException {
         BMap proxyConfig = config.getMapValue(StringUtils.fromString(FtpConstants.PROXY));
         if (proxyConfig == null) {
             return;
@@ -160,7 +187,7 @@ public class FtpUtil {
         // Extract proxy host
         BString proxyHost = proxyConfig.getStringValue(StringUtils.fromString(FtpConstants.PROXY_HOST));
         if (proxyHost == null || proxyHost.getValue().isEmpty()) {
-            throw new BallerinaFtpException("Proxy host cannot be empty");
+            throw new FtpInvalidConfigurationException("Proxy host cannot be empty");
         }
         ftpProperties.put(FtpConstants.PROXY_HOST, proxyHost.getValue());
 
@@ -169,7 +196,8 @@ public class FtpUtil {
         if (proxyPortObj != null) {
             long proxyPort = ((Number) proxyPortObj).longValue();
             if (proxyPort < 1 || proxyPort > 65535) {
-                throw new BallerinaFtpException("Proxy port must be between 1 and 65535 (got: " + proxyPort + ")");
+                throw new FtpInvalidConfigurationException(
+                        "Proxy port must be between 1 and 65535 (got: " + proxyPort + ")");
             }
             ftpProperties.put(FtpConstants.PROXY_PORT, String.valueOf(proxyPort));
         }
@@ -384,6 +412,36 @@ public class FtpUtil {
                         .fromString(maskUrlPassword(cause.getMessage()))), null);
     }
 
+    /**
+     * Creates a Ballerina error from an exception, automatically determining the error type.
+     *
+     * @param exception the exception to convert to a Ballerina error
+     * @return a BError with the appropriate error type
+     */
+    public static BError createError(RemoteFileSystemConnectorException exception) {
+        String errorType = getErrorTypeForException(exception);
+        return createError(exception.getMessage(), exception.getCause(), errorType);
+    }
+
+    /**
+     * Determines the appropriate Ballerina error type for a given exception.
+     *
+     * @param exception the exception to analyze
+     * @return the error type name
+     */
+    public static String getErrorTypeForException(Throwable exception) {
+        if (exception instanceof FtpConnectionException) {
+            return ErrorType.ConnectionError.errorType();
+        } else if (exception instanceof FtpFileNotFoundException) {
+            return ErrorType.FileNotFoundError.errorType();
+        } else if (exception instanceof FtpFileAlreadyExistsException) {
+            return ErrorType.FileAlreadyExistsError.errorType();
+        } else if (exception instanceof FtpInvalidConfigurationException) {
+            return ErrorType.InvalidConfigurationError.errorType();
+        }
+        return ErrorType.Error.errorType();
+    }
+
     public static Throwable findRootCause(Throwable throwable) {
         Objects.requireNonNull(throwable);
         Throwable rootCause = throwable;
@@ -561,7 +619,11 @@ public class FtpUtil {
      */
     public enum ErrorType {
 
-        Error("Error");
+        Error("Error"),
+        ConnectionError("ConnectionError"),
+        FileNotFoundError("FileNotFoundError"),
+        FileAlreadyExistsError("FileAlreadyExistsError"),
+        InvalidConfigurationError("InvalidConfigurationError");
 
         private String errorType;
 

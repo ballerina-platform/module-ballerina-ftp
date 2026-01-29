@@ -19,6 +19,9 @@
 package io.ballerina.stdlib.ftp.transport.client.connector.contractimpl;
 
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
+import io.ballerina.stdlib.ftp.exception.FtpConnectionException;
+import io.ballerina.stdlib.ftp.exception.FtpFileAlreadyExistsException;
+import io.ballerina.stdlib.ftp.exception.FtpFileNotFoundException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.FtpAction;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
@@ -72,9 +75,9 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             path = fsManager.resolveFile(fileURI, opts);
         } catch (FileSystemException e) {
             String safeUri = maskUrlPassword(fileURI);
-            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null) 
+            String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null)
                     ? e.getCause().getMessage() : e.getMessage();
-            throw new RemoteFileSystemConnectorException("Error while connecting to the FTP server with URL: "
+            throw new FtpConnectionException("Error while connecting to the FTP server with URL: "
                     + (safeUri != null ? safeUri : "") + ". " + rootCauseMessage, e.getCause());
         }
     }
@@ -110,7 +113,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             switch (action) {
                 case MKDIR:
                     if (fileObject.exists()) {
-                        throw new RemoteFileSystemConnectorException("Directory exists: "
+                        throw new FtpFileAlreadyExistsException("Directory exists: "
                                 + maskUrlPassword(fileObject.getName().getURI()));
                     }
                     fileObject.createFolder();
@@ -152,7 +155,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                             logger.debug(filesDeleted + " files successfully deleted");
                         }
                     } else {
-                        throw new RemoteFileSystemConnectorException(
+                        throw new FtpFileNotFoundException(
                                 "Failed to delete file: " + maskUrlPassword(fileObject.getName().getURI())
                                         + " not found");
                     }
@@ -164,7 +167,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                             logger.debug(filesDeleted + " files successfully deleted");
                         }
                     } else {
-                        throw new RemoteFileSystemConnectorException(
+                        throw new FtpFileNotFoundException(
                                 "Failed to delete directory: " + maskUrlPassword(fileObject.getName().getURI())
                                         + " not found");
                     }
@@ -181,7 +184,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                                     if (!finalPath.exists()) {
                                         fileObject.moveTo(finalPath);
                                     } else {
-                                        throw new RemoteFileSystemConnectorException(
+                                        throw new FtpFileAlreadyExistsException(
                                                 "The file at " + maskUrlPassword(newPath.getURL().toString())
                                                         + " already exists or it is a directory");
                                     }
@@ -189,7 +192,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                             }
                         }
                     } else {
-                        throw new RemoteFileSystemConnectorException(
+                        throw new FtpFileNotFoundException(
                                 "Failed to rename file: " + maskUrlPassword(fileObject.getName().getURI())
                                         + " not found");
                     }
@@ -205,7 +208,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         // close the FileObject. If we close the FileObject now then InputStream will not get any data.
                         pathClose = false;
                     } else {
-                        throw new RemoteFileSystemConnectorException(
+                        throw new FtpFileNotFoundException(
                                 "Failed to read file: " + maskUrlPassword(fileObject.getName().getURI())
                                         + " not found");
                     }
@@ -215,10 +218,10 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                         byte[] content = fileObject.getContent().getByteArray();
                         remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(content));
                     } else {
-                        throw new RemoteFileSystemConnectorException(
-                        "Failed to read file: " + maskUrlPassword(fileObject.getName().getURI())
-                                + " not found");
-            }
+                        throw new FtpFileNotFoundException(
+                                "Failed to read file: " + maskUrlPassword(fileObject.getName().getURI())
+                                        + " not found");
+                    }
                     break;
                 case SIZE:
                     remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.getContent().getSize()));
@@ -235,7 +238,7 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                     break;
                 case ISDIR:
                     if (!fileObject.exists()) {
-                        throw new BallerinaFtpException(filePath + " does not exists to check if it is a directory.");
+                        throw new FtpFileNotFoundException(filePath + " does not exist to check if it is a directory.");
                     }
                     remoteFileSystemListener.onMessage(new RemoteFileSystemMessage(fileObject.isFolder()));
                     break;
@@ -249,13 +252,13 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
                             if (!destinationFile.exists()) {
                                 destinationFile.copyFrom(fileObject, Selectors.SELECT_SELF);
                             } else {
-                                throw new RemoteFileSystemConnectorException(
+                                throw new FtpFileAlreadyExistsException(
                                         "The file at " + maskUrlPassword(destinationFile.getURL().toString())
                                                 + " already exists");
                             }
                         }
                     } else {
-                        throw new RemoteFileSystemConnectorException(
+                        throw new FtpFileNotFoundException(
                                 "Failed to copy file: " + maskUrlPassword(fileObject.getName().getURI())
                                         + " not found");
                     }

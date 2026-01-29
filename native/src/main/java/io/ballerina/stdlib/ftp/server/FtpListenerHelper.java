@@ -30,6 +30,7 @@ import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
+import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigurationException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
@@ -52,6 +53,7 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CLIENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVICE_ENDPOINT_CONFIG;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.InvalidConfigurationError;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.createError;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractCompressionConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractFileTransferConfiguration;
@@ -116,6 +118,8 @@ public class FtpListenerHelper {
 
             ftpListener.addNativeData(FTP_SERVICE_ENDPOINT_CONFIG, serviceEndpointConfig);
             return null;
+        } catch (FtpInvalidConfigurationException e) {
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), InvalidConfigurationError.errorType());
         } catch (RemoteFileSystemConnectorException | BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         } catch (BError e) {
@@ -333,7 +337,7 @@ public class FtpListenerHelper {
     }
 
     private static List<FileDependencyCondition> parseFileDependencyConditions(
-            BMap<BString, Object> serviceEndpointConfig) {
+            BMap<BString, Object> serviceEndpointConfig) throws FtpInvalidConfigurationException {
         List<FileDependencyCondition> conditions = new ArrayList<>();
 
         BArray conditionsArray = serviceEndpointConfig.getArrayValue(
@@ -349,13 +353,18 @@ public class FtpListenerHelper {
             // Target pattern
             String targetPattern = conditionMap.getStringValue(
                     StringUtils.fromString(FtpConstants.DEPENDENCY_TARGET_PATTERN)).getValue();
+            FtpUtil.validateRegexPattern(targetPattern,
+                    "fileDependencyConditions[" + i + "].targetPattern");
 
-            // Required files
+            // Required files (these are also regex patterns)
             BArray requiredFilesArray = conditionMap.getArrayValue(
                     StringUtils.fromString(FtpConstants.DEPENDENCY_REQUIRED_FILES));
             List<String> requiredFiles = new ArrayList<>();
             for (int j = 0; j < requiredFilesArray.size(); j++) {
-                requiredFiles.add(((BString) requiredFilesArray.get(j)).getValue());
+                String requiredFilePattern = ((BString) requiredFilesArray.get(j)).getValue();
+                FtpUtil.validateRegexPattern(requiredFilePattern,
+                        "fileDependencyConditions[" + i + "].requiredFiles[" + j + "]");
+                requiredFiles.add(requiredFilePattern);
             }
 
             // Matching mode
@@ -373,11 +382,13 @@ public class FtpListenerHelper {
         return conditions;
     }
 
-    private static void addStringProperty(BMap config, Map<String, Object> params) {
+    private static void addStringProperty(BMap config, Map<String, Object> params) 
+    throws FtpInvalidConfigurationException {
         BString namePatternString = config.getStringValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN));
         String fileNamePattern = (namePatternString != null && !namePatternString.getValue().isEmpty()) ?
                 namePatternString.getValue() : "";
+        FtpUtil.validateRegexPattern(fileNamePattern, "fileNamePattern");
         params.put(FtpConstants.FILE_NAME_PATTERN, fileNamePattern);
     }
 
