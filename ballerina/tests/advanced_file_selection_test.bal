@@ -65,7 +65,7 @@ function testFileAgeFilterRespectsMaxAge() returns error? {
             }
         },
         path: "/home/in/advanced/age",
-        pollingInterval: 5,
+        pollingInterval: 2,
         fileAgeFilter: {
             maxAge: 60
         },
