@@ -255,3 +255,48 @@ public type FileDependencyCondition record {|
     DependencyMatchingMode matchingMode = ALL;
     int requiredFileCount = 1;
 |};
+
+# Categories of errors that can trip the circuit breaker.
+# Used to configure which types of failures should count towards the circuit breaker threshold.
+public enum FailureCategory {
+    # Connection-level failures (timeout, refused, reset, DNS resolution).
+    # Maps to ConnectionError type.
+    CONNECTION_ERROR,
+    # Authentication failures (invalid credentials, key rejected).
+    # Detected via FTP 530 response code.
+    AUTHENTICATION_ERROR,
+    # Transient server errors that may succeed on retry.
+    # Maps to ServiceUnavailableError type (FTP codes 421, 425, 426, 450, 451, 452).
+    TRANSIENT_ERROR,
+    # All errors regardless of type
+    ALL_ERRORS
+}
+
+# Configuration for the sliding time window used in failure calculation.
+# The rolling window divides time into discrete buckets for efficient tracking of request success/failure rates.
+#
+# + requestVolumeThreshold - Minimum number of requests in the window before evaluating failure threshold.
+#                            Circuit breaker will not trip until this many requests have been made.
+# + timeWindow - Time period in seconds for the sliding window
+# + bucketSize - Granularity of time buckets in seconds. Must be less than timeWindow.
+public type RollingWindow record {|
+    int requestVolumeThreshold = 10;
+    decimal timeWindow = 60;
+    decimal bucketSize = 10;
+|};
+
+# Configuration for circuit breaker behavior.
+# The circuit breaker prevents cascade failures by temporarily blocking requests when the server is experiencing issues.
+#
+# + rollingWindow - Time window configuration for failure tracking
+# + failureThreshold - Failure ratio threshold (0.0 to 1.0) that trips the circuit.
+#                      For example, 0.5 means the circuit will open when 50% of requests fail.
+# + resetTime - Seconds to wait in OPEN state before transitioning to HALF_OPEN to test recovery
+# + failureCategories - Error categories that count as failures for the circuit breaker.
+#                       Only errors matching these categories will contribute to the failure ratio.
+public type CircuitBreakerConfig record {|
+    RollingWindow rollingWindow = {};
+    float failureThreshold = 0.5;
+    decimal resetTime = 30;
+    FailureCategory[] failureCategories = [CONNECTION_ERROR, TRANSIENT_ERROR];
+|};

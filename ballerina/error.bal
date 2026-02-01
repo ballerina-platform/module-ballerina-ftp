@@ -40,3 +40,9 @@ public type ServiceUnavailableError distinct Error;
 # Represents an error that occurs when all retry attempts have been exhausted.
 # This error wraps the last failure encountered during retry attempts.
 public type AllRetryAttemptsFailedError distinct Error;
+
+# Error returned when the circuit breaker is in OPEN state.
+# This indicates the FTP server is unavailable and requests are being blocked
+# to prevent cascade failures. The client should implement fallback logic
+# or wait for the circuit to transition to HALF_OPEN state.
+public type CircuitBreakerOpenError distinct ServiceUnavailableError;

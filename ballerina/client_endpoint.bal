@@ -453,6 +453,8 @@ public enum Compression {
 # + csvFailSafe - Configuration for fail-safe CSV content processing. In the fail-safe mode,
 #                 malformed CSV records are skipped and written to a separate file in the current directory
 # + retryConfig - Configuration for retry behavior on transient failures. If not specified, no retry is attempted.
+# + circuitBreaker - Circuit breaker configuration for handling server failures gracefully.
+#                    When enabled, the client will fail fast if the server is experiencing issues.
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -468,6 +470,7 @@ public type ClientConfiguration record {|
     string sftpSshKnownHosts?;
     FailSafeOptions csvFailSafe?;
     RetryConfig retryConfig?;
+    CircuitBreakerConfig circuitBreaker?;
 |};
 
 isolated function getInputContent(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content,
