@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## unreleased
 
+- [Add automatic retry support with exponential backoff for FTP client and listener operations](https://github.com/ballerina-platform/ballerina-library/issues/8585)
+- [Incorporate the csv fail safe support in the FTP listener](https://github.com/ballerina-platform/ballerina-library/issues/8502)
+
+### Fixed
+
+
+## [2.16.0] - 2025-12-19
+
 ### Added
 
 - [Add distinct error types](https://github.com/ballerina-platform/ballerina-library/issues/8597)
