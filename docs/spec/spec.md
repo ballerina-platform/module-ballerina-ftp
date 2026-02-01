@@ -153,7 +153,6 @@ The FTP module provides a hierarchy of error types for better error handling and
 
 * `Error` - The base error type for all FTP-related errors.
 ```ballerina
-# Defines the common error type for the module.
 public type Error distinct error;
 ```
 
@@ -165,13 +164,11 @@ public type ConnectionError distinct Error;
 
 * `FileNotFoundError` - Represents errors that occur when a requested file or directory is not found on the remote server.
 ```ballerina
-# Represents an error that occurs when a requested file or directory is not found.
 public type FileNotFoundError distinct Error;
 ```
 
 * `FileAlreadyExistsError` - Represents errors that occur when attempting to create a file or directory that already exists.
 ```ballerina
-# Represents an error that occurs when attempting to create a file or directory that already exists.
 public type FileAlreadyExistsError distinct Error;
 ```
 
