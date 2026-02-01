@@ -1137,9 +1137,10 @@ public function testListFiles() {
         "child_directory",
         "content-methods",
         "age",
+        "retry",
         "test3.txt"
     ];
-    int[] fileSizes = [0, 61, 0, 0, 0, 0, 0, 145, 0, 0, 16400, 9000, 0, 0, 0, 12];
+    int[] fileSizes = [0, 61, 0, 0, 0, 0, 0, 145, 0, 0, 16400, 9000, 0, 0, 0, 0, 12];
     FileInfo[]|Error response = (<Client>clientEp)->list("/home/in");
     if response is FileInfo[] {
         log:printInfo("List of files/directories: ");

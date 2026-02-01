@@ -129,6 +129,9 @@ public final class MockFtpServer {
         fileSystem.add(new DirectoryEntry("/home/in/content-methods"));
         fileSystem.add(new FileEntry("/home/in/content-methods/.init", ""));
 
+        fileSystem.add(new DirectoryEntry("/home/in/retry"));
+        fileSystem.add(new FileEntry("/home/in/retry/test1.txt", content1));
+
         fileSystem.add(new DirectoryEntry("/home/in/advanced/cron"));
         fileSystem.add(new FileEntry("/home/in/cron/.init", ""));
 
