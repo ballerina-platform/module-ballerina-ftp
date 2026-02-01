@@ -73,3 +73,70 @@ public function testFileAlreadyExistsErrorOnRename() returns error? {
     Error? cleanupSrc = (<Client>clientEp)->delete(sourcePath);
     Error? cleanupDest = (<Client>clientEp)->delete(destPath);
 }
+
+// Test FileNotFoundError type for get operation on non-existing file
+@test:Config {
+    dependsOn: []
+}
+public function testFileNotFoundErrorOnGet() returns error? {
+    stream<byte[] & readonly, io:Error?>|Error result = (<Client>clientEp)->get("/home/in/nonexistent_error_test.txt");
+    test:assertTrue(result is FileNotFoundError,
+        msg = "Expected FileNotFoundError when reading non-existing file");
+    if result is FileNotFoundError {
+        test:assertTrue(result.message().includes("not found"),
+            msg = "FileNotFoundError message should indicate file not found");
+    }
+}
+
+// Test FileNotFoundError type for delete operation on non-existing file
+@test:Config {
+    dependsOn: [testDeleteFile]
+}
+public function testFileNotFoundErrorOnDelete() returns error? {
+    Error? result = (<Client>clientEp)->delete("/home/in/nonexistent_delete_test.txt");
+    test:assertTrue(result is FileNotFoundError,
+        msg = "Expected FileNotFoundError when deleting non-existing file");
+    if result is FileNotFoundError {
+        test:assertTrue(result.message().includes("not found"),
+            msg = "FileNotFoundError message should indicate file not found");
+    }
+}
+
+// Test ConnectionError type when connecting to non-existing server
+@test:Config {}
+public function testConnectionErrorOnInvalidServer() {
+    ClientConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 59999, // Non-existing port
+        auth: {credentials: {username: "test", password: "test"}}
+    };
+    Client|Error result = new (config);
+    test:assertTrue(result is ConnectionError,
+        msg = "Expected ConnectionError when connecting to non-existing server");
+    if result is ConnectionError {
+        test:assertTrue(result.message().includes("Error while connecting"),
+            msg = "ConnectionError message should indicate connection failure");
+    }
+}
+
+// Test InvalidConfigurationError type for invalid regex pattern
+@test:Config {}
+public function testInvalidConfigurationErrorOnBadRegex() {
+    ListenerConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        path: "/home/in",
+        pollingInterval: 2,
+        fileNamePattern: "[unclosed"
+    };
+    Listener|Error result = new (config);
+    test:assertTrue(result is InvalidConfigurationError,
+        msg = "Expected InvalidConfigurationError for invalid regex pattern");
+    if result is InvalidConfigurationError {
+        test:assertTrue(result.message().includes("Invalid regex pattern"),
+            msg = "InvalidConfigurationError message should indicate invalid regex");
+    }
+}
