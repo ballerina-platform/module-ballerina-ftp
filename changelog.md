@@ -25,11 +25,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add functionality for streaming put methods in ftp:Client
 - Add functionality for type based put and get in ftp:Caller
 - Deprecate `onFileDeleted` method and introduced `onFileDelete`
-- Add typed error types for better error handling:
-  - `ConnectionError` for connection failures
-  - `FileNotFoundError` for file/directory not found errors
-  - `FileAlreadyExistsError` for file/directory already exists errors
-  - `InvalidConfigurationError` for configuration validation errors
 
 ### Fixed
 
