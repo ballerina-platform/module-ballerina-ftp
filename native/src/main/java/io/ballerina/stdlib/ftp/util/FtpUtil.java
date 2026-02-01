@@ -33,9 +33,7 @@ import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
-import io.ballerina.stdlib.ftp.exception.FtpConnectionException;
-import io.ballerina.stdlib.ftp.exception.FtpFileAlreadyExistsException;
-import io.ballerina.stdlib.ftp.exception.FtpFileNotFoundException;
+import io.ballerina.stdlib.ftp.exception.ErrorTypeProvider;
 import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigurationException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import org.slf4j.Logger;
@@ -430,14 +428,8 @@ public class FtpUtil {
      * @return the error type name
      */
     public static String getErrorTypeForException(Throwable exception) {
-        if (exception instanceof FtpConnectionException) {
-            return ErrorType.ConnectionError.errorType();
-        } else if (exception instanceof FtpFileNotFoundException) {
-            return ErrorType.FileNotFoundError.errorType();
-        } else if (exception instanceof FtpFileAlreadyExistsException) {
-            return ErrorType.FileAlreadyExistsError.errorType();
-        } else if (exception instanceof FtpInvalidConfigurationException) {
-            return ErrorType.InvalidConfigurationError.errorType();
+        if (exception instanceof ErrorTypeProvider provider) {
+            return provider.errorType();
         }
         return ErrorType.Error.errorType();
     }
