@@ -623,7 +623,8 @@ public class FtpUtil {
         FileNotFoundError("FileNotFoundError"),
         FileAlreadyExistsError("FileAlreadyExistsError"),
         InvalidConfigurationError("InvalidConfigurationError"),
-        ServiceUnavailableError("ServiceUnavailableError");
+        ServiceUnavailableError("ServiceUnavailableError"),
+        AllRetryAttemptsFailedError("AllRetryAttemptsFailedError");
 
         private String errorType;
 
