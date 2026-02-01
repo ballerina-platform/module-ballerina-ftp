@@ -423,15 +423,22 @@ public class FtpUtil {
 
     /**
      * Determines the appropriate Ballerina error type for a given exception.
+     * First checks if the exception implements ErrorTypeProvider, then falls back
+     * to message-based FTP error code analysis.
      *
      * @param exception the exception to analyze
      * @return the error type name
      */
     public static String getErrorTypeForException(Throwable exception) {
+        // First, check if exception implements ErrorTypeProvider
         if (exception instanceof ErrorTypeProvider provider) {
             return provider.errorType();
         }
-        return ErrorType.Error.errorType();
+
+        // Fall back to message-based FTP error code analysis
+        String fullMessage = FtpErrorCodeAnalyzer.getFullErrorMessage(exception);
+        ErrorType recommendedType = FtpErrorCodeAnalyzer.getRecommendedErrorType(fullMessage);
+        return recommendedType.errorType();
     }
 
     public static Throwable findRootCause(Throwable throwable) {
@@ -615,7 +622,8 @@ public class FtpUtil {
         ConnectionError("ConnectionError"),
         FileNotFoundError("FileNotFoundError"),
         FileAlreadyExistsError("FileAlreadyExistsError"),
-        InvalidConfigurationError("InvalidConfigurationError");
+        InvalidConfigurationError("InvalidConfigurationError"),
+        ServiceUnavailableError("ServiceUnavailableError");
 
         private String errorType;
 

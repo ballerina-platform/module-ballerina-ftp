@@ -30,3 +30,9 @@ public type FileAlreadyExistsError distinct Error;
 # Represents an error that occurs when FTP/SFTP configuration is invalid.
 # This includes invalid port numbers, invalid regex patterns, invalid timeout values, etc.
 public type InvalidConfigurationError distinct Error;
+
+# Represents an error that occurs when the FTP/SFTP service is temporarily unavailable.
+# This is a transient error indicating the operation may succeed on retry.
+# Common causes include: server overload (421), connection issues (425, 426),
+# temporary file locks (450), or server-side processing errors (451).
+public type ServiceUnavailableError distinct Error;

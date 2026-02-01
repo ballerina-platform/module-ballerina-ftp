@@ -22,6 +22,7 @@ import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.FtpConnectionException;
 import io.ballerina.stdlib.ftp.exception.FtpFileAlreadyExistsException;
 import io.ballerina.stdlib.ftp.exception.FtpFileNotFoundException;
+import io.ballerina.stdlib.ftp.exception.FtpServiceUnavailableException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.FtpAction;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
@@ -30,6 +31,7 @@ import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
 import io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
+import io.ballerina.stdlib.ftp.util.FtpErrorCodeAnalyzer;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
@@ -77,8 +79,17 @@ public class VfsClientConnectorImpl implements VfsClientConnector {
             String safeUri = maskUrlPassword(fileURI);
             String rootCauseMessage = (e.getCause() != null && e.getCause().getMessage() != null)
                     ? e.getCause().getMessage() : e.getMessage();
-            throw new FtpConnectionException("Error while connecting to the FTP server with URL: "
-                    + (safeUri != null ? safeUri : "") + ". " + rootCauseMessage, e.getCause());
+            String errorMessage = "Error while connecting to the FTP server with URL: "
+                    + (safeUri != null ? safeUri : "") + ". " + rootCauseMessage;
+
+            // Analyze exception for specific FTP error codes
+            String fullMessage = FtpErrorCodeAnalyzer.getFullErrorMessage(e);
+            if (FtpErrorCodeAnalyzer.isServiceUnavailable(fullMessage)) {
+                int ftpCode = FtpErrorCodeAnalyzer.extractFtpCodeFromException(e).orElse(0);
+                throw new FtpServiceUnavailableException(errorMessage, ftpCode, e.getCause());
+            }
+
+            throw new FtpConnectionException(errorMessage, e.getCause());
         }
     }
 
