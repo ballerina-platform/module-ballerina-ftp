@@ -32,6 +32,8 @@ import io.ballerina.runtime.api.values.BStream;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.runtime.api.values.BTypedesc;
 import io.ballerina.runtime.api.values.BXml;
+import io.ballerina.stdlib.ftp.client.circuitbreaker.CircuitBreaker;
+import io.ballerina.stdlib.ftp.client.circuitbreaker.CircuitBreakerConfig;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
@@ -97,6 +99,71 @@ public class FtpClient {
         // private constructor
     }
 
+    /**
+     * Gets the circuit breaker for a client, if configured.
+     *
+     * @param clientConnector The FTP client connector
+     * @return The circuit breaker or null if not configured
+     */
+    private static CircuitBreaker getCircuitBreaker(BObject clientConnector) {
+        return (CircuitBreaker) clientConnector.getNativeData(FtpConstants.CIRCUIT_BREAKER_NATIVE_DATA);
+    }
+
+    /**
+     * Records that a request is starting. Call this BEFORE executing an operation.
+     *
+     * @param clientConnector The FTP client connector
+     */
+    private static void recordCircuitBreakerRequestStart(BObject clientConnector) {
+        CircuitBreaker cb = getCircuitBreaker(clientConnector);
+        if (cb != null) {
+            cb.recordRequestStart();
+        }
+    }
+
+    /**
+     * Records the outcome of an operation. Call this AFTER the operation completes.
+     *
+     * @param clientConnector The FTP client connector
+     * @param result The result from the operation
+     * @return The result unchanged (circuit breaker state updated as side effect)
+     */
+    private static Object recordCircuitBreakerOutcome(BObject clientConnector, Object result) {
+        CircuitBreaker cb = getCircuitBreaker(clientConnector);
+        if (cb == null) {
+            return result;
+        }
+
+        if (result instanceof BError bError) {
+            // Pass the original cause to preserve exception type for categorization
+            Throwable cause = bError.getCause();
+            if (cause != null) {
+                cb.recordOutcome(cause);
+            } else {
+                // Fallback to wrapping message if no cause available
+                cb.recordOutcome(new RuntimeException(bError.getMessage()));
+            }
+        } else {
+            cb.recordOutcome(null);
+        }
+        return result;
+    }
+
+    /**
+     * Checks if circuit is open before starting an operation.
+     * Returns the circuit breaker error if open, null otherwise.
+     *
+     * @param clientConnector The FTP client connector
+     * @return BError if circuit is open, null if operation can proceed
+     */
+    private static BError getCircuitBreakerErrorIfOpen(BObject clientConnector) {
+        CircuitBreaker cb = getCircuitBreaker(clientConnector);
+        if (cb != null && cb.isOpen()) {
+            return cb.createServiceUnavailableError();
+        }
+        return null;
+    }
+
     public static Object initClientEndpoint(BObject clientEndpoint, BMap<Object, Object> config) {
         String protocol = extractProtocol(config);
         configureClientEndpointBasic(clientEndpoint, config, protocol);
@@ -112,8 +179,8 @@ public class FtpClient {
         if (vfsError != null) {
             return vfsError;
         }
-        
-        return createAndStoreConnector(clientEndpoint, ftpConfig);
+
+        return createAndStoreConnector(clientEndpoint, ftpConfig, config);
     }
 
     private static String extractProtocol(BMap<Object, Object> config) {
@@ -232,26 +299,53 @@ public class FtpClient {
         }
     }
 
-    private static Object createAndStoreConnector(BObject clientEndpoint, Map<String, Object> ftpConfig) {
-        
+    private static Object createAndStoreConnector(BObject clientEndpoint, Map<String, Object> ftpConfig,
+                                                    BMap<Object, Object> config) {
+
         String url;
         try {
             url = FtpUtil.createUrl(clientEndpoint, "");
         } catch (BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
-        
+
         ftpConfig.put(FtpConstants.URI, url);
         clientEndpoint.addNativeData(FtpConstants.PROPERTY_MAP, ftpConfig);
-        
+
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         try {
             VfsClientConnector connector = fileSystemConnectorFactory.createVfsClientConnector(ftpConfig);
             clientEndpoint.addNativeData(VFS_CLIENT_CONNECTOR, connector);
+
+            // Initialize circuit breaker if configured
+            Object circuitBreakerError = initializeCircuitBreaker(clientEndpoint, config);
+            if (circuitBreakerError != null) {
+                return circuitBreakerError;
+            }
+
             return null;
         } catch (RemoteFileSystemConnectorException e) {
             String errorType = FtpUtil.getErrorTypeForException(e);
             return FtpUtil.createError(e.getMessage(), findRootCause(e), errorType);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object initializeCircuitBreaker(BObject clientEndpoint, BMap<Object, Object> config) {
+        BMap<BString, Object> cbConfig = (BMap<BString, Object>) config.getMapValue(
+                StringUtils.fromString(FtpConstants.CIRCUIT_BREAKER));
+        if (cbConfig == null) {
+            return null;
+        }
+
+        try {
+            CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.fromBMap(cbConfig);
+            CircuitBreaker circuitBreaker = new CircuitBreaker(circuitBreakerConfig);
+            clientEndpoint.addNativeData(FtpConstants.CIRCUIT_BREAKER_NATIVE_DATA, circuitBreaker);
+            log.debug("Circuit breaker initialized for FTP client");
+            return null;
+        } catch (BallerinaFtpException e) {
+            return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
     }
 
@@ -387,8 +481,16 @@ public class FtpClient {
         if (connector == null) {
             return FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR);
         }
+
+        // Check circuit breaker before proceeding
+        BError cbError = getCircuitBreakerErrorIfOpen(clientConnector);
+        if (cbError != null) {
+            return cbError;
+        }
+
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
         return env.yieldAndRun(() -> {
+            recordCircuitBreakerRequestStart(clientConnector);
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
             FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
                     remoteFileSystemBaseMessage ->
@@ -396,7 +498,8 @@ public class FtpClient {
                                     balFuture, TypeCreator.createArrayType(PredefinedTypes.TYPE_BYTE), laxDataBinding));
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.GET, filePath.getValue(), null);
-            return getResult(balFuture);
+            Object result = getResult(balFuture);
+            return recordCircuitBreakerOutcome(clientConnector, result);
         });
     }
 
@@ -406,8 +509,16 @@ public class FtpClient {
         if (connector == null) {
             return FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR);
         }
+
+        // Check circuit breaker before proceeding
+        BError cbError = getCircuitBreakerErrorIfOpen(clientConnector);
+        if (cbError != null) {
+            return cbError;
+        }
+
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
         return env.yieldAndRun(() -> {
+            recordCircuitBreakerRequestStart(clientConnector);
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
             FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
                     remoteFileSystemBaseMessage ->
@@ -415,7 +526,8 @@ public class FtpClient {
                                     balFuture, typeDesc.getDescribingType(), laxDataBinding));
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.GET, filePath.getValue(), null);
-            return getResult(balFuture);
+            Object result = getResult(balFuture);
+            return recordCircuitBreakerOutcome(clientConnector, result);
         });
     }
 
@@ -424,14 +536,23 @@ public class FtpClient {
         if (connector == null) {
             return FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR);
         }
+
+        // Check circuit breaker before proceeding
+        BError cbError = getCircuitBreakerErrorIfOpen(clientConnector);
+        if (cbError != null) {
+            return cbError;
+        }
+
         return env.yieldAndRun(() -> {
+            recordCircuitBreakerRequestStart(clientConnector);
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
             FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
                     remoteFileSystemBaseMessage -> FtpClientHelper.executeGetAllAction(remoteFileSystemBaseMessage,
                             balFuture));
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.GET_ALL, filePath.getValue(), null);
-            return getResult(balFuture);
+            Object result = getResult(balFuture);
+            return recordCircuitBreakerOutcome(clientConnector, result);
         });
     }
 
@@ -736,7 +857,15 @@ public class FtpClient {
         if (connector == null) {
             return FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR);
         }
+
+        // Check circuit breaker before proceeding
+        BError cbError = getCircuitBreakerErrorIfOpen(clientConnector);
+        if (cbError != null) {
+            return cbError;
+        }
+
         return env.yieldAndRun(() -> {
+            recordCircuitBreakerRequestStart(clientConnector);
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
             FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                     remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
@@ -747,7 +876,8 @@ public class FtpClient {
             } else {
                 connector.send(message, FtpAction.APPEND, filePath, null);
             }
-            return getResult(balFuture);
+            Object result = getResult(balFuture);
+            return recordCircuitBreakerOutcome(clientConnector, result);
         });
     }
 
@@ -839,14 +969,23 @@ public class FtpClient {
         if (connector == null) {
             return FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR);
         }
+
+        // Check circuit breaker before proceeding
+        BError cbError = getCircuitBreakerErrorIfOpen(clientConnector);
+        if (cbError != null) {
+            return cbError;
+        }
+
         return env.yieldAndRun(() -> {
+            recordCircuitBreakerRequestStart(clientConnector);
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
             Function<RemoteFileSystemBaseMessage, Boolean> messageHandler =
                     messageHandlerFactory.apply(balFuture);
             FtpClientListener connectorListener = new FtpClientListener(balFuture, closeInput, messageHandler);
             connector.addListener(connectorListener);
             connector.send(null, action, filePath.getValue(), null);
-            return getResult(balFuture);
+            Object result = getResult(balFuture);
+            return recordCircuitBreakerOutcome(clientConnector, result);
         });
     }
 
@@ -866,6 +1005,13 @@ public class FtpClient {
         if (connector == null) {
             return FtpUtil.createError(CLIENT_CLOSED_ERROR_MESSAGE, FTP_ERROR);
         }
+
+        // Check circuit breaker before proceeding
+        BError cbError = getCircuitBreakerErrorIfOpen(clientConnector);
+        if (cbError != null) {
+            return cbError;
+        }
+
         String destinationUrl;
         try {
             destinationUrl = FtpUtil.createUrl(clientConnector, destinationPath.getValue());
@@ -873,12 +1019,14 @@ public class FtpClient {
             return FtpUtil.createError(e.getMessage(), Error.errorType());
         }
         return env.yieldAndRun(() -> {
+            recordCircuitBreakerRequestStart(clientConnector);
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
             FtpClientListener connectorListener = new FtpClientListener(balFuture, true,
                     remoteFileSystemBaseMessage -> FtpClientHelper.executeGenericAction());
             connector.addListener(connectorListener);
             connector.send(null, action, sourcePath.getValue(), destinationUrl);
-            return getResult(balFuture);
+            Object result = getResult(balFuture);
+            return recordCircuitBreakerOutcome(clientConnector, result);
         });
     }
 
