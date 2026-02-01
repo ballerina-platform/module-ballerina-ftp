@@ -24,11 +24,14 @@ The conforming implementation of the specification is released and included in t
     - [2.1. Security Configurations](#21-security-configurations)
     - [2.2. FileInfo](#22-fileinfo)
     - [2.3. Error Types](#23-error-types)
+    - [2.3. Error Types](#23-error-types-1)
+    - [2.4. Retry Configuration](#24-retry-configuration)
   - [3. Client](#3-client)
     - [3.1. Configurations](#31-configurations)
     - [3.2. Initialization](#32-initialization)
       - [3.2.1. Insecure Client](#321-insecure-client)
       - [3.2.2. Secure Client](#322-secure-client)
+      - [3.2.3. Client with Retry Configuration](#323-client-with-retry-configuration)
     - [3.3. Functions](#33-functions)
   - [4. Listener](#4-listener)
     - [4.1. Configurations](#41-configurations)
@@ -194,6 +197,70 @@ if result is ftp:ConnectionError {
     // Handle any other FTP error
 }
 ```
+### 2.3. Error Types
+The FTP module provides a hierarchy of error types for better error handling and more precise error identification.
+
+* `Error` - The base error type for all FTP-related errors.
+```ballerina
+public type Error distinct error;
+```
+
+* `ConnectionError` - Represents errors that occur when connecting to the FTP/SFTP server. This includes network failures, host unreachable, connection refused, etc.
+```ballerina
+# Represents an error that occurs when connecting to the FTP/SFTP server.
+public type ConnectionError distinct Error;
+```
+
+* `FileNotFoundError` - Represents errors that occur when a requested file or directory is not found on the remote server.
+```ballerina
+public type FileNotFoundError distinct Error;
+```
+
+* `FileAlreadyExistsError` - Represents errors that occur when attempting to create a file or directory that already exists.
+```ballerina
+public type FileAlreadyExistsError distinct Error;
+```
+
+* `InvalidConfigurationError` - Represents errors that occur when FTP/SFTP configuration is invalid (e.g., invalid port numbers, invalid regex patterns, invalid timeout values).
+```ballerina
+public type InvalidConfigurationError distinct Error;
+```
+
+* `ServiceUnavailableError` - Represents errors that occur when the FTP/SFTP service is temporarily unavailable. This is a transient error indicating the operation may succeed on retry. Common causes include server overload (FTP code 421), connection issues (425, 426), temporary file locks (450), or server-side processing errors (451). This error type is designed for use with retry and circuit breaker patterns.
+```ballerina
+public type ServiceUnavailableError distinct Error;
+```
+
+All specific error types are subtypes of the base `Error` type, allowing for both specific and general error handling:
+```ballerina
+// Handle specific error types
+ftp:Client|ftp:Error result = new(config);
+if result is ftp:ConnectionError {
+    // Handle connection failures specifically
+} else if result is ftp:ServiceUnavailableError {
+    // Transient error - retry the operation
+} else if result is ftp:Error {
+    // Handle any other FTP error
+}
+```
+### 2.4. Retry Configuration
+* `RetryConfig` record represents the configuration for automatic retries of operations.
+```ballerina
+# Retry configuration for FTP operations
+#
+# + count - Maximum number of retry attempts (default: 3)
+# + interval - Initial retry interval in seconds (default: 1.0)
+# + backOffFactor - Multiplier for exponential backoff (default: 2.0)
+# + maxWaitInterval - Maximum wait interval between retries in seconds (default: 30.0)
+public type RetryConfig record {|
+    int count = 3;
+    decimal interval = 1.0;
+    decimal backOffFactor = 2.0;
+    decimal maxWaitInterval = 30.0;
+|};
+```
+The retry mechanism uses exponential backoff to progressively increase wait times between retry attempts.
+
 ## 3. Client
 The `ftp:Client` connects to FTP server and performs various operations on the files. It supports reading files in multiple formats (bytes, text, JSON, XML, CSV) with streaming support for large files, writing files in multiple formats, and file management operations including create, delete, rename, move, copy, and list.
 ### 3.1. Configurations
@@ -215,6 +282,8 @@ public type ClientConfiguration record {|
     boolean userDirIsRoot = false;
     # If set to `true`, allows missing or null values when reading files in structured formats
     boolean laxDataBinding = false;
+    # Retry configuration for read operations
+    RetryConfig retryConfig?;
 |};
 ```
 * InputContent record represents the configurations for the input given for `put` and `append` operations.
@@ -277,6 +346,26 @@ ftp:ClientConfiguration ftpConfig = {
     },
     userDirIsRoot: true
 };
+```
+#### 3.2.3. Client with Retry Configuration
+A client can be initialized with retry configuration to automatically retry failed read operations:
+```ballerina
+ftp:ClientConfiguration ftpConfig = {
+    protocol: ftp:FTP,
+    host: "<The FTP host>",
+    port: <The FTP port>,
+    retryConfig: {
+        count: 5,              // Retry up to 5 times
+        interval: 2.0,         // Start with 2 second wait
+        backOffFactor: 1.5,    // Increase wait by 1.5x each time
+        maxWaitInterval: 20.0  // Cap wait time at 20 seconds
+    }
+};
+
+ftp:Client ftpClient = check new(ftpConfig);
+
+// All read operations will automatically retry on failure
+byte[] bytes = check ftpClient->getBytes("/path/to/file.txt");
 ```
 ### 3.3. Functions
 * FTP Client API can be used to put files on the FTP server. For this, the `put()` method can be used.
@@ -689,6 +778,7 @@ ftp:ListenerConfiguration ftpConfig = {
     userDirIsRoot: true
 };
 ```
+
 #### 4.3. Usage
 After initializing the listener, a service must be attached to the listener. There are two ways for this.
 1. Attach the service to the listener directly.
