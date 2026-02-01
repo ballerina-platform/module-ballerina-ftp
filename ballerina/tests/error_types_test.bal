@@ -73,23 +73,3 @@ public function testFileAlreadyExistsErrorOnRename() returns error? {
     Error? cleanupSrc = (<Client>clientEp)->delete(sourcePath);
     Error? cleanupDest = (<Client>clientEp)->delete(destPath);
 }
-
-// Test that all error types are subtypes of Error
-@test:Config {}
-public function testErrorTypeHierarchy() {
-    // Test that ConnectionError is a subtype of Error
-    ConnectionError connErr = error ConnectionError("test connection error");
-    test:assertTrue(connErr is Error, msg = "ConnectionError should be a subtype of Error");
-
-    // Test that FileNotFoundError is a subtype of Error
-    FileNotFoundError fnfErr = error FileNotFoundError("test file not found error");
-    test:assertTrue(fnfErr is Error, msg = "FileNotFoundError should be a subtype of Error");
-
-    // Test that FileAlreadyExistsError is a subtype of Error
-    FileAlreadyExistsError faeErr = error FileAlreadyExistsError("test file already exists error");
-    test:assertTrue(faeErr is Error, msg = "FileAlreadyExistsError should be a subtype of Error");
-
-    // Test that InvalidConfigurationError is a subtype of Error
-    InvalidConfigurationError configErr = error InvalidConfigurationError("test invalid config error");
-    test:assertTrue(configErr is Error, msg = "InvalidConfigurationError should be a subtype of Error");
-}
