@@ -888,7 +888,7 @@ public type PostgresqlConfig record {
 };
 ```
 
-#### 4.4.2. How Coordination Works
+#### 4.4.2. Coordination Mechanism
 1. **Leader election**: Members in the same `coordinationGroup` coordinate via the database to elect an active member
 2. **Heartbeat**: The active member updates its heartbeat at `heartbeatFrequency` intervals
 3. **Liveness monitoring**: Standby members check the active member's heartbeat every `livenessCheckInterval` seconds
