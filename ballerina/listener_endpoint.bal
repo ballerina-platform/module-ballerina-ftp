@@ -160,7 +160,7 @@ isolated function getPollingService(Listener initializedListener) returns task:S
         private final Listener ftpListener = initializedListener;
 
         isolated function execute() {
-            var result = self.ftpListener.poll();
+            error? result = self.ftpListener.poll();
             if result is error {
                 log:printError("Error while executing poll function", 'error = result);
             }
