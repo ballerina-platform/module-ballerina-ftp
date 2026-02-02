@@ -172,9 +172,9 @@ public type FileNotFoundError distinct Error;
 public type FileAlreadyExistsError distinct Error;
 ```
 
-* `InvalidConfigurationError` - Represents errors that occur when FTP/SFTP configuration is invalid (e.g., invalid port numbers, invalid regex patterns, invalid timeout values).
+* `InvalidConfigError` - Represents errors that occur when FTP/SFTP configuration is invalid (e.g., invalid port numbers, invalid regex patterns, invalid timeout values).
 ```ballerina
-public type InvalidConfigurationError distinct Error;
+public type InvalidConfigError distinct Error;
 ```
 
 * `ServiceUnavailableError` - Represents errors that occur when the FTP/SFTP service is temporarily unavailable. This is a transient error indicating the operation may succeed on retry. Common causes include server overload (FTP code 421), connection issues (425, 426), temporary file locks (450), or server-side processing errors (451). This error type is designed for use with retry and circuit breaker patterns.

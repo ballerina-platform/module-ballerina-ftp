@@ -24,18 +24,18 @@ import io.ballerina.stdlib.ftp.util.FtpUtil;
  * Exception thrown when FTP/SFTP configuration is invalid.
  * This includes invalid port numbers, invalid regex patterns, invalid timeout values, etc.
  */
-public class FtpInvalidConfigurationException extends BallerinaFtpException implements ErrorTypeProvider {
+public class FtpInvalidConfigException extends BallerinaFtpException implements ErrorTypeProvider {
 
-    public FtpInvalidConfigurationException(String message) {
+    public FtpInvalidConfigException(String message) {
         super(message);
     }
 
-    public FtpInvalidConfigurationException(String message, Throwable cause) {
+    public FtpInvalidConfigException(String message, Throwable cause) {
         super(message, cause);
     }
 
     @Override
     public String errorType() {
-        return FtpUtil.ErrorType.InvalidConfigurationError.errorType();
+        return FtpUtil.ErrorType.InvalidConfigError.errorType();
     }
 }

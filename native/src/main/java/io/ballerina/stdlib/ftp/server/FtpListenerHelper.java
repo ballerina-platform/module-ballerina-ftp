@@ -30,7 +30,7 @@ import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
-import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigurationException;
+import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
@@ -53,7 +53,7 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_CLIENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVICE_ENDPOINT_CONFIG;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
-import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.InvalidConfigurationError;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.InvalidConfigError;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.createError;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractCompressionConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractFileTransferConfiguration;
@@ -118,8 +118,8 @@ public class FtpListenerHelper {
 
             ftpListener.addNativeData(FTP_SERVICE_ENDPOINT_CONFIG, serviceEndpointConfig);
             return null;
-        } catch (FtpInvalidConfigurationException e) {
-            return FtpUtil.createError(e.getMessage(), findRootCause(e), InvalidConfigurationError.errorType());
+        } catch (FtpInvalidConfigException e) {
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), InvalidConfigError.errorType());
         } catch (RemoteFileSystemConnectorException | BallerinaFtpException e) {
             return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         } catch (BError e) {
@@ -337,7 +337,7 @@ public class FtpListenerHelper {
     }
 
     private static List<FileDependencyCondition> parseFileDependencyConditions(
-            BMap<BString, Object> serviceEndpointConfig) throws FtpInvalidConfigurationException {
+            BMap<BString, Object> serviceEndpointConfig) throws FtpInvalidConfigException {
         List<FileDependencyCondition> conditions = new ArrayList<>();
 
         BArray conditionsArray = serviceEndpointConfig.getArrayValue(
@@ -383,7 +383,7 @@ public class FtpListenerHelper {
     }
 
     private static void addStringProperty(BMap config, Map<String, Object> params) 
-    throws FtpInvalidConfigurationException {
+    throws FtpInvalidConfigException {
         BString namePatternString = config.getStringValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN));
         String fileNamePattern = (namePatternString != null && !namePatternString.getValue().isEmpty()) ?

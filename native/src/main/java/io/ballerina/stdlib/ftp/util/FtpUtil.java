@@ -34,7 +34,7 @@ import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.ErrorTypeProvider;
-import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigurationException;
+import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,12 +114,12 @@ public class FtpUtil {
         ftpProperties.put(FtpConstants.SFTP_SESSION_TIMEOUT, String.valueOf(sftpSessionTimeout));
     }
 
-    private static void validateTimeout(double timeout, String fieldName) throws FtpInvalidConfigurationException {
+    private static void validateTimeout(double timeout, String fieldName) throws FtpInvalidConfigException {
         if (timeout < 0) {
-            throw new FtpInvalidConfigurationException(fieldName + " must be positive or zero (got: " + timeout + ")");
+            throw new FtpInvalidConfigException(fieldName + " must be positive or zero (got: " + timeout + ")");
         }
         if (timeout > 600) {
-            throw new FtpInvalidConfigurationException(
+            throw new FtpInvalidConfigException(
                     fieldName + " must not exceed 600 seconds (got: " + timeout + ")");
         }
     }
@@ -129,16 +129,16 @@ public class FtpUtil {
      *
      * @param pattern the regex pattern to validate
      * @param fieldName the name of the field for error messages
-     * @throws FtpInvalidConfigurationException if the pattern is invalid
+     * @throws FtpInvalidConfigException if the pattern is invalid
      */
-    public static void validateRegexPattern(String pattern, String fieldName) throws FtpInvalidConfigurationException {
+    public static void validateRegexPattern(String pattern, String fieldName) throws FtpInvalidConfigException {
         if (pattern == null || pattern.isEmpty()) {
             return; // Empty pattern is allowed
         }
         try {
             Pattern.compile(pattern);
         } catch (PatternSyntaxException e) {
-            throw new FtpInvalidConfigurationException(
+            throw new FtpInvalidConfigException(
                     "Invalid regex pattern for " + fieldName + ": " + e.getDescription(), e);
         }
     }
@@ -177,7 +177,7 @@ public class FtpUtil {
     }
 
     public static void extractProxyConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties)
-            throws FtpInvalidConfigurationException {
+            throws FtpInvalidConfigException {
         BMap proxyConfig = config.getMapValue(StringUtils.fromString(FtpConstants.PROXY));
         if (proxyConfig == null) {
             return;
@@ -185,7 +185,7 @@ public class FtpUtil {
         // Extract proxy host
         BString proxyHost = proxyConfig.getStringValue(StringUtils.fromString(FtpConstants.PROXY_HOST));
         if (proxyHost == null || proxyHost.getValue().isEmpty()) {
-            throw new FtpInvalidConfigurationException("Proxy host cannot be empty");
+            throw new FtpInvalidConfigException("Proxy host cannot be empty");
         }
         ftpProperties.put(FtpConstants.PROXY_HOST, proxyHost.getValue());
 
@@ -194,7 +194,7 @@ public class FtpUtil {
         if (proxyPortObj != null) {
             long proxyPort = ((Number) proxyPortObj).longValue();
             if (proxyPort < 1 || proxyPort > 65535) {
-                throw new FtpInvalidConfigurationException(
+                throw new FtpInvalidConfigException(
                         "Proxy port must be between 1 and 65535 (got: " + proxyPort + ")");
             }
             ftpProperties.put(FtpConstants.PROXY_PORT, String.valueOf(proxyPort));
@@ -622,7 +622,7 @@ public class FtpUtil {
         ConnectionError("ConnectionError"),
         FileNotFoundError("FileNotFoundError"),
         FileAlreadyExistsError("FileAlreadyExistsError"),
-        InvalidConfigurationError("InvalidConfigurationError"),
+        InvalidConfigError("InvalidConfigError"),
         ServiceUnavailableError("ServiceUnavailableError");
 
         private String errorType;

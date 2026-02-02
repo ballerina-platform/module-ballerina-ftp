@@ -120,9 +120,9 @@ public function testConnectionErrorOnInvalidServer() {
     }
 }
 
-// Test InvalidConfigurationError type for invalid regex pattern
+// Test InvalidConfigError type for invalid regex pattern
 @test:Config {}
-public function testInvalidConfigurationErrorOnBadRegex() {
+public function testInvalidConfigErrorOnBadRegex() {
     ListenerConfiguration config = {
         protocol: FTP,
         host: "127.0.0.1",
@@ -133,10 +133,10 @@ public function testInvalidConfigurationErrorOnBadRegex() {
         fileNamePattern: "[unclosed"
     };
     Listener|Error result = new (config);
-    test:assertTrue(result is InvalidConfigurationError,
-        msg = "Expected InvalidConfigurationError for invalid regex pattern");
-    if result is InvalidConfigurationError {
+    test:assertTrue(result is InvalidConfigError,
+        msg = "Expected InvalidConfigError for invalid regex pattern");
+    if result is InvalidConfigError {
         test:assertTrue(result.message().includes("Invalid regex pattern"),
-            msg = "InvalidConfigurationError message should indicate invalid regex");
+            msg = "InvalidConfigError message should indicate invalid regex");
     }
 }

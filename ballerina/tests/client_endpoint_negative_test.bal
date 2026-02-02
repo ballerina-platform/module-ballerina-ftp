@@ -351,9 +351,9 @@ public function testListenerWithInvalidFileNamePattern() returns error? {
         fileNamePattern: "[invalid(regex"  // Invalid regex pattern (unclosed bracket)
     };
     Listener|Error listenerResult = new (invalidPatternConfig);
-    test:assertTrue(listenerResult is InvalidConfigurationError,
-        msg = "Expected InvalidConfigurationError when creating listener with invalid fileNamePattern");
-    if listenerResult is InvalidConfigurationError {
+    test:assertTrue(listenerResult is InvalidConfigError,
+        msg = "Expected InvalidConfigError when creating listener with invalid fileNamePattern");
+    if listenerResult is InvalidConfigError {
         test:assertTrue(listenerResult.message().includes("Invalid regex pattern"),
             msg = "Error message should indicate invalid regex pattern. Got: " + listenerResult.message());
         test:assertTrue(listenerResult.message().includes("fileNamePattern"),
@@ -380,9 +380,9 @@ public function testListenerWithInvalidDependencyTargetPattern() returns error? 
         ]
     };
     Listener|Error listenerResult = new (invalidDependencyConfig);
-    test:assertTrue(listenerResult is InvalidConfigurationError,
-        msg = "Expected InvalidConfigurationError for invalid dependency targetPattern");
-    if listenerResult is InvalidConfigurationError {
+    test:assertTrue(listenerResult is InvalidConfigError,
+        msg = "Expected InvalidConfigError for invalid dependency targetPattern");
+    if listenerResult is InvalidConfigError {
         test:assertTrue(listenerResult.message().includes("Invalid regex pattern"),
             msg = "Error message should indicate invalid regex pattern. Got: " + listenerResult.message());
         test:assertTrue(listenerResult.message().includes("targetPattern"),
@@ -409,9 +409,9 @@ public function testListenerWithInvalidDependencyRequiredFilePattern() returns e
         ]
     };
     Listener|Error listenerResult = new (invalidRequiredFileConfig);
-    test:assertTrue(listenerResult is InvalidConfigurationError,
-        msg = "Expected InvalidConfigurationError for invalid requiredFiles pattern");
-    if listenerResult is InvalidConfigurationError {
+    test:assertTrue(listenerResult is InvalidConfigError,
+        msg = "Expected InvalidConfigError for invalid requiredFiles pattern");
+    if listenerResult is InvalidConfigError {
         test:assertTrue(listenerResult.message().includes("Invalid regex pattern"),
             msg = "Error message should indicate invalid regex pattern. Got: " + listenerResult.message());
         test:assertTrue(listenerResult.message().includes("requiredFiles"),
