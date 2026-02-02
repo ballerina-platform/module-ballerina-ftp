@@ -33,6 +33,9 @@ import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
+import io.ballerina.stdlib.ftp.exception.ErrorTypeProvider;
+import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
+import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +53,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -77,7 +82,7 @@ public class FtpUtil {
     }
 
     public static void extractTimeoutConfigurations(BMap<Object, Object> config, Map<String, Object> ftpProperties)
-            throws BallerinaFtpException {
+            throws FtpInvalidConfigException {
         // Extract connectTimeout
         Object connectTimeoutObj = config.get(StringUtils.fromString(FtpConstants.CONNECT_TIMEOUT));
         double connectTimeout = ((BDecimal) connectTimeoutObj).floatValue();
@@ -109,12 +114,32 @@ public class FtpUtil {
         ftpProperties.put(FtpConstants.SFTP_SESSION_TIMEOUT, String.valueOf(sftpSessionTimeout));
     }
 
-    private static void validateTimeout(double timeout, String fieldName) throws BallerinaFtpException {
+    private static void validateTimeout(double timeout, String fieldName) throws FtpInvalidConfigException {
         if (timeout < 0) {
-            throw new BallerinaFtpException(fieldName + " must be positive or zero (got: " + timeout + ")");
+            throw new FtpInvalidConfigException(fieldName + " must be positive or zero (got: " + timeout + ")");
         }
         if (timeout > 600) {
-            throw new BallerinaFtpException(fieldName + " must not exceed 600 seconds (got: " + timeout + ")");
+            throw new FtpInvalidConfigException(
+                    fieldName + " must not exceed 600 seconds (got: " + timeout + ")");
+        }
+    }
+
+    /**
+     * Validates that a regex pattern is syntactically correct.
+     *
+     * @param pattern the regex pattern to validate
+     * @param fieldName the name of the field for error messages
+     * @throws FtpInvalidConfigException if the pattern is invalid
+     */
+    public static void validateRegexPattern(String pattern, String fieldName) throws FtpInvalidConfigException {
+        if (pattern == null || pattern.isEmpty()) {
+            return; // Empty pattern is allowed
+        }
+        try {
+            Pattern.compile(pattern);
+        } catch (PatternSyntaxException e) {
+            throw new FtpInvalidConfigException(
+                    "Invalid regex pattern for " + fieldName + ": " + e.getDescription(), e);
         }
     }
 
@@ -152,7 +177,7 @@ public class FtpUtil {
     }
 
     public static void extractProxyConfiguration(BMap<Object, Object> config, Map<String, Object> ftpProperties)
-            throws BallerinaFtpException {
+            throws FtpInvalidConfigException {
         BMap proxyConfig = config.getMapValue(StringUtils.fromString(FtpConstants.PROXY));
         if (proxyConfig == null) {
             return;
@@ -160,7 +185,7 @@ public class FtpUtil {
         // Extract proxy host
         BString proxyHost = proxyConfig.getStringValue(StringUtils.fromString(FtpConstants.PROXY_HOST));
         if (proxyHost == null || proxyHost.getValue().isEmpty()) {
-            throw new BallerinaFtpException("Proxy host cannot be empty");
+            throw new FtpInvalidConfigException("Proxy host cannot be empty");
         }
         ftpProperties.put(FtpConstants.PROXY_HOST, proxyHost.getValue());
 
@@ -169,7 +194,8 @@ public class FtpUtil {
         if (proxyPortObj != null) {
             long proxyPort = ((Number) proxyPortObj).longValue();
             if (proxyPort < 1 || proxyPort > 65535) {
-                throw new BallerinaFtpException("Proxy port must be between 1 and 65535 (got: " + proxyPort + ")");
+                throw new FtpInvalidConfigException(
+                        "Proxy port must be between 1 and 65535 (got: " + proxyPort + ")");
             }
             ftpProperties.put(FtpConstants.PROXY_PORT, String.valueOf(proxyPort));
         }
@@ -384,6 +410,37 @@ public class FtpUtil {
                         .fromString(maskUrlPassword(cause.getMessage()))), null);
     }
 
+    /**
+     * Creates a Ballerina error from an exception, automatically determining the error type.
+     *
+     * @param exception the exception to convert to a Ballerina error
+     * @return a BError with the appropriate error type
+     */
+    public static BError createError(RemoteFileSystemConnectorException exception) {
+        String errorType = getErrorTypeForException(exception);
+        return createError(exception.getMessage(), exception.getCause(), errorType);
+    }
+
+    /**
+     * Determines the appropriate Ballerina error type for a given exception.
+     * First checks if the exception implements ErrorTypeProvider, then falls back
+     * to message-based FTP error code analysis.
+     *
+     * @param exception the exception to analyze
+     * @return the error type name
+     */
+    public static String getErrorTypeForException(Throwable exception) {
+        // First, check if exception implements ErrorTypeProvider
+        if (exception instanceof ErrorTypeProvider provider) {
+            return provider.errorType();
+        }
+
+        // Fall back to message-based FTP error code analysis
+        String fullMessage = FtpErrorCodeAnalyzer.getFullErrorMessage(exception);
+        ErrorType recommendedType = FtpErrorCodeAnalyzer.getRecommendedErrorType(fullMessage);
+        return recommendedType.errorType();
+    }
+
     public static Throwable findRootCause(Throwable throwable) {
         Objects.requireNonNull(throwable);
         Throwable rootCause = throwable;
@@ -561,7 +618,12 @@ public class FtpUtil {
      */
     public enum ErrorType {
 
-        Error("Error");
+        Error("Error"),
+        ConnectionError("ConnectionError"),
+        FileNotFoundError("FileNotFoundError"),
+        FileAlreadyExistsError("FileAlreadyExistsError"),
+        InvalidConfigError("InvalidConfigError"),
+        ServiceUnavailableError("ServiceUnavailableError");
 
         private String errorType;
 
