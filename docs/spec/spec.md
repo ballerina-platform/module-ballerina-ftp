@@ -604,7 +604,7 @@ public type ListenerConfiguration record {|
     boolean laxDataBinding = false;
     # Configuration for distributed task coordination using warm backup approach.
     # When configured, only one member in the group will actively poll while others act as standby.
-    CoordinationConfiguration coordination?;
+    CoordinationConfig coordination?;
 |};
 ```
 * `WatchEvent` record represents the latest status change of the server from the last status change.
@@ -850,9 +850,9 @@ public isolated function register(Service ftpService, string? name) returns erro
 The FTP listener supports distributed coordination for high availability deployments. When multiple listener instances are deployed across different nodes, coordination ensures that only one instance actively polls the FTP server while others act as warm standby nodes. This prevents duplicate file processing and provides automatic failover.
 
 #### 4.4.1. Coordination Configuration
-* `CoordinationConfiguration` record represents the configuration for distributed task coordination.
+* `CoordinationConfig` record represents the configuration for distributed task coordination.
 ```ballerina
-public type CoordinationConfiguration record {|
+public type CoordinationConfig record {|
     # The database configuration for task coordination
     task:DatabaseConfig databaseConfig;
     # The interval (in seconds) to check the liveness of the active node. Default is 30 seconds.

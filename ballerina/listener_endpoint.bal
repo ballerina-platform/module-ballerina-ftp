@@ -34,10 +34,10 @@ public isolated class Listener {
 
         lock {
             decimal pollingInterval = self.config.pollingInterval;
-            CoordinationConfiguration? coordination = self.config.coordination;
+            CoordinationConfig? coordination = self.config.coordination;
 
             task:Listener|error taskListener;
-            if coordination is CoordinationConfiguration {
+            if coordination is CoordinationConfig {
                 taskListener = new ({
                     trigger: {interval: pollingInterval},
                     warmBackupConfig: {
@@ -215,7 +215,7 @@ public type ListenerConfiguration record {|
     TransferCompression[] sftpCompression = [NO];
     string sftpSshKnownHosts?;
     FailSafeOptions csvFailSafe?;
-    CoordinationConfiguration coordination?;
+    CoordinationConfig coordination?;
 |};
 
 # Fail-safe options for CSV content processing.
@@ -246,7 +246,7 @@ public type Service distinct service object {
 # + coordinationGroup - The name of the coordination group of FTP listeners that coordinate together.
 #                       It is recommended to use a unique name for each group.
 # + heartbeatFrequency - The interval (in seconds) for the node to update its heartbeat status. Default is 1 second.
-public type CoordinationConfiguration record {|
+public type CoordinationConfig record {|
     task:DatabaseConfig databaseConfig;
     int livenessCheckInterval = 30;
     string memberId;
