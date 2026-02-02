@@ -33,6 +33,7 @@ import io.ballerina.runtime.api.values.BString;
 import io.ballerina.runtime.api.values.BTypedesc;
 import io.ballerina.runtime.api.values.BXml;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
+import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.FtpAction;
@@ -74,6 +75,7 @@ import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertBytesToXml
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.convertToBallerinaByteArray;
 import static io.ballerina.stdlib.ftp.util.FtpContentConverter.deriveFileNamePrefix;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
+import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.InvalidConfigError;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractCompressionConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractFileTransferConfiguration;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.extractKnownHostsConfiguration;
@@ -221,8 +223,8 @@ public class FtpClient {
             extractKnownHostsConfiguration(config, ftpConfig);
             extractProxyConfiguration(config, ftpConfig);
             return null;
-        } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), Error.errorType());
+        } catch (FtpInvalidConfigException e) {
+            return FtpUtil.createError(e.getMessage(), InvalidConfigError.errorType());
         }
     }
 
@@ -244,7 +246,8 @@ public class FtpClient {
             clientEndpoint.addNativeData(VFS_CLIENT_CONNECTOR, connector);
             return null;
         } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
+            String errorType = FtpUtil.getErrorTypeForException(e);
+            return FtpUtil.createError(e.getMessage(), findRootCause(e), errorType);
         }
     }
 

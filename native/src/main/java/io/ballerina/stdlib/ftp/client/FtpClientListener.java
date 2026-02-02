@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
 /**
  * Contains implementation of RemoteFileSystemListener.
@@ -56,7 +55,8 @@ public class FtpClientListener implements RemoteFileSystemListener {
     @Override
     public void onError(Throwable throwable) {
         log.error(throwable.getMessage(), throwable);
-        balFuture.complete(FtpUtil.createError(throwable.getMessage(), throwable.getCause(), Error.errorType()));
+        String errorType = FtpUtil.getErrorTypeForException(throwable);
+        balFuture.complete(FtpUtil.createError(throwable.getMessage(), throwable.getCause(), errorType));
     }
 
     @Override

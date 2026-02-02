@@ -938,7 +938,7 @@ public function testRenameDirectory() {
     boolean|Error response2 = (<Client>clientEp)->isDirectory(existingName);
     log:printInfo("Executed `isDirectory` operation on original directory after renaming a directory");
     if response2 is Error {
-        test:assertEquals(response2.message(), "/home/in/out does not exists to check if it is a directory.",
+        test:assertEquals(response2.message(), "/home/in/out does not exist to check if it is a directory.",
             msg = "Incorrect error message for non-existing file/directory at `isDirectory` operation");
     } else {
         test:assertFail("Error not created while invoking `isDirectory` operation after `rename` operation");
@@ -1247,7 +1247,7 @@ function testGenericRmdir(string path) returns error? {
         i += 1;
     }
     if response2 is Error {
-        test:assertEquals(response2.message(), path + " does not exists to check if it is a directory.",
+        test:assertEquals(response2.message(), path + " does not exist to check if it is a directory.",
             msg = "Incorrect error message for non-existing file/directory at `isDirectory` operation after `rmdir` operation");
     } else {
         // test:assertFail(msg = "Error not created while invoking `isDirectory` operation after `rmdir` operation on " + path );

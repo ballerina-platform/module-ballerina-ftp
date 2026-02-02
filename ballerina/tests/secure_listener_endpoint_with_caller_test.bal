@@ -349,7 +349,7 @@ public function testRmDirWithCaller() returns error? {
     runtime:sleep(3);
     boolean|Error result = (<Client>sftpClientEp)->isDirectory("/out/callerDir");
     if result is Error {
-        test:assertEquals(result.message(), "/out/callerDir does not exists to check if it is a directory.");
+        test:assertEquals(result.message(), "/out/callerDir does not exist to check if it is a directory.");
     } else {
         test:assertFail("Expected an error");
     }
