@@ -38,7 +38,7 @@ The conforming implementation of the specification is released and included in t
       - [4.3.1. Format-Specific Listener Callbacks](#431-format-specific-listener-callbacks)
     - [4.4. Distributed Coordination](#44-distributed-coordination)
       - [4.4.1. Coordination Configuration](#441-coordination-configuration)
-      - [4.4.2. How Coordination Works](#442-how-coordination-works)
+      - [4.4.2. Coordination Mechanism](#442-coordination-mechanism)
   - [5. Caller](#5-caller)
     - [5.1. Initialization](#51-initialization)
     - [5.2. Functions](#52-functions)
