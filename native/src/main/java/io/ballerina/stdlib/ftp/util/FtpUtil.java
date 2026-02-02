@@ -82,7 +82,7 @@ public class FtpUtil {
     }
 
     public static void extractTimeoutConfigurations(BMap<Object, Object> config, Map<String, Object> ftpProperties)
-            throws BallerinaFtpException {
+            throws FtpInvalidConfigException {
         // Extract connectTimeout
         Object connectTimeoutObj = config.get(StringUtils.fromString(FtpConstants.CONNECT_TIMEOUT));
         double connectTimeout = ((BDecimal) connectTimeoutObj).floatValue();
