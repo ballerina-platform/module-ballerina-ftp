@@ -36,3 +36,7 @@ public type InvalidConfigError distinct Error;
 # Common causes include: server overload (421), connection issues (425, 426),
 # temporary file locks (450), or server-side processing errors (451).
 public type ServiceUnavailableError distinct Error;
+
+# Represents an error that occurs when all retry attempts have been exhausted.
+# This error wraps the last failure encountered during retry attempts.
+public type AllRetryAttemptsFailedError distinct Error;

@@ -178,6 +178,20 @@ public type SocketConfig record {|
     decimal sftpSessionTimeout = 300.0;
 |};
 
+# Configuration for retry behavior on transient failures.
+# Enables automatic retry with exponential backoff for read operations.
+#
+# + count - Maximum number of retry attempts
+# + interval - Initial wait time in seconds between retries
+# + backOffFactor - Multiplier for exponential backoff
+# + maxWaitInterval - Maximum wait time cap in seconds
+public type RetryConfig record {|
+    int count = 3;
+    float interval = 1.0;
+    float backOffFactor = 2.0;
+    float maxWaitInterval = 30.0;
+|};
+
 # Internal configuration for content to be written in put and append operations.
 #
 # + filePath - Path of the file to be created or appended

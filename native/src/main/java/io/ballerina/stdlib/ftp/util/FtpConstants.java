@@ -192,4 +192,25 @@ public class FtpConstants {
     // Common error messages
     public static final String ERR_READING_STREAM = "Error occurred while reading stream";
     public static final String ERR_CREATE_STREAM = "Unable to create stream";
+
+    // Retry configuration
+    public static final String RETRY_CONFIG = "retryConfig";
+    public static final String RETRY_COUNT = "count";
+    public static final String RETRY_INTERVAL = "interval";
+    public static final String RETRY_BACKOFF_FACTOR = "backOffFactor";
+    public static final String RETRY_MAX_WAIT_INTERVAL = "maxWaitInterval";
+
+    // Native data keys for retry
+    public static final String NATIVE_RETRY_ENABLED = "Retry_Enabled";
+    public static final String NATIVE_RETRY_COUNT = "Retry_Count";
+    public static final String NATIVE_RETRY_INTERVAL = "Retry_Interval";
+    public static final String NATIVE_RETRY_BACKOFF = "Retry_Backoff";
+    public static final String NATIVE_RETRY_MAX_WAIT = "Retry_MaxWait";
+
+    // Operation names for retry handler
+    public static final String OP_GET_BYTES = "getBytes";
+    public static final String OP_GET_TEXT = "getText";
+    public static final String OP_GET_JSON = "getJson";
+    public static final String OP_GET_XML = "getXml";
+    public static final String OP_GET_CSV = "getCsv";
 }
