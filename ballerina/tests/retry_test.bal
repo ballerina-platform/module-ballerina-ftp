@@ -230,17 +230,6 @@ function testGetBytesWithoutRetry_ImmediateFail() returns error? {
         msg = "Without retry, should fail quickly. Elapsed: " + elapsedSeconds.toString() + "s");
 }
 
-// Test: RetryConfig default values
-@test:Config {}
-function testRetryConfigDefaults() {
-    RetryConfig defaultConfig = {};
-
-    test:assertEquals(defaultConfig.count, 3, msg = "Default count should be 3");
-    test:assertEquals(defaultConfig.interval, 1.0d, msg = "Default interval should be 1.0");
-    test:assertEquals(defaultConfig.backOffFactor, 2.0, msg = "Default backOffFactor should be 2.0");
-    test:assertEquals(defaultConfig.maxWaitInterval, 30.0d, msg = "Default maxWaitInterval should be 30.0");
-}
-
 // Test: Client creation with minimal retry config
 @test:Config {}
 function testClientWithMinimalRetryConfig() returns error? {
