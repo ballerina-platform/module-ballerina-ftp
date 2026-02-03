@@ -98,7 +98,7 @@ public class CircuitBreakerConfig {
         }
 
         // Validate configuration
-        validate(failureThreshold, timeWindowMillis, bucketSizeMillis);
+        validate(requestVolumeThreshold, failureThreshold, timeWindowMillis, bucketSizeMillis, resetTimeMillis);
 
         return new CircuitBreakerConfig(requestVolumeThreshold, timeWindowMillis, bucketSizeMillis,
                 failureThreshold, resetTimeMillis, failureCategories);
@@ -111,8 +111,12 @@ public class CircuitBreakerConfig {
         return (long) (((Number) value).doubleValue() * 1000);
     }
 
-    private static void validate(float failureThreshold, long timeWindowMillis, long bucketSizeMillis)
+    private static void validate(int requestVolumeThreshold, float failureThreshold, long timeWindowMillis, 
+                                 long bucketSizeMillis, long resetTimeMillis)
             throws BallerinaFtpException {
+        if (requestVolumeThreshold <= 0) {
+            throw new BallerinaFtpException("Circuit breaker requestVolumeThreshold must be greater than 0");
+        }
         if (failureThreshold < 0.0f || failureThreshold > 1.0f) {
             throw new BallerinaFtpException("Circuit breaker failureThreshold must be between 0.0 and 1.0");
         }
@@ -121,6 +125,12 @@ public class CircuitBreakerConfig {
         }
         if (timeWindowMillis < bucketSizeMillis) {
             throw new BallerinaFtpException("Circuit breaker timeWindow must be greater than or equal to bucketSize");
+        }
+        if (timeWindowMillis % bucketSizeMillis != 0) {
+            throw new BallerinaFtpException("Circuit breaker timeWindow must be evenly divisible by bucketSize");
+        }
+        if (resetTimeMillis <= 0) {
+            throw new BallerinaFtpException("Circuit breaker resetTime must be greater than 0");
         }
     }
 
