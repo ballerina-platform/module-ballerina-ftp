@@ -141,8 +141,10 @@ public class FtpClient {
             if (cause != null) {
                 cb.recordOutcome(cause);
             } else {
-                // Fallback to wrapping message if no cause available
-                cb.recordOutcome(new RuntimeException(bError.getMessage()));
+                // When no cause is available, create an exception with the error message
+                // The message will be analyzed by FailureCategorizer for pattern matching
+                String errorMessage = bError.getMessage();
+                cb.recordOutcome(new RuntimeException(errorMessage));
             }
         } else {
             cb.recordOutcome(null);
