@@ -100,7 +100,7 @@ public class FtpClient {
 
     public static Object initClientEndpoint(BObject clientEndpoint, BMap<Object, Object> config) {
         String protocol = extractProtocol(config);
-        Object basicConfigError = configureClientEndpointBasic(clientEndpoint, config, protocol);
+        BError basicConfigError = configureClientEndpointBasic(clientEndpoint, config, protocol);
         if (basicConfigError != null) {
             return basicConfigError;
         }
@@ -124,7 +124,7 @@ public class FtpClient {
         return (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
     }
 
-    private static Object configureClientEndpointBasic(BObject clientEndpoint, BMap<Object, Object> config,
+    private static BError configureClientEndpointBasic(BObject clientEndpoint, BMap<Object, Object> config,
                                                        String protocol) {
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING,
                 config.getBooleanValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING)));
@@ -148,7 +148,7 @@ public class FtpClient {
             Object maxWaitIntervalObj = retryConfig.get(StringUtils.fromString(FtpConstants.RETRY_MAX_WAIT_INTERVAL));
             double maxWaitInterval = ((BDecimal) maxWaitIntervalObj).floatValue();
 
-            Object retryValidationError = validateRetryConfig(count, interval, backOffFactor, maxWaitInterval);
+            BError retryValidationError = validateRetryConfig(count, interval, backOffFactor, maxWaitInterval);
             if (retryValidationError != null) {
                 return retryValidationError;
             }
@@ -173,7 +173,7 @@ public class FtpClient {
         return null;
     }
 
-    private static Object validateRetryConfig(long count, double interval, double backOffFactor,
+    private static BError validateRetryConfig(long count, double interval, double backOffFactor,
                                               double maxWaitInterval) {
         if (count <= 0) {
             return FtpUtil.createError("retryConfig.count must be greater than 0.",
