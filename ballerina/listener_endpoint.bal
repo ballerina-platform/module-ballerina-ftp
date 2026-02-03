@@ -247,7 +247,7 @@ public type Service distinct service object {
 #                       It is recommended to use a unique name for each group.
 # + heartbeatFrequency - The interval (in seconds) for the node to update its heartbeat status. Default is 1 second.
 public type CoordinationConfig record {|
-    task:DatabaseConfig databaseConfig;
+    task:DatabaseConfig databaseConfig = <task:MysqlConfig>{};
     int livenessCheckInterval = 30;
     string memberId;
     string coordinationGroup;
