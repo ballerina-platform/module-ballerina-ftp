@@ -205,10 +205,10 @@ if result is ftp:ConnectionError {
 ```ballerina
 # Retry configuration for FTP operations
 #
-# + count - Maximum number of retry attempts (default: 3)
-# + interval - Initial retry interval in seconds (default: 1.0)
-# + backOffFactor - Multiplier for exponential backoff (default: 2.0)
-# + maxWaitInterval - Maximum wait interval between retries in seconds (default: 30.0)
+# + count - Maximum number of retry attempts 
+# + interval - Initial retry interval in seconds 
+# + backOffFactor - Multiplier for exponential backoff 
+# + maxWaitInterval - Maximum wait interval between retries in seconds
 public type RetryConfig record {|
     int count = 3;
     decimal interval = 1.0;
@@ -321,7 +321,7 @@ ftp:ClientConfiguration ftpConfig = {
 
 ftp:Client ftpClient = check new(ftpConfig);
 
-// All read operations will automatically retry on failure
+// Non-streaming read operations (getBytes, getText, getJson, getXml, getCsv) will automatically retry on failure
 byte[] bytes = check ftpClient->getBytes("/path/to/file.txt");
 ```
 ### 3.3. Functions

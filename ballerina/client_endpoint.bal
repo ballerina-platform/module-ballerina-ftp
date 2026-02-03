@@ -452,7 +452,8 @@ public enum Compression {
 # + proxy - Proxy configuration for SFTP connections (SFTP only)
 # + csvFailSafe - Configuration for fail-safe CSV content processing. In the fail-safe mode, 
 #                 malformed CSV records are skipped and written to a separate file in the current directory
-# + retryConfig - Configuration for retry behavior on transient failures. If not specified, no retry is attempted.
+# + retryConfig - Configuration for retry behavior on transient failures for non-streaming read operations
+#                 (getBytes, getText, getJson, getXml, getCsv). If not specified, no retry is attempted.
 public type ClientConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
