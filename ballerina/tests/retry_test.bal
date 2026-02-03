@@ -61,13 +61,8 @@ function initRetryTestEnvironment() returns error? {
 function testGetBytesWithRetryConfig_Success() returns error? {
     string testPath = "/home/in/retry/test1.txt";
 
-    byte[]|Error result = (<Client>retryClientEp)->getBytes(testPath);
-
-    if result is Error {
-        test:assertFail(msg = "getBytes with retry config should succeed: " + result.message());
-    } else {
-        test:assertTrue(result.length() > 0, msg = "Should return non-empty bytes");
-    }
+    byte[] result = check (<Client>retryClientEp)->getBytes(testPath);
+    test:assertTrue(result.length() > 0, msg = "Should return non-empty bytes");
 }
 
 // Test: Successful getText with retry config (no retry needed)
@@ -77,13 +72,8 @@ function testGetBytesWithRetryConfig_Success() returns error? {
 function testGetTextWithRetryConfig_Success() returns error? {
     string testPath = "/home/in/retry/test1.txt";
 
-    string|Error result = (<Client>retryClientEp)->getText(testPath);
-
-    if result is Error {
-        test:assertFail(msg = "getText with retry config should succeed: " + result.message());
-    } else {
-        test:assertTrue(result.length() > 0, msg = "Should return non-empty text");
-    }
+    string result = check (<Client>retryClientEp)->getText(testPath);
+    test:assertTrue(result.length() > 0, msg = "Should return non-empty text");
 }
 
 // Test: Successful getJson with retry config (no retry needed)
@@ -96,13 +86,8 @@ function testGetJsonWithRetryConfig_Success() returns error? {
     json testJson = {name: "retry-test", value: 42};
     check (<Client>retryClientEp)->putJson(jsonPath, testJson);
 
-    json|Error result = (<Client>retryClientEp)->getJson(jsonPath);
-
-    if result is Error {
-        test:assertFail(msg = "getJson with retry config should succeed: " + result.message());
-    } else {
-        test:assertEquals(result, testJson, msg = "JSON content should match");
-    }
+    json result = check (<Client>retryClientEp)->getJson(jsonPath);
+    test:assertEquals(result, testJson, msg = "JSON content should match");
 
     // Cleanup
     check (<Client>retryClientEp)->delete(jsonPath);
@@ -118,13 +103,8 @@ function testGetXmlWithRetryConfig_Success() returns error? {
     xml testXml = xml `<root><item>retry-test</item></root>`;
     check (<Client>retryClientEp)->putXml(xmlPath, testXml);
 
-    xml|Error result = (<Client>retryClientEp)->getXml(xmlPath);
-
-    if result is Error {
-        test:assertFail(msg = "getXml with retry config should succeed: " + result.message());
-    } else {
-        test:assertEquals(result.toString(), testXml.toString(), msg = "XML content should match");
-    }
+    xml result = check (<Client>retryClientEp)->getXml(xmlPath);
+    test:assertEquals(result.toString(), testXml.toString(), msg = "XML content should match");
 
     // Cleanup
     check (<Client>retryClientEp)->delete(xmlPath);
@@ -144,14 +124,9 @@ function testGetCsvWithRetryConfig_Success() returns error? {
     ];
     check (<Client>retryClientEp)->putCsv(csvPath, testCsv);
 
-    string[][]|Error result = (<Client>retryClientEp)->getCsv(csvPath);
-
-    if result is Error {
-        test:assertFail(msg = "getCsv with retry config should succeed: " + result.message());
-    } else {
-        test:assertEquals(result.length(), 2, msg = "Should return 2 data rows");
-        test:assertEquals(result[0][1], "Alice", msg = "First row name should be Alice");
-    }
+    string[][] result = check (<Client>retryClientEp)->getCsv(csvPath);
+    test:assertEquals(result.length(), 2, msg = "Should return 2 data rows");
+    test:assertEquals(result[0][1], "Alice", msg = "First row name should be Alice");
 
     // Cleanup
     check (<Client>retryClientEp)->delete(csvPath);
@@ -245,11 +220,8 @@ function testClientWithMinimalRetryConfig() returns error? {
 
     // Should be able to perform operations
     string testPath = "/home/in/test1.txt";
-    byte[]|Error result = minimalClient->getBytes(testPath);
-
-    if result is Error {
-        test:assertFail(msg = "Client with minimal retry config should work: " + result.message());
-    }
+    byte[] result = check minimalClient->getBytes(testPath);
+    test:assertTrue(result.length() > 0, msg = "Should return non-empty bytes");
 
     check minimalClient->close();
 }
@@ -267,12 +239,8 @@ function testWriteOperationsWithRetryConfig() returns error? {
     test:assertEquals(putResult, (), msg = "putText should succeed with retry config");
 
     // Verify content was written
-    string|Error getText = (<Client>retryClientEp)->getText(testPath);
-    if getText is string {
-        test:assertEquals(getText, content, msg = "Content should match after write");
-    } else {
-        test:assertFail(msg = "Failed to read written content: " + getText.message());
-    }
+    string getText = check (<Client>retryClientEp)->getText(testPath);
+    test:assertEquals(getText, content, msg = "Content should match after write");
 
     // Cleanup
     check (<Client>retryClientEp)->delete(testPath);
