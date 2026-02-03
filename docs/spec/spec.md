@@ -24,11 +24,13 @@ The conforming implementation of the specification is released and included in t
     - [2.1. Security Configurations](#21-security-configurations)
     - [2.2. FileInfo](#22-fileinfo)
     - [2.3. Error Types](#23-error-types)
+    - [2.4. Retry Configuration](#24-retry-configuration)
   - [3. Client](#3-client)
     - [3.1. Configurations](#31-configurations)
     - [3.2. Initialization](#32-initialization)
       - [3.2.1. Insecure Client](#321-insecure-client)
       - [3.2.2. Secure Client](#322-secure-client)
+      - [3.2.3. Client with Retry Configuration](#323-client-with-retry-configuration)
     - [3.3. Functions](#33-functions)
   - [4. Listener](#4-listener)
     - [4.1. Configurations](#41-configurations)
@@ -197,6 +199,25 @@ if result is ftp:ConnectionError {
     // Handle any other FTP error
 }
 ```
+
+### 2.4. Retry Configuration
+* `RetryConfig` record represents the configuration for automatic retries of operations.
+```ballerina
+# Retry configuration for FTP operations
+#
+# + count - Maximum number of retry attempts (default: 3)
+# + interval - Initial retry interval in seconds (default: 1.0)
+# + backOffFactor - Multiplier for exponential backoff (default: 2.0)
+# + maxWaitInterval - Maximum wait interval between retries in seconds (default: 30.0)
+public type RetryConfig record {|
+    int count = 3;
+    decimal interval = 1.0;
+    decimal backOffFactor = 2.0;
+    decimal maxWaitInterval = 30.0;
+|};
+```
+The retry mechanism uses exponential backoff to progressively increase wait times between retry attempts.
+
 ## 3. Client
 The `ftp:Client` connects to FTP server and performs various operations on the files. It supports reading files in multiple formats (bytes, text, JSON, XML, CSV) with streaming support for large files, writing files in multiple formats, and file management operations including create, delete, rename, move, copy, and list.
 ### 3.1. Configurations
@@ -218,6 +239,8 @@ public type ClientConfiguration record {|
     boolean userDirIsRoot = false;
     # If set to `true`, allows missing or null values when reading files in structured formats
     boolean laxDataBinding = false;
+    # Retry configuration for read operations
+    RetryConfig retryConfig?;
 |};
 ```
 * InputContent record represents the configurations for the input given for `put` and `append` operations.
@@ -280,6 +303,26 @@ ftp:ClientConfiguration ftpConfig = {
     },
     userDirIsRoot: true
 };
+```
+#### 3.2.3. Client with Retry Configuration
+A client can be initialized with retry configuration to automatically retry failed read operations:
+```ballerina
+ftp:ClientConfiguration ftpConfig = {
+    protocol: ftp:FTP,
+    host: "<The FTP host>",
+    port: <The FTP port>,
+    retryConfig: {
+        count: 5,              // Retry up to 5 times
+        interval: 2.0,         // Start with 2 second wait
+        backOffFactor: 1.5,    // Increase wait by 1.5x each time
+        maxWaitInterval: 20.0  // Cap wait time at 20 seconds
+    }
+};
+
+ftp:Client ftpClient = check new(ftpConfig);
+
+// All read operations will automatically retry on failure
+byte[] bytes = check ftpClient->getBytes("/path/to/file.txt");
 ```
 ### 3.3. Functions
 * FTP Client API can be used to put files on the FTP server. For this, the `put()` method can be used.
@@ -695,6 +738,7 @@ ftp:ListenerConfiguration ftpConfig = {
     userDirIsRoot: true
 };
 ```
+
 #### 4.3. Usage
 After initializing the listener, a service must be attached to the listener. There are two ways for this.
 1. Attach the service to the listener directly.
