@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/test;
+import ballerina/lang.runtime;
 
 // Test client creation with invalid failure threshold (> 1.0)
 @test:Config {}
@@ -75,6 +76,79 @@ public function testClientWithInvalidBucketSize() {
     };
     Client|Error cbClient = new (config);
     test:assertTrue(cbClient is Error, msg = "Client creation should fail when bucketSize > timeWindow");
+    if cbClient is Error {
+        test:assertTrue(cbClient.message().includes("timeWindow") || cbClient.message().includes("bucketSize"),
+            msg = "Error message should mention timeWindow or bucketSize");
+    }
+}
+
+// Test client creation with invalid requestVolumeThreshold (<= 0)
+@test:Config {}
+public function testClientWithInvalidRequestVolumeThreshold() {
+    ClientConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        circuitBreaker: {
+            rollingWindow: {
+                requestVolumeThreshold: 0,
+                timeWindow: 60,
+                bucketSize: 10
+            }
+        }
+    };
+    Client|Error cbClient = new (config);
+    test:assertTrue(cbClient is Error, msg = "Client creation should fail when requestVolumeThreshold <= 0");
+    if cbClient is Error {
+        test:assertTrue(cbClient.message().includes("requestVolumeThreshold"),
+            msg = "Error message should mention requestVolumeThreshold");
+    }
+}
+
+// Test client creation with invalid resetTime (<= 0)
+@test:Config {}
+public function testClientWithInvalidResetTime() {
+    ClientConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        circuitBreaker: {
+            rollingWindow: {
+                requestVolumeThreshold: 1,
+                timeWindow: 60,
+                bucketSize: 10
+            },
+            resetTime: 0
+        }
+    };
+    Client|Error cbClient = new (config);
+    test:assertTrue(cbClient is Error, msg = "Client creation should fail when resetTime <= 0");
+    if cbClient is Error {
+        test:assertTrue(cbClient.message().includes("resetTime"),
+            msg = "Error message should mention resetTime");
+    }
+}
+
+// Test client creation with timeWindow not divisible by bucketSize
+@test:Config {}
+public function testClientWithNonDivisibleTimeWindow() {
+    ClientConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        circuitBreaker: {
+            rollingWindow: {
+                requestVolumeThreshold: 1,
+                timeWindow: 60,
+                bucketSize: 11
+            }
+        }
+    };
+    Client|Error cbClient = new (config);
+    test:assertTrue(cbClient is Error, msg = "Client creation should fail when timeWindow is not divisible by bucketSize");
     if cbClient is Error {
         test:assertTrue(cbClient.message().includes("timeWindow") || cbClient.message().includes("bucketSize"),
             msg = "Error message should mention timeWindow or bucketSize");
@@ -188,6 +262,54 @@ public function testCircuitBreakerOpensAfterFailures() returns error? {
         test:assertTrue(message.includes("Circuit breaker is OPEN"),
             msg = "Error message should indicate circuit breaker is open");
     }
+
+    check cbClient->close();
+}
+
+// Test HALF_OPEN transition: allow a single trial request after reset time, then reopen on failure
+@test:Config {}
+public function testCircuitBreakerHalfOpenTrial() returns error? {
+    ClientConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        circuitBreaker: {
+            rollingWindow: {
+                requestVolumeThreshold: 1,
+                timeWindow: 60,
+                bucketSize: 10
+            },
+            failureThreshold: 0.5,
+            resetTime: 1,
+            failureCategories: [ALL_ERRORS]
+        }
+    };
+
+    Client cbClient = check new (config);
+    string nonExistentPath = "/non/existent/file/path/half-open-test.txt";
+
+    // Trip the circuit quickly
+    byte[]|Error result1 = cbClient->getBytes(nonExistentPath);
+    test:assertTrue(result1 is Error, msg = "Initial request should fail");
+
+    // Circuit should now be OPEN
+    byte[]|Error result2 = cbClient->getBytes(nonExistentPath);
+    test:assertTrue(result2 is CircuitBreakerOpenError,
+        msg = "Circuit should be OPEN after failure threshold is met");
+
+    // Wait for reset time to elapse
+    runtime:sleep(2);
+
+    // First request after reset should be allowed (HALF_OPEN trial)
+    byte[]|Error trialResult = cbClient->getBytes(nonExistentPath);
+    test:assertFalse(trialResult is CircuitBreakerOpenError,
+        msg = "HALF_OPEN should allow a single trial request");
+
+    // Trial fails, circuit should move back to OPEN and block immediately
+    byte[]|Error result3 = cbClient->getBytes(nonExistentPath);
+    test:assertTrue(result3 is CircuitBreakerOpenError,
+        msg = "Circuit should reopen after failed HALF_OPEN trial");
 
     check cbClient->close();
 }
