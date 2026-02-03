@@ -313,3 +313,108 @@ public function testCircuitBreakerHalfOpenTrial() returns error? {
 
     check cbClient->close();
 }
+
+// Test HALF_OPEN transition: successful trial request should close the circuit
+@test:Config {}
+public function testCircuitBreakerHalfOpenSuccessfulTrial() returns error? {
+    ClientConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        circuitBreaker: {
+            rollingWindow: {
+                requestVolumeThreshold: 1,
+                timeWindow: 60,
+                bucketSize: 10
+            },
+            failureThreshold: 0.5,
+            resetTime: 1,
+            failureCategories: [ALL_ERRORS]
+        }
+    };
+
+    Client cbClient = check new (config);
+    string nonExistentPath = "/non/existent/file/path/half-open-success-test.txt";
+
+    // Trip the circuit quickly
+    byte[]|Error result1 = cbClient->getBytes(nonExistentPath);
+    test:assertTrue(result1 is Error, msg = "Initial request should fail");
+
+    // Circuit should now be OPEN
+    byte[]|Error result2 = cbClient->getBytes(nonExistentPath);
+    test:assertTrue(result2 is CircuitBreakerOpenError,
+        msg = "Circuit should be OPEN after failure threshold is met");
+
+    // Wait for reset time to elapse
+    runtime:sleep(2);
+
+    // First request after reset should be allowed (HALF_OPEN trial)
+    // This time, make a successful request
+    boolean|Error trialResult = cbClient->exists("/home/in");
+    test:assertFalse(trialResult is CircuitBreakerOpenError,
+        msg = "HALF_OPEN should allow a single trial request");
+    test:assertTrue(trialResult is boolean,
+        msg = "Trial request should succeed");
+
+    // Circuit should now be CLOSED, so next request should succeed
+    boolean|Error result3 = cbClient->exists("/home/in");
+    test:assertFalse(result3 is CircuitBreakerOpenError,
+        msg = "Circuit should be CLOSED after successful HALF_OPEN trial");
+    test:assertTrue(result3 is boolean,
+        msg = "Request should succeed when circuit is CLOSED");
+
+    check cbClient->close();
+}
+
+// Test interaction between retry and circuit breaker mechanisms
+@test:Config {}
+public function testRetryAndCircuitBreakerInteraction() returns error? {
+    // Configure both retry and circuit breaker
+    // Retry will attempt 3 times, circuit breaker will trip after 2 failures
+    ClientConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        retryConfig: {
+            count: 3,
+            interval: 0.5,  // 500ms interval for test stability
+            backOffFactor: 1.0,
+            maxWaitInterval: 2.0
+        },
+        circuitBreaker: {
+            rollingWindow: {
+                requestVolumeThreshold: 2,  // Need 2 requests to evaluate
+                timeWindow: 60,
+                bucketSize: 10
+            },
+            failureThreshold: 0.5,  // 50% failure rate trips circuit
+            resetTime: 30,
+            failureCategories: [ALL_ERRORS]
+        }
+    };
+
+    Client cbClient = check new (config);
+    string nonExistentPath = "/non/existent/file/retry-cb-test.txt";
+
+    // First request: Will fail after all retries are exhausted
+    // This counts as 1 failure for the circuit breaker
+    byte[]|Error result1 = cbClient->getBytes(nonExistentPath);
+    test:assertTrue(result1 is AllRetryAttemptsFailedError,
+        msg = "First request should fail after all retries");
+
+    // Second request: Will also fail after all retries
+    // After this, circuit should have 2 failures and should trip
+    byte[]|Error result2 = cbClient->getBytes(nonExistentPath);
+    test:assertTrue(result2 is AllRetryAttemptsFailedError,
+        msg = "Second request should fail after all retries");
+
+    // Third request: Circuit should now be OPEN and block immediately
+    // This should NOT go through retries, should fail fast
+    byte[]|Error result3 = cbClient->getBytes(nonExistentPath);
+    test:assertTrue(result3 is CircuitBreakerOpenError,
+        msg = "Third request should fail fast with circuit breaker open");
+
+    check cbClient->close();
+}
