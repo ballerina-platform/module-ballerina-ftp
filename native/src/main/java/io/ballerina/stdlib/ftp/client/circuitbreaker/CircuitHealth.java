@@ -64,7 +64,7 @@ public class CircuitHealth {
     public int getCurrentBucketId() {
         long elapsedMillis = Instant.now().toEpochMilli() - startTime.toEpochMilli();
         long windowElapsed = elapsedMillis % timeWindowMillis;
-        return (int) (((windowElapsed / bucketSizeMillis) + 1) % numberOfBuckets);
+        return (int) ((windowElapsed / bucketSizeMillis) % numberOfBuckets);
     }
 
     /**

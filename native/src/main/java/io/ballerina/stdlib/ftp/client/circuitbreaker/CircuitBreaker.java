@@ -37,6 +37,7 @@ public class CircuitBreaker {
     private final CircuitBreakerConfig config;
     private final CircuitHealth health;
     private volatile CircuitState state;
+    private boolean trialRequestInProgress;
     private final Object lock = new Object();
 
     /**
@@ -52,6 +53,7 @@ public class CircuitBreaker {
                 config.getTimeWindowMillis()
         );
         this.state = CircuitState.CLOSED;
+        this.trialRequestInProgress = false;
         log.debug("Circuit breaker initialized with {} buckets, {}ms window, {}% failure threshold",
                 config.getNumberOfBuckets(), config.getTimeWindowMillis(),
                 config.getFailureThreshold() * 100);
@@ -69,8 +71,11 @@ public class CircuitBreaker {
         synchronized (lock) {
             updateState();
 
-            if (state == CircuitState.OPEN) {
+            if (state == CircuitState.OPEN || (state == CircuitState.HALF_OPEN && trialRequestInProgress)) {
                 throw createServiceUnavailableError();
+            }
+            if (state == CircuitState.HALF_OPEN) {
+                trialRequestInProgress = true;
             }
 
             // Record the request
@@ -81,14 +86,36 @@ public class CircuitBreaker {
         try {
             T result = operation.call();
             synchronized (lock) {
-                recordSuccess();
+                if (state == CircuitState.HALF_OPEN) {
+                    recordSuccess();
+                    state = CircuitState.CLOSED;
+                    trialRequestInProgress = false;
+                    health.resetAllBuckets();
+                    log.info("Circuit breaker transitioning from HALF_OPEN to CLOSED (trial succeeded)");
+                } else {
+                    recordSuccess();
+                    updateState();
+                }
             }
             return result;
         } catch (Exception e) {
             synchronized (lock) {
-                if (shouldCountAsFailure(e)) {
+                if (state == CircuitState.HALF_OPEN) {
+                    if (shouldCountAsFailure(e)) {
+                        recordFailure();
+                        state = CircuitState.OPEN;
+                        log.info("Circuit breaker transitioning from HALF_OPEN to OPEN (trial failed)");
+                    } else {
+                        recordSuccess();
+                        state = CircuitState.CLOSED;
+                        health.resetAllBuckets();
+                        log.info("Circuit breaker transitioning from HALF_OPEN to CLOSED (trial succeeded)");
+                    }
+                    trialRequestInProgress = false;
+                } else if (shouldCountAsFailure(e)) {
                     recordFailure();
                     log.debug("Circuit breaker recorded failure: {}", e.getMessage());
+                    updateState();
                 }
             }
             throw e;
@@ -103,6 +130,9 @@ public class CircuitBreaker {
     public boolean isOpen() {
         synchronized (lock) {
             updateState();
+            if (state == CircuitState.HALF_OPEN) {
+                return trialRequestInProgress;
+            }
             return state == CircuitState.OPEN;
         }
     }
@@ -113,6 +143,13 @@ public class CircuitBreaker {
      */
     public void recordRequestStart() {
         synchronized (lock) {
+            updateState();
+            if (state == CircuitState.OPEN || (state == CircuitState.HALF_OPEN && trialRequestInProgress)) {
+                return;
+            }
+            if (state == CircuitState.HALF_OPEN) {
+                trialRequestInProgress = true;
+            }
             health.prepareRollingWindow();
             health.recordRequest();
         }
@@ -126,6 +163,27 @@ public class CircuitBreaker {
      */
     public void recordOutcome(Throwable error) {
         synchronized (lock) {
+            if (state == CircuitState.HALF_OPEN) {
+                if (error == null) {
+                    recordSuccess();
+                    state = CircuitState.CLOSED;
+                    health.resetAllBuckets();
+                    log.info("Circuit breaker transitioning from HALF_OPEN to CLOSED (trial succeeded)");
+                } else if (shouldCountAsFailure(error)) {
+                    recordFailure();
+                    log.debug("Circuit breaker recorded failure: {}", error.getMessage());
+                    state = CircuitState.OPEN;
+                    log.info("Circuit breaker transitioning from HALF_OPEN to OPEN (trial failed)");
+                } else {
+                    recordSuccess();
+                    state = CircuitState.CLOSED;
+                    health.resetAllBuckets();
+                    log.info("Circuit breaker transitioning from HALF_OPEN to CLOSED (trial succeeded)");
+                }
+                trialRequestInProgress = false;
+                return;
+            }
+
             if (error == null) {
                 recordSuccess();
             } else if (shouldCountAsFailure(error)) {
@@ -169,19 +227,13 @@ public class CircuitBreaker {
             case OPEN:
                 if (resetTimeElapsed()) {
                     state = CircuitState.HALF_OPEN;
+                    trialRequestInProgress = false;
                     log.info("Circuit breaker transitioning from OPEN to HALF_OPEN");
                 }
                 break;
 
             case HALF_OPEN:
-                if (health.isLastRequestSuccess()) {
-                    state = CircuitState.CLOSED;
-                    health.resetAllBuckets();
-                    log.info("Circuit breaker transitioning from HALF_OPEN to CLOSED (trial succeeded)");
-                } else {
-                    state = CircuitState.OPEN;
-                    log.info("Circuit breaker transitioning from HALF_OPEN to OPEN (trial failed)");
-                }
+                // HALF_OPEN transition is evaluated after the trial request completes.
                 break;
 
             case CLOSED:
