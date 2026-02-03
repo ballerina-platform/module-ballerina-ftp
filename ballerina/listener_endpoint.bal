@@ -23,7 +23,7 @@ public isolated class Listener {
 
     private handle EMPTY_JAVA_STRING = java:fromString("");
     private ListenerConfiguration config = {};
-    private task:JobId? jobId = ();
+    private task:Listener taskListener;
 
     # Gets invoked during object initialization.
     #
@@ -31,7 +31,33 @@ public isolated class Listener {
     # + return - `()` or else an `ftp:Error` upon failure to initialize the listener
     public isolated function init(*ListenerConfiguration listenerConfig) returns Error? {
         self.config = listenerConfig.clone();
+
         lock {
+            decimal pollingInterval = self.config.pollingInterval;
+            CoordinationConfig? coordination = self.config.coordination;
+
+            task:Listener|error taskListener;
+            if coordination is CoordinationConfig {
+                taskListener = new ({
+                    trigger: {interval: pollingInterval},
+                    warmBackupConfig: {
+                        databaseConfig: coordination.databaseConfig,
+                        livenessCheckInterval: coordination.livenessCheckInterval,
+                        taskId: coordination.memberId,
+                        groupId: coordination.coordinationGroup,
+                        heartbeatFrequency: coordination.heartbeatFrequency
+                    }
+                });
+            } else {
+                taskListener = new ({
+                    trigger: {interval: pollingInterval}
+                });
+            }
+
+            if taskListener is error {
+                return error Error("Failed to create internal task listener: " + taskListener.message());
+            }
+            self.taskListener = taskListener;
             return initListener(self, self.config);
         }
     }
@@ -94,16 +120,14 @@ public isolated class Listener {
 
     isolated function internalStart() returns error? {
         lock {
-            self.jobId = check task:scheduleJobRecurByFrequency(new Job(self), self.config.pollingInterval);
+            check self.taskListener.attach(getPollingService(self));
+            check self.taskListener.'start();
         }
     }
 
     isolated function stop() returns error? {
         lock {
-            var id = self.jobId;
-            if id is task:JobId {
-                check task:unscheduleJob(id);
-            }
+            check self.taskListener.gracefulStop();
             return cleanup(self);
         }
     }
@@ -131,21 +155,17 @@ public isolated class Listener {
     }
 }
 
-class Job {
+isolated function getPollingService(Listener initializedListener) returns task:Service {
+    return service object {
+        private final Listener ftpListener = initializedListener;
 
-    *task:Job;
-    private Listener ftpListener;
-
-    public isolated function execute() {
-        var result = self.ftpListener.poll();
-        if result is error {
-            log:printError("Error while executing poll function", 'error = result);
+        isolated function execute() {
+            error? result = trap self.ftpListener.poll();
+            if result is error {
+                log:printError("Error while executing poll function", 'error = result);
+            }
         }
-    }
-
-    public isolated function init(Listener initializedListener) {
-        self.ftpListener = initializedListener;
-    }
+    };
 }
 
 # Configuration for the FTP listener.
@@ -172,8 +192,10 @@ class Job {
 # + sftpCompression - Compression algorithms (SFTP only)
 # + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
 # + proxy - Proxy configuration for SFTP connections (SFTP only)
-# + csvFailSafe - Configuration for fail-safe CSV content processing. In the fail-safe mode, 
+# + csvFailSafe - Configuration for fail-safe CSV content processing. In the fail-safe mode,
 #                 malformed CSV records are skipped and written to a separate file in the current directory
+# + coordination - Configuration for distributed task coordination using warm backup approach.
+#                  When configured, only one member in the group will actively poll while others act as standby.
 public type ListenerConfiguration record {|
     Protocol protocol = FTP;
     string host = "127.0.0.1";
@@ -193,6 +215,7 @@ public type ListenerConfiguration record {|
     TransferCompression[] sftpCompression = [NO];
     string sftpSshKnownHosts?;
     FailSafeOptions csvFailSafe?;
+    CoordinationConfig coordination?;
 |};
 
 # Fail-safe options for CSV content processing.
@@ -212,3 +235,21 @@ public enum ErrorLogContentType {
 # FTP service for handling file system change events.
 public type Service distinct service object {
 };
+
+# Represents the configuration required for distributed task coordination.
+# When configured, multiple FTP listener members coordinate so that only one actively polls
+# while others act as warm standby members.
+#
+# + databaseConfig - The database configuration for task coordination
+# + livenessCheckInterval - The interval (in seconds) to check the liveness of the active node. Default is 30 seconds.
+# + memberId - Unique identifier for the current member. Must be distinct for each node in the distributed system.
+# + coordinationGroup - The name of the coordination group of FTP listeners that coordinate together.
+#                       It is recommended to use a unique name for each group.
+# + heartbeatFrequency - The interval (in seconds) for the node to update its heartbeat status. Default is 1 second.
+public type CoordinationConfig record {|
+    task:DatabaseConfig databaseConfig;
+    int livenessCheckInterval = 30;
+    string memberId;
+    string coordinationGroup;
+    int heartbeatFrequency = 1;
+|};

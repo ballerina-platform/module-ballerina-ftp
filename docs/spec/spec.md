@@ -3,7 +3,7 @@
 _Owners_: @shafreenAnfar @dilanSachi @Bhashinee    
 _Reviewers_: @shafreenAnfar @Bhashinee  
 _Created_: 2020/10/28   
-_Updated_: 2025/11/20  
+_Updated_: 2026/01/26  
 _Edition_: Swan Lake    
 
 ## Introduction
@@ -37,6 +37,9 @@ The conforming implementation of the specification is released and included in t
       - [4.2.2. Secure Listener](#422-secure-listener)
       - [4.3. Usage](#43-usage)
       - [4.3.1. Format-Specific Listener Callbacks](#431-format-specific-listener-callbacks)
+    - [4.4. Distributed Coordination](#44-distributed-coordination)
+      - [4.4.1. Coordination Configuration](#441-coordination-configuration)
+      - [4.4.2. Coordination Mechanism](#442-coordination-mechanism)
   - [5. Caller](#5-caller)
     - [5.1. Initialization](#51-initialization)
     - [5.2. Functions](#52-functions)
@@ -646,6 +649,9 @@ public type ListenerConfiguration record {|
     boolean userDirIsRoot = false;
     # If set to `true`, allows missing or null values when reading files in structured formats
     boolean laxDataBinding = false;
+    # Configuration for distributed task coordination using warm backup approach.
+    # When configured, only one member in the group will actively poll while others act as standby.
+    CoordinationConfig coordination?;
 |};
 ```
 * `WatchEvent` record represents the latest status change of the server from the last status change.
@@ -885,6 +891,57 @@ public isolated function poll() returns error?
 #            server
 public isolated function register(Service ftpService, string? name) returns error?
 ```
+
+### 4.4. Distributed Coordination
+
+The FTP listener supports distributed coordination for high availability deployments. When multiple listener instances are deployed across different nodes, coordination ensures that only one instance actively polls the FTP server while others act as warm standby nodes. This prevents duplicate file processing and provides automatic failover.
+
+#### 4.4.1. Coordination Configuration
+* `CoordinationConfig` record represents the configuration for distributed task coordination.
+```ballerina
+public type CoordinationConfig record {|
+    # The database configuration for task coordination
+    task:DatabaseConfig databaseConfig;
+    # The interval (in seconds) to check the liveness of the active node. Default is 30 seconds.
+    int livenessCheckInterval = 30;
+    # Unique identifier for the current member. Must be distinct for each node in the distributed system.
+    string memberId;
+    # The name of the coordination group of FTP listeners that coordinate together.
+    # It is recommended to use a unique name for each group.
+    string coordinationGroup;
+    # The interval (in seconds) for the node to update its heartbeat status. Default is 1 second.
+    int heartbeatFrequency = 1;
+|};
+```
+
+* The `databaseConfig` field accepts either `task:MysqlConfig` or `task:PostgresqlConfig`:
+```ballerina
+# MySQL configuration
+public type MysqlConfig record {
+    string host = "localhost";
+    string? user = ();
+    string? password = ();
+    int port = 3306;
+    string? database = ();
+};
+
+# PostgreSQL configuration
+public type PostgresqlConfig record {
+    string host = "localhost";
+    string? user = ();
+    string? password = ();
+    int port = 5432;
+    string? database = ();
+};
+```
+
+#### 4.4.2. Coordination Mechanism
+1. **Leader election**: Members in the same `coordinationGroup` coordinate via the database to elect an active member
+2. **Heartbeat**: The active member updates its heartbeat at `heartbeatFrequency` intervals
+3. **Liveness monitoring**: Standby members check the active member's heartbeat every `livenessCheckInterval` seconds
+4. **Failover**: If the active member's heartbeat becomes stale, a standby member takes over as the new active member
+5. **Polling**: Only the active member's `poll()` function executes; standby members skip polling
+
 ## 5. Caller
 `ftp:Caller` is like a wrapper on the `ftp:Client`. It has an `ftp:Client` defined inside and contains all the APIs of `ftp:Client` like `get()`, `put()`, `append()` etc. However, `ftp:Caller` can only be created internally to be passed to the `onFileChange` method.
 `ftp:Caller` is created in the runtime when the `ftp:Listener` gets attached to a `ftp:Service` by checking whether the user has added `ftp:Caller` as a parameter in the `onFileChange` method.

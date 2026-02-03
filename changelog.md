@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- [Add FTP Listener Coordination Support](https://github.com/ballerina-platform/ballerina-library/issues/8490)
 - [Add distinct error types](https://github.com/ballerina-platform/ballerina-library/issues/8597)
 - [Incorporate the csv fail safe support in the FTP listener](https://github.com/ballerina-platform/ballerina-library/issues/8502)
 
@@ -14,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 
 ## [2.16.0] - 2025-12-19
+
+### Added
 
 - [Add close API for the FTP clients](https://github.com/ballerina-platform/module-ballerina-ftp/pull/1519)
 - [Added FTPS with SSL/TLS configuration](https://github.com/ballerina-platform/module-ballerina-ftp/pull/1523)
