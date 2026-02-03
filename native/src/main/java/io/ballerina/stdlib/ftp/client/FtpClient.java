@@ -25,6 +25,7 @@ import io.ballerina.runtime.api.types.PredefinedTypes;
 import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BArray;
+import io.ballerina.runtime.api.values.BDecimal;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -99,7 +100,10 @@ public class FtpClient {
 
     public static Object initClientEndpoint(BObject clientEndpoint, BMap<Object, Object> config) {
         String protocol = extractProtocol(config);
-        configureClientEndpointBasic(clientEndpoint, config, protocol);
+        BError basicConfigError = configureClientEndpointBasic(clientEndpoint, config, protocol);
+        if (basicConfigError != null) {
+            return basicConfigError;
+        }
         
         Map<String, Object> ftpConfig = new HashMap<>(20);
         Object authError = configureAuthentication(config, protocol, ftpConfig);
@@ -120,12 +124,40 @@ public class FtpClient {
         return (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL))).getValue();
     }
 
-    private static void configureClientEndpointBasic(BObject clientEndpoint, BMap<Object, Object> config, 
-                                                     String protocol) {
+    private static BError configureClientEndpointBasic(BObject clientEndpoint, BMap<Object, Object> config,
+                                                       String protocol) {
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING,
                 config.getBooleanValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING)));
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_CSV_FAIL_SAFE,
                 config.getMapValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_CSV_FAIL_SAFE)));
+
+        // Store retry config if present
+        BMap<?, ?> retryConfig = config.getMapValue(StringUtils.fromString(FtpConstants.RETRY_CONFIG));
+        if (retryConfig == null) {
+            clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_ENABLED, false);
+        } else {
+            clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_ENABLED, true);
+
+            long count = retryConfig.getIntValue(StringUtils.fromString(FtpConstants.RETRY_COUNT));
+            Object intervalObj = retryConfig.get(StringUtils.fromString(FtpConstants.RETRY_INTERVAL));
+            double interval = ((BDecimal) intervalObj).floatValue();
+
+            Object backOffFactorObj = retryConfig.get(StringUtils.fromString(FtpConstants.RETRY_BACKOFF_FACTOR));
+            double backOffFactor = ((BDecimal) backOffFactorObj).floatValue();
+            
+            Object maxWaitIntervalObj = retryConfig.get(StringUtils.fromString(FtpConstants.RETRY_MAX_WAIT_INTERVAL));
+            double maxWaitInterval = ((BDecimal) maxWaitIntervalObj).floatValue();
+
+            BError retryValidationError = validateRetryConfig(count, interval, backOffFactor, maxWaitInterval);
+            if (retryValidationError != null) {
+                return retryValidationError;
+            }
+
+            clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_COUNT, count);
+            clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_INTERVAL, interval);
+            clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_BACKOFF, backOffFactor);
+            clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_MAX_WAIT, maxWaitInterval);
+        }
 
         Map<String, String> authMap = FtpUtil.getAuthMap(config, protocol);
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_USERNAME,
@@ -138,6 +170,33 @@ public class FtpClient {
                 FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
                         FtpConstants.ENDPOINT_CONFIG_PORT))));
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
+        return null;
+    }
+
+    private static BError validateRetryConfig(long count, double interval, double backOffFactor,
+                                              double maxWaitInterval) {
+        if (count <= 0) {
+            return FtpUtil.createError("retryConfig.count must be greater than 0.",
+                    InvalidConfigError.errorType());
+        }
+        if (interval <= 0) {
+            return FtpUtil.createError("retryConfig.interval must be greater than 0.",
+                    InvalidConfigError.errorType());
+        }
+        if (backOffFactor < 1.0) {
+            return FtpUtil.createError("retryConfig.backOffFactor must be greater than or equal to 1.0.",
+                    InvalidConfigError.errorType());
+        }
+        if (maxWaitInterval <= 0) {
+            return FtpUtil.createError("retryConfig.maxWaitInterval must be greater than 0.",
+                    InvalidConfigError.errorType());
+        }
+        if (maxWaitInterval < interval) {
+            return FtpUtil.createError(
+                    "retryConfig.maxWaitInterval must be greater than or equal to retryConfig.interval.",
+                    InvalidConfigError.errorType());
+        }
+        return null;
     }
 
     private static Object configureAuthentication(BMap<Object, Object> config, String protocol, 
@@ -298,51 +357,84 @@ public class FtpClient {
     }
 
     public static Object getBytes(Environment env, BObject clientConnector, BString filePath) {
-        Object content = getAllContent(env, clientConnector, filePath);
-        if (!(content instanceof byte[])) {
-            return content;
-        }
-        return convertToBallerinaByteArray((byte[]) content);
+        return FtpRetryHelper.executeWithRetry(
+                clientConnector,
+                () -> {
+                    Object content = getAllContent(env, clientConnector, filePath);
+                    if (content instanceof byte[]) {
+                        return convertToBallerinaByteArray((byte[]) content);
+                    }
+                    return content;
+                },
+                FtpConstants.OP_GET_BYTES,
+                filePath.getValue()
+        );
     }
 
     public static Object getText(Environment env, BObject clientConnector, BString filePath) {
-        Object content = getAllContent(env, clientConnector, filePath);
-        if (!(content instanceof byte[])) {
-            return content;
-        }
-        return convertBytesToString((byte[]) content);
+        return FtpRetryHelper.executeWithRetry(
+                clientConnector,
+                () -> {
+                    Object content = getAllContent(env, clientConnector, filePath);
+                    if (content instanceof byte[]) {
+                        return convertBytesToString((byte[]) content);
+                    }
+                    return content;
+                },
+                FtpConstants.OP_GET_TEXT,
+                filePath.getValue()
+        );
     }
 
     public static Object getJson(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
-        Object content = getAllContent(env, clientConnector, filePath);
-        if (!(content instanceof byte[])) {
-            return content;
-        }
-
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
-        return convertBytesToJson((byte[]) content, typeDesc.getDescribingType(), laxDataBinding);
+        return FtpRetryHelper.executeWithRetry(
+                clientConnector,
+                () -> {
+                    Object content = getAllContent(env, clientConnector, filePath);
+                    if (content instanceof byte[]) {
+                        return convertBytesToJson((byte[]) content, typeDesc.getDescribingType(), laxDataBinding);
+                    }
+                    return content;
+                },
+                FtpConstants.OP_GET_JSON,
+                filePath.getValue()
+        );
     }
 
     public static Object getXml(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
-        Object content = getAllContent(env, clientConnector, filePath);
-        if (!(content instanceof byte[])) {
-            return content;
-        }
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
-        return convertBytesToXml((byte[]) content, typeDesc.getDescribingType(), laxDataBinding);
+        return FtpRetryHelper.executeWithRetry(
+                clientConnector,
+                () -> {
+                    Object content = getAllContent(env, clientConnector, filePath);
+                    if (content instanceof byte[]) {
+                        return convertBytesToXml((byte[]) content, typeDesc.getDescribingType(), laxDataBinding);
+                    }
+                    return content;
+                },
+                FtpConstants.OP_GET_XML,
+                filePath.getValue()
+        );
     }
 
     public static Object getCsv(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
-        Object content = getAllContent(env, clientConnector, filePath);
-        if (!(content instanceof byte[])) {
-            return content;
-        }
-
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
         BMap<?, ?> csvFailSafe = (BMap<?, ?>) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_CSV_FAIL_SAFE);
         String fileNamePrefix = deriveFileNamePrefix(filePath);
-        return convertBytesToCsv(env, (byte[]) content, typeDesc.getDescribingType(),
-                laxDataBinding, csvFailSafe, fileNamePrefix);
+        return FtpRetryHelper.executeWithRetry(
+                clientConnector,
+                () -> {
+                    Object content = getAllContent(env, clientConnector, filePath);
+                    if (content instanceof byte[]) {
+                        return convertBytesToCsv(env, (byte[]) content, typeDesc.getDescribingType(),
+                                laxDataBinding, csvFailSafe, fileNamePrefix);
+                    }
+                    return content;
+                },
+                FtpConstants.OP_GET_CSV,
+                filePath.getValue()
+        );
     }
 
     public static Object getBytesAsStream(Environment env, BObject clientConnector, BString filePath) {
