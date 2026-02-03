@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2026 WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -42,17 +42,7 @@ public final class FtpRetryHelper {
         // private constructor
     }
 
-    /**
-     * Executes an operation with retry logic using exponential backoff.
-     * If the operation fails and retry is configured, it will retry up to the configured count.
-     *
-     * @param clientConnector The FTP client connector object
-     * @param operation       The operation to execute (returns Object which may be result or BError)
-     * @param operationName   The name of the operation for logging
-     * @param filePath        The file path for logging
-     * @return The operation result or error after exhausting retries
-     */
-    public static Object executeWithRetry(BObject clientConnector, Supplier<Object> operation,
+    protected static Object executeWithRetry(BObject clientConnector, Supplier<Object> operation,
                                           String operationName, String filePath) {
         // First attempt
         Object result = operation.get();
@@ -120,14 +110,6 @@ public final class FtpRetryHelper {
                 " retry attempts: " + lastError.getMessage(), lastError, AllRetryAttemptsFailedError.errorType());
     }
 
-    /**
-     * Calculates the wait time with exponential backoff, capped at maxWaitTime.
-     *
-     * @param backOffFactor The multiplier for exponential backoff
-     * @param maxWaitTime   The maximum wait time cap
-     * @param interval      The current interval
-     * @return The calculated wait time, capped at maxWaitTime
-     */
     private static double getWaitTime(double backOffFactor, double maxWaitTime, double interval) {
         double waitTime = interval * backOffFactor;
         return Math.min(waitTime, maxWaitTime);
