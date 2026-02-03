@@ -93,7 +93,7 @@ public final class FtpRetryHelper {
 
             // Sleep before retry (convert seconds to milliseconds)
             try {
-                long sleepMs = (long) currentInterval * 1000;
+                long sleepMs = (long) (currentInterval * 1000);
                 Thread.sleep(sleepMs);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

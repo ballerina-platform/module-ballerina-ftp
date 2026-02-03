@@ -187,9 +187,9 @@ public type SocketConfig record {|
 # + maxWaitInterval - Maximum wait time cap in seconds
 public type RetryConfig record {|
     int count = 3;
-    float interval = 1.0;
-    float backOffFactor = 2.0;
-    float maxWaitInterval = 30.0;
+    decimal interval = 1.0;
+    decimal backOffFactor = 2.0;
+    decimal maxWaitInterval = 30.0;
 |};
 
 # Internal configuration for content to be written in put and append operations.

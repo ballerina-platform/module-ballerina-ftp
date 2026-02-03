@@ -25,6 +25,7 @@ import io.ballerina.runtime.api.types.PredefinedTypes;
 import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BArray;
+import io.ballerina.runtime.api.values.BDecimal;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -138,22 +139,24 @@ public class FtpClient {
             clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_ENABLED, true);
 
             long count = retryConfig.getIntValue(StringUtils.fromString(FtpConstants.RETRY_COUNT));
-            double interval = retryConfig.getFloatValue(StringUtils.fromString(FtpConstants.RETRY_INTERVAL));
-            double inputBackOffFactor = retryConfig.getFloatValue(
-                    StringUtils.fromString(FtpConstants.RETRY_BACKOFF_FACTOR));
-            double inputMaxWaitInterval = retryConfig.getFloatValue(
-                    StringUtils.fromString(FtpConstants.RETRY_MAX_WAIT_INTERVAL));
+            Object intervalObj = retryConfig.get(StringUtils.fromString(FtpConstants.RETRY_INTERVAL));
+            double interval = ((BDecimal) intervalObj).floatValue();
 
-            Object retryValidationError = validateRetryConfig(count, interval, inputBackOffFactor,
-                    inputMaxWaitInterval);
+            Object backOffFactorObj = retryConfig.get(StringUtils.fromString(FtpConstants.RETRY_BACKOFF_FACTOR));
+            double backOffFactor = ((BDecimal) backOffFactorObj).floatValue();
+            
+            Object maxWaitIntervalObj = retryConfig.get(StringUtils.fromString(FtpConstants.RETRY_MAX_WAIT_INTERVAL));
+            double maxWaitInterval = ((BDecimal) maxWaitIntervalObj).floatValue();
+
+            Object retryValidationError = validateRetryConfig(count, interval, backOffFactor, maxWaitInterval);
             if (retryValidationError != null) {
                 return retryValidationError;
             }
 
             clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_COUNT, count);
             clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_INTERVAL, interval);
-            clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_BACKOFF, inputBackOffFactor);
-            clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_MAX_WAIT, inputMaxWaitInterval);
+            clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_BACKOFF, backOffFactor);
+            clientEndpoint.addNativeData(FtpConstants.NATIVE_RETRY_MAX_WAIT, maxWaitInterval);
         }
 
         Map<String, String> authMap = FtpUtil.getAuthMap(config, protocol);
