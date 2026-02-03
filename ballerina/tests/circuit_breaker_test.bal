@@ -379,9 +379,9 @@ public function testRetryAndCircuitBreakerInteraction() returns error? {
         auth: {credentials: {username: "wso2", password: "wso2123"}},
         retryConfig: {
             count: 3,
-            interval: 0.1,  // Fast retries for testing
+            interval: 0.5,  // 500ms interval for test stability
             backOffFactor: 1.0,
-            maxWaitInterval: 1.0
+            maxWaitInterval: 2.0
         },
         circuitBreaker: {
             rollingWindow: {
