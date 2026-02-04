@@ -22,6 +22,11 @@ import java.time.Instant;
 
 /**
  * Tracks the health metrics of the circuit breaker using a sliding window of buckets.
+ * <p>
+ * This class is NOT thread-safe. All methods must be called within synchronized blocks
+ * from the CircuitBreaker class. The CircuitBreaker maintains synchronization at a higher
+ * level to ensure thread-safe access to CircuitHealth state.
+ * </p>
  */
 public class CircuitHealth {
     private final Bucket[] buckets;
@@ -83,8 +88,8 @@ public class CircuitHealth {
         int currentBucketId = getCurrentBucketId();
 
         // Reset buckets that have become stale
-        if (currentBucketId == lastUsedBucketId && idleTimeMillis > bucketSizeMillis) {
-            // Same bucket but stale - reset all
+        if (currentBucketId == lastUsedBucketId && idleTimeMillis > timeWindowMillis) {
+            // Same bucket but idle exceeded the full time window - reset all
             resetAllBuckets();
         } else if (currentBucketId < lastUsedBucketId) {
             // Wrapped around - reset from 0 to current and from lastUsed+1 to end

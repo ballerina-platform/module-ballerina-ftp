@@ -195,7 +195,7 @@ public type ServiceUnavailableError distinct Error;
 public type AllRetryAttemptsFailedError distinct Error;
 ```
 
-* `CircuitBreakerOpenError` - Error returned when the circuit breaker is in OPEN state. This indicates the FTP server is unavailable and requests are being blocked to prevent cascade failures. This is a subtype of `ServiceUnavailableError`.
+* `CircuitBreakerOpenError` - Error returned when the circuit breaker is in OPEN state. This indicates the FTP server is unavailable and requests are being blocked to prevent cascade failures. This is a distinct subtype of `ServiceUnavailableError`.
 ```ballerina
 public type CircuitBreakerOpenError distinct ServiceUnavailableError;
 ```
