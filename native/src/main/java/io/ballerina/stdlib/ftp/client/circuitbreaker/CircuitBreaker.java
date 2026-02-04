@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 /**
  * Circuit breaker implementation for FTP client operations.
@@ -57,69 +56,6 @@ public class CircuitBreaker {
         log.debug("Circuit breaker initialized with {} buckets, {}ms window, {}% failure threshold",
                 config.getNumberOfBuckets(), config.getTimeWindowMillis(),
                 config.getFailureThreshold() * 100);
-    }
-
-    /**
-     * Executes an operation with circuit breaker protection.
-     *
-     * @param operation The operation to execute
-     * @param <T>       The return type of the operation
-     * @return The result of the operation
-     * @throws Exception If the operation fails or circuit is open
-     */
-    public <T> T execute(Callable<T> operation) throws Exception {
-        synchronized (lock) {
-            updateState();
-
-            if (state == CircuitState.OPEN || (state == CircuitState.HALF_OPEN && trialRequestInProgress)) {
-                throw createServiceUnavailableError();
-            }
-            if (state == CircuitState.HALF_OPEN) {
-                trialRequestInProgress = true;
-            }
-
-            // Record the request
-            health.prepareRollingWindow();
-            health.recordRequest();
-        }
-
-        try {
-            T result = operation.call();
-            synchronized (lock) {
-                if (state == CircuitState.HALF_OPEN) {
-                    recordSuccess();
-                    state = CircuitState.CLOSED;
-                    trialRequestInProgress = false;
-                    health.resetAllBuckets();
-                    log.info("Circuit breaker transitioning from HALF_OPEN to CLOSED (trial succeeded)");
-                } else {
-                    recordSuccess();
-                    updateState();
-                }
-            }
-            return result;
-        } catch (Exception e) {
-            synchronized (lock) {
-                if (state == CircuitState.HALF_OPEN) {
-                    if (shouldCountAsFailure(e)) {
-                        recordFailure();
-                        state = CircuitState.OPEN;
-                        log.info("Circuit breaker transitioning from HALF_OPEN to OPEN (trial failed)");
-                    } else {
-                        recordSuccess();
-                        state = CircuitState.CLOSED;
-                        health.resetAllBuckets();
-                        log.info("Circuit breaker transitioning from HALF_OPEN to CLOSED (trial succeeded)");
-                    }
-                    trialRequestInProgress = false;
-                } else if (shouldCountAsFailure(e)) {
-                    recordFailure();
-                    log.debug("Circuit breaker recorded failure: {}", e.getMessage());
-                    updateState();
-                }
-            }
-            throw e;
-        }
     }
 
     /**
