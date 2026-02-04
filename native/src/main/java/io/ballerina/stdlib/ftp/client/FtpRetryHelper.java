@@ -52,6 +52,12 @@ public final class FtpRetryHelper {
             return result;
         }
 
+        // Circuit breaker open error should fail fast without retries
+        BError initialError = (BError) result;
+        if (isCircuitBreakerOpenError(initialError)) {
+            return initialError;
+        }
+
         // Check if retry is configured
         boolean isRetryEnabled = (boolean) clientConnector.getNativeData(FtpConstants.NATIVE_RETRY_ENABLED);
         if (!isRetryEnabled) {
@@ -64,7 +70,7 @@ public final class FtpRetryHelper {
         double backOffFactor = (double) clientConnector.getNativeData(FtpConstants.NATIVE_RETRY_BACKOFF);
         double maxWaitInterval = (double) clientConnector.getNativeData(FtpConstants.NATIVE_RETRY_MAX_WAIT);
 
-        BError lastError = (BError) result;
+        BError lastError = initialError;
         double currentInterval = interval;
 
         log.debug("Operation '{}' failed for path '{}', starting retry with count={}, interval={}, " +
@@ -101,6 +107,11 @@ public final class FtpRetryHelper {
             }
 
             lastError = (BError) result;
+
+            // Circuit breaker open error should fail fast without further retries
+            if (isCircuitBreakerOpenError(lastError)) {
+                return lastError;
+            }
         }
 
         // All retries exhausted
@@ -108,6 +119,11 @@ public final class FtpRetryHelper {
                 operationName, count, filePath);
         return FtpUtil.createError("Operation '" + operationName + "' failed after " + count +
                 " retry attempts: " + lastError.getMessage(), lastError, AllRetryAttemptsFailedError.errorType());
+    }
+
+    private static boolean isCircuitBreakerOpenError(BError error) {
+        String typeName = error.getType().getName();
+        return FtpConstants.CIRCUIT_BREAKER_OPEN_ERROR.equals(typeName);
     }
 
     private static double getWaitTime(double backOffFactor, double maxWaitTime, double interval) {
