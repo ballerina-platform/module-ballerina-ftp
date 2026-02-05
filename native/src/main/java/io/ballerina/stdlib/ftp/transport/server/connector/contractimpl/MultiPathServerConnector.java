@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -42,7 +43,7 @@ public class MultiPathServerConnector implements RemoteFileSystemServerConnector
     private static final Logger log = LoggerFactory.getLogger(MultiPathServerConnector.class);
 
     private final FtpListener ftpListener;
-    private final Map<String, RemoteFileSystemConsumer> pathConsumers = new HashMap<>();
+    private final Map<String, RemoteFileSystemConsumer> pathConsumers = new ConcurrentHashMap<>();
     private final Map<String, Object> baseProperties;
     private AtomicBoolean isPollOperationOccupied = new AtomicBoolean(false);
     private FileSystemManager fileSystemManager;

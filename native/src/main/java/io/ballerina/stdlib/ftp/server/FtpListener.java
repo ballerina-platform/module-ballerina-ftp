@@ -57,6 +57,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
@@ -79,10 +81,10 @@ public class FtpListener implements RemoteFileSystemListener {
     private static final Logger log = LoggerFactory.getLogger(FtpListener.class);
     private final Runtime runtime;
     private Environment environment = null;
-    private Map<String, BObject> registeredServices = new HashMap<>();
-    private Map<String, ServiceConfiguration> serviceConfigurations = new HashMap<>();
-    private Map<String, BObject> pathToService = new HashMap<>();
-    private boolean usesServiceLevelConfig = false;
+    private Map<String, BObject> registeredServices = new ConcurrentHashMap<>();
+    private Map<String, ServiceConfiguration> serviceConfigurations = new ConcurrentHashMap<>();
+    private Map<String, BObject> pathToService = new ConcurrentHashMap<>();
+    private AtomicBoolean usesServiceLevelConfig = new AtomicBoolean(false);
     private BObject caller;
     private FileSystemManager fileSystemManager;
     private FileSystemOptions fileSystemOptions;
@@ -120,7 +122,7 @@ public class FtpListener implements RemoteFileSystemListener {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
 
             if (runtime != null) {
-                if (usesServiceLevelConfig && event.getSourcePath() != null) {
+                if (usesServiceLevelConfig.get() && event.getSourcePath() != null) {
                     // Path-keyed routing: dispatch only to the service monitoring this path
                     BObject service = pathToService.get(event.getSourcePath());
                     if (service != null) {
@@ -520,7 +522,7 @@ public class FtpListener implements RemoteFileSystemListener {
         }
         serviceConfigurations.put(path, config);
         pathToService.put(path, service);
-        usesServiceLevelConfig = true;
+        usesServiceLevelConfig.set(true);
         return true;
     }
 
@@ -540,7 +542,7 @@ public class FtpListener implements RemoteFileSystemListener {
      * @return true if at least one service uses @ftp:ServiceConfig annotation
      */
     public boolean usesServiceLevelConfig() {
-        return usesServiceLevelConfig;
+        return usesServiceLevelConfig.get();
     }
 
     /**
