@@ -19,7 +19,6 @@
 package io.ballerina.stdlib.ftp.plugin;
 
 import io.ballerina.compiler.api.SemanticModel;
-import io.ballerina.compiler.api.symbols.ModuleSymbol;
 import io.ballerina.compiler.api.symbols.Symbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.Node;
@@ -34,7 +33,6 @@ import java.util.Optional;
 
 import static io.ballerina.compiler.syntax.tree.SyntaxKind.ERROR_TYPE_DESC;
 import static io.ballerina.compiler.syntax.tree.SyntaxKind.QUALIFIED_NAME_REFERENCE;
-import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CALLER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ERROR_PARAM;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_ERROR_FIRST_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_ERROR_SECOND_PARAMETER;
@@ -88,7 +86,7 @@ public class FtpOnErrorValidator {
         // Validate 2nd parameter if present - must be Caller
         if (paramCount == 2) {
             ParameterNode secondParamNode = parameters.get(1);
-            if (!validateCallerParam((RequiredParameterNode) secondParamNode)) {
+            if (!PluginUtils.validateCallerParameter(secondParamNode, context)) {
                 context.reportDiagnostic(getDiagnostic(INVALID_ON_ERROR_SECOND_PARAMETER,
                         DiagnosticSeverity.ERROR, secondParamNode.location()));
             }
@@ -117,19 +115,4 @@ public class FtpOnErrorValidator {
         }
     }
 
-    private boolean validateCallerParam(RequiredParameterNode requiredParameterNode) {
-        Node parameterTypeNode = requiredParameterNode.typeName();
-        SemanticModel semanticModel = context.semanticModel();
-        Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
-        if (paramSymbol.isPresent()) {
-            Optional<ModuleSymbol> moduleSymbol = paramSymbol.get().getModule();
-            if (moduleSymbol.isPresent()) {
-                String paramName = paramSymbol.get().getName().isPresent() ? paramSymbol.get().getName().get() : "";
-                if (validateModuleId(moduleSymbol.get()) && paramName.equals(CALLER)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 }
