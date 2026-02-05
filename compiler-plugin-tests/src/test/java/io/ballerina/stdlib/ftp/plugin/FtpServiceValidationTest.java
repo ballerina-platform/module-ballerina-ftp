@@ -50,8 +50,11 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.I
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_FILE_DELETE_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS_ON_FILE_DELETE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.BOTH_ON_FILE_DELETE_METHODS_NOT_ALLOWED;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_ERROR_SECOND_PARAMETER;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_ERROR_MUST_BE_REMOTE;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS_ON_ERROR;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS_ON_FILE_DELETED;
 
 /**
@@ -728,6 +731,66 @@ public class FtpServiceValidationTest {
         Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
         assertDiagnostic(diagnostic, MANDATORY_PARAMETER_NOT_FOUND,
                 "Mandatory parameter missing for onFileDelete. Expected string.");
+    }
+
+    // ==================== onError Handler Tests ====================
+
+    @Test(description = "Validation with valid onError handler (Error only)")
+    public void testValidOnErrorService1() {
+        Package currentPackage = loadPackage("valid_on_error_service_1");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
+    @Test(description = "Validation with valid onError handler (Error and Caller)")
+    public void testValidOnErrorService2() {
+        Package currentPackage = loadPackage("valid_on_error_service_2");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
+    @Test(description = "Validation with valid onError handler (error)")
+    public void testValidOnErrorService3() {
+        Package currentPackage = loadPackage("valid_on_error_service_3");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
+    @Test(description = "Validation when onError method is not remote")
+    public void testInvalidOnErrorService1() {
+        Package currentPackage = loadPackage("invalid_on_error_service_1");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, ON_ERROR_MUST_BE_REMOTE,
+                "onError method must be remote.");
+    }
+
+    @Test(description = "Validation when onError has invalid second parameter (not Caller)")
+    public void testInvalidOnErrorService3() {
+        Package currentPackage = loadPackage("invalid_on_error_service_3");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, INVALID_ON_ERROR_SECOND_PARAMETER,
+                "Invalid second parameter for onError. Second parameter must be ftp:Caller.");
+    }
+
+    @Test(description = "Validation when onError has too many parameters")
+    public void testInvalidOnErrorService4() {
+        Package currentPackage = loadPackage("invalid_on_error_service_4");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 1);
+        Diagnostic diagnostic = (Diagnostic) diagnosticResult.errors().toArray()[0];
+        assertDiagnostic(diagnostic, TOO_MANY_PARAMETERS_ON_ERROR,
+                "Too many parameters for onError. Accepts at most 2 parameters: " +
+                "(error, caller?).");
     }
 
 }
