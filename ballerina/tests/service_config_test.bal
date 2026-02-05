@@ -326,3 +326,123 @@ public function testServiceConfigRelativePath() returns error? {
     };
     test:assertEquals(relConfig.path, "relative/subdir");
 }
+
+// ===========================================================================
+// TEST: Duplicate path registration error – verifying error handling
+// ===========================================================================
+@test:Config {}
+public function testDuplicatePathRegistrationError() returns error? {
+    // This test verifies that attempting to register two services with the same
+    // path on the same listener results in an error.
+    
+    Service duplicateService1 = service object {
+        remote function onFileText(string content, FileInfo fileInfo) returns error? {
+            log:printInfo(string `[Duplicate1] received: ${fileInfo.name}`);
+        }
+    };
+
+    Service duplicateService2 = service object {
+        remote function onFileText(string content, FileInfo fileInfo) returns error? {
+            log:printInfo(string `[Duplicate2] received: ${fileInfo.name}`);
+        }
+    };
+
+    Listener duplicateListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        port: 21212,
+        pollingInterval: 2
+    });
+
+    // Attach first service with path /home/in/duplicate-test
+    check duplicateListener.attach(duplicateService1, {path: "/home/in/duplicate-test"});
+    
+    // Attempt to attach second service with the same path - should fail
+    error? attachResult = duplicateListener.attach(duplicateService2, {path: "/home/in/duplicate-test"});
+    
+    test:assertTrue(attachResult is error, "Attaching a service with duplicate path should return an error");
+    
+    if attachResult is error {
+        string errorMsg = attachResult.message();
+        test:assertTrue(errorMsg.includes("Duplicate path"), 
+            "Error message should mention duplicate path, got: " + errorMsg);
+    }
+    
+    // Clean up
+    check duplicateListener.gracefulStop();
+}
+
+// ===========================================================================
+// TEST: Mixed services error – some with @ServiceConfig, some without
+// ===========================================================================
+@test:Config {}
+public function testMixedServicesError() returns error? {
+    // This test verifies that mixing services with and without @ServiceConfig
+    // annotation on the same listener results in an error.
+    
+    Service annotatedService = service object {
+        remote function onFileText(string content, FileInfo fileInfo) returns error? {
+            log:printInfo(string `[Annotated] received: ${fileInfo.name}`);
+        }
+    };
+
+    Service nonAnnotatedService = service object {
+        remote function onFileText(string content, FileInfo fileInfo) returns error? {
+            log:printInfo(string `[NonAnnotated] received: ${fileInfo.name}`);
+        }
+    };
+
+    Listener mixedListener = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        port: 21212,
+        pollingInterval: 2
+    });
+
+    // Attach service WITH @ServiceConfig annotation
+    check mixedListener.attach(annotatedService, {path: "/home/in/mixed-test-annotated"});
+    
+    // Attempt to attach service WITHOUT @ServiceConfig - should fail
+    error? attachResult = mixedListener.attach(nonAnnotatedService);
+    
+    test:assertTrue(attachResult is error, 
+        "Attaching a non-annotated service when annotated services exist should return an error");
+    
+    if attachResult is error {
+        string errorMsg = attachResult.message();
+        test:assertTrue(errorMsg.includes("ServiceConfig") || errorMsg.includes("annotation"), 
+            "Error message should mention ServiceConfig or annotation, got: " + errorMsg);
+    }
+    
+    // Clean up
+    check mixedListener.gracefulStop();
+    
+    // Now test the opposite: attach non-annotated first, then annotated
+    Listener mixedListener2 = check new ({
+        protocol: FTP,
+        host: "127.0.0.1",
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        port: 21212,
+        pollingInterval: 2
+    });
+
+    // Attach service WITHOUT @ServiceConfig annotation first
+    check mixedListener2.attach(nonAnnotatedService);
+    
+    // Attempt to attach service WITH @ServiceConfig - should fail
+    error? attachResult2 = mixedListener2.attach(annotatedService, {path: "/home/in/mixed-test-annotated-2"});
+    
+    test:assertTrue(attachResult2 is error, 
+        "Attaching an annotated service when non-annotated services exist should return an error");
+    
+    if attachResult2 is error {
+        string errorMsg = attachResult2.message();
+        test:assertTrue(errorMsg.includes("ServiceConfig") || errorMsg.includes("annotation"), 
+            "Error message should mention ServiceConfig or annotation, got: " + errorMsg);
+    }
+    
+    // Clean up
+    check mixedListener2.gracefulStop();
+}
