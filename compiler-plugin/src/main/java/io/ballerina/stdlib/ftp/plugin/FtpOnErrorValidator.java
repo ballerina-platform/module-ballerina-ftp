@@ -20,19 +20,20 @@ package io.ballerina.stdlib.ftp.plugin;
 
 import io.ballerina.compiler.api.SemanticModel;
 import io.ballerina.compiler.api.symbols.Symbol;
+import io.ballerina.compiler.api.symbols.TypeDefinitionSymbol;
+import io.ballerina.compiler.api.symbols.TypeDescKind;
+import io.ballerina.compiler.api.symbols.TypeReferenceTypeSymbol;
+import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
-import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
-import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
-import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 
 import java.util.Optional;
 
-import static io.ballerina.compiler.syntax.tree.SyntaxKind.ERROR_TYPE_DESC;
-import static io.ballerina.compiler.syntax.tree.SyntaxKind.QUALIFIED_NAME_REFERENCE;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.PACKAGE_ORG;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.PACKAGE_PREFIX;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ERROR_PARAM;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_ERROR_FIRST_PARAMETER;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.INVALID_ON_ERROR_SECOND_PARAMETER;
@@ -40,7 +41,6 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.O
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.TOO_MANY_PARAMETERS_ON_ERROR;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.getDiagnostic;
 import static io.ballerina.stdlib.ftp.plugin.PluginUtils.isRemoteFunction;
-import static io.ballerina.stdlib.ftp.plugin.PluginUtils.validateModuleId;
 
 /**
  * Validates the onError remote function in FTP service.
@@ -97,22 +97,52 @@ public class FtpOnErrorValidator {
     }
 
     private void validateErrorParameter(ParameterNode parameterNode) {
-        SyntaxKind paramSyntaxKind = ((RequiredParameterNode) parameterNode).typeName().kind();
+        Optional<TypeSymbol> paramType = PluginUtils.getParameterTypeSymbol(parameterNode, context);
+        if (paramType.isEmpty()) {
+            context.reportDiagnostic(getDiagnostic(INVALID_ON_ERROR_FIRST_PARAMETER,
+                    DiagnosticSeverity.ERROR, parameterNode.location()));
+            return;
+        }
+
         SemanticModel semanticModel = context.semanticModel();
-        if (paramSyntaxKind.equals(QUALIFIED_NAME_REFERENCE)) {
-            Node parameterTypeNode = ((RequiredParameterNode) parameterNode).typeName();
-            Optional<Symbol> paramSymbol = semanticModel.symbol(parameterTypeNode);
-            if (paramSymbol.isEmpty() || paramSymbol.get().getName().isEmpty() ||
-                    !paramSymbol.get().getName().get().equals(ERROR_PARAM) ||
-                    paramSymbol.get().getModule().isEmpty() ||
-                    !validateModuleId(paramSymbol.get().getModule().get())) {
-                context.reportDiagnostic(getDiagnostic(INVALID_ON_ERROR_FIRST_PARAMETER,
-                        DiagnosticSeverity.ERROR, parameterNode.location()));
-            }
-        } else if (!paramSyntaxKind.equals(ERROR_TYPE_DESC)) {
+        TypeSymbol normalizedParamType = unwrapTypeReference(paramType.get());
+        boolean isError = isSameType(normalizedParamType, semanticModel.types().ERROR);
+        boolean isFtpErrorSubtype = findFtpErrorTypeSymbol(semanticModel, "")
+                .map(this::unwrapTypeReference)
+                .map(normalizedParamType::subtypeOf)
+                .orElse(false);
+        if (!isError && !isFtpErrorSubtype) {
             context.reportDiagnostic(getDiagnostic(INVALID_ON_ERROR_FIRST_PARAMETER,
                     DiagnosticSeverity.ERROR, parameterNode.location()));
         }
+    }
+
+    private Optional<TypeSymbol> findFtpErrorTypeSymbol(SemanticModel semanticModel, String version) {
+        Optional<Symbol> ftpErrorSymbol = semanticModel.types()
+                .getTypeByName(PACKAGE_ORG, PACKAGE_PREFIX, version, ERROR_PARAM);
+        if (ftpErrorSymbol.isEmpty()) {
+            return Optional.empty();
+        }
+        Symbol symbol = ftpErrorSymbol.get();
+        if (symbol instanceof TypeDefinitionSymbol typeDefinitionSymbol) {
+            return Optional.of(typeDefinitionSymbol.typeDescriptor());
+        }
+        if (symbol instanceof TypeSymbol typeSymbol) {
+            return Optional.of(typeSymbol);
+        }
+        return Optional.empty();
+    }
+
+    private boolean isSameType(TypeSymbol left, TypeSymbol right) {
+        return left.subtypeOf(right) && right.subtypeOf(left);
+    }
+
+    private TypeSymbol unwrapTypeReference(TypeSymbol typeSymbol) {
+        if (typeSymbol.typeKind() == TypeDescKind.TYPE_REFERENCE &&
+                typeSymbol instanceof TypeReferenceTypeSymbol typeReferenceTypeSymbol) {
+            return typeReferenceTypeSymbol.typeDescriptor();
+        }
+        return typeSymbol;
     }
 
 }

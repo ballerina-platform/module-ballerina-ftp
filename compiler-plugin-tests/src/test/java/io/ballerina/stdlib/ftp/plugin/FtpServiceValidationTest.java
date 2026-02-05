@@ -759,6 +759,14 @@ public class FtpServiceValidationTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
+    @Test(description = "Validation with valid onError handler (ftp:ContentBindingError subtype)")
+    public void testValidOnErrorService4() {
+        Package currentPackage = loadPackage("valid_on_error_service_4");
+        PackageCompilation compilation = currentPackage.getCompilation();
+        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
+        Assert.assertEquals(diagnosticResult.errors().size(), 0);
+    }
+
     @Test(description = "Validation when onError method is not remote")
     public void testInvalidOnErrorService1() {
         Package currentPackage = loadPackage("invalid_on_error_service_1");
