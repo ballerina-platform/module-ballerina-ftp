@@ -47,11 +47,13 @@ public class FormatMethodsHolder {
     private final BObject service;
     private final Map<String, MethodType> annotationPatternToMethod;
     private final Map<String, MethodType> availableContentMethods;
+    private final MethodType onErrorMethod;
 
     public FormatMethodsHolder(BObject service) {
         this.service = service;
         this.annotationPatternToMethod = new HashMap<>();
         this.availableContentMethods = new HashMap<>();
+        this.onErrorMethod = FtpUtil.getOnErrorMethod(service).orElse(null);
         initializeMethodMappings();
     }
 
@@ -174,5 +176,23 @@ public class FormatMethodsHolder {
      */
     public boolean hasContentMethods() {
         return !availableContentMethods.isEmpty();
+    }
+
+    /**
+     * Gets the onError method if it exists in the service.
+     *
+     * @return Optional containing the onError MethodType
+     */
+    public Optional<MethodType> getOnErrorMethod() {
+        return Optional.ofNullable(onErrorMethod);
+    }
+
+    /**
+     * Checks if an onError handler is available.
+     *
+     * @return true if onError method is available
+     */
+    public boolean hasOnErrorMethod() {
+        return onErrorMethod != null;
     }
 }

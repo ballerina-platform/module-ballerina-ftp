@@ -40,8 +40,6 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 
 import static io.ballerina.lib.data.csvdata.csv.Native.parseBytes;
-import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
-import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.Error;
 
 /**
  * Utility class for converting file content to various Ballerina types using data binding modules.
@@ -83,23 +81,27 @@ public final class FtpContentConverter {
      *
      * @param content    The byte array content
      * @param targetType The target Ballerina type for data binding
-     * @return Ballerina JSON object or BError
+     * @param laxDataBinding Whether to allow lax data binding
+     * @param filePath   The file path for error reporting
+     * @return Ballerina JSON object or ContentBindingError
      */
-    public static Object convertBytesToJson(byte[] content, Type targetType, boolean laxDataBinding) {
+    public static Object convertBytesToJson(byte[] content, Type targetType, boolean laxDataBinding, String filePath) {
         try {
             BArray byteArray = ValueCreator.createArrayValue(content);
             BMap<BString, Object> options = createJsonParseOptions(laxDataBinding);
             BTypedesc typedesc = ValueCreator.createTypedescValue(targetType);
 
             Object result = io.ballerina.lib.data.jsondata.json.Native.parseBytes(byteArray, options, typedesc);
-            if (result instanceof BError) {
-                log.error("Failed to parse JSON content: {}", ((BError) result).getMessage());
-                return FtpUtil.createError(((BError) result).getErrorMessage().getValue(), FTP_ERROR);
+            if (result instanceof BError bError) {
+                log.error("Failed to parse JSON content: {}", bError.getMessage());
+                return FtpUtil.createContentBindingError(bError.getErrorMessage().getValue(), bError, filePath, 
+                content);
             }
             return result;
         } catch (Exception e) {
             log.error("Error converting bytes to JSON", e);
-            return FtpUtil.createError("Failed to parse JSON content: " + e.getMessage(), Error.errorType());
+            return FtpUtil.createContentBindingError("Failed to parse JSON content: " + e.getMessage(), e,
+                    filePath, content);
         }
     }
 
@@ -108,9 +110,11 @@ public final class FtpContentConverter {
      *
      * @param content    The byte array content
      * @param targetType The target Ballerina type for data binding
-     * @return Ballerina XML object or BError
+     * @param laxDataBinding Whether to allow lax data binding
+     * @param filePath   The file path for error reporting
+     * @return Ballerina XML object or ContentBindingError
      */
-    public static Object convertBytesToXml(byte[] content, Type targetType, boolean laxDataBinding) {
+    public static Object convertBytesToXml(byte[] content, Type targetType, boolean laxDataBinding, String filePath) {
         try {
             if (targetType.getQualifiedName().equals("xml")) {
                 return XmlUtils.parse(StringUtils.fromString(new String(content, StandardCharsets.UTF_8)));
@@ -119,24 +123,30 @@ public final class FtpContentConverter {
             BMap<BString, Object> mapValue = createXmlParseOptions(laxDataBinding);
             Object bXml = Native.parseBytes(
                     ValueCreator.createArrayValue(content), mapValue, ValueCreator.createTypedescValue(targetType));
-            if (bXml instanceof BError) {
-                return FtpUtil.createError(((BError) bXml).getErrorMessage().getValue(), FTP_ERROR);
+            if (bXml instanceof BError bError) {
+                return FtpUtil.createContentBindingError(bError.getErrorMessage().getValue(), bError, filePath, 
+                content);
             }
             return bXml;
         } catch (BError e) {
-            return FtpUtil.createError(e.getErrorMessage().getValue(), FTP_ERROR);
+            return FtpUtil.createContentBindingError(e.getErrorMessage().getValue(), e, filePath, content);
         }
     }
 
     /**
      * Converts byte array to CSV using data.csvdata module.
      *
+     * @param env        The Ballerina environment
      * @param content    The byte array content
      * @param targetType The target Ballerina type for data binding
-     * @return Ballerina CSV data (string[][], record[][], or custom type) or BError
+     * @param laxDataBinding Whether to allow lax data binding
+     * @param csvFailSafeConfigs CSV fail-safe configuration
+     * @param fileNamePrefix The file name prefix for error log
+     * @param filePath   The file path for error reporting
+     * @return Ballerina CSV data (string[][], record[][], or custom type) or ContentBindingError
      */
     public static Object convertBytesToCsv(Environment env, byte[] content, Type targetType, boolean laxDataBinding,
-                                           BMap<?, ?> csvFailSafeConfigs, String fileNamePrefix) {
+                                           BMap<?, ?> csvFailSafeConfigs, String fileNamePrefix, String filePath) {
         try {
             BArray byteArray = ValueCreator.createArrayValue(content);
             BMap<BString, Object> options = createCsvParseOptions(laxDataBinding, csvFailSafeConfigs, fileNamePrefix);
@@ -146,16 +156,17 @@ public final class FtpContentConverter {
 
             Object result = parseBytes(env, byteArray, options, typedesc);
 
-            if (result instanceof BError) {
-                log.error("Failed to parse CSV content: {}", ((BError) result).getMessage());
-                return FtpUtil.createError("Failed to parse CSV content: " + ((BError) result).getErrorMessage(),
-                        Error.errorType());
+            if (result instanceof BError bError) {
+                log.error("Failed to parse CSV content: {}", bError.getMessage());
+                return FtpUtil.createContentBindingError("Failed to parse CSV content: " + bError.getErrorMessage(),
+                        bError, filePath, content);
             }
 
             return result;
         } catch (Exception e) {
             log.error("Error converting bytes to CSV", e);
-            return FtpUtil.createError("Failed to parse CSV content: " + e.getMessage(), Error.errorType());
+            return FtpUtil.createContentBindingError("Failed to parse CSV content: " + e.getMessage(), e,
+                    filePath, content);
         }
     }
 

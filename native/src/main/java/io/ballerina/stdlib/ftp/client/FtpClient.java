@@ -393,7 +393,8 @@ public class FtpClient {
                 () -> {
                     Object content = getAllContent(env, clientConnector, filePath);
                     if (content instanceof byte[]) {
-                        return convertBytesToJson((byte[]) content, typeDesc.getDescribingType(), laxDataBinding);
+                        return convertBytesToJson((byte[]) content, typeDesc.getDescribingType(), laxDataBinding,
+                                filePath.getValue());
                     }
                     return content;
                 },
@@ -409,7 +410,8 @@ public class FtpClient {
                 () -> {
                     Object content = getAllContent(env, clientConnector, filePath);
                     if (content instanceof byte[]) {
-                        return convertBytesToXml((byte[]) content, typeDesc.getDescribingType(), laxDataBinding);
+                        return convertBytesToXml((byte[]) content, typeDesc.getDescribingType(), laxDataBinding,
+                                filePath.getValue());
                     }
                     return content;
                 },
@@ -428,7 +430,7 @@ public class FtpClient {
                     Object content = getAllContent(env, clientConnector, filePath);
                     if (content instanceof byte[]) {
                         return convertBytesToCsv(env, (byte[]) content, typeDesc.getDescribingType(),
-                                laxDataBinding, csvFailSafe, fileNamePrefix);
+                                laxDataBinding, csvFailSafe, fileNamePrefix, filePath.getValue());
                     }
                     return content;
                 },
