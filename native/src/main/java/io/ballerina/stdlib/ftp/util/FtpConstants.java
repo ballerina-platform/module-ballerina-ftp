@@ -173,6 +173,10 @@ public class FtpConstants {
     public static final String ON_FILE_CSV_REMOTE_FUNCTION = "onFileCsv";
     public static final String ON_FILE_DELETE_REMOTE_FUNCTION = "onFileDelete";
     public static final String ON_FILE_DELETED_REMOTE_FUNCTION = "onFileDeleted";
+    public static final String ON_ERROR_REMOTE_FUNCTION = "onError";
+
+    // Error types
+    public static final String CONTENT_BINDING_ERROR = "ContentBindingError";
 
     public static final String APACHE_VFS2_PACKAGE_NAME = "org.apache.commons.vfs2";
     public static final String BALLERINA_FTP_PACKAGE_NAME = "io.ballerina.stdlib.ftp";

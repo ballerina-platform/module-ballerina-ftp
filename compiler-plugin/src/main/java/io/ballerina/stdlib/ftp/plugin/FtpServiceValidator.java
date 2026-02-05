@@ -40,6 +40,7 @@ import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.M
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.NO_VALID_REMOTE_METHOD;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.ON_FILE_CHANGE_DEPRECATED;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.CompilationErrors.RESOURCE_FUNCTION_NOT_ALLOWED;
+import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_ERROR_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CHANGE_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_CSV_FUNC;
 import static io.ballerina.stdlib.ftp.plugin.PluginConstants.ON_FILE_DELETE_FUNC;
@@ -76,6 +77,7 @@ public class FtpServiceValidator {
         FunctionDefinitionNode onFileChange = null;
         FunctionDefinitionNode onFileDelete = null;
         FunctionDefinitionNode onFileDeleted = null;
+        FunctionDefinitionNode onError = null;
         List<FunctionDefinitionNode> contentMethods = new ArrayList<>();
         List<String> contentMethodNames = new ArrayList<>();
 
@@ -115,6 +117,9 @@ public class FtpServiceValidator {
                 case ON_FILE_CSV_FUNC:
                     contentMethods.add(functionDefinitionNode);
                     contentMethodNames.add(funcName);
+                    break;
+                case ON_ERROR_FUNC:
+                    onError = functionDefinitionNode;
                     break;
                 default:
                     // Invalid remote function name
@@ -168,6 +173,11 @@ public class FtpServiceValidator {
         if (onFileDeleted != null) {
             new FtpFileDeletedValidator(context, onFileDeleted,
                     FtpFileDeletedValidator.DeletionMethodType.ON_FILE_DELETED).validate();
+        }
+
+        // Validate error handler
+        if (onError != null) {
+            new FtpOnErrorValidator(context, onError).validate();
         }
     }
 }

@@ -1,0 +1,10 @@
+[package]
+org = "ftp_test"
+name = "valid_on_error_service_4"
+version = "0.1.0"
+
+[[dependency]]
+org="ballerina"
+name="ftp"
+version="2.16.1"
+repository="local"

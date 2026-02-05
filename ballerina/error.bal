@@ -37,6 +37,24 @@ public type InvalidConfigError distinct Error;
 # temporary file locks (450), or server-side processing errors (451).
 public type ServiceUnavailableError distinct Error;
 
+# Represents an error that occurs when file content cannot be converted to the expected type.
+# This includes JSON/XML parsing errors, CSV format errors, and record type binding failures.
+# This error type is applicable to both Client operations and Listener callbacks.
+#
+# When used with the Listener, if an `onError` remote function is defined in the service,
+# it will be invoked with this error type, allowing for custom error handling such as
+# moving failed files to an error folder or sending notifications.
+public type ContentBindingError distinct Error & error<ContentBindingErrorDetail>;
+
+# Detail record for ContentBindingError providing additional context about the binding failure.
+#
+# + filePath - The file path that caused the error
+# + content - The raw file content as bytes that failed to bind
+public type ContentBindingErrorDetail record {|
+    string filePath?;
+    byte[] content?;
+|};
+
 # Represents an error that occurs when all retry attempts have been exhausted.
 # This error wraps the last failure encountered during retry attempts.
 public type AllRetryAttemptsFailedError distinct Error;
