@@ -1,4 +1,4 @@
 [package]
 org = "ftp_test"
-name = "invalid_on_error_service_2"
+name = "valid_on_error_service_3"
 version = "0.1.0"

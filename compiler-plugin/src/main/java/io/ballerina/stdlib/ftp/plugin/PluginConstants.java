@@ -128,11 +128,11 @@ public final class PluginConstants {
                 "Use only 'onFileDelete' as 'onFileDeleted' is deprecated.", "FTP_133"),
         ON_ERROR_MUST_BE_REMOTE("onError method must be remote.", "FTP_134"),
         INVALID_ON_ERROR_FIRST_PARAMETER("Invalid first parameter for onError. First parameter must be " +
-                "'ftp:Error'.", "FTP_135"),
+                "'ftp:Error' or 'error'.", "FTP_135"),
         INVALID_ON_ERROR_SECOND_PARAMETER("Invalid second parameter for onError. " +
-                "Second parameter must be 'ftp:Caller'.", "FTP_137"),
+                "Second parameter must be 'ftp:Caller'.", "FTP_136"),
         TOO_MANY_PARAMETERS_ON_ERROR("Too many parameters for onError. Accepts at most 2 parameters: " +
-                "(error, caller?).", "FTP_138");
+                "(error, caller?).", "FTP_137");
         private final String error;
         private final String errorCode;
 

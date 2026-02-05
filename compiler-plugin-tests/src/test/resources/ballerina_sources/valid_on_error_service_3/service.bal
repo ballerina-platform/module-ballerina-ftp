@@ -25,7 +25,7 @@ listener ftp:Listener remoteServer = check new ({
     fileNamePattern: "(.*)"
 });
 
-// Invalid: first parameter is not ContentBindingError
+// Valid: onError handler with plain error type (not ftp:Error)
 service "OnErrorService" on remoteServer {
     remote function onFileJson(json content, ftp:FileInfo fileInfo) returns error? {
         return;

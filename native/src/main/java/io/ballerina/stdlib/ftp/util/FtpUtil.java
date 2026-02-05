@@ -635,8 +635,13 @@ public class FtpUtil {
         String safeMessage = maskUrlPassword(message);
         BError causeError = null;
         if (cause != null) {
-            causeError = cause instanceof BError ? (BError) cause :
-                    ErrorCreator.createError(StringUtils.fromString(maskUrlPassword(cause.getMessage())));
+            if (cause instanceof BError) {
+                causeError = (BError) cause;
+            } else {
+                String causeMsg = cause.getMessage() != null ? cause.getMessage() : "Unknown error";
+                String safeCauseMsg = maskUrlPassword(causeMsg);
+                causeError = ErrorCreator.createError(StringUtils.fromString(safeCauseMsg));
+            }
         }
 
         return ErrorCreator.createError(ModuleUtils.getModule(), FtpConstants.CONTENT_BINDING_ERROR,
