@@ -102,6 +102,10 @@ test {
     useTestNG() {
         suites 'src/test/resources/testng.xml'
     }
+    testLogging {
+        showStandardStreams = true
+        events "passed", "failed", "skipped", "standardOut", "standardError"
+    }
 }
 
 test.dependsOn ":ftp-ballerina:build"
