@@ -22,8 +22,10 @@ import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.concurrent.StrandMetadata;
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
+import io.ballerina.runtime.api.types.ObjectType;
 import io.ballerina.runtime.api.types.Parameter;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
@@ -36,10 +38,13 @@ import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
 import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
+import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.MultiPathServerConnector;
 import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.RemoteFileSystemServerConnectorImpl;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.ftp.util.ModuleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,9 +73,13 @@ import static io.ballerina.stdlib.ftp.util.FtpUtil.getOnFileChangeMethod;
  */
 public class FtpListenerHelper {
 
+    private static final Logger log = LoggerFactory.getLogger(FtpListenerHelper.class);
+
     private static final String CLOSE_METHOD = "close";
     private static final String CLOSE_CALLER_ERROR = "Error occurred while closing the caller: ";
     private static final BString CLIENT_INSTANCE = StringUtils.fromString("client");
+    private static final String BASE_PARAMS_KEY = "BASE_CONNECTOR_PARAMS";
+    private static final String FTP_LISTENER_KEY = "FTP_LISTENER_INSTANCE";
 
     public static final BString CSV_FAIL_SAFE = StringUtils.fromString("csvFailSafe");
 
@@ -114,8 +123,10 @@ public class FtpListenerHelper {
             BMap<?, ?> csvFailSafe = serviceEndpointConfig.getMapValue(CSV_FAIL_SAFE);
             listener.setCsvFailSafeConfigs(csvFailSafe);
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
-            // This is a temporary solution
 
+            // Store base params and listener for creating multi-path connector later if needed
+            ftpListener.addNativeData(BASE_PARAMS_KEY, paramMap);
+            ftpListener.addNativeData(FTP_LISTENER_KEY, listener);
             ftpListener.addNativeData(FTP_SERVICE_ENDPOINT_CONFIG, serviceEndpointConfig);
             return null;
         } catch (FtpInvalidConfigException e) {
@@ -129,10 +140,77 @@ public class FtpListenerHelper {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static Object register(BObject ftpListener, BObject service) {
         RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) ftpListener.getNativeData(
                 FtpConstants.FTP_SERVER_CONNECTOR);
         FtpListener listener = ftpConnector.getFtpListener();
+
+        // Check for @ftp:ServiceConfig annotation
+        Optional<BMap<BString, Object>> serviceConfigAnnotation = getServiceConfigAnnotation(service);
+
+        // Validate consistency: all services must use annotation or none
+        if (listener.getServiceCount() > 0) {
+            boolean previousUsesConfig = listener.usesServiceLevelConfig();
+            boolean currentUsesConfig = serviceConfigAnnotation.isPresent();
+
+            if (previousUsesConfig != currentUsesConfig) {
+                String errorMsg = currentUsesConfig
+                        ? "All services attached to a listener must use @ftp:ServiceConfig annotation when any " +
+                          "service uses it. Previous services did not use the annotation."
+                        : "All services attached to a listener must use @ftp:ServiceConfig annotation when any " +
+                          "service uses it. The new service is missing the annotation.";
+                return FtpUtil.createError(errorMsg, null, InvalidConfigError.errorType());
+            }
+        }
+
+        // If service has @ftp:ServiceConfig, extract and store the configuration
+        if (serviceConfigAnnotation.isPresent()) {
+            try {
+                ServiceConfiguration config = parseServiceConfiguration(serviceConfigAnnotation.get());
+
+                // Path must be unique across services on the same listener
+                if (!listener.addServiceConfiguration(service, config)) {
+                    return FtpUtil.createError(
+                            "Duplicate path '" + config.getPath() + "' in @ftp:ServiceConfig. " +
+                            "Each service must monitor a unique path.", null, InvalidConfigError.errorType());
+                }
+                log.debug("Service registered with path: {}", config.getPath());
+
+                // Switch to multi-path connector if this is the first @ServiceConfig service
+                if (!listener.usesServiceLevelConfig() || !(ftpConnector instanceof MultiPathServerConnector)) {
+                    Object switchResult = switchToMultiPathConnector(ftpListener, listener);
+                    if (switchResult != null) {
+                        return switchResult;
+                    }
+                    ftpConnector = (RemoteFileSystemServerConnector) ftpListener.getNativeData(
+                            FtpConstants.FTP_SERVER_CONNECTOR);
+                }
+
+                // Add consumer for this service's path
+                if (ftpConnector instanceof MultiPathServerConnector) {
+                    MultiPathServerConnector multiPathConnector = (MultiPathServerConnector) ftpConnector;
+                    if (!multiPathConnector.hasConsumerForPath(config.getPath())) {
+                        multiPathConnector.addPathConsumer(
+                                config.getPath(),
+                                config.getFileNamePattern(),
+                                config.getMinAge(),
+                                config.getMaxAge(),
+                                config.getAgeCalculationMode(),
+                                config.getDependencyConditions()
+                        );
+                        // Update listener's FileSystemManager from the new connector
+                        listener.setFileSystemManager(multiPathConnector.getFileSystemManager());
+                        listener.setFileSystemOptions(multiPathConnector.getFileSystemOptions());
+                    }
+                }
+            } catch (FtpInvalidConfigException e) {
+                return FtpUtil.createError(e.getMessage(), findRootCause(e), InvalidConfigError.errorType());
+            } catch (RemoteFileSystemConnectorException e) {
+                return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
+            }
+        }
+
         listener.addService(service);
 
         // Check if caller is needed (for onFileChange with 2 params or content methods with caller param)
@@ -177,6 +255,225 @@ public class FtpListenerHelper {
             listener.setCaller(caller);
         }
         return null;
+    }
+
+    /**
+     * Switches from the default single-path connector to a multi-path connector.
+     * Called when the first service with @ftp:ServiceConfig is registered.
+     *
+     * @param ftpListener The Ballerina listener object
+     * @param listener The FTP listener instance
+     * @return null on success, or an error
+     */
+    @SuppressWarnings("unchecked")
+    private static Object switchToMultiPathConnector(BObject ftpListener, FtpListener listener) {
+        try {
+            // Get base parameters stored during init
+            Map<String, Object> baseParams = (Map<String, Object>) ftpListener.getNativeData(BASE_PARAMS_KEY);
+            if (baseParams == null) {
+                return FtpUtil.createError("Failed to switch to multi-path connector: " +
+                        "base parameters not found", null, Error.errorType());
+            }
+
+            // Stop the existing single-path connector. RemoteFileSystemServerConnectorImpl wraps exactly
+            // one consumer and is created by the factory during init(); MultiPathServerConnector is a
+            // separate implementation that manages the per-path consumer lifecycle itself.
+            RemoteFileSystemServerConnector existingConnector =
+                    (RemoteFileSystemServerConnector) ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+            if (existingConnector != null) {
+                existingConnector.stop();
+            }
+
+            // Create multi-path connector
+            MultiPathServerConnector multiPathConnector = new MultiPathServerConnector(baseParams, listener);
+            ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, multiPathConnector);
+
+            log.debug("Switched to multi-path connector for service-level configuration");
+            return null;
+        } catch (Exception e) {
+            return FtpUtil.createError("Failed to switch to multi-path connector: " + e.getMessage(),
+                    findRootCause(e), Error.errorType());
+        }
+    }
+
+    /**
+     * Extracts the @ftp:ServiceConfig annotation from a service.
+     *
+     * @param service The service object
+     * @return Optional containing the annotation map if present
+     */
+    private static Optional<BMap<BString, Object>> getServiceConfigAnnotation(BObject service) {
+        ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
+
+        BMap<BString, Object> annotations = serviceType.getAnnotations();
+        if (annotations == null) {
+            return Optional.empty();
+        }
+
+        for (BString key : annotations.getKeys()) {
+            String keyStr = key.getValue();
+            if (keyStr.endsWith(FtpConstants.SERVICE_CONFIG_ANNOTATION)) {
+                Object annotationValue = annotations.get(key);
+                if (annotationValue instanceof BMap) {
+                    return Optional.of((BMap<BString, Object>) annotationValue);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Parses the @ftp:ServiceConfig annotation into a ServiceConfiguration object.
+     *
+     * @param annotation The annotation map
+     * @return ServiceConfiguration object
+     * @throws FtpInvalidConfigException if configuration is invalid
+     */
+    private static ServiceConfiguration parseServiceConfiguration(BMap<BString, Object> annotation)
+            throws FtpInvalidConfigException {
+        ServiceConfiguration.Builder builder = new ServiceConfiguration.Builder();
+
+        // path is a required field in the ServiceConfiguration record; the Ballerina compiler
+        // enforces its presence before the annotation reaches the native layer.
+        String path = annotation.getStringValue(
+                StringUtils.fromString(FtpConstants.SERVICE_CONFIG_PATH)).getValue();
+        if (path.isEmpty()) {
+            throw new FtpInvalidConfigException("The 'path' field cannot be empty in @ftp:ServiceConfig annotation.");
+        }
+        builder.path(path);
+
+        // Extract fileNamePattern (optional)
+        BString patternKey = StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN);
+        if (annotation.containsKey(patternKey)) {
+            Object patternObj = annotation.get(patternKey);
+            if (patternObj != null) {
+                String pattern = patternObj.toString();
+                // Validate regex pattern
+                try {
+                    java.util.regex.Pattern.compile(pattern);
+                    builder.fileNamePattern(pattern);
+                } catch (java.util.regex.PatternSyntaxException e) {
+                    throw new FtpInvalidConfigException(
+                            "Invalid regex pattern '" + pattern + "' in @ftp:ServiceConfig.fileNamePattern: " +
+                            e.getMessage());
+                }
+            }
+        }
+
+        // Extract fileAgeFilter (optional) — uses the same extraction logic as listener-level config
+        BString ageFilterKey = StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_AGE_FILTER);
+        if (annotation.containsKey(ageFilterKey)) {
+            Object ageFilterObj = annotation.get(ageFilterKey);
+            if (ageFilterObj instanceof BMap) {
+                BMap<BString, Object> ageFilter = (BMap<BString, Object>) ageFilterObj;
+                parseFileAgeFilter(ageFilter, builder);
+            }
+        }
+
+        // Extract fileDependencyConditions (optional)
+        BString depKey = StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_DEPENDENCY_CONDITIONS);
+        if (annotation.containsKey(depKey)) {
+            Object depObj = annotation.get(depKey);
+            if (depObj instanceof BArray) {
+                BArray depArray = (BArray) depObj;
+                List<FileDependencyCondition> conditions = parseFileDependencyConditionsFromArray(depArray);
+                builder.dependencyConditions(conditions);
+            }
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * Parses file age filter into ServiceConfiguration.Builder using the shared extraction logic.
+     */
+    private static void parseFileAgeFilter(BMap<BString, Object> ageFilter, ServiceConfiguration.Builder builder) {
+        Map<String, Object> ageParams = new HashMap<>();
+        addAgeFilterValues(ageFilter, ageParams);
+
+        Object minAge = ageParams.get(FtpConstants.FILE_AGE_FILTER_MIN_AGE);
+        if (minAge != null) {
+            builder.minAge(Double.parseDouble((String) minAge));
+        }
+
+        Object maxAge = ageParams.get(FtpConstants.FILE_AGE_FILTER_MAX_AGE);
+        if (maxAge != null) {
+            builder.maxAge(Double.parseDouble((String) maxAge));
+        }
+
+        Object mode = ageParams.get(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE);
+        if (mode != null) {
+            builder.ageCalculationMode((String) mode);
+        }
+    }
+
+    /**
+     * Parses file dependency conditions from annotation array.
+     */
+    private static List<FileDependencyCondition> parseFileDependencyConditionsFromArray(BArray depArray)
+            throws FtpInvalidConfigException {
+        List<FileDependencyCondition> conditions = new ArrayList<>();
+
+        for (int i = 0; i < depArray.size(); i++) {
+            Object element = depArray.get(i);
+            if (element instanceof BMap) {
+                BMap<BString, Object> conditionMap = (BMap<BString, Object>) element;
+                FileDependencyCondition condition = parseFileDependencyCondition(conditionMap);
+                conditions.add(condition);
+            }
+        }
+
+        return conditions;
+    }
+
+    /**
+     * Parses a single file dependency condition.
+     */
+    private static FileDependencyCondition parseFileDependencyCondition(BMap<BString, Object> conditionMap)
+            throws FtpInvalidConfigException {
+        BString targetPatternKey = StringUtils.fromString(FtpConstants.DEPENDENCY_TARGET_PATTERN);
+        BString requiredFilesKey = StringUtils.fromString(FtpConstants.DEPENDENCY_REQUIRED_FILES);
+        BString matchingModeKey = StringUtils.fromString(FtpConstants.DEPENDENCY_MATCHING_MODE);
+        BString requiredCountKey = StringUtils.fromString(FtpConstants.DEPENDENCY_REQUIRED_FILE_COUNT);
+
+        String targetPattern = conditionMap.getStringValue(targetPatternKey).getValue();
+        // Validate target pattern regex
+        try {
+            java.util.regex.Pattern.compile(targetPattern);
+        } catch (java.util.regex.PatternSyntaxException e) {
+            throw new FtpInvalidConfigException(
+                    "Invalid regex pattern '" + targetPattern + "' in fileDependencyConditions.targetPattern: " +
+                    e.getMessage());
+        }
+
+        List<String> requiredFiles = new ArrayList<>();
+        if (conditionMap.containsKey(requiredFilesKey)) {
+            BArray filesArray = conditionMap.getArrayValue(requiredFilesKey);
+            for (int i = 0; i < filesArray.size(); i++) {
+                String filePattern = filesArray.getBString(i).getValue();
+                // Validate each required file pattern
+                try {
+                    java.util.regex.Pattern.compile(filePattern);
+                } catch (java.util.regex.PatternSyntaxException e) {
+                    throw new FtpInvalidConfigException(
+                            "Invalid regex pattern '" + filePattern + "' in fileDependencyConditions.requiredFiles: " +
+                            e.getMessage());
+                }
+                requiredFiles.add(filePattern);
+            }
+        }
+
+        String matchingMode = FtpConstants.DEPENDENCY_MATCHING_MODE_ALL;
+        if (conditionMap.containsKey(matchingModeKey)) {
+            matchingMode = conditionMap.getStringValue(matchingModeKey).getValue();
+        }
+
+        int requiredFileCount = 1;
+        if (conditionMap.containsKey(requiredCountKey)) {
+            requiredFileCount = ((Number) conditionMap.get(requiredCountKey)).intValue();
+        }
+
+        return new FileDependencyCondition(targetPattern, requiredFiles, matchingMode, requiredFileCount);
     }
 
     private static Map<String, Object> getServerConnectorParamMap(BMap serviceEndpointConfig)
@@ -317,24 +614,29 @@ public class FtpListenerHelper {
         BMap fileAgeFilter = serviceEndpointConfig.getMapValue(
                 StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_AGE_FILTER));
         if (fileAgeFilter != null) {
-            // Min age
-            Object minAgeObj = fileAgeFilter.get(StringUtils.fromString(FtpConstants.FILE_AGE_FILTER_MIN_AGE));
-            if (minAgeObj != null) {
-                params.put(FtpConstants.FILE_AGE_FILTER_MIN_AGE, String.valueOf(minAgeObj));
-            }
+            addAgeFilterValues(fileAgeFilter, params);
+        }
+    }
 
-            // Max age
-            Object maxAgeObj = fileAgeFilter.get(StringUtils.fromString(FtpConstants.FILE_AGE_FILTER_MAX_AGE));
-            if (maxAgeObj != null) {
-                params.put(FtpConstants.FILE_AGE_FILTER_MAX_AGE, String.valueOf(maxAgeObj));
-            }
+    /**
+     * Extracts minAge, maxAge and ageCalculationMode from a fileAgeFilter record into params.
+     * Shared by both listener-level and service-level config processing.
+     */
+    private static void addAgeFilterValues(BMap ageFilter, Map<String, Object> params) {
+        Object minAgeObj = ageFilter.get(StringUtils.fromString(FtpConstants.FILE_AGE_FILTER_MIN_AGE));
+        if (minAgeObj != null) {
+            params.put(FtpConstants.FILE_AGE_FILTER_MIN_AGE, String.valueOf(minAgeObj));
+        }
 
-            // Age calculation mode
-            BString modeStr = fileAgeFilter.getStringValue(
-                    StringUtils.fromString(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE));
-            if (modeStr != null && !modeStr.getValue().isEmpty()) {
-                params.put(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE, modeStr.getValue());
-            }
+        Object maxAgeObj = ageFilter.get(StringUtils.fromString(FtpConstants.FILE_AGE_FILTER_MAX_AGE));
+        if (maxAgeObj != null) {
+            params.put(FtpConstants.FILE_AGE_FILTER_MAX_AGE, String.valueOf(maxAgeObj));
+        }
+
+        BString modeStr = ageFilter.getStringValue(
+                StringUtils.fromString(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE));
+        if (modeStr != null && !modeStr.getValue().isEmpty()) {
+            params.put(FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE, modeStr.getValue());
         }
     }
 

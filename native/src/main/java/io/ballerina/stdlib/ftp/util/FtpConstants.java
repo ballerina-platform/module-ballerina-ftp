@@ -213,4 +213,8 @@ public class FtpConstants {
     public static final String OP_GET_JSON = "getJson";
     public static final String OP_GET_XML = "getXml";
     public static final String OP_GET_CSV = "getCsv";
+
+    // Service-level configuration annotation
+    public static final String SERVICE_CONFIG_ANNOTATION = "ServiceConfig";
+    public static final String SERVICE_CONFIG_PATH = "path";
 }
