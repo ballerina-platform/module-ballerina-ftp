@@ -323,6 +323,85 @@ function testPutXmlFailure() returns error? {
     test:assertTrue(got is Error, msg = "XML content binding should have failed for non-XML content");
 }
 
+// Test that getJson returns ContentBindingError when JSON parsing fails
+@test:Config {dependsOn: [testPutFileContent]}
+function testGetJsonContentBindingError() returns error? {
+    string path = "/home/in/invalid-json.txt";
+    // Write invalid JSON content
+    check (<Client>clientEp)->putText(path, "this is not valid json {{{");
+
+    json|Error result = (<Client>clientEp)->getJson(path);
+    test:assertTrue(result is ContentBindingError, msg = "getJson should return ContentBindingError for invalid JSON");
+    if result is ContentBindingError {
+        test:assertTrue(result.detail().filePath is string, msg = "ContentBindingError should contain filePath");
+        test:assertTrue(result.detail().content is byte[], msg = "ContentBindingError should contain content bytes");
+    }
+
+    // Cleanup
+    check (<Client>clientEp)->delete(path);
+}
+
+// Test that getXml returns ContentBindingError when XML parsing fails
+@test:Config {dependsOn: [testPutFileContent]}
+function testGetXmlContentBindingError() returns error? {
+    string path = "/home/in/invalid-xml.txt";
+    // Write invalid XML content
+    check (<Client>clientEp)->putText(path, "this is not valid xml <<<>>>");
+
+    xml|Error result = (<Client>clientEp)->getXml(path);
+    test:assertTrue(result is ContentBindingError, msg = "getXml should return ContentBindingError for invalid XML");
+    if result is ContentBindingError {
+        test:assertTrue(result.detail().filePath is string, msg = "ContentBindingError should contain filePath");
+        test:assertTrue(result.detail().content is byte[], msg = "ContentBindingError should contain content bytes");
+    }
+
+    // Cleanup
+    check (<Client>clientEp)->delete(path);
+}
+
+// Test that getJson with typed binding returns ContentBindingError when type doesn't match
+@test:Config {dependsOn: [testPutFileContent]}
+function testGetJsonTypedContentBindingError() returns error? {
+    string path = "/home/in/json-typed-binding-error.json";
+    // Write JSON missing required field 'age'
+    json content = {name: "Alice"};
+    check (<Client>clientEp)->putJson(path, content);
+
+    // Try to bind to a record that requires 'age' field
+    PersonStrict|Error result = (<Client>clientEp)->getJson(path);
+    test:assertTrue(result is ContentBindingError, msg = "getJson should return ContentBindingError when type binding fails");
+    if result is ContentBindingError {
+        test:assertTrue(result.detail().filePath is string, msg = "ContentBindingError should contain filePath");
+        test:assertTrue(result.detail().content is byte[], msg = "ContentBindingError should contain content bytes");
+    }
+
+    // Cleanup
+    check (<Client>clientEp)->delete(path);
+}
+
+// Test that getCsv returns ContentBindingError when type binding fails
+@test:Config {dependsOn: [testPutFileContent]}
+function testGetCsvContentBindingError() returns error? {
+    string path = "/home/in/csv-binding-error.csv";
+    // Write CSV with non-integer value in age column
+    string[][] csvData = [
+        ["name", "age"],
+        ["Alice", "not-a-number"]  // Invalid: age should be int
+    ];
+    check (<Client>clientEp)->putCsv(path, csvData);
+
+    // Try to bind to a record that expects 'age' as int
+    CsvPersonStrict[]|Error result = (<Client>clientEp)->getCsv(path);
+    test:assertTrue(result is ContentBindingError, msg = "getCsv should return ContentBindingError when type binding fails");
+    if result is ContentBindingError {
+        test:assertTrue(result.detail().filePath is string, msg = "ContentBindingError should contain filePath");
+        test:assertTrue(result.detail().content is byte[], msg = "ContentBindingError should contain content bytes");
+    }
+
+    // Cleanup
+    check (<Client>clientEp)->delete(path);
+}
+
 @test:Config {dependsOn: [testPutFileContent]}
 function testPutText() returns error? {
     string txt = "hello text content";
