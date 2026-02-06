@@ -47,8 +47,8 @@ public class MultiPathServerConnector implements RemoteFileSystemServerConnector
     private final Map<String, RemoteFileSystemConsumer> pathConsumers = new ConcurrentHashMap<>();
     private final Map<String, Object> baseProperties;
     private AtomicBoolean isPollOperationOccupied = new AtomicBoolean(false);
-    private FileSystemManager fileSystemManager;
-    private FileSystemOptions fileSystemOptions;
+    private volatile FileSystemManager fileSystemManager;
+    private volatile FileSystemOptions fileSystemOptions;
 
     public MultiPathServerConnector(Map<String, Object> baseProperties, FtpListener ftpListener) {
         this.baseProperties = new HashMap<>(baseProperties);

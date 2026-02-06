@@ -467,3 +467,106 @@ public function testServiceConfigRelativePath() {
 
     test:assertEquals(relativeConfig.path, "relative/path");
 }
+
+// ===========================================================================
+// TEST: Invalid regex pattern in @ServiceConfig fileNamePattern
+// ===========================================================================
+@test:Config {}
+public function testServiceConfigInvalidFileNamePattern() returns error? {
+    ListenerConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        pollingInterval: 2
+    };
+    Listener ftpListener = check new (config);
+
+    Service invalidRegexService = @ServiceConfig {
+        path: "/home/in/invalid-regex",
+        fileNamePattern: "[unclosed"  // Invalid regex - unclosed bracket
+    } service object {
+        remote function onFileChange(Caller caller, WatchEvent & readonly event) {
+        }
+    };
+
+    error? result = ftpListener.attach(invalidRegexService, "invalidRegexService");
+    test:assertTrue(result is InvalidConfigError,
+        msg = "Expected InvalidConfigError for invalid regex pattern in @ServiceConfig.fileNamePattern");
+    if result is InvalidConfigError {
+        test:assertTrue(result.message().includes("Invalid regex pattern"),
+            msg = "InvalidConfigError message should indicate invalid regex");
+    }
+}
+
+// ===========================================================================
+// TEST: Invalid regex pattern in @ServiceConfig fileDependencyConditions targetPattern
+// ===========================================================================
+@test:Config {}
+public function testServiceConfigInvalidTargetPattern() returns error? {
+    ListenerConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        pollingInterval: 2
+    };
+    Listener ftpListener = check new (config);
+
+    Service invalidTargetService = @ServiceConfig {
+        path: "/home/in/invalid-target",
+        fileDependencyConditions: [
+            {
+                targetPattern: "(invalid*regex",  // Invalid regex - unclosed parenthesis
+                requiredFiles: ["data.txt"]
+            }
+        ]
+    } service object {
+        remote function onFileChange(Caller caller, WatchEvent & readonly event) {
+        }
+    };
+
+    error? result = ftpListener.attach(invalidTargetService, "invalidTargetService");
+    test:assertTrue(result is InvalidConfigError,
+        msg = "Expected InvalidConfigError for invalid regex pattern in @ServiceConfig.fileDependencyConditions.targetPattern");
+    if result is InvalidConfigError {
+        test:assertTrue(result.message().includes("Invalid regex pattern"),
+            msg = "InvalidConfigError message should indicate invalid regex");
+    }
+}
+
+// ===========================================================================
+// TEST: Invalid regex pattern in @ServiceConfig fileDependencyConditions requiredFiles
+// ===========================================================================
+@test:Config {}
+public function testServiceConfigInvalidRequiredFilesPattern() returns error? {
+    ListenerConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        pollingInterval: 2
+    };
+    Listener ftpListener = check new (config);
+
+    Service invalidRequiredService = @ServiceConfig {
+        path: "/home/in/invalid-required",
+        fileDependencyConditions: [
+            {
+                targetPattern: "data.*\\.csv",
+                requiredFiles: ["[broken-regex"]  // Invalid regex - unclosed bracket
+            }
+        ]
+    } service object {
+        remote function onFileChange(Caller caller, WatchEvent & readonly event) {
+        }
+    };
+
+    error? result = ftpListener.attach(invalidRequiredService, "invalidRequiredService");
+    test:assertTrue(result is InvalidConfigError,
+        msg = "Expected InvalidConfigError for invalid regex pattern in @ServiceConfig.fileDependencyConditions.requiredFiles");
+    if result is InvalidConfigError {
+        test:assertTrue(result.message().includes("Invalid regex pattern"),
+            msg = "InvalidConfigError message should indicate invalid regex");
+    }
+}
