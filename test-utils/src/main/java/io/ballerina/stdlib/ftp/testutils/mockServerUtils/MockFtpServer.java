@@ -123,6 +123,14 @@ public final class MockFtpServer {
         fileSystem.add(new FileEntry("/home/in/child_directory/content1.txt"));
         fileSystem.add(new FileEntry("/home/in/child_directory/content2.txt"));
 
+        fileSystem.add(new DirectoryEntry("/home/in/onerror-tests"));
+        fileSystem.add(new DirectoryEntry("/home/in/sc-route-a"));
+        fileSystem.add(new DirectoryEntry("/home/in/sc-route-b"));
+        fileSystem.add(new DirectoryEntry("/home/in/sc-single"));
+        fileSystem.add(new DirectoryEntry("/home/in/sc-legacy"));
+        fileSystem.add(new DirectoryEntry("/home/in/duplicate-test"));
+        fileSystem.add(new DirectoryEntry("/home/in/mixed-test-annotated"));
+
         fileSystem.add(new DirectoryEntry("/home/in/delete"));
         fileSystem.add(new FileEntry("/home/in/delete/.init", ""));
 

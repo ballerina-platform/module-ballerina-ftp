@@ -27,6 +27,7 @@ public class RemoteFileSystemEvent extends RemoteFileSystemBaseMessage {
 
     private List<FileInfo> addedFiles;
     private List<String> deletedFiles;
+    private String sourcePath;
 
     public RemoteFileSystemEvent(List<FileInfo> addedFiles, List<String> deletedFiles) {
         this.addedFiles = addedFiles;
@@ -39,5 +40,24 @@ public class RemoteFileSystemEvent extends RemoteFileSystemBaseMessage {
 
     public List<String> getDeletedFiles() {
         return deletedFiles;
+    }
+
+    /**
+     * Gets the source path where this event originated.
+     * Used for routing events to the correct service when monitoring multiple paths.
+     *
+     * @return The source path, or null if not set
+     */
+    public String getSourcePath() {
+        return sourcePath;
+    }
+
+    /**
+     * Sets the source path where this event originated.
+     *
+     * @param sourcePath The path being monitored that generated this event
+     */
+    public void setSourcePath(String sourcePath) {
+        this.sourcePath = sourcePath;
     }
 }

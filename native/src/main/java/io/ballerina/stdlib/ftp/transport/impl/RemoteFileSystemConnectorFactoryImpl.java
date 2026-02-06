@@ -19,12 +19,14 @@
 package io.ballerina.stdlib.ftp.transport.impl;
 
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.server.FtpListener;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
 import io.ballerina.stdlib.ftp.transport.client.connector.contractimpl.VfsClientConnectorImpl;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
+import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.MultiPathServerConnector;
 import io.ballerina.stdlib.ftp.transport.server.connector.contractimpl.RemoteFileSystemServerConnectorImpl;
 
 import java.util.List;
@@ -48,6 +50,13 @@ public class RemoteFileSystemConnectorFactoryImpl implements RemoteFileSystemCon
                                                                  RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException {
         return new RemoteFileSystemServerConnectorImpl(connectorConfig, dependencyConditions, remoteFileSystemListener);
+    }
+
+    @Override
+    public RemoteFileSystemServerConnector createMultiPathServerConnector(Map<String, Object> connectorConfig,
+                                                                          FtpListener ftpListener)
+            throws RemoteFileSystemConnectorException {
+        return new MultiPathServerConnector(connectorConfig, ftpListener);
     }
 
     @Override

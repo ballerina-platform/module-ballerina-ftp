@@ -240,7 +240,7 @@ function testFtpsImplicitListener() returns error? {
 
 @test:Config {}
 public function testFtpsConnectWithInvalidKeystore() returns error? {
-    Listener|Error ftpsServer = new ({
+    Listener ftpsServer = check new ({
         protocol: FTPS,
         host: "localhost",
         port: 21214,
@@ -262,10 +262,15 @@ public function testFtpsConnectWithInvalidKeystore() returns error? {
         pollingInterval: 2
     });
 
-    if ftpsServer is Error {
-        test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector.") ||
-            ftpsServer.message().includes("Failed to load FTPS Server Keystore"),
-            msg = "Expected error for invalid keystore. Got: " + ftpsServer.message());
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = ftpsServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector.") ||
+            attachResult.message().includes("Failed to load FTPS Server Keystore"),
+            msg = "Expected error for invalid keystore. Got: " + attachResult.message());
     } else {
         test:assertFail("Non-error result when invalid keystore is used.");
     }
@@ -273,7 +278,7 @@ public function testFtpsConnectWithInvalidKeystore() returns error? {
 
 @test:Config {}
 public function testFtpsConnectWithInvalidTruststore() returns error? {
-    Listener|Error ftpsServer = new ({
+    Listener ftpsServer = check new ({
         protocol: FTPS,
         host: "localhost",
         port: 21214,
@@ -295,10 +300,15 @@ public function testFtpsConnectWithInvalidTruststore() returns error? {
         pollingInterval: 2
     });
 
-    if ftpsServer is Error {
-        test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector.") ||
-            ftpsServer.message().includes("Failed to load FTPS Server Truststore"),
-            msg = "Expected error for invalid truststore. Got: " + ftpsServer.message());
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = ftpsServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector.") ||
+            attachResult.message().includes("Failed to load FTPS Server Truststore"),
+            msg = "Expected error for invalid truststore. Got: " + attachResult.message());
     } else {
         test:assertFail("Non-error result when invalid truststore is used.");
     }
@@ -339,7 +349,7 @@ public function testFtpsConnectToFTPServerWithFTPProtocol() returns error? {
 
 @test:Config {}
 public function testFtpsListenerConnectWithEmptySecureSocket() returns error? {
-    Listener|Error ftpsServer = new ({
+    Listener ftpsServer = check new ({
         protocol: FTPS,
         host: "localhost",
         port: 21214,
@@ -350,8 +360,13 @@ public function testFtpsListenerConnectWithEmptySecureSocket() returns error? {
         pollingInterval: 2
     });
 
-    if ftpsServer is Error {
-        test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector."),
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = ftpsServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."),
             msg = "Expected error for missing secureSocket");
     } else {
         test:assertFail("Non-error result when no secureSocket config is provided.");
@@ -360,7 +375,7 @@ public function testFtpsListenerConnectWithEmptySecureSocket() returns error? {
 
 @test:Config {}
 public function testFtpsConnectWithEmptyCredentials() returns error? {
-    Listener|Error ftpsServer = new ({
+    Listener ftpsServer = check new ({
         protocol: FTPS,
         host: "localhost",
         port: 21214,
@@ -381,8 +396,13 @@ public function testFtpsConnectWithEmptyCredentials() returns error? {
         pollingInterval: 2
     });
 
-    if ftpsServer is Error {
-        test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector."),
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = ftpsServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."),
             msg = "Expected error for missing credentials");
     } else {
         test:assertFail("Non-error result when no credentials were provided.");
@@ -427,7 +447,7 @@ public function testFtpsConnectWithEmptyKeystorePath() returns error? {
 
 @test:Config {}
 public function testFtpsServerConnectWithInvalidHostWithDetails() returns error? {
-    Listener|Error ftpsServer = new ({
+    Listener ftpsServer = check new ({
         protocol: FTPS,
         host: "nonexistent.invalid.host",
         port: 21214,
@@ -452,9 +472,14 @@ public function testFtpsServerConnectWithInvalidHostWithDetails() returns error?
         pollingInterval: 2
     });
 
-    if ftpsServer is Error {
-        test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector."));
-        test:assertTrue(ftpsServer.message().length() > "Failed to initialize File server connector.".length(),
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = ftpsServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
+        test:assertTrue(attachResult.message().length() > "Failed to initialize File server connector.".length(),
             msg = "Error message should contain detailed root cause information");
     } else {
         test:assertFail("Non-error result when invalid host is used.");
@@ -463,7 +488,7 @@ public function testFtpsServerConnectWithInvalidHostWithDetails() returns error?
 
 @test:Config {}
 public function testFtpsServerConnectWithInvalidPortWithDetails() returns error? {
-    Listener|Error ftpsServer = new ({
+    Listener ftpsServer = check new ({
         protocol: FTPS,
         host: "127.0.0.1",
         port: 21299,
@@ -488,9 +513,14 @@ public function testFtpsServerConnectWithInvalidPortWithDetails() returns error?
         pollingInterval: 2
     });
 
-    if ftpsServer is Error {
-        test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector."));
-        test:assertTrue(ftpsServer.message().length() > "Failed to initialize File server connector.".length(),
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = ftpsServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
+        test:assertTrue(attachResult.message().length() > "Failed to initialize File server connector.".length(),
             msg = "Error message should contain detailed root cause information");
     } else {
         test:assertFail("Non-error result when invalid port is used.");

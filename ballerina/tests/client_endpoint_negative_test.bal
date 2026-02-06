@@ -379,13 +379,18 @@ public function testListenerWithInvalidDependencyTargetPattern() returns error? 
             }
         ]
     };
-    Listener|Error listenerResult = new (invalidDependencyConfig);
-    test:assertTrue(listenerResult is InvalidConfigError,
+    Listener listenerResult = check new (invalidDependencyConfig);
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = listenerResult.attach(attachService);
+    test:assertTrue(attachResult is InvalidConfigError,
         msg = "Expected InvalidConfigError for invalid dependency targetPattern");
-    if listenerResult is InvalidConfigError {
-        test:assertTrue(listenerResult.message().includes("Invalid regex pattern"),
-            msg = "Error message should indicate invalid regex pattern. Got: " + listenerResult.message());
-        test:assertTrue(listenerResult.message().includes("targetPattern"),
+    if attachResult is InvalidConfigError {
+        test:assertTrue(attachResult.message().includes("Invalid regex pattern"),
+            msg = "Error message should indicate invalid regex pattern. Got: " + attachResult.message());
+        test:assertTrue(attachResult.message().includes("targetPattern"),
             msg = "Error message should mention targetPattern field");
     }
 }
@@ -408,13 +413,18 @@ public function testListenerWithInvalidDependencyRequiredFilePattern() returns e
             }
         ]
     };
-    Listener|Error listenerResult = new (invalidRequiredFileConfig);
-    test:assertTrue(listenerResult is InvalidConfigError,
+    Listener listenerResult = check new (invalidRequiredFileConfig);
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = listenerResult.attach(attachService);
+    test:assertTrue(attachResult is InvalidConfigError,
         msg = "Expected InvalidConfigError for invalid requiredFiles pattern");
-    if listenerResult is InvalidConfigError {
-        test:assertTrue(listenerResult.message().includes("Invalid regex pattern"),
-            msg = "Error message should indicate invalid regex pattern. Got: " + listenerResult.message());
-        test:assertTrue(listenerResult.message().includes("requiredFiles"),
+    if attachResult is InvalidConfigError {
+        test:assertTrue(attachResult.message().includes("Invalid regex pattern"),
+            msg = "Error message should indicate invalid regex pattern. Got: " + attachResult.message());
+        test:assertTrue(attachResult.message().includes("requiredFiles"),
             msg = "Error message should mention requiredFiles field");
     }
 }

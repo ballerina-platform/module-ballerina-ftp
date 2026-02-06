@@ -70,7 +70,7 @@ public function testSecureAddedFileCount() {
 
 @test:Config {}
 public function testConnectWithInvalidKey() returns error? {
-    Listener|Error sftpServer = new ({
+    Listener sftpServer = check new ({
         protocol: SFTP,
         host: "localhost",
         port: 21213,
@@ -86,8 +86,13 @@ public function testConnectWithInvalidKey() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    if sftpServer is Error {
-        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = sftpServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when invalid key is used for creating a Listener.");
     }
@@ -95,7 +100,7 @@ public function testConnectWithInvalidKey() returns error? {
 
 @test:Config {}
 public function testConnectWithInvalidKeyPath() returns error? {
-    Listener|Error sftpServer = new ({
+    Listener sftpServer = check new ({
         protocol: SFTP,
         host: "localhost",
         port: 21213,
@@ -111,8 +116,13 @@ public function testConnectWithInvalidKeyPath() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    if sftpServer is Error {
-        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = sftpServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when invalid key path is used for creating a Listener.");
     }
@@ -120,7 +130,7 @@ public function testConnectWithInvalidKeyPath() returns error? {
 
 @test:Config {}
 public function testConnectToSFTPServerWithFTPProtocol() returns error? {
-    Listener|Error sftpServer = new ({
+    Listener sftpServer = check new ({
         protocol: FTP,
         host: "localhost",
         port: 21213,
@@ -132,8 +142,13 @@ public function testConnectToSFTPServerWithFTPProtocol() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    if sftpServer is Error {
-        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = sftpServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when connecting to SFTP server via FTP is used for creating a Listener.");
     }
@@ -141,7 +156,7 @@ public function testConnectToSFTPServerWithFTPProtocol() returns error? {
 
 @test:Config {}
 public function testConnectWithEmptyKey() returns error? {
-    Listener|Error sftpServer = new ({
+    Listener sftpServer = check new ({
         protocol: SFTP,
         host: "localhost",
         port: 21213,
@@ -153,8 +168,13 @@ public function testConnectWithEmptyKey() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    if sftpServer is Error {
-        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = sftpServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when no key config is provided when creating a Listener.");
     }
@@ -162,7 +182,7 @@ public function testConnectWithEmptyKey() returns error? {
 
 @test:Config {}
 public function testConnectWithEmptyCredentials() returns error? {
-    Listener|Error sftpServer = new ({
+    Listener sftpServer = check new ({
         protocol: SFTP,
         host: "localhost",
         port: 21213,
@@ -178,8 +198,13 @@ public function testConnectWithEmptyCredentials() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    if sftpServer is Error {
-        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = sftpServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when no credentials were provided when creating a Listener.");
     }
@@ -187,7 +212,7 @@ public function testConnectWithEmptyCredentials() returns error? {
 
 @test:Config {}
 public function testConnectWithEmptyCredentialsAndKey() returns error? {
-    Listener|Error sftpServer = new ({
+    Listener sftpServer = check new ({
         protocol: SFTP,
         host: "localhost",
         port: 21213,
@@ -196,8 +221,13 @@ public function testConnectWithEmptyCredentialsAndKey() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    if sftpServer is Error {
-        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = sftpServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when no auth config is provided when creating a Listener.");
     }
@@ -255,7 +285,7 @@ public function testConnectWithEmptyKeyPath() returns error? {
 
 @test:Config {}
 public function testSFTPServerConnectWithInvalidHostWithDetails() returns error? {
-    Listener|Error sftpServer = new ({
+    Listener sftpServer = check new ({
         protocol: SFTP,
         host: "nonexistent.invalid.host",
         port: 21213,
@@ -273,10 +303,15 @@ public function testSFTPServerConnectWithInvalidHostWithDetails() returns error?
         fileNamePattern: "(.*).txt"
     });
 
-    if sftpServer is Error {
-        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = sftpServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
         // Verify that the error message contains additional details from the root cause
-        test:assertTrue(sftpServer.message().length() > "Failed to initialize File server connector.".length(),
+        test:assertTrue(attachResult.message().length() > "Failed to initialize File server connector.".length(),
             msg = "Error message should contain detailed root cause information");
     } else {
         test:assertFail("Non-error result when invalid host is used for creating an SFTP Listener.");
@@ -285,7 +320,7 @@ public function testSFTPServerConnectWithInvalidHostWithDetails() returns error?
 
 @test:Config {}
 public function testSFTPServerConnectWithInvalidPortWithDetails() returns error? {
-    Listener|Error sftpServer = new ({
+    Listener sftpServer = check new ({
         protocol: SFTP,
         host: "127.0.0.1",
         port: 21299,
@@ -303,10 +338,15 @@ public function testSFTPServerConnectWithInvalidPortWithDetails() returns error?
         fileNamePattern: "(.*).txt"
     });
 
-    if sftpServer is Error {
-        test:assertTrue(sftpServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = sftpServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
         // Verify that the error message contains additional details from the root cause
-        test:assertTrue(sftpServer.message().length() > "Failed to initialize File server connector.".length(),
+        test:assertTrue(attachResult.message().length() > "Failed to initialize File server connector.".length(),
             msg = "Error message should contain detailed root cause information");
     } else {
         test:assertFail("Non-error result when invalid port is used for creating an SFTP Listener.");
