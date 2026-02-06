@@ -222,4 +222,8 @@ public class FtpConstants {
     public static final String CIRCUIT_BREAKER = "circuitBreaker";
     public static final String CIRCUIT_BREAKER_NATIVE_DATA = "CircuitBreaker";
     public static final String CIRCUIT_BREAKER_OPEN_ERROR = "CircuitBreakerOpenError";
+
+    // Service-level configuration annotation
+    public static final String SERVICE_CONFIG_ANNOTATION = "ServiceConfig";
+    public static final String SERVICE_CONFIG_PATH = "path";
 }
