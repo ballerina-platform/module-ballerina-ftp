@@ -141,6 +141,11 @@ public final class MockFtpServer {
         fileSystem.add(new DirectoryEntry("/home/in/advanced/dependency"));
         fileSystem.add(new FileEntry("/home/in/dependency/.init", ""));
 
+        fileSystem.add(new DirectoryEntry("/home/in/post-process"));
+        fileSystem.add(new FileEntry("/home/in/post-process/.init", ""));
+        fileSystem.add(new DirectoryEntry("/home/in/post-process-archive"));
+        fileSystem.add(new DirectoryEntry("/home/in/post-process-error"));
+
         ftpServer.setFileSystem(fileSystem);
         ftpServer.start();
         logger.info("Starting FTP server...");
