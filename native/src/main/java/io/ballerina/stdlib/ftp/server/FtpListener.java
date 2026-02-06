@@ -57,6 +57,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
@@ -79,7 +81,10 @@ public class FtpListener implements RemoteFileSystemListener {
     private static final Logger log = LoggerFactory.getLogger(FtpListener.class);
     private final Runtime runtime;
     private Environment environment = null;
-    private Map<String, BObject> registeredServices = new HashMap<>();
+    private Map<String, BObject> registeredServices = new ConcurrentHashMap<>();
+    private Map<String, ServiceConfiguration> serviceConfigurations = new ConcurrentHashMap<>();
+    private Map<String, BObject> pathToService = new ConcurrentHashMap<>();
+    private AtomicBoolean usesServiceLevelConfig = new AtomicBoolean(false);
     private BObject caller;
     private FileSystemManager fileSystemManager;
     private FileSystemOptions fileSystemOptions;
@@ -117,8 +122,17 @@ public class FtpListener implements RemoteFileSystemListener {
             RemoteFileSystemEvent event = (RemoteFileSystemEvent) remoteFileSystemBaseMessage;
 
             if (runtime != null) {
-                for (BObject service : registeredServices.values()) {
-                    dispatchFileEventToService(this.environment, service, event);
+                if (usesServiceLevelConfig.get() && event.getSourcePath() != null) {
+                    // Path-keyed routing: dispatch only to the service monitoring this path
+                    BObject service = pathToService.get(event.getSourcePath());
+                    if (service != null) {
+                        dispatchFileEventToService(this.environment, service, event);
+                    }
+                } else {
+                    // Legacy single-path mode: dispatch to all registered services
+                    for (BObject service : registeredServices.values()) {
+                        dispatchFileEventToService(this.environment, service, event);
+                    }
                 }
             } else {
                 log.error("Runtime should not be null.");
@@ -493,6 +507,61 @@ public class FtpListener implements RemoteFileSystemListener {
         }
     }
 
+    /**
+     * Registers a service with its path-based configuration.
+     * Path must be unique across all services on this listener.
+     *
+     * @param service The service object
+     * @param config The service configuration
+     * @return true if added successfully, false if path is already registered
+     */
+    public boolean addServiceConfiguration(BObject service, ServiceConfiguration config) {
+        String path = config.getPath();
+        if (pathToService.putIfAbsent(path, service) != null) {
+            return false;
+        }
+        serviceConfigurations.put(path, config);
+        usesServiceLevelConfig.set(true);
+        return true;
+    }
+
+    /**
+     * Gets the service configuration for a given path.
+     *
+     * @param path The monitored path
+     * @return The service configuration, or null if not configured
+     */
+    public ServiceConfiguration getServiceConfiguration(String path) {
+        return serviceConfigurations.get(path);
+    }
+
+    /**
+     * Checks if any service uses service-level configuration.
+     *
+     * @return true if at least one service uses @ftp:ServiceConfig annotation
+     */
+    public boolean usesServiceLevelConfig() {
+        return usesServiceLevelConfig.get();
+    }
+
+    /**
+     * Gets the number of registered services.
+     *
+     * @return The count of registered services
+     */
+    public int getServiceCount() {
+        return registeredServices.size();
+    }
+
+    /**
+     * Gets all service configurations.
+     *
+     * @return Map of service name to configuration
+     */
+    public Map<String, ServiceConfiguration> getServiceConfigurations() {
+        return serviceConfigurations;
+    }
+
     public void setCaller(BObject caller) {
         this.caller = caller;
     }
@@ -503,6 +572,9 @@ public class FtpListener implements RemoteFileSystemListener {
 
     void cleanup() {
         registeredServices.clear();
+        usesServiceLevelConfig.set(false);
+        serviceConfigurations.clear();
+        pathToService.clear();
         caller = null;
         fileSystemManager = null;
         fileSystemOptions = null;
