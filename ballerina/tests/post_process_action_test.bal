@@ -420,13 +420,16 @@ public function testBothAfterProcessAndAfterError() returns error? {
     check (<Client>clientEp)->delete(archiveFilePath);
 }
 
+boolean noActionInvoked = false;
+string noActionFilePath = "";
+
 @test:Config {
     dependsOn: [testBothAfterProcessAndAfterError]
 }
 public function testNoActionWhenNotConfigured() returns error? {
     // Reset state
-    boolean noActionInvoked = false;
-    string noActionFilePath = "";
+    noActionInvoked = false;
+    noActionFilePath = "";
 
     // Service without any afterProcess or afterError
     Service noActionService = service object {
