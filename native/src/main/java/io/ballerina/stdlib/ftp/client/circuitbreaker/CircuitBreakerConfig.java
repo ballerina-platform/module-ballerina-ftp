@@ -105,8 +105,8 @@ public class CircuitBreakerConfig {
     }
 
     private static long decimalToMillis(Object value) {
-        if (value instanceof BDecimal) {
-            return (long) (((BDecimal) value).floatValue() * 1000);
+        if (value instanceof BDecimal decimalValue) {
+            return (long) (decimalValue.floatValue() * 1000);
         }
         return (long) (((Number) value).doubleValue() * 1000);
     }

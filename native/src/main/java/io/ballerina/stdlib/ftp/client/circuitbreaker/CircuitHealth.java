@@ -148,10 +148,7 @@ public class CircuitHealth {
      */
     public float getFailureRatio() {
         int totalCount = getTotalRequestCount();
-        if (totalCount == 0) {
-            return 0.0f;
-        }
-        return (float) getTotalFailureCount() / totalCount;
+        return totalCount == 0 ? 0.0f : (float) getTotalFailureCount() / totalCount;
     }
 
     /**
