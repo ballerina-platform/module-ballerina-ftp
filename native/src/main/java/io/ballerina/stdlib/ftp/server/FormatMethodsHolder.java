@@ -280,4 +280,13 @@ public class FormatMethodsHolder {
     public Optional<PostProcessAction> getAfterErrorAction(String methodName) {
         return Optional.ofNullable(methodAfterErrorAction.get(methodName));
     }
+
+    /**
+     * Checks if any content method has post-processing actions configured.
+     *
+     * @return true if any method has afterProcess or afterError actions
+     */
+    public boolean hasPostProcessingActions() {
+        return !methodAfterProcessAction.isEmpty() || !methodAfterErrorAction.isEmpty();
+    }
 }
