@@ -40,7 +40,7 @@ public type MOVE Move;
 # + afterProcess - Action to perform after successful processing. Can be DELETE or MOVE.
 #                  If not specified, no action is taken (file remains in place).
 # + afterError - Action to perform after processing error. Can be DELETE or MOVE.
-#                This action is executed after the onError handler returns successfully.
+#                This action is executed immediately after the content handler returns an error or panics.
 #                If not specified, no action is taken (file remains in place).
 public type FtpFunctionConfig record {|
     string fileNamePattern?;

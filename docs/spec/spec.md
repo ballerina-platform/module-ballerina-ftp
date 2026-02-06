@@ -879,6 +879,9 @@ public type Move record {|
     string moveTo;
     boolean preserveSubDirs = true;
 |};
+
+# Type alias for Move record, used in union types for post-processing actions.
+public type MOVE Move;
 ```
 
 **Updated FtpFunctionConfig:**
@@ -892,7 +895,10 @@ public type FtpFunctionConfig record {|
 
 **Action Fields:**
 - `afterProcess` - Action to perform after successful processing. If not specified, no action is taken.
-- `afterError` - Action to perform after the handler returns an error. If not specified, no action is taken.
+- `afterError` - Action to perform after the handler returns an error or panics. If not specified, no action is taken.
+
+**Prerequisites:**
+- When using `MOVE` action with `preserveSubDirs: true`, the destination directory structure must be pre-created on the FTP server. The move operation will fail if the destination parent directories do not exist.
 
 **Behavior:**
 1. **After Successful Processing:** If the handler returns successfully (no error), the `afterProcess` action is executed.

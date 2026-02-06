@@ -38,7 +38,10 @@ public function testAfterProcessDelete() returns error? {
     lastProcessedFilePath = "";
 
     // Create test directories
-    check (<Client>clientEp)->mkdir(POST_PROCESS_TEST_DIR);
+    boolean dirExists = check (<Client>clientEp)->exists(POST_PROCESS_TEST_DIR);
+    if !dirExists {
+        check (<Client>clientEp)->mkdir(POST_PROCESS_TEST_DIR);
+    }
 
     // Service with afterProcess: DELETE
     Service deleteAfterProcessService = service object {
