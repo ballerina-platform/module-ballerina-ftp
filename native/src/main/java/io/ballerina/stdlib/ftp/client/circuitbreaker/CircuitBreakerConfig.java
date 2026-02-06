@@ -74,7 +74,6 @@ public class CircuitBreakerConfig {
      * @return A new CircuitBreakerConfig instance
      * @throws BallerinaFtpException if the configuration is invalid
      */
-    @SuppressWarnings("unchecked")
     public static CircuitBreakerConfig fromBMap(BMap<BString, Object> config) throws BallerinaFtpException {
         // Extract rolling window configuration
         BMap<BString, Object> rollingWindow = (BMap<BString, Object>) config.getMapValue(ROLLING_WINDOW);
@@ -98,7 +97,8 @@ public class CircuitBreakerConfig {
         }
 
         // Validate configuration
-        validate(failureThreshold, timeWindowMillis, bucketSizeMillis, requestVolumeThreshold, resetTimeMillis);
+        validate(failureThreshold, timeWindowMillis, bucketSizeMillis, requestVolumeThreshold, resetTimeMillis,
+                failureCategories);
 
         return new CircuitBreakerConfig(requestVolumeThreshold, timeWindowMillis, bucketSizeMillis,
                 failureThreshold, resetTimeMillis, failureCategories);
@@ -112,8 +112,12 @@ public class CircuitBreakerConfig {
     }
 
     private static void validate(float failureThreshold, long timeWindowMillis, long bucketSizeMillis,
-                                 int requestVolumeThreshold, long resetTimeMillis)
+                                 int requestVolumeThreshold, long resetTimeMillis,
+                                 Set<FailureCategory> failureCategories)
             throws BallerinaFtpException {
+        if (failureCategories == null || failureCategories.isEmpty()) {
+            throw new BallerinaFtpException("Circuit breaker failureCategories must not be empty");
+        }
         if (failureThreshold < 0.0f || failureThreshold > 1.0f) {
             throw new BallerinaFtpException("Circuit breaker failureThreshold must be between 0.0 and 1.0");
         }

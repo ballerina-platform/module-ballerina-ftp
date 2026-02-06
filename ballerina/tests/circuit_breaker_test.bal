@@ -131,6 +131,33 @@ public function testClientWithInvalidResetTime() {
     }
 }
 
+// Test client creation with empty failureCategories
+@test:Config {}
+public function testClientWithEmptyFailureCategories() {
+    ClientConfiguration config = {
+        protocol: FTP,
+        host: "127.0.0.1",
+        port: 21212,
+        auth: {credentials: {username: "wso2", password: "wso2123"}},
+        circuitBreaker: {
+            rollingWindow: {
+                requestVolumeThreshold: 1,
+                timeWindow: 60,
+                bucketSize: 10
+            },
+            failureThreshold: 0.5,
+            resetTime: 30,
+            failureCategories: []
+        }
+    };
+    Client|Error cbClient = new (config);
+    test:assertTrue(cbClient is Error, msg = "Client creation should fail when failureCategories is empty");
+    if cbClient is Error {
+        test:assertTrue(cbClient.message().includes("failureCategories"),
+            msg = "Error message should mention failureCategories");
+    }
+}
+
 // Test client creation with timeWindow not divisible by bucketSize
 @test:Config {}
 public function testClientWithNonDivisibleTimeWindow() {
