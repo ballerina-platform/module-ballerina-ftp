@@ -213,4 +213,9 @@ public class FtpConstants {
     public static final String OP_GET_JSON = "getJson";
     public static final String OP_GET_XML = "getXml";
     public static final String OP_GET_CSV = "getCsv";
+
+    // Circuit breaker configuration
+    public static final String CIRCUIT_BREAKER = "circuitBreaker";
+    public static final String CIRCUIT_BREAKER_NATIVE_DATA = "CircuitBreaker";
+    public static final String CIRCUIT_BREAKER_OPEN_ERROR = "CircuitBreakerOpenError";
 }
