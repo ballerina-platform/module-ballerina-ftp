@@ -145,7 +145,7 @@ public class FormatMethodsHolder {
                 return null;
             }
             String moveTo = moveToObj.toString();
-            if (moveTo == null || moveTo.trim().isEmpty()) {
+            if (moveTo.trim().isEmpty()) {
                 log.warn("Move action specified but moveTo field is empty");
                 return null;
             }
