@@ -163,6 +163,20 @@ public class FtpListenerHelper {
             }
         }
 
+        // Also check if any content method has post-processing actions configured
+        // Post-processing actions require a caller even if the handler doesn't accept one
+        // This also validates the post-process action configuration
+        if (contentMethod.isPresent()) {
+            try {
+                FormatMethodsHolder holder = new FormatMethodsHolder(service);
+                if (!needsCaller && holder.hasPostProcessingActions()) {
+                    needsCaller = true;
+                }
+            } catch (FtpInvalidConfigException e) {
+                return FtpUtil.createError(e.getMessage(), e, FtpUtil.ErrorType.InvalidConfigError.errorType());
+            }
+        }
+        
         if (!needsCaller) {
             return null;
         }

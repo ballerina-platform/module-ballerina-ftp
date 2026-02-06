@@ -184,7 +184,9 @@ public class RemoteFileSystemConsumer {
                     }
                     try {
                         if (addedFileInfo.size() > 0 || deleted.size() > 0) {
-                            RemoteFileSystemEvent message = new RemoteFileSystemEvent(addedFileInfo, deleted);
+                            String listenerPath = listeningDir.getName().getPath();
+                            RemoteFileSystemEvent message = new RemoteFileSystemEvent(addedFileInfo, deleted,
+                                    listenerPath);
                             remoteFileSystemListener.onMessage(message);
                         }
                     } catch (Exception e) {
@@ -242,6 +244,18 @@ public class RemoteFileSystemConsumer {
      */
     public FileSystemOptions getFileSystemOptions() {
         return fileSystemOptions;
+    }
+
+    /**
+     * Get the listener path (the monitored directory path).
+     *
+     * @return The listener path, or null if not available
+     */
+    public String getListenerPath() {
+        if (listeningDir != null) {
+            return listeningDir.getName().getPath();
+        }
+        return null;
     }
 
     private void closeDirectories() {

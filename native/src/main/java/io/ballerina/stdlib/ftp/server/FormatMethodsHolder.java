@@ -23,6 +23,7 @@ import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpFileExtensionMapper;
@@ -34,6 +35,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
+
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ANNOTATION_AFTER_ERROR;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ANNOTATION_AFTER_PROCESS;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ANNOTATION_MOVE_TO;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ANNOTATION_PRESERVE_SUB_DIRS;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.POST_PROCESS_ACTION_DELETE;
 
 /**
  * Routes files to appropriate content handler methods based on file extension and annotations.
@@ -47,18 +54,24 @@ public class FormatMethodsHolder {
     private final BObject service;
     private final Map<String, MethodType> annotationPatternToMethod;
     private final Map<String, MethodType> availableContentMethods;
+    private final Map<String, PostProcessAction> methodAfterProcessAction;
+    private final Map<String, PostProcessAction> methodAfterErrorAction;
 
-    public FormatMethodsHolder(BObject service) {
+    public FormatMethodsHolder(BObject service) throws FtpInvalidConfigException {
         this.service = service;
         this.annotationPatternToMethod = new HashMap<>();
         this.availableContentMethods = new HashMap<>();
+        this.methodAfterProcessAction = new HashMap<>();
+        this.methodAfterErrorAction = new HashMap<>();
         initializeMethodMappings();
     }
 
     /**
      * Initializes method mappings by scanning all content methods and their annotations.
+     *
+     * @throws FtpInvalidConfigException if post-process action configuration is invalid
      */
-    private void initializeMethodMappings() {
+    private void initializeMethodMappings() throws FtpInvalidConfigException {
         MethodType[] contentMethods = FtpUtil.getAllContentHandlerMethods(service);
 
         for (MethodType method : contentMethods) {
@@ -69,6 +82,8 @@ public class FormatMethodsHolder {
             Optional<BMap<BString, Object>> annotationOpt = getFileConfigAnnotation(method);
             if (annotationOpt.isPresent()) {
                 BMap<BString, Object> annotation = annotationOpt.get();
+
+                // Parse fileNamePattern
                 Object patternObj = annotation.get(io.ballerina.runtime.api.utils.StringUtils.
                         fromString(ANNOTATION_PATTERN_FIELD));
                 if (patternObj != null) {
@@ -76,8 +91,90 @@ public class FormatMethodsHolder {
                     annotationPatternToMethod.put(pattern, method);
                     log.debug("Registered annotation pattern '{}' for method '{}'", pattern, methodName);
                 }
+
+                // Parse afterProcess action
+                PostProcessAction afterProcess = parsePostProcessAction(annotation, ANNOTATION_AFTER_PROCESS,
+                        methodName);
+                if (afterProcess != null) {
+                    methodAfterProcessAction.put(methodName, afterProcess);
+                    log.debug("Registered afterProcess action '{}' for method '{}'", afterProcess, methodName);
+                }
+
+                // Parse afterError action
+                PostProcessAction afterError = parsePostProcessAction(annotation, ANNOTATION_AFTER_ERROR,
+                        methodName);
+                if (afterError != null) {
+                    methodAfterErrorAction.put(methodName, afterError);
+                    log.debug("Registered afterError action '{}' for method '{}'", afterError, methodName);
+                }
             }
         }
+    }
+
+    /**
+     * Parses a post-process action from the annotation.
+     * The action can be:
+     * - null: no action
+     * - "DELETE" (string): delete action
+     * - {moveTo: "...", preserveSubDirs: true/false} (record): move action
+     *
+     * @param annotation The annotation map
+     * @param fieldName The field name (afterProcess or afterError)
+     * @param methodName The method name for error messages
+     * @return The parsed PostProcessAction or null if not specified
+     * @throws FtpInvalidConfigException if the action configuration is invalid
+     */
+    private PostProcessAction parsePostProcessAction(BMap<BString, Object> annotation, String fieldName,
+                                                     String methodName) throws FtpInvalidConfigException {
+        Object actionObj = annotation.get(io.ballerina.runtime.api.utils.StringUtils.fromString(fieldName));
+        if (actionObj == null) {
+            return null;
+        }
+
+        // Check if it's the DELETE constant (string)
+        if (actionObj instanceof BString) {
+            String actionStr = ((BString) actionObj).getValue();
+            if (POST_PROCESS_ACTION_DELETE.equals(actionStr)) {
+                return PostProcessAction.delete();
+            }
+            throw new FtpInvalidConfigException(String.format(
+                    "Invalid '%s' action '%s' in method '%s'. Expected 'DELETE' or a Move record.",
+                    fieldName, actionStr, methodName));
+        }
+
+        // Check if it's a Move record (BMap)
+        if (actionObj instanceof BMap) {
+            @SuppressWarnings("unchecked")
+            BMap<BString, Object> moveRecord = (BMap<BString, Object>) actionObj;
+
+            Object moveToObj = moveRecord.get(
+                    io.ballerina.runtime.api.utils.StringUtils.fromString(ANNOTATION_MOVE_TO));
+            if (moveToObj == null) {
+                throw new FtpInvalidConfigException(String.format(
+                        "Move action in '%s' for method '%s' requires a 'moveTo' path.",
+                        fieldName, methodName));
+            }
+            String moveTo = moveToObj.toString();
+            if (moveTo.trim().isEmpty()) {
+                throw new FtpInvalidConfigException(String.format(
+                        "Move action in '%s' for method '%s' has an empty 'moveTo' path.",
+                        fieldName, methodName));
+            }
+
+            // preserveSubDirs defaults to true
+            boolean preserveSubDirs = true;
+            Object preserveObj = moveRecord.get(
+                    io.ballerina.runtime.api.utils.StringUtils.fromString(ANNOTATION_PRESERVE_SUB_DIRS));
+            if (preserveObj instanceof Boolean) {
+                preserveSubDirs = (Boolean) preserveObj;
+            }
+
+            return PostProcessAction.move(moveTo, preserveSubDirs);
+        }
+
+        throw new FtpInvalidConfigException(String.format(
+                "Invalid '%s' configuration type in method '%s'. Expected 'DELETE' or a Move record.",
+                fieldName, methodName));
     }
 
     /**
@@ -174,5 +271,34 @@ public class FormatMethodsHolder {
      */
     public boolean hasContentMethods() {
         return !availableContentMethods.isEmpty();
+    }
+
+    /**
+     * Gets the afterProcess action for a method.
+     *
+     * @param methodName The method name
+     * @return Optional containing the PostProcessAction if configured
+     */
+    public Optional<PostProcessAction> getAfterProcessAction(String methodName) {
+        return Optional.ofNullable(methodAfterProcessAction.get(methodName));
+    }
+
+    /**
+     * Gets the afterError action for a method.
+     *
+     * @param methodName The method name
+     * @return Optional containing the PostProcessAction if configured
+     */
+    public Optional<PostProcessAction> getAfterErrorAction(String methodName) {
+        return Optional.ofNullable(methodAfterErrorAction.get(methodName));
+    }
+
+    /**
+     * Checks if any content method has post-processing actions configured.
+     *
+     * @return true if any method has afterProcess or afterError actions
+     */
+    public boolean hasPostProcessingActions() {
+        return !methodAfterProcessAction.isEmpty() || !methodAfterErrorAction.isEmpty();
     }
 }

@@ -27,10 +27,17 @@ public class RemoteFileSystemEvent extends RemoteFileSystemBaseMessage {
 
     private List<FileInfo> addedFiles;
     private List<String> deletedFiles;
+    private String listenerPath;
 
     public RemoteFileSystemEvent(List<FileInfo> addedFiles, List<String> deletedFiles) {
         this.addedFiles = addedFiles;
         this.deletedFiles = deletedFiles;
+    }
+
+    public RemoteFileSystemEvent(List<FileInfo> addedFiles, List<String> deletedFiles, String listenerPath) {
+        this.addedFiles = addedFiles;
+        this.deletedFiles = deletedFiles;
+        this.listenerPath = listenerPath;
     }
 
     public List<FileInfo> getAddedFiles() {
@@ -39,5 +46,24 @@ public class RemoteFileSystemEvent extends RemoteFileSystemBaseMessage {
 
     public List<String> getDeletedFiles() {
         return deletedFiles;
+    }
+
+    /**
+     * Gets the listener's monitored path.
+     * Used for subdirectory preservation during MOVE actions.
+     *
+     * @return The listener path, or null if not set
+     */
+    public String getListenerPath() {
+        return listenerPath;
+    }
+
+    /**
+     * Sets the listener's monitored path.
+     *
+     * @param listenerPath The listener path
+     */
+    public void setListenerPath(String listenerPath) {
+        this.listenerPath = listenerPath;
     }
 }
