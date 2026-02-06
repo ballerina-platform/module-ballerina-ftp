@@ -385,7 +385,6 @@ public class FtpClient {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static Object initializeCircuitBreaker(BObject clientEndpoint, BMap<Object, Object> config) {
         BMap<BString, Object> cbConfig = (BMap<BString, Object>) config.getMapValue(
                 StringUtils.fromString(FtpConstants.CIRCUIT_BREAKER));
@@ -878,14 +877,12 @@ public class FtpClient {
 
         private byte[] toBytes(Object value) {
             // Each element is a record with a 'value' field.
-            @SuppressWarnings("unchecked")
             BMap<BString, Object> streamRecord = (BMap<BString, Object>) value;
             Object val = streamRecord.get(FtpConstants.FIELD_VALUE);
 
             if (val instanceof BArray array) {
                 return bytesFromArray(array);
             }
-            @SuppressWarnings("unchecked")
             BMap<BString, Object> recordValue = (BMap<BString, Object>) val;
             return bytesFromRecord(recordValue, isFirstRow);
         }

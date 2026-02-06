@@ -94,13 +94,6 @@ public final class FailureCategorizer {
         return null;
     }
 
-    /**
-     * Categorizes based on ErrorTypeProvider interface.
-     * This leverages the structured error type system.
-     *
-     * @param throwable The exception to categorize
-     * @return The FailureCategory, or null if not an ErrorTypeProvider or no match
-     */
     private static FailureCategory categorizeByErrorTypeProvider(Throwable throwable) {
         if (!(throwable instanceof ErrorTypeProvider provider)) {
             return null;
@@ -122,12 +115,6 @@ public final class FailureCategorizer {
         return null;
     }
 
-    /**
-     * Categorizes based on exception type.
-     *
-     * @param throwable The exception to categorize
-     * @return The FailureCategory, or null if no match
-     */
     private static FailureCategory categorizeByExceptionType(Throwable throwable) {
         // Connection errors
         if (throwable instanceof ConnectException ||
@@ -157,12 +144,6 @@ public final class FailureCategorizer {
         return null;
     }
 
-    /**
-     * Categorizes based on error message patterns using FtpErrorCodeAnalyzer.
-     *
-     * @param message The error message to categorize
-     * @return The FailureCategory, or null if no match
-     */
     private static FailureCategory categorizeByMessage(String message) {
         if (message == null) {
             return null;

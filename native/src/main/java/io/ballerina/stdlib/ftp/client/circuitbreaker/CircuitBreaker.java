@@ -30,10 +30,6 @@ import java.util.concurrent.locks.StampedLock;
 /**
  * Circuit breaker implementation for FTP client operations.
  * Prevents cascade failures by temporarily blocking requests when the server is experiencing issues.
- *
- * <p>Uses {@link StampedLock} with optimistic reads on the hot path ({@code isOpen()})
- * to avoid contention when the circuit is CLOSED—the common case. Write locks are
- * acquired only when state or health metrics need to be mutated.</p>
  */
 public class CircuitBreaker {
     private static final Logger log = LoggerFactory.getLogger(CircuitBreaker.class);
@@ -183,10 +179,6 @@ public class CircuitBreaker {
         return FtpUtil.createError(message, FtpUtil.ErrorType.CircuitBreakerOpenError.errorType());
     }
 
-    /**
-     * Updates the circuit state based on current metrics.
-     * Must be called while holding the write lock.
-     */
     private void updateState() {
         health.prepareRollingWindow();
 
@@ -217,11 +209,6 @@ public class CircuitBreaker {
         }
     }
 
-    /**
-     * Checks if the reset time has elapsed since the circuit opened.
-     *
-     * @return true if reset time has elapsed
-     */
     private boolean resetTimeElapsed() {
         Instant lastError = health.getLastErrorTime();
         if (lastError == null) {
@@ -231,28 +218,14 @@ public class CircuitBreaker {
         return elapsedMillis >= config.getResetTimeMillis();
     }
 
-    /**
-     * Records a successful operation.
-     * Must be called while holding the write lock.
-     */
     private void recordSuccess() {
         health.recordSuccess();
     }
 
-    /**
-     * Records a failed operation.
-     * Must be called while holding the write lock.
-     */
     private void recordFailure() {
         health.recordFailure();
     }
 
-    /**
-     * Determines if an error should count as a failure for circuit breaker purposes.
-     *
-     * @param e The throwable to evaluate
-     * @return true if the error should count as a failure
-     */
     private boolean shouldCountAsFailure(Throwable e) {
         Set<FailureCategory> configuredCategories = config.getFailureCategories();
 
