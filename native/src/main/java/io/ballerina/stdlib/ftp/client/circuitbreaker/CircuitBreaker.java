@@ -25,10 +25,15 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Set;
+import java.util.concurrent.locks.StampedLock;
 
 /**
  * Circuit breaker implementation for FTP client operations.
  * Prevents cascade failures by temporarily blocking requests when the server is experiencing issues.
+ *
+ * <p>Uses {@link StampedLock} with optimistic reads on the hot path ({@code isOpen()})
+ * to avoid contention when the circuit is CLOSED—the common case. Write locks are
+ * acquired only when state or health metrics need to be mutated.</p>
  */
 public class CircuitBreaker {
     private static final Logger log = LoggerFactory.getLogger(CircuitBreaker.class);
@@ -36,8 +41,8 @@ public class CircuitBreaker {
     private final CircuitBreakerConfig config;
     private final CircuitHealth health;
     private volatile CircuitState state;
-    private boolean trialRequestInProgress;
-    private final Object lock = new Object();
+    private volatile boolean trialRequestInProgress;
+    private final StampedLock lock = new StampedLock();
 
     /**
      * Creates a new CircuitBreaker with the specified configuration.
@@ -60,16 +65,36 @@ public class CircuitBreaker {
 
     /**
      * Checks if the circuit is currently open (blocking requests).
+     * Uses an optimistic read first; falls back to a write lock only when a
+     * state transition may be required.
      *
      * @return true if the circuit is open
      */
     public boolean isOpen() {
-        synchronized (lock) {
+        // Fast path: optimistic read – succeeds without blocking when the
+        // circuit is CLOSED and no state transition is needed.
+        long stamp = lock.tryOptimisticRead();
+        CircuitState currentState = this.state;
+        boolean trialInProgress = this.trialRequestInProgress;
+        if (lock.validate(stamp)) {
+            if (currentState == CircuitState.CLOSED) {
+                return false;
+            }
+            if (currentState == CircuitState.HALF_OPEN) {
+                return trialInProgress;
+            }
+        }
+
+        // Slow path: acquire a write lock so we can run updateState().
+        stamp = lock.writeLock();
+        try {
             updateState();
             if (state == CircuitState.HALF_OPEN) {
                 return trialRequestInProgress;
             }
             return state == CircuitState.OPEN;
+        } finally {
+            lock.unlockWrite(stamp);
         }
     }
 
@@ -78,7 +103,8 @@ public class CircuitBreaker {
      * Call this BEFORE starting the operation.
      */
     public void recordRequestStart() {
-        synchronized (lock) {
+        long stamp = lock.writeLock();
+        try {
             updateState();
             if (state == CircuitState.OPEN || (state == CircuitState.HALF_OPEN && trialRequestInProgress)) {
                 return;
@@ -88,6 +114,8 @@ public class CircuitBreaker {
             }
             health.prepareRollingWindow();
             health.recordRequest();
+        } finally {
+            lock.unlockWrite(stamp);
         }
     }
 
@@ -98,7 +126,8 @@ public class CircuitBreaker {
      * @param error The throwable if the operation failed, null if successful
      */
     public void recordOutcome(Throwable error) {
-        synchronized (lock) {
+        long stamp = lock.writeLock();
+        try {
             if (state == CircuitState.HALF_OPEN) {
                 if (error == null) {
                     recordSuccess();
@@ -128,6 +157,8 @@ public class CircuitBreaker {
             }
             // Update state after recording the outcome
             updateState();
+        } finally {
+            lock.unlockWrite(stamp);
         }
     }
 
@@ -154,7 +185,7 @@ public class CircuitBreaker {
 
     /**
      * Updates the circuit state based on current metrics.
-     * Must be called within synchronized block.
+     * Must be called while holding the write lock.
      */
     private void updateState() {
         health.prepareRollingWindow();
@@ -202,7 +233,7 @@ public class CircuitBreaker {
 
     /**
      * Records a successful operation.
-     * Must be called within synchronized block.
+     * Must be called while holding the write lock.
      */
     private void recordSuccess() {
         health.recordSuccess();
@@ -210,7 +241,7 @@ public class CircuitBreaker {
 
     /**
      * Records a failed operation.
-     * Must be called within synchronized block.
+     * Must be called while holding the write lock.
      */
     private void recordFailure() {
         health.recordFailure();
@@ -247,8 +278,17 @@ public class CircuitBreaker {
      * @return The current state
      */
     public CircuitState getState() {
-        synchronized (lock) {
-            return state;
+        long stamp = lock.tryOptimisticRead();
+        CircuitState currentState = this.state;
+        if (lock.validate(stamp)) {
+            return currentState;
+        }
+        // Fall back to a read lock if the optimistic read was invalidated.
+        stamp = lock.readLock();
+        try {
+            return this.state;
+        } finally {
+            lock.unlockRead(stamp);
         }
     }
 }

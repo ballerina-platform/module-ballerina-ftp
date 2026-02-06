@@ -23,9 +23,8 @@ import java.time.Instant;
 /**
  * Tracks the health metrics of the circuit breaker using a sliding window of buckets.
  * <p>
- * This class is NOT thread-safe. All methods must be called within synchronized blocks
- * from the CircuitBreaker class. The CircuitBreaker maintains synchronization at a higher
- * level to ensure thread-safe access to CircuitHealth state.
+ * This class is NOT thread-safe. All methods must be called while holding the
+ * write lock from the {@link CircuitBreaker}'s {@link java.util.concurrent.locks.StampedLock}.
  * </p>
  */
 public class CircuitHealth {
