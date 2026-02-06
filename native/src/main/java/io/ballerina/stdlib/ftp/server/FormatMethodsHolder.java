@@ -35,6 +35,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ANNOTATION_AFTER_ERROR;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ANNOTATION_AFTER_PROCESS;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ANNOTATION_MOVE_TO;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ANNOTATION_PRESERVE_SUB_DIRS;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.POST_PROCESS_ACTION_DELETE;
+
 /**
  * Routes files to appropriate content handler methods based on file extension and annotations.
  */
@@ -47,11 +53,15 @@ public class FormatMethodsHolder {
     private final BObject service;
     private final Map<String, MethodType> annotationPatternToMethod;
     private final Map<String, MethodType> availableContentMethods;
+    private final Map<String, PostProcessAction> methodAfterProcessAction;
+    private final Map<String, PostProcessAction> methodAfterErrorAction;
 
     public FormatMethodsHolder(BObject service) {
         this.service = service;
         this.annotationPatternToMethod = new HashMap<>();
         this.availableContentMethods = new HashMap<>();
+        this.methodAfterProcessAction = new HashMap<>();
+        this.methodAfterErrorAction = new HashMap<>();
         initializeMethodMappings();
     }
 
@@ -69,6 +79,8 @@ public class FormatMethodsHolder {
             Optional<BMap<BString, Object>> annotationOpt = getFileConfigAnnotation(method);
             if (annotationOpt.isPresent()) {
                 BMap<BString, Object> annotation = annotationOpt.get();
+
+                // Parse fileNamePattern
                 Object patternObj = annotation.get(io.ballerina.runtime.api.utils.StringUtils.
                         fromString(ANNOTATION_PATTERN_FIELD));
                 if (patternObj != null) {
@@ -76,8 +88,77 @@ public class FormatMethodsHolder {
                     annotationPatternToMethod.put(pattern, method);
                     log.debug("Registered annotation pattern '{}' for method '{}'", pattern, methodName);
                 }
+
+                // Parse afterProcess action
+                PostProcessAction afterProcess = parsePostProcessAction(annotation, ANNOTATION_AFTER_PROCESS);
+                if (afterProcess != null) {
+                    methodAfterProcessAction.put(methodName, afterProcess);
+                    log.debug("Registered afterProcess action '{}' for method '{}'", afterProcess, methodName);
+                }
+
+                // Parse afterError action
+                PostProcessAction afterError = parsePostProcessAction(annotation, ANNOTATION_AFTER_ERROR);
+                if (afterError != null) {
+                    methodAfterErrorAction.put(methodName, afterError);
+                    log.debug("Registered afterError action '{}' for method '{}'", afterError, methodName);
+                }
             }
         }
+    }
+
+    /**
+     * Parses a post-process action from the annotation.
+     * The action can be:
+     * - null: no action
+     * - "DELETE" (string): delete action
+     * - {moveTo: "...", preserveSubDirs: true/false} (record): move action
+     *
+     * @param annotation The annotation map
+     * @param fieldName The field name (afterProcess or afterError)
+     * @return The parsed PostProcessAction or null if not specified
+     */
+    private PostProcessAction parsePostProcessAction(BMap<BString, Object> annotation, String fieldName) {
+        Object actionObj = annotation.get(io.ballerina.runtime.api.utils.StringUtils.fromString(fieldName));
+        if (actionObj == null) {
+            return null;
+        }
+
+        // Check if it's the DELETE constant (string)
+        if (actionObj instanceof BString) {
+            String actionStr = ((BString) actionObj).getValue();
+            if (POST_PROCESS_ACTION_DELETE.equals(actionStr)) {
+                return PostProcessAction.delete();
+            }
+            log.warn("Unknown post-process action string: {}", actionStr);
+            return null;
+        }
+
+        // Check if it's a Move record (BMap)
+        if (actionObj instanceof BMap) {
+            @SuppressWarnings("unchecked")
+            BMap<BString, Object> moveRecord = (BMap<BString, Object>) actionObj;
+
+            Object moveToObj = moveRecord.get(
+                    io.ballerina.runtime.api.utils.StringUtils.fromString(ANNOTATION_MOVE_TO));
+            if (moveToObj == null) {
+                log.warn("Move action specified but moveTo field is missing");
+                return null;
+            }
+            String moveTo = moveToObj.toString();
+
+            // preserveSubDirs defaults to true
+            boolean preserveSubDirs = true;
+            Object preserveObj = moveRecord.get(
+                    io.ballerina.runtime.api.utils.StringUtils.fromString(ANNOTATION_PRESERVE_SUB_DIRS));
+            if (preserveObj instanceof Boolean) {
+                preserveSubDirs = (Boolean) preserveObj;
+            }
+
+            return PostProcessAction.move(moveTo, preserveSubDirs);
+        }
+
+        log.warn("Unexpected post-process action type: {}", actionObj.getClass().getName());
+        return null;
     }
 
     /**
@@ -174,5 +255,25 @@ public class FormatMethodsHolder {
      */
     public boolean hasContentMethods() {
         return !availableContentMethods.isEmpty();
+    }
+
+    /**
+     * Gets the afterProcess action for a method.
+     *
+     * @param methodName The method name
+     * @return Optional containing the PostProcessAction if configured
+     */
+    public Optional<PostProcessAction> getAfterProcessAction(String methodName) {
+        return Optional.ofNullable(methodAfterProcessAction.get(methodName));
+    }
+
+    /**
+     * Gets the afterError action for a method.
+     *
+     * @param methodName The method name
+     * @return Optional containing the PostProcessAction if configured
+     */
+    public Optional<PostProcessAction> getAfterErrorAction(String methodName) {
+        return Optional.ofNullable(methodAfterErrorAction.get(methodName));
     }
 }

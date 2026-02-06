@@ -213,4 +213,11 @@ public class FtpConstants {
     public static final String OP_GET_JSON = "getJson";
     public static final String OP_GET_XML = "getXml";
     public static final String OP_GET_CSV = "getCsv";
+
+    // Post-processing action annotation fields
+    public static final String ANNOTATION_AFTER_PROCESS = "afterProcess";
+    public static final String ANNOTATION_AFTER_ERROR = "afterError";
+    public static final String ANNOTATION_MOVE_TO = "moveTo";
+    public static final String ANNOTATION_PRESERVE_SUB_DIRS = "preserveSubDirs";
+    public static final String POST_PROCESS_ACTION_DELETE = "DELETE";
 }

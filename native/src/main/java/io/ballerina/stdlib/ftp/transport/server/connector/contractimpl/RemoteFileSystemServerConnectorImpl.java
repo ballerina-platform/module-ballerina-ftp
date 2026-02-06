@@ -103,4 +103,8 @@ public class RemoteFileSystemServerConnectorImpl implements RemoteFileSystemServ
     public FileSystemOptions getFileSystemOptions() {
         return consumer.getFileSystemOptions();
     }
+
+    public String getListenerPath() {
+        return consumer.getListenerPath();
+    }
 }
