@@ -114,6 +114,8 @@ public class FtpServiceValidationTest {
         DiagnosticResult diagnosticResult = compilation.diagnosticResult();
         Diagnostic warning = diagnosticResult.diagnostics().stream()
                 .filter(diagnostic -> diagnostic.diagnosticInfo().severity() == DiagnosticSeverity.WARNING)
+                .filter(diagnostic -> 
+                        diagnostic.diagnosticInfo().code().equals(ON_FILE_CHANGE_DEPRECATED.getErrorCode()))
                 .findFirst()
                 .orElse(null);
         Assert.assertNotNull(warning, "Expected a deprecation warning for onFileChange usage.");

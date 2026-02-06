@@ -1138,21 +1138,34 @@ public function testListFiles() {
         "content-methods",
         "age",
         "retry",
-        "test3.txt"
+        "test3.txt",
+        "onerror-tests",
+        "sc-route-a",
+        "sc-route-b",
+        "sc-single",
+        "sc-legacy"
     ];
-    int[] fileSizes = [0, 61, 0, 0, 0, 0, 0, 145, 0, 0, 16400, 9000, 0, 0, 0, 0, 12];
+    int[] fileSizes = [0, 61, 0, 0, 0, 0, 0, 145, 0, 0, 16400, 9000, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0];
     FileInfo[]|Error response = (<Client>clientEp)->list("/home/in");
     if response is FileInfo[] {
         log:printInfo("List of files/directories: ");
-        int i = 0;
+        map<FileInfo> fileInfoMap = {};
         foreach var fileInfo in response {
             log:printInfo(fileInfo.toString());
-            test:assertEquals(fileInfo.path, "/home/in/" + resourceNames[i],
-                msg = "File path is not matched during the `list` operation");
-            test:assertTrue(fileInfo.lastModifiedTimestamp > 0,
-                msg = "Last Modified Timestamp of the file is not correct during the `list` operation");
-            test:assertEquals(fileInfo.size, fileSizes[i],
-                msg = "File size is not matched during the `list` operation");
+            fileInfoMap[fileInfo.path] = fileInfo;
+        }
+        int i = 0;
+        while i < resourceNames.length() {
+            string expectedPath = "/home/in/" + resourceNames[i];
+            FileInfo? expectedInfo = fileInfoMap[expectedPath];
+            test:assertTrue(expectedInfo is FileInfo,
+                msg = "Expected path not found during the `list` operation: " + expectedPath);
+            if expectedInfo is FileInfo {
+                test:assertTrue(expectedInfo.lastModifiedTimestamp > 0,
+                    msg = "Last Modified Timestamp of the file is not correct during the `list` operation");
+                test:assertEquals(expectedInfo.size, fileSizes[i],
+                    msg = "File size is not matched during the `list` operation");
+            }
             i = i + 1;
         }
         log:printInfo("Executed `list` operation");

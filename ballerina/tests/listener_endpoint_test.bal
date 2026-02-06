@@ -173,7 +173,7 @@ public function testFtpServerDeregistration() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureEmptyPassword() returns error? {
-    Listener|Error emptyPasswordServer = new ({
+    Listener emptyPasswordServer = check new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -188,8 +188,13 @@ public function testServerRegisterFailureEmptyPassword() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    if emptyPasswordServer is Error {
-        test:assertTrue(emptyPasswordServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = emptyPasswordServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when empty password is used for creating a Listener.");
     }
@@ -221,7 +226,7 @@ public function testServerRegisterFailureEmptyUsername() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureInvalidUsername() returns error? {
-    Listener|Error invalidUsernameServer = new (
+    Listener invalidUsernameServer = check new (
         protocol = FTP,
         host = "127.0.0.1",
         auth = {
@@ -236,8 +241,13 @@ public function testServerRegisterFailureInvalidUsername() returns error? {
         fileNamePattern = "(.*).txt"
     );
 
-    if invalidUsernameServer is Error {
-        test:assertTrue(invalidUsernameServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = invalidUsernameServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when invalid username is used for creating a Listener.");
     }
@@ -245,7 +255,7 @@ public function testServerRegisterFailureInvalidUsername() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureInvalidPassword() returns error? {
-    Listener|Error invalidPasswordServer = new ({
+    Listener invalidPasswordServer = check new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -260,8 +270,13 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    if invalidPasswordServer is Error {
-        test:assertTrue(invalidPasswordServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = invalidPasswordServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when invalid password is used for creating a Listener.");
     }
@@ -269,7 +284,7 @@ public function testServerRegisterFailureInvalidPassword() returns error? {
 
 @test:Config {}
 public function testConnectToInvalidUrl() returns error? {
-    Listener|Error invalidUrlServer = new ({
+    Listener invalidUrlServer = check new ({
         protocol: FTP,
         host: "localhost",
         port: 21218,
@@ -281,8 +296,13 @@ public function testConnectToInvalidUrl() returns error? {
         fileNamePattern: "(.*).txt"
     });
 
-    if invalidUrlServer is Error {
-        test:assertTrue(invalidUrlServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = invalidUrlServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
     } else {
         test:assertFail("Non-error result when trying to connect to an invalid url.");
     }
@@ -290,7 +310,7 @@ public function testConnectToInvalidUrl() returns error? {
 
 @test:Config {}
 public function testServerRegisterFailureWithDetailedErrorMessage() returns error? {
-    Listener|Error invalidUrlServer = new ({
+    Listener invalidUrlServer = check new ({
         protocol: FTP,
         host: "localhost",
         port: 21219,
@@ -302,10 +322,15 @@ public function testServerRegisterFailureWithDetailedErrorMessage() returns erro
         fileNamePattern: "(.*).txt"
     });
 
-    if invalidUrlServer is Error {
-        test:assertTrue(invalidUrlServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = invalidUrlServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
         // Verify that the error message contains additional details from the root cause
-        test:assertTrue(invalidUrlServer.message().length() > "Failed to initialize File server connector.".length(),
+        test:assertTrue(attachResult.message().length() > "Failed to initialize File server connector.".length(),
             msg = "Error message should contain detailed root cause information");
     } else {
         test:assertFail("Non-error result when trying to connect to an unreachable server.");
@@ -314,7 +339,7 @@ public function testServerRegisterFailureWithDetailedErrorMessage() returns erro
 
 @test:Config {}
 public function testServerRegisterFailureInvalidCredentialsWithDetails() returns error? {
-    Listener|Error invalidCredsServer = new ({
+    Listener invalidCredsServer = check new ({
         protocol: FTP,
         host: "127.0.0.1",
         auth: {
@@ -329,10 +354,15 @@ public function testServerRegisterFailureInvalidCredentialsWithDetails() returns
         fileNamePattern: "(.*).txt"
     });
 
-    if invalidCredsServer is Error {
-        test:assertTrue(invalidCredsServer.message().startsWith("Failed to initialize File server connector."));
+    Service attachService = service object {
+        remote function onFileChange(WatchEvent & readonly event) {
+        }
+    };
+    error? attachResult = invalidCredsServer.attach(attachService);
+    if attachResult is Error {
+        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector."));
         // Verify that the error message contains additional details from the root cause
-        test:assertTrue(invalidCredsServer.message().length() > "Failed to initialize File server connector.".length(),
+        test:assertTrue(attachResult.message().length() > "Failed to initialize File server connector.".length(),
             msg = "Error message should contain detailed root cause information");
     } else {
         test:assertFail("Non-error result when invalid credentials are used for creating a Listener.");
