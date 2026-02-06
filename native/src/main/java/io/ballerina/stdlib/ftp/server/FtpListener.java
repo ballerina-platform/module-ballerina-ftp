@@ -37,6 +37,7 @@ import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
@@ -128,7 +129,14 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     private void dispatchFileEventToService(Environment env, BObject service, RemoteFileSystemEvent event) {
-        FormatMethodsHolder formatMethodHolder = new FormatMethodsHolder(service);
+        FormatMethodsHolder formatMethodHolder;
+        try {
+            formatMethodHolder = new FormatMethodsHolder(service);
+        } catch (FtpInvalidConfigException e) {
+            // This should not happen as validation occurs during attach
+            log.error("Invalid post-process action configuration: {}", e.getMessage());
+            return;
+        }
         Optional<MethodType> onFileDeletedMethodType = getOnFileDeletedMethod(service);
 
         // Dispatch Strategy: Check handler availability in order

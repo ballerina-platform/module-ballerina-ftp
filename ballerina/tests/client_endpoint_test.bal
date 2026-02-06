@@ -1138,22 +1138,31 @@ public function testListFiles() {
         "content-methods",
         "age",
         "retry",
-        "test3.txt"
+        "test3.txt",
+        "post-process",
+        "post-process-archive",
+        "post-process-error"
     ];
-    int[] fileSizes = [0, 61, 0, 0, 0, 0, 0, 145, 0, 0, 16400, 9000, 0, 0, 0, 0, 12];
+    int[] fileSizes = [0, 61, 0, 0, 0, 0, 0, 145, 0, 0, 16400, 9000, 0, 0, 0, 0, 12, 0, 0, 0];
     FileInfo[]|Error response = (<Client>clientEp)->list("/home/in");
     if response is FileInfo[] {
         log:printInfo("List of files/directories: ");
+        map<int> expectedSizes = {};
         int i = 0;
+        foreach string name in resourceNames {
+            expectedSizes["/home/in/" + name] = fileSizes[i];
+            i = i + 1;
+        }
+        test:assertEquals(response.length(), resourceNames.length(),
+            msg = "File count is not matched during the `list` operation");
         foreach var fileInfo in response {
             log:printInfo(fileInfo.toString());
-            test:assertEquals(fileInfo.path, "/home/in/" + resourceNames[i],
+            test:assertTrue(expectedSizes.hasKey(fileInfo.path),
                 msg = "File path is not matched during the `list` operation");
             test:assertTrue(fileInfo.lastModifiedTimestamp > 0,
                 msg = "Last Modified Timestamp of the file is not correct during the `list` operation");
-            test:assertEquals(fileInfo.size, fileSizes[i],
+            test:assertEquals(fileInfo.size, expectedSizes[fileInfo.path],
                 msg = "File size is not matched during the `list` operation");
-            i = i + 1;
         }
         log:printInfo("Executed `list` operation");
     } else {
