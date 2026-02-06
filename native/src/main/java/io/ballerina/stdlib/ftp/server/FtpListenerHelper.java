@@ -339,8 +339,6 @@ public class FtpListenerHelper {
             return FtpUtil.createError(e.getMessage(), findRootCause(e), InvalidConfigError.errorType());
         } catch (RemoteFileSystemConnectorException e) {
             return FtpUtil.createError(e);
-        } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
         }
     }
 
