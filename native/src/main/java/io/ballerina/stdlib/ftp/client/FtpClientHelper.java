@@ -295,7 +295,6 @@ class FtpClientHelper {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static void callStreamNext(Environment env, BObject entity, BufferHolder bufferHolder,
                                        BObject iteratorObj) {
         Object result = env.getRuntime().callMethod(iteratorObj, BYTE_STREAM_NEXT_FUNC, null);

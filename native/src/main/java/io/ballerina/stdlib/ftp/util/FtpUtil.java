@@ -624,7 +624,8 @@ public class FtpUtil {
         FileAlreadyExistsError("FileAlreadyExistsError"),
         InvalidConfigError("InvalidConfigError"),
         ServiceUnavailableError("ServiceUnavailableError"),
-        AllRetryAttemptsFailedError("AllRetryAttemptsFailedError");
+        AllRetryAttemptsFailedError("AllRetryAttemptsFailedError"),
+        CircuitBreakerOpenError("CircuitBreakerOpenError");
 
         private String errorType;
 
