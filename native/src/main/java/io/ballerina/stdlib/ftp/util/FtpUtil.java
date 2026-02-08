@@ -678,7 +678,8 @@ public class FtpUtil {
         InvalidConfigError("InvalidConfigError"),
         ServiceUnavailableError("ServiceUnavailableError"),
         ContentBindingError("ContentBindingError"),
-        AllRetryAttemptsFailedError("AllRetryAttemptsFailedError");
+        AllRetryAttemptsFailedError("AllRetryAttemptsFailedError"),
+        CircuitBreakerOpenError("CircuitBreakerOpenError");
 
         private String errorType;
 

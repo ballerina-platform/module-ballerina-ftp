@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## unreleased
 
 ### Added
+
 - [Introduce onError remote function](https://github.com/ballerina-platform/ballerina-library/issues/8605)
+- [Add Circuit breaker support](https://github.com/ballerina-platform/ballerina-library/issues/8382)
 - [Add automatic retry support with exponential backoff for FTP client](https://github.com/ballerina-platform/ballerina-library/issues/8585)
 - [Add FTP Listener Coordination Support](https://github.com/ballerina-platform/ballerina-library/issues/8490)
 - [Add distinct error types](https://github.com/ballerina-platform/ballerina-library/issues/8597)

@@ -32,6 +32,10 @@ The conforming implementation of the specification is released and included in t
       - [3.2.2. Secure Client](#322-secure-client)
       - [3.2.3. Client with Retry Configuration](#323-client-with-retry-configuration)
     - [3.3. Functions](#33-functions)
+    - [3.4. Circuit Breaker](#34-circuit-breaker)
+      - [State Machine](#state-machine)
+      - [Configuration](#configuration)
+      - [Usage Example](#usage-example)
   - [4. Listener](#4-listener)
     - [4.1. Configurations](#41-configurations)
     - [4.2. Initialization](#42-initialization)
@@ -163,7 +167,6 @@ public type Error distinct error;
 
 * `ConnectionError` - Represents errors that occur when connecting to the FTP/SFTP server. This includes network failures, host unreachable, connection refused, etc.
 ```ballerina
-# Represents an error that occurs when connecting to the FTP/SFTP server.
 public type ConnectionError distinct Error;
 ```
 
@@ -182,7 +185,7 @@ public type FileAlreadyExistsError distinct Error;
 public type InvalidConfigError distinct Error;
 ```
 
-* `ServiceUnavailableError` - Represents errors that occur when the FTP/SFTP service is temporarily unavailable. This is a transient error indicating the operation may succeed on retry. Common causes include server overload (FTP code 421), connection issues (425, 426), temporary file locks (450), or server-side processing errors (451). This error type is designed for use with retry and circuit breaker patterns.
+* `ServiceUnavailableError` - Represents errors that occur when the FTP/SFTP service is temporarily unavailable. This is a transient error indicating the operation may succeed on retry. Common causes include server overload (FTP code 421), connection issues (425, 426), temporary file locks (450), or server-side processing errors (451).
 ```ballerina
 public type ServiceUnavailableError distinct Error;
 ```
@@ -200,19 +203,32 @@ public type ContentBindingErrorDetail record {|
 |};
 ```
 
+* `AllRetryAttemptsFailedError` - Represents an error that occurs when all retry attempts have been exhausted. This error wraps the last failure encountered during retry attempts.
+```ballerina
+public type AllRetryAttemptsFailedError distinct Error;
+```
+
+* `CircuitBreakerOpenError` - Error returned when the circuit breaker is in OPEN state. This indicates the FTP server is unavailable and requests are being blocked to prevent cascade failures. This is a distinct subtype of `ServiceUnavailableError`.
+```ballerina
+public type CircuitBreakerOpenError distinct ServiceUnavailableError;
+```
+
 All specific error types are subtypes of the base `Error` type, allowing for both specific and general error handling:
 ```ballerina
 // Handle specific error types
 ftp:Client|ftp:Error result = new(config);
 if result is ftp:ConnectionError {
     // Handle connection failures specifically
+} else if result is ftp:CircuitBreakerOpenError {
+    // Circuit breaker is open - implement fallback logic
+} else if result is ftp:AllRetryAttemptsFailedError {
+    // All retries exhausted - consider alerting
 } else if result is ftp:ServiceUnavailableError {
     // Transient error - retry the operation
 } else if result is ftp:Error {
     // Handle any other FTP error
 }
 ```
-
 ### 2.4. Retry Configuration
 * `RetryConfig` record represents the configuration for automatic retries of operations.
 ```ballerina
@@ -254,6 +270,8 @@ public type ClientConfiguration record {|
     boolean laxDataBinding = false;
     # Retry configuration for read operations
     RetryConfig retryConfig?;
+    # Circuit breaker configuration to prevent cascade failures
+    CircuitBreakerConfig circuitBreaker?;
 |};
 ```
 * InputContent record represents the configurations for the input given for `put` and `append` operations.
@@ -676,6 +694,84 @@ remote isolated function list(string path) returns FileInfo[]|Error;
 #            an error occurred while checking the path
 remote isolated function isDirectory(string path) returns boolean|Error;
 ```
+
+### 3.4. Circuit Breaker
+The circuit breaker pattern prevents cascade failures by temporarily blocking requests to an FTP server experiencing issues. When failures reach a threshold, the circuit "opens" and subsequent requests fail fast with `CircuitBreakerOpenError` without attempting the actual operation.
+
+#### State Machine
+The circuit breaker operates in three states:
+- **CLOSED**: Normal operation. Requests are allowed and failures are tracked.
+- **OPEN**: Circuit is tripped. All requests are rejected immediately with `CircuitBreakerOpenError`.
+- **HALF_OPEN**: After the reset time elapses, one trial request is allowed. Success returns to CLOSED; failure returns to OPEN.
+
+#### Configuration
+* CircuitBreakerConfig record contains the circuit breaker settings.
+```ballerina
+public type CircuitBreakerConfig record {|
+    # Rolling window configuration for failure tracking
+    RollingWindow rollingWindow = {};
+    # Failure ratio threshold (0.0 to 1.0) that trips the circuit
+    float failureThreshold = 0.5;
+    # Time in seconds to wait before transitioning from OPEN to HALF_OPEN
+    decimal resetTime = 30;
+    # Categories of failures that count towards tripping the circuit
+    FailureCategory[] failureCategories = [CONNECTION_ERROR, TRANSIENT_ERROR];
+|};
+```
+* RollingWindow record configures the sliding window for tracking failures.
+```ballerina
+public type RollingWindow record {|
+    # Minimum number of requests in the window before the circuit can trip
+    int requestVolumeThreshold = 10;
+    # Time window in seconds for tracking failures
+    decimal timeWindow = 60;
+    # Size of each time bucket in seconds (timeWindow / bucketSize = number of buckets)
+    decimal bucketSize = 10;
+|};
+```
+* FailureCategory enum specifies which types of failures count towards tripping the circuit.
+```ballerina
+public enum FailureCategory {
+    # Connection failures (network issues, timeouts)
+    CONNECTION_ERROR,
+    # Authentication failures (invalid credentials)
+    AUTHENTICATION_ERROR,
+    # Server disconnection during operation
+    TRANSIENT_ERROR,
+    # All errors count as failures
+    ALL_ERRORS
+}
+```
+#### Usage Example
+```ballerina
+ftp:ClientConfiguration ftpConfig = {
+    protocol: ftp:FTP,
+    host: "ftp.example.com",
+    port: 21,
+    auth: {
+        credentials: {username: "user", password: "pass"}
+    },
+    circuitBreaker: {
+        failureThreshold: 0.5,
+        resetTime: 30,
+        rollingWindow: {
+            requestVolumeThreshold: 5,
+            timeWindow: 60,
+            bucketSize: 10
+        },
+        failureCategories: [ftp:CONNECTION_ERROR, ftp:TRANSIENT_ERROR]
+    }
+};
+
+ftp:Client ftpClient = check new(ftpConfig);
+
+// Operations will fail fast with CircuitBreakerOpenError when circuit is open
+byte[]|ftp:Error content = ftpClient->getBytes("/file.txt");
+if content is ftp:CircuitBreakerOpenError {
+    // Handle circuit breaker open state - server is unavailable
+}
+```
+
 ## 4. Listener
 The `ftp:Listener` is used to listen to a remote FTP location and trigger a `WatchEvent` type of event when new
 files are added to or deleted from the directory. The `onFileChange` function is invoked when a new file is added
