@@ -83,18 +83,22 @@ public class FtpListenerHelper {
 
     public static final BString CSV_FAIL_SAFE = StringUtils.fromString("csvFailSafe");
 
+    /**
+     * Prevents instantiation of this utility helper class.
+     */
     private FtpListenerHelper() {
         // private constructor
     }
 
     /**
-     * Initialize the FTP Listener without creating a connector.
-     * The connector is created lazily during the first service registration,
-     * allowing us to choose between single-path (legacy) or multi-path mode
-     * based on whether the first service uses @ftp:ServiceConfig.
+     * Prepare an FTP listener and store base connector parameters so the actual server connector
+     * can be created lazily during the first service registration (choosing legacy single-path
+     * or multi-path mode based on service annotations).
      *
-     * @param ftpListener           Listener that places `ftp:WatchEvent` by Ballerina runtime
-     * @param serviceEndpointConfig FTP server endpoint configuration
+     * @param ftpListener           the listener object that will receive `ftp:WatchEvent` and hold native data
+     * @param serviceEndpointConfig the FTP server endpoint configuration map
+     * @return                       `null` on success, or an error object describing invalid configuration
+     *                               or other initialization failures
      */
     public static Object init(Environment env, BObject ftpListener, BMap<BString, Object> serviceEndpointConfig) {
         try {
@@ -123,6 +127,22 @@ public class FtpListenerHelper {
         }
     }
 
+    /**
+     * Register a service with the given FTP listener, creating and configuring the server connector and any
+     * per-service path consumers as required.
+     *
+     * <p>On first registration the method lazily creates either a multi-path connector if the service has a
+     * @ftp:ServiceConfig annotation, or a legacy single-path connector otherwise. For services with
+     * @ftp:ServiceConfig it parses and registers the service configuration (path, file name pattern, age filters,
+     * dependency conditions) and adds a path consumer to the connector. For subsequent registrations it validates
+     * that all services consistently use (or do not use) @ftp:ServiceConfig and enforces unique paths. The service
+     * is added to the listener and, if the service methods require a caller, a caller object is created and attached
+     * to the listener.
+     *
+     * @param ftpListener the listener object to register the service with
+     * @param service the service object to register
+     * @return `null` on success, or an error object describing configuration or connector failures otherwise
+     */
     public static Object register(BObject ftpListener, BObject service) {
         RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) ftpListener.getNativeData(
                 FtpConstants.FTP_SERVER_CONNECTOR);
@@ -281,6 +301,15 @@ public class FtpListenerHelper {
         return null;
     }
 
+    /**
+     * Create and attach a multi-path server connector to the provided FTP listener using stored base parameters,
+     * excluding listener-level file monitoring settings which are not applicable at the service level.
+     *
+     * @param ftpListener the Ballerina FTP listener object containing native data and where the connector will be stored
+     * @param listener    the FtpListener instance to associate with the created server connector
+     * @return            an error object describing the failure if connector creation fails (for example when base
+     *                    parameters are missing or an unexpected exception occurs), `null` on success
+     */
     private static Object createMultiPathConnector(BObject ftpListener, FtpListener listener) {
         try {
             Map<String, Object> baseParams = (Map<String, Object>) ftpListener.getNativeData(BASE_PARAMS_KEY);
@@ -309,6 +338,23 @@ public class FtpListenerHelper {
         }
     }
 
+    /**
+     * Create and register a legacy single-path server connector for the listener and attach its
+     * filesystem resources to the listener.
+     *
+     * This method builds a server connector using base parameters stored on the ftpListener and any
+     * file dependency conditions defined in the serviceEndpointConfig, stores the created connector in
+     * ftpListener native data under FTP_SERVER_CONNECTOR, and, when available, propagates the
+     * connector's FileSystemManager and options to the provided listener.
+     *
+     * @param ftpListener           the BObject representing the FTP listener which holds native data
+     *                              (base params) and will receive the created connector
+     * @param listener              the FtpListener instance that will be associated with the connector
+     *                              and receive filesystem manager/options
+     * @param serviceEndpointConfig endpoint configuration map used to parse file dependency conditions
+     * @return                      `null` on success, or an error object describing the failure
+     *                              (e.g., invalid configuration or connector creation failure)
+     */
     private static Object createLegacySinglePathConnector(BObject ftpListener, FtpListener listener,
                                                           BMap<BString, Object> serviceEndpointConfig) {
         try {
@@ -343,10 +389,10 @@ public class FtpListenerHelper {
     }
 
     /**
-     * Extracts the @ftp:ServiceConfig annotation from a service.
+     * Locate the @ftp:ServiceConfig annotation on a service and return its map representation.
      *
-     * @param service The service object
-     * @return Optional containing the annotation map if present
+     * @param service the service object to inspect for the annotation
+     * @return an Optional containing the annotation map when present, otherwise Optional.empty()
      */
     private static Optional<BMap<BString, Object>> getServiceConfigAnnotation(BObject service) {
         ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
@@ -369,11 +415,11 @@ public class FtpListenerHelper {
     }
 
     /**
-     * Parses the @ftp:ServiceConfig annotation into a ServiceConfiguration object.
+     * Convert a `@ftp:ServiceConfig` annotation map into a ServiceConfiguration instance.
      *
-     * @param annotation The annotation map
-     * @return ServiceConfiguration object
-     * @throws FtpInvalidConfigException if configuration is invalid
+     * @param annotation the annotation map for `@ftp:ServiceConfig`
+     * @return the parsed ServiceConfiguration
+     * @throws FtpInvalidConfigException if the annotation contains invalid values (for example an empty `path` or invalid regex patterns)
      */
     private static ServiceConfiguration parseServiceConfiguration(BMap<BString, Object> annotation)
             throws FtpInvalidConfigException {
@@ -431,8 +477,14 @@ public class FtpListenerHelper {
     }
 
     /**
-     * Parses file age filter into ServiceConfiguration.Builder using the shared extraction logic.
-     */
+         * Populate the given ServiceConfiguration.Builder with file age filter values from the provided map.
+         *
+         * Reads "minAge" and "maxAge" (expected as string representations of numbers) and sets them on the builder,
+         * and reads "ageCalculationMode" (string) and sets the mode on the builder if present.
+         *
+         * @param ageFilter map containing file age filter fields (minAge, maxAge, ageCalculationMode)
+         * @param builder   the ServiceConfiguration.Builder to populate
+         */
     private static void parseFileAgeFilter(BMap<BString, Object> ageFilter, ServiceConfiguration.Builder builder) {
         Map<String, Object> ageParams = new HashMap<>();
         addAgeFilterValues(ageFilter, ageParams);
@@ -454,7 +506,14 @@ public class FtpListenerHelper {
     }
 
     /**
-     * Parses file dependency conditions from annotation array.
+     * Parse an array of file dependency condition maps into a list of FileDependencyCondition objects.
+     *
+     * Each element of the provided BArray that is a BMap is converted into a FileDependencyCondition;
+     * non-map elements are ignored.
+     *
+     * @param depArray an array containing dependency condition maps (annotation entries)
+     * @return a list of parsed FileDependencyCondition instances
+     * @throws FtpInvalidConfigException if any condition map contains invalid configuration (for example, invalid regex patterns)
      */
     private static List<FileDependencyCondition> parseFileDependencyConditionsFromArray(BArray depArray)
             throws FtpInvalidConfigException {
@@ -473,8 +532,18 @@ public class FtpListenerHelper {
     }
 
     /**
-     * Parses a single file dependency condition.
-     */
+         * Parse a single file-dependency condition map and produce a FileDependencyCondition.
+         *
+         * <p>The method reads the required `targetPattern`, optional `requiredFiles` patterns,
+         * optional `matchingMode`, and optional `requiredFileCount` from the provided map.
+         * It validates `targetPattern` and each entry of `requiredFiles` as regular expressions.
+         * If `matchingMode` is absent, it defaults to "ALL". If `requiredFileCount` is absent, it
+         * defaults to 1.</p>
+         *
+         * @param conditionMap a BMap containing keys defined by FtpConstants for a single dependency condition
+         * @return a FileDependencyCondition built from the values in {@code conditionMap}
+         * @throws FtpInvalidConfigException if any provided regex pattern is invalid
+         */
     private static FileDependencyCondition parseFileDependencyCondition(BMap<BString, Object> conditionMap)
             throws FtpInvalidConfigException {
         BString targetPatternKey = StringUtils.fromString(FtpConstants.DEPENDENCY_TARGET_PATTERN);
@@ -522,6 +591,13 @@ public class FtpListenerHelper {
         return new FileDependencyCondition(targetPattern, requiredFiles, matchingMode, requiredFileCount);
     }
 
+    /**
+     * Build a parameter map for creating a server connector from the provided service endpoint configuration.
+     *
+     * @param serviceEndpointConfig the endpoint configuration map containing protocol, authentication, VFS, and filter settings
+     * @return a Map of connector parameter names to values ready for connector construction
+     * @throws BallerinaFtpException if the endpoint configuration is invalid
+     */
     private static Map<String, Object> getServerConnectorParamMap(BMap serviceEndpointConfig)
             throws BallerinaFtpException {
         Map<String, Object> params = new HashMap<>(25);
@@ -656,6 +732,13 @@ public class FtpListenerHelper {
         extractProxyConfiguration(serviceEndpointConfig, params);
     }
 
+    /**
+     * If the endpoint configuration contains a file age filter, copies its age-related values
+     * into the provided connector parameter map.
+     *
+     * @param serviceEndpointConfig the endpoint configuration map that may include a file age filter
+     * @param params                the mutable parameter map to populate with age filter values
+     */
     private static void addFileAgeFilterParams(BMap serviceEndpointConfig, Map<String, Object> params) {
         BMap fileAgeFilter = serviceEndpointConfig.getMapValue(
                 StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_FILE_AGE_FILTER));
@@ -665,8 +748,16 @@ public class FtpListenerHelper {
     }
 
     /**
-     * Extracts minAge, maxAge and ageCalculationMode from a fileAgeFilter record into params.
-     * Shared by both listener-level and service-level config processing.
+     * Copy file age filter values (minAge, maxAge, ageCalculationMode) from the given ageFilter map into the
+     * connector parameter map.
+     *
+     * <p>Only present values are transferred; numeric min/max values are converted to strings and the
+     * ageCalculationMode string is copied as-is.</p>
+     *
+     * @param ageFilter source map containing file age filter fields (expects keys
+     *                  FtpConstants.FILE_AGE_FILTER_MIN_AGE, FtpConstants.FILE_AGE_FILTER_MAX_AGE,
+     *                  FtpConstants.FILE_AGE_FILTER_AGE_CALCULATION_MODE)
+     * @param params    destination parameter map to receive the age filter values
      */
     private static void addAgeFilterValues(BMap ageFilter, Map<String, Object> params) {
         Object minAgeObj = ageFilter.get(StringUtils.fromString(FtpConstants.FILE_AGE_FILTER_MIN_AGE));
@@ -742,6 +833,12 @@ public class FtpListenerHelper {
         params.put(FtpConstants.FILE_NAME_PATTERN, fileNamePattern);
     }
 
+    /**
+     * Invoke polling on the underlying server connector associated with the given FTP listener.
+     *
+     * @param ftpListener the FTP listener object that holds the native server connector
+     * @return `null` if polling completed successfully, an error object describing the failure otherwise
+     */
     public static Object poll(BObject ftpListener) {
         RemoteFileSystemServerConnector connector = (RemoteFileSystemServerConnector) ftpListener.
                 getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
@@ -782,6 +879,15 @@ public class FtpListenerHelper {
         return ValueCreator.createObjectValue(ModuleUtils.getModule(), FTP_CALLER, client);
     }
 
+    /**
+     * Close the FTP caller associated with the given listener, if present.
+     *
+     * Attempts to invoke the caller's `close` operation on the FTP client. If there is no server connector
+     * or no caller attached, the method returns null.
+     *
+     * @param ftpListener the FTP listener object that may contain the server connector and caller
+     * @return an error object describing the caller close failure, or `null` if no caller was present or the close completed successfully
+     */
     public static Object closeCaller(Environment env, BObject ftpListener) {
         RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) ftpListener
                 .getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
@@ -806,6 +912,14 @@ public class FtpListenerHelper {
         });
     }
 
+    /**
+     * Clean up resources associated with the FTP listener by closing the caller, stopping the server connector,
+     * and invoking listener cleanup.
+     *
+     * @param env the Ballerina runtime environment used for closing the caller
+     * @param ftpListener the FTP listener object whose native resources will be cleaned up
+     * @return an error object describing the failure if an exception occurs, or null on success
+     */
     public static Object cleanup(Environment env, BObject ftpListener) {
         Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         RemoteFileSystemServerConnector ftpConnector =

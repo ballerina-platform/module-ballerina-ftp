@@ -33,11 +33,26 @@ public class PathSpecificListener implements RemoteFileSystemListener {
     private final FtpListener ftpListener;
     private final String monitoredPath;
 
+    /**
+     * Creates a PathSpecificListener that forwards events to the given {@link FtpListener}
+     * while tagging forwarded RemoteFileSystemEvent messages with the provided monitored path.
+     *
+     * @param ftpListener  the underlying listener to delegate events to
+     * @param monitoredPath the path to set as the source for forwarded events
+     */
     public PathSpecificListener(FtpListener ftpListener, String monitoredPath) {
         this.ftpListener = ftpListener;
         this.monitoredPath = monitoredPath;
     }
 
+    /**
+     * Forwards the incoming filesystem message to the wrapped FTP listener, tagging event messages with this
+     * listener's monitored path before forwarding to enable path-based routing.
+     *
+     * @param message the incoming filesystem message; if it is a RemoteFileSystemEvent its source path will be set
+     *                to this listener's monitored path prior to forwarding
+     * @return `true` if the wrapped listener handled the message, `false` otherwise
+     */
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage message) {
         if (message instanceof RemoteFileSystemEvent) {
@@ -48,11 +63,24 @@ public class PathSpecificListener implements RemoteFileSystemListener {
         return ftpListener.onMessage(message);
     }
 
+    /**
+     * Handle an error that occurred during remote file system processing.
+     *
+     * @param throwable the error to handle; forwarded to the wrapped FTP listener's error handler
+     */
     @Override
     public void onError(Throwable throwable) {
         ftpListener.onError(throwable);
     }
 
+    /**
+     * Indicates that this listener does not perform completion handling itself.
+     *
+     * The lifecycle and completion handling are managed by MultiPathServerConnector, so callers should
+     * not expect this listener to return a completion error or perform tear-down here.
+     *
+     * @return null to indicate no completion error; completion is handled by the MultiPathServerConnector
+     */
     @Override
     public BError done() {
         // Don't call done() here - let the MultiPathServerConnector manage lifecycle

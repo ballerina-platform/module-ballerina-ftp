@@ -44,6 +44,15 @@ public class RemoteFileSystemConnectorFactoryImpl implements RemoteFileSystemCon
         return new RemoteFileSystemServerConnectorImpl(connectorConfig, remoteFileSystemListener);
     }
 
+    /**
+     * Creates a server connector configured with the provided connector settings, dependency conditions, and listener.
+     *
+     * @param connectorConfig      map of connector configuration properties
+     * @param dependencyConditions list of file dependency conditions that the connector should enforce
+     * @param remoteFileSystemListener listener to receive remote filesystem events
+     * @return a configured RemoteFileSystemServerConnector
+     * @throws RemoteFileSystemConnectorException if the connector cannot be created with the given configuration
+     */
     @Override
     public RemoteFileSystemServerConnector createServerConnector(Map<String, Object> connectorConfig,
                                                                  List<FileDependencyCondition> dependencyConditions,
@@ -52,6 +61,14 @@ public class RemoteFileSystemConnectorFactoryImpl implements RemoteFileSystemCon
         return new RemoteFileSystemServerConnectorImpl(connectorConfig, dependencyConditions, remoteFileSystemListener);
     }
 
+    /**
+     * Create a server connector that supports multiple remote paths.
+     *
+     * @param connectorConfig configuration options for the connector
+     * @param ftpListener     listener to receive FTP events from the connector
+     * @return a RemoteFileSystemServerConnector configured for multi-path handling
+     * @throws RemoteFileSystemConnectorException if the connector cannot be created
+     */
     @Override
     public RemoteFileSystemServerConnector createMultiPathServerConnector(Map<String, Object> connectorConfig,
                                                                           FtpListener ftpListener)
@@ -59,6 +76,12 @@ public class RemoteFileSystemConnectorFactoryImpl implements RemoteFileSystemCon
         return new MultiPathServerConnector(connectorConfig, ftpListener);
     }
 
+    /**
+     * Creates a VFS client connector configured with the provided connector settings.
+     *
+     * @param connectorConfig map of connector configuration options
+     * @return a configured VfsClientConnector instance
+     */
     @Override
     public VfsClientConnector createVfsClientConnector(Map<String, Object> connectorConfig)
             throws RemoteFileSystemConnectorException {

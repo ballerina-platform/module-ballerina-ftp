@@ -44,22 +44,27 @@ public interface RemoteFileSystemConnectorFactory {
             throws RemoteFileSystemConnectorException;
 
     /**
-     * @param connectorConfig          properties required for the {@link VfsClientConnector}.
-     * @param remoteFileSystemListener listener which gets triggered when message comes.
-     * @return VFSClientConnector instance
-     * @throws RemoteFileSystemConnectorException if any error occurred when initializing the server connector.
-     */
+             * Create a RemoteFileSystemServerConnector configured with the provided connector configuration and file dependency conditions.
+             *
+             * @param connectorConfig          properties required to initialize the connector
+             * @param dependencyConditions     file dependency conditions that the connector must enforce or monitor
+             * @param remoteFileSystemListener listener invoked when filesystem events or messages are received
+             * @return                         the initialized RemoteFileSystemServerConnector
+             * @throws RemoteFileSystemConnectorException if an error occurs while creating or initializing the connector
+             */
     RemoteFileSystemServerConnector createServerConnector(Map<String, Object> connectorConfig,
                                                           List<FileDependencyCondition> dependencyConditions,
                                                           RemoteFileSystemListener remoteFileSystemListener)
             throws RemoteFileSystemConnectorException;
 
     /**
-     * @param connectorConfig properties required for the multi-path server connector.
-     * @param ftpListener     listener used for routing events to services.
-     * @return RemoteFileSystemServerConnector instance.
-     * @throws RemoteFileSystemConnectorException if any error occurred when creating the connector.
-     */
+             * Creates a multi-path remote file system server connector that routes filesystem events using the given FTP listener.
+             *
+             * @param connectorConfig configuration properties for the multi-path server connector
+             * @param ftpListener     listener used to route incoming events to FTP services
+             * @return the configured RemoteFileSystemServerConnector for multi-path routing
+             * @throws RemoteFileSystemConnectorException if an error occurs while creating or configuring the connector
+             */
     RemoteFileSystemServerConnector createMultiPathServerConnector(Map<String, Object> connectorConfig,
                                                                    FtpListener ftpListener)
             throws RemoteFileSystemConnectorException;

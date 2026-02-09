@@ -92,6 +92,15 @@ public final class MockFtpServer {
         return null;
     }
 
+    /**
+     * Initializes and starts a mock authenticated FTP server with a predefined filesystem and test user.
+     *
+     * The server listens on port 21212, registers a test user account, populates an in-memory filesystem
+     * with directories and files used by tests, and waits briefly for startup completion.
+     *
+     * @return null on successful startup
+     * @throws Exception if the startup wait is interrupted or the server fails to start within the expected time
+     */
     public static Object initFtpServer() throws Exception {
         final int port = 21212;
         ftpServer = new FakeFtpServer();

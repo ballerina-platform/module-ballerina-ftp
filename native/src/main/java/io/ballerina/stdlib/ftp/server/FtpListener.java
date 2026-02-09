@@ -116,6 +116,17 @@ public class FtpListener implements RemoteFileSystemListener {
         this.csvFailSafe = csvFailSafe;
     }
 
+    /**
+     * Handle incoming remote file system messages and dispatch any file events to appropriate services.
+     *
+     * <p>When the message is a RemoteFileSystemEvent and a runtime is available, dispatches the event
+     * either to the single service mapped to the event's source path (when service-level configuration
+     * is enabled and the event provides a source path) or to all registered services (legacy mode).
+     * Non-event messages are ignored.</p>
+     *
+     * @param remoteFileSystemBaseMessage the incoming message to handle; may be a RemoteFileSystemEvent
+     * @return `true` indicating the message was accepted for processing
+     */
     @Override
     public boolean onMessage(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemEvent) {
@@ -500,6 +511,13 @@ public class FtpListener implements RemoteFileSystemListener {
         return null;
     }
 
+    /**
+     * Register a service instance using its type name as the registry key.
+     *
+     * If the service, its type, or the type's name is null, the service is not registered.
+     *
+     * @param service the service instance to register
+     */
     protected void addService(BObject service) {
         Type serviceType = TypeUtils.getType(service);
         if (service != null && serviceType != null && serviceType.getName() != null) {
@@ -508,12 +526,13 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     /**
-     * Registers a service with its path-based configuration.
-     * Path must be unique across all services on this listener.
+     * Register a service for handling events for the configured path and enable path-based routing.
      *
-     * @param service The service object
-     * @param config The service configuration
-     * @return true if added successfully, false if path is already registered
+     * The service's path (from the provided configuration) must be unique among registered services.
+     *
+     * @param service the service object to register
+     * @param config  the service configuration containing the path to register
+     * @return true if the service was registered for the path, false if the path was already registered
      */
     public boolean addServiceConfiguration(BObject service, ServiceConfiguration config) {
         String path = config.getPath();
@@ -526,19 +545,19 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     /**
-     * Gets the service configuration for a given path.
+     * Retrieve the ServiceConfiguration associated with a monitored path.
      *
-     * @param path The monitored path
-     * @return The service configuration, or null if not configured
+     * @param path the monitored path
+     * @return the ServiceConfiguration for the given path, or {@code null} if none is configured
      */
     public ServiceConfiguration getServiceConfiguration(String path) {
         return serviceConfigurations.get(path);
     }
 
     /**
-     * Checks if any service uses service-level configuration.
+     * Indicates whether any registered service uses service-level configuration.
      *
-     * @return true if at least one service uses @ftp:ServiceConfig annotation
+     * @return {@code true} if at least one service is registered with a service-level (per-path) configuration, {@code false} otherwise.
      */
     public boolean usesServiceLevelConfig() {
         return usesServiceLevelConfig.get();
@@ -554,14 +573,19 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     /**
-     * Gets all service configurations.
+     * Retrieves the map of registered service paths to their ServiceConfiguration objects.
      *
-     * @return Map of service name to configuration
+     * @return the map where keys are service base paths and values are the corresponding ServiceConfiguration
      */
     public Map<String, ServiceConfiguration> getServiceConfigurations() {
         return serviceConfigurations;
     }
 
+    /**
+     * Sets the caller object used when invoking service callback methods.
+     *
+     * @param caller the caller object to associate with this listener
+     */
     public void setCaller(BObject caller) {
         this.caller = caller;
     }
@@ -570,6 +594,12 @@ public class FtpListener implements RemoteFileSystemListener {
         return caller;
     }
 
+    /**
+     * Clears internal listener state and releases references held for active services and filesystem resources.
+     *
+     * This removes all registered services and service configurations, resets path-based routing to disabled,
+     * clears the caller reference, and nulls the filesystem manager and options to allow garbage collection.
+     */
     void cleanup() {
         registeredServices.clear();
         usesServiceLevelConfig.set(false);

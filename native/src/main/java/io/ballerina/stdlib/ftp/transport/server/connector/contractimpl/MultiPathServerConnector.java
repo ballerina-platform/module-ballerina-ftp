@@ -50,21 +50,27 @@ public class MultiPathServerConnector implements RemoteFileSystemServerConnector
     private volatile FileSystemManager fileSystemManager;
     private volatile FileSystemOptions fileSystemOptions;
 
+    /**
+     * Creates a connector that can manage multiple path-specific consumers using the provided base configuration and listener.
+     *
+     * @param baseProperties base configuration properties used as a template for per-path consumers; a shallow copy is made
+     * @param ftpListener    listener used to route FTP events to registered consumers
+     */
     public MultiPathServerConnector(Map<String, Object> baseProperties, FtpListener ftpListener) {
         this.baseProperties = new HashMap<>(baseProperties);
         this.ftpListener = ftpListener;
     }
 
     /**
-     * Adds a consumer for a specific path.
+     * Register a per-path consumer that monitors the given directory and routes events to the FTP listener.
      *
-     * @param path The directory path to monitor
-     * @param fileNamePattern The file name pattern (regex) to match
-     * @param minAge Minimum file age in seconds (-1 to disable)
-     * @param maxAge Maximum file age in seconds (-1 to disable)
-     * @param ageCalculationMode Age calculation mode (LAST_MODIFIED or CREATION_TIME)
-     * @param dependencyConditions List of file dependency conditions
-     * @throws RemoteFileSystemConnectorException if unable to create the consumer
+     * @param path the directory path to monitor; used to create a path-specific listener and to replace the path portion of the base URI
+     * @param fileNamePattern a regex pattern to filter file names; omit or pass null/empty to disable name filtering
+     * @param minAge minimum file age in seconds to include (-1 to disable)
+     * @param maxAge maximum file age in seconds to include (-1 to disable)
+     * @param ageCalculationMode the file age calculation mode, e.g. "LAST_MODIFIED" or "CREATION_TIME"; omit or pass null/empty to use defaults
+     * @param dependencyConditions optional list of file dependency conditions; when present the consumer enforces these before emitting events
+     * @throws RemoteFileSystemConnectorException if the consumer cannot be created or initialized
      */
     public void addPathConsumer(String path, String fileNamePattern,
                                 double minAge, double maxAge, String ageCalculationMode,
@@ -100,6 +106,23 @@ public class MultiPathServerConnector implements RemoteFileSystemServerConnector
         log.debug("Added consumer for path: {}", path);
     }
 
+    /**
+     * Builds a path-specific properties map by cloning the connector's base properties and applying
+     * overrides for the target path, file name pattern, and file age filters.
+     *
+     * The returned map will contain the base properties with:
+     * - the URI updated to use the provided path (if a base URI exists),
+     * - the FILE_NAME_PATTERN set when a non-empty pattern is provided,
+     * - the FILE_AGE_FILTER_* entries set when the corresponding values are provided (min/max as
+     *   non-negative numbers and a non-empty ageCalculationMode).
+     *
+     * @param path the path to apply to the base URI; may be null or empty to leave the URI path unchanged
+     * @param fileNamePattern a glob/regex pattern to filter files by name; ignored if null or empty
+     * @param minAge minimum file age (in the same units used by the connector) to include; ignored if negative
+     * @param maxAge maximum file age to include; ignored if negative
+     * @param ageCalculationMode mode used to calculate file age; ignored if null or empty
+     * @return a new Map containing the path-specific properties derived from the connector's base properties
+     */
     private Map<String, Object> buildPathProperties(String path, String fileNamePattern,
                                                     double minAge, double maxAge,
                                                     String ageCalculationMode) {
@@ -136,6 +159,17 @@ public class MultiPathServerConnector implements RemoteFileSystemServerConnector
         return props;
     }
 
+    /**
+     * Replace the path portion of a URI with the provided newPath.
+     *
+     * The newPath is normalized to start with a leading '/' before substitution. If newPath is null or empty,
+     * the original uri is returned. If the uri has no scheme (no "://") or has no existing path component,
+     * the normalized newPath is appended to the uri.
+     *
+     * @param uri the original URI to modify
+     * @param newPath the path to set in the URI
+     * @return the URI with its path replaced by newPath (or the original uri when newPath is null/empty)
+     */
     private String replacePathInUri(String uri, String newPath) {
         if (newPath == null || newPath.isEmpty()) {
             return uri;
@@ -162,6 +196,13 @@ public class MultiPathServerConnector implements RemoteFileSystemServerConnector
         return uri.substring(0, pathStart) + normalizedPath;
     }
 
+    /**
+     * Triggers a single polling cycle across all registered path consumers.
+     *
+     * <p>If no consumers are registered, the method returns immediately. Only one poll may run at a time; if a poll
+     * is already in progress the invocation is skipped. Exceptions thrown by individual consumers are caught and logged
+     * so that polling continues for other consumers.</p>
+     */
     @Override
     public void poll() throws RemoteFileSystemConnectorException {
         if (pathConsumers.isEmpty()) {
@@ -191,6 +232,15 @@ public class MultiPathServerConnector implements RemoteFileSystemServerConnector
         }
     }
 
+    /**
+     * Stops and closes all path-specific consumers and clears the internal consumer registry.
+     *
+     * Iterates over each registered consumer, attempts to close it, and records the most recent non-null
+     * error returned by any consumer close operation. Exceptions thrown while closing individual consumers
+     * are logged but do not interrupt stopping other consumers.
+     *
+     * @return the last non-null error object returned by a consumer's close method, or {@code null} if none
+     */
     @Override
     public Object stop() {
         Object lastError = null;
@@ -208,24 +258,38 @@ public class MultiPathServerConnector implements RemoteFileSystemServerConnector
         return lastError;
     }
 
+    /**
+     * Retrieve the FtpListener associated with this connector.
+     *
+     * @return the associated {@link FtpListener} instance
+     */
     @Override
     public FtpListener getFtpListener() {
         return ftpListener;
     }
 
+    /**
+     * Returns the cached FileSystemManager instance initialized from the first added path consumer.
+     *
+     * @return the cached FileSystemManager, or {@code null} if no consumer has initialized it
+     */
     public FileSystemManager getFileSystemManager() {
         return fileSystemManager;
     }
 
+    /**
+     * Retrieve the cached FileSystemOptions initialized from the first added consumer.
+     *
+     * @return the cached FileSystemOptions used by path consumers, or `null` if not yet initialized.
+     */
     public FileSystemOptions getFileSystemOptions() {
         return fileSystemOptions;
     }
 
     /**
-     * Checks if a consumer exists for the given path.
+     * Determine whether a consumer is registered for the specified path.
      *
-     * @param path The path to check
-     * @return true if a consumer exists for the path
+     * @return true if a consumer is registered for the path, false otherwise.
      */
     public boolean hasConsumerForPath(String path) {
         return pathConsumers.containsKey(path);
