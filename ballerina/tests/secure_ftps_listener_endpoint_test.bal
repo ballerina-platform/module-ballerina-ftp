@@ -268,8 +268,7 @@ public function testFtpsConnectWithInvalidKeystore() returns error? {
     };
     error? attachResult = ftpsServer.attach(attachService);
     if attachResult is Error {
-        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector.") ||
-            attachResult.message().includes("Failed to load FTPS Server Keystore"),
+        test:assertTrue(attachResult.message().includes("Failed to load KeyStore from path"),
             msg = "Expected error for invalid keystore. Got: " + attachResult.message());
     } else {
         test:assertFail("Non-error result when invalid keystore is used.");
@@ -306,8 +305,7 @@ public function testFtpsConnectWithInvalidTruststore() returns error? {
     };
     error? attachResult = ftpsServer.attach(attachService);
     if attachResult is Error {
-        test:assertTrue(attachResult.message().startsWith("Failed to initialize File server connector.") ||
-            attachResult.message().includes("Failed to load FTPS Server Truststore"),
+        test:assertTrue(attachResult.message().includes("Failed to load KeyStore from path"),
             msg = "Expected error for invalid truststore. Got: " + attachResult.message());
     } else {
         test:assertFail("Non-error result when invalid truststore is used.");
@@ -339,8 +337,7 @@ public function testFtpsConnectToFTPServerWithFTPProtocol() returns error? {
     });
 
     if ftpsServer is Error {
-        test:assertTrue(ftpsServer.message().startsWith("Failed to initialize File server connector.") ||
-            ftpsServer.message().includes("secureSocket can only be used with FTPS protocol"),
+        test:assertTrue(ftpsServer.message().includes("secureSocket can only be used with FTPS protocol"),
             msg = "Expected error for wrong protocol");
     } else {
         test:assertFail("Non-error result when connecting to FTPS server via FTP.");
