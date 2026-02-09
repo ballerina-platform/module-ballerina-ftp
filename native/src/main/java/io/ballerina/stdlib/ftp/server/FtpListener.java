@@ -517,11 +517,10 @@ public class FtpListener implements RemoteFileSystemListener {
      */
     public boolean addServiceConfiguration(BObject service, ServiceConfiguration config) {
         String path = config.getPath();
-        if (pathToService.containsKey(path)) {
+        if (pathToService.putIfAbsent(path, service) != null) {
             return false;
         }
         serviceConfigurations.put(path, config);
-        pathToService.put(path, service);
         usesServiceLevelConfig.set(true);
         return true;
     }
@@ -573,6 +572,7 @@ public class FtpListener implements RemoteFileSystemListener {
 
     void cleanup() {
         registeredServices.clear();
+        usesServiceLevelConfig.set(false);
         serviceConfigurations.clear();
         pathToService.clear();
         caller = null;
