@@ -1200,32 +1200,30 @@ public function testGetFileSize() {
     dependsOn: [testGetFileSize]
 }
 public function testListFiles() {
-    string[] resourceNames = [
-        "cron",
-        "test1.txt",
-        "complexDirectory",
-        "test",
-        "advanced",
-        "dependency",
-        "folder1",
-        "test3.zip",
-        "childDirectory",
-        "delete",
-        "test2.txt",
-        "onerror-tests",
-        "test4.txt",
-        "child_directory",
-        "content-methods",
-        "age",
-        "retry",
-        "test3.txt",
-        "onerror-tests",
-        "sc-route-a",
-        "sc-route-b",
-        "sc-single",
-        "sc-legacy"
-    ];
-    int[] fileSizes = [0, 61, 0, 0, 0, 0, 0, 145, 0, 0, 16400, 9000, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0];
+    map<int> expectedSizes = {
+        "/home/in/cron": 0,
+        "/home/in/test1.txt": 61,
+        "/home/in/complexDirectory": 0,
+        "/home/in/test": 0,
+        "/home/in/advanced": 0,
+        "/home/in/dependency": 0,
+        "/home/in/folder1": 0,
+        "/home/in/test3.zip": 145,
+        "/home/in/childDirectory": 0,
+        "/home/in/delete": 0,
+        "/home/in/test2.txt": 16400,
+        "/home/in/onerror-tests": 9000,
+        "/home/in/test4.txt": 0,
+        "/home/in/child_directory": 0,
+        "/home/in/content-methods": 0,
+        "/home/in/age": 0,
+        "/home/in/retry": 12,
+        "/home/in/test3.txt": 0,
+        "/home/in/sc-route-a": 0,
+        "/home/in/sc-route-b": 0,
+        "/home/in/sc-single": 0,
+        "/home/in/sc-legacy": 0
+    };
     FileInfo[]|Error response = (<Client>clientEp)->list("/home/in");
     if response is FileInfo[] {
         log:printInfo("List of files/directories: ");
@@ -1234,19 +1232,16 @@ public function testListFiles() {
             log:printInfo(fileInfo.toString());
             fileInfoMap[fileInfo.path] = fileInfo;
         }
-        int i = 0;
-        while i < resourceNames.length() {
-            string expectedPath = "/home/in/" + resourceNames[i];
+        foreach string expectedPath in expectedSizes.keys() {
             FileInfo? expectedInfo = fileInfoMap[expectedPath];
             test:assertTrue(expectedInfo is FileInfo,
                 msg = "Expected path not found during the `list` operation: " + expectedPath);
             if expectedInfo is FileInfo {
                 test:assertTrue(expectedInfo.lastModifiedTimestamp > 0,
                     msg = "Last Modified Timestamp of the file is not correct during the `list` operation");
-                test:assertEquals(expectedInfo.size, fileSizes[i],
+                test:assertEquals(expectedInfo.size, <int>expectedSizes[expectedPath],
                     msg = "File size is not matched during the `list` operation");
             }
-            i = i + 1;
         }
         log:printInfo("Executed `list` operation");
     } else {
