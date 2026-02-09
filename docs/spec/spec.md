@@ -874,11 +874,11 @@ public annotation ServiceConfiguration ServiceConfig on service;
 
 **Validation Error Messages:**
 
-| Scenario | Error Code | Message |
-|----------|------------|---------|
-| Mixed usage (some services with annotation, some without) | FTP_140 | "All services attached to a listener must use @ftp:ServiceConfig annotation when any service uses it. Service '{serviceName}' is missing the annotation." |
-| Invalid path pattern | FTP_142 | "Invalid path '{path}' in @ftp:ServiceConfig. Path must be an absolute path starting with '/'." |
-| Invalid fileNamePattern regex | FTP_143 | "Invalid regex pattern '{pattern}' in @ftp:ServiceConfig.fileNamePattern: {error}" |
+| Scenario | Error Type | Message |
+|----------|-----------|---------|
+| Mixed usage (some services with annotation, some without) | InvalidConfigError | "All services attached to a listener must use @ftp:ServiceConfig annotation when any service uses it. Service '{serviceName}' is missing the annotation." |
+| Invalid path pattern | InvalidConfigError | "Invalid path '{path}' in @ftp:ServiceConfig. Path must be an absolute path starting with '/'." |
+| Invalid fileNamePattern regex | InvalidConfigError | "Invalid regex pattern '{pattern}' in @ftp:ServiceConfig.fileNamePattern: {error}" |
 
 **Example: Multiple Services Monitoring Different Directories**
 
