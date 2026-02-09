@@ -3,7 +3,7 @@
 _Owners_: @shafreenAnfar @dilanSachi @Bhashinee    
 _Reviewers_: @shafreenAnfar @Bhashinee  
 _Created_: 2020/10/28   
-_Updated_: 2026/02/03  
+_Updated_: 2026/02/05  
 _Edition_: Swan Lake    
 
 ## Introduction
@@ -188,6 +188,19 @@ public type InvalidConfigError distinct Error;
 * `ServiceUnavailableError` - Represents errors that occur when the FTP/SFTP service is temporarily unavailable. This is a transient error indicating the operation may succeed on retry. Common causes include server overload (FTP code 421), connection issues (425, 426), temporary file locks (450), or server-side processing errors (451).
 ```ballerina
 public type ServiceUnavailableError distinct Error;
+```
+
+* `ContentBindingError` - Represents errors that occur when file content cannot be converted to the expected type. This includes JSON/XML parsing errors, CSV format errors, and record type binding failures. This error type is applicable to both Client operations and Listener callbacks. When used with the Listener, if an `onError` remote function is defined in the service, it will be invoked with this error type.
+```ballerina
+public type ContentBindingError distinct Error<ContentBindingErrorDetail>;
+```
+
+The `ContentBindingError` includes a detail record providing additional context:
+```ballerina
+public type ContentBindingErrorDetail record {|
+    string filePath?;   // The file path that caused the error
+    byte[] content?;    // The raw file content as bytes that failed to bind
+|};
 ```
 
 * `AllRetryAttemptsFailedError` - Represents an error that occurs when all retry attempts have been exhausted. This error wraps the last failure encountered during retry attempts.
@@ -498,7 +511,7 @@ remote isolated function getBytes(string path) returns byte[]|Error;
 # + return - File content as text, or an error if the operation fails
 remote isolated function getText(string path) returns string|Error;
 ```
-* `getJson()` can be used to read a file as JSON data.
+* `getJson()` can be used to read a file as JSON data. Returns `ContentBindingError` if the file content cannot be parsed as JSON or bound to the target type.
 ```ballerina
 # Read a file as JSON data.
 # ```ballerina
@@ -507,10 +520,10 @@ remote isolated function getText(string path) returns string|Error;
 #
 # + path - Location of the file on the server
 # + targetType - What format should the data have? (JSON, structured data, or a custom format)
-# + return - The file content as JSON or an error if the operation fails
+# + return - The file content as JSON, or `ContentBindingError` if parsing/binding fails, or other `Error` for connection issues
 remote isolated function getJson(string path, typedesc<json|record {}> targetType = <>) returns targetType|Error;
 ```
-* `getXml()` can be used to read a file as XML data.
+* `getXml()` can be used to read a file as XML data. Returns `ContentBindingError` if the file content cannot be parsed as XML or bound to the target type.
 ```ballerina
 # Read a file as XML data.
 # ```ballerina
@@ -519,10 +532,10 @@ remote isolated function getJson(string path, typedesc<json|record {}> targetTyp
 #
 # + path - Location of the file on the server
 # + targetType - What format should the data have? (XML, structured data, or a custom format)
-# + return - The file content as XML or an error if the operation fails
+# + return - The file content as XML, or `ContentBindingError` if parsing/binding fails, or other `Error` for connection issues
 remote isolated function getXml(string path, typedesc<xml|record {}> targetType = <>) returns targetType|Error;
 ```
-* `getCsv()` can be used to read a CSV file from the server.
+* `getCsv()` can be used to read a CSV file from the server. Returns `ContentBindingError` if the file content cannot be parsed or bound to the target type.
 ```ballerina
 # Read a CSV (comma-separated) file from the server.
 # The first row of the CSV file should contain column names (headers).
@@ -532,7 +545,7 @@ remote isolated function getXml(string path, typedesc<xml|record {}> targetType 
 #
 # + path - Location of the CSV file on the server
 # + targetType - What format should the data have? (Table or structured records)
-# + return - The CSV file content as a table or records, or an error if the operation fails
+# + return - The CSV file content as a table or records, or `ContentBindingError` if parsing/binding fails, or other `Error` for connection issues
 remote isolated function getCsv(string path, typedesc<string[][]|record {}[]> targetType = <>) returns targetType|Error;
 ```
 * `getBytesAsStream()` can be used to read file content as a stream of byte chunks.
@@ -947,7 +960,34 @@ remote function onFileDelete(string deletedFile, ftp:Caller caller) returns erro
 }
 ```
 
-**Optional parameters:** The `fileInfo` and `caller` parameters can be omitted if not needed in your implementation.
+* `onError()` - Triggered when a content binding error occurs during file processing. This allows centralized error handling for data binding failures:
+```ballerina
+remote function onError(ftp:Error err, ftp:Caller caller) returns error? {
+    // Check if it's a content binding error to access details
+    if err is ftp:ContentBindingError {
+        string? filePath = err.detail().filePath;
+        byte[]? content = err.detail().content;
+
+        log:printError("Failed to process file: " + (filePath ?: "unknown"), err);
+        if filePath is string {
+            check caller->move(filePath, "/error/failed_file");
+        }
+    }
+}
+```
+
+The `onError` handler receives:
+- `err`: The base `ftp:Error` type. For content binding failures, this will be a `ContentBindingError`. Users should type-check with `if err is ftp:ContentBindingError` to access the detail record containing `filePath` and `content`.
+- `caller` (optional): FTP caller for performing recovery operations
+
+**Supported parameter signatures:**
+- `onError(error err)` - Using Ballerina's error type descriptor
+- `onError(ftp:Error err)` - Using the FTP module's Error type
+- `onError(ftp:Error err, ftp:Caller caller)` - With caller for recovery operations
+
+If `onError` is not defined, binding errors are logged and the file is skipped.
+
+**Optional parameters:** The `caller` parameter can be omitted if not needed in your implementation.
 
 All format-specific callbacks receive `fileInfo` (metadata about the file) and optionally `caller`
 (to perform additional FTP operations). The data is automatically parsed based on the callback type.

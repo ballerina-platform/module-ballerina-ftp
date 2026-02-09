@@ -42,6 +42,9 @@ public final class PluginConstants {
     public static final String ON_FILE_DELETED_FUNC = "onFileDeleted";
     public static final String ON_FILE_DELETE_FUNC = "onFileDelete";
 
+    // Error handler function name
+    public static final String ON_ERROR_FUNC = "onError";
+
     /**
      * All format-specific handler names.
      * These handlers automatically convert file content to typed data.
@@ -61,6 +64,7 @@ public final class PluginConstants {
 
     // return types error or nil
     public static final String ERROR = "error";
+    public static final String ERROR_PARAM = "Error";
 
     // Code template related constants (Format-specific handlers)
     public static final String NODE_LOCATION = "node.location";
@@ -121,7 +125,14 @@ public final class PluginConstants {
         ON_FILE_DELETED_DEPRECATED("'onFileDeleted' is deprecated and will be removed in a future release. " +
                 "Use 'onFileDelete' instead.", "FTP_132"),
         BOTH_ON_FILE_DELETE_METHODS_NOT_ALLOWED("Cannot use both 'onFileDelete' and 'onFileDeleted' methods. " +
-                "Use only 'onFileDelete' as 'onFileDeleted' is deprecated.", "FTP_133");
+                "Use only 'onFileDelete' as 'onFileDeleted' is deprecated.", "FTP_133"),
+        ON_ERROR_MUST_BE_REMOTE("onError method must be remote.", "FTP_134"),
+        INVALID_ON_ERROR_FIRST_PARAMETER("Invalid first parameter for onError. First parameter must be " +
+                "'ftp:Error' or 'error'.", "FTP_135"),
+        INVALID_ON_ERROR_SECOND_PARAMETER("Invalid second parameter for onError. " +
+                "Second parameter must be 'ftp:Caller'.", "FTP_136"),
+        TOO_MANY_PARAMETERS_ON_ERROR("Too many parameters for onError. Accepts at most 2 parameters: " +
+                "(error, caller?).", "FTP_137");
         private final String error;
         private final String errorCode;
 

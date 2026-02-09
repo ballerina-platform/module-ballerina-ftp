@@ -117,6 +117,13 @@ public class FtpContentCallbackHandler {
                 MethodType methodType = methodTypeOpt.get();
                 Object convertedContent = convertFileContent(env, fileObject, inputStream, methodType);
 
+                // Check if content conversion returned an error (ContentBindingError)
+                if (convertedContent instanceof BError bError) {
+                    log.error("Content binding failed for file: {}", fileInfo.getPath());
+                    routeToOnError(service, holder, bError, callerObject);
+                    continue;
+                }
+
                 // Prepare method arguments
                 Object[] methodArguments = prepareContentMethodArguments(methodType, convertedContent,
                         fileInfo, callerObject);
@@ -185,13 +192,16 @@ public class FtpContentCallbackHandler {
         } else {
             byte[] fileContent = fetchAllFileContentFromRemote(fileObject, inputStream);
             String fileNamePrefix = deriveFileNamePrefix(fileObject);
+            String filePath = fileObject.getName().getURI();
             return switch (methodName) {
                 case ON_FILE_REMOTE_FUNCTION -> convertToBallerinaByteArray(fileContent);
                 case ON_FILE_TEXT_REMOTE_FUNCTION -> convertBytesToString(fileContent);
-                case ON_FILE_JSON_REMOTE_FUNCTION -> convertBytesToJson(fileContent, firstParamType, laxDataBinding);
-                case ON_FILE_XML_REMOTE_FUNCTION -> convertBytesToXml(fileContent, firstParamType, laxDataBinding);
+                case ON_FILE_JSON_REMOTE_FUNCTION -> convertBytesToJson(fileContent, firstParamType, laxDataBinding,
+                        filePath);
+                case ON_FILE_XML_REMOTE_FUNCTION -> convertBytesToXml(fileContent, firstParamType, laxDataBinding,
+                        filePath);
                 case ON_FILE_CSV_REMOTE_FUNCTION -> convertBytesToCsv(environment, fileContent, firstParamType,
-                        laxDataBinding, csvFailSafe, fileNamePrefix);
+                        laxDataBinding, csvFailSafe, fileNamePrefix, filePath);
                 default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
             };
         }
@@ -265,6 +275,45 @@ public class FtpContentCallbackHandler {
                 FtpConstants.FTP_FILE_INFO,
                 fileInfoParams
         );
+    }
+
+    /**
+     * Routes error to onError handler if available.
+     */
+    private void routeToOnError(BObject service, FormatMethodsHolder holder, BError error, BObject callerObject) {
+        if (!holder.hasOnErrorMethod()) {
+            // No onError handler, error is already logged
+            return;
+        }
+
+        Optional<MethodType> onErrorMethodOpt = holder.getOnErrorMethod();
+        if (onErrorMethodOpt.isEmpty()) {
+            return;
+        }
+
+        MethodType onErrorMethod = onErrorMethodOpt.get();
+
+        // Prepare arguments for onError method
+        Object[] methodArguments = prepareOnErrorMethodArguments(onErrorMethod, error, callerObject);
+
+        // Invoke onError asynchronously
+        invokeContentMethodAsync(service, onErrorMethod.getName(), methodArguments);
+    }
+
+    /**
+     * Prepares method arguments for onError handler.
+     * onError accepts: (error) or (error, caller)
+     */
+    private Object[] prepareOnErrorMethodArguments(MethodType methodType, BError error, BObject callerObject) {
+        Parameter[] parameters = methodType.getParameters();
+
+        if (parameters.length == 2) {
+            // Two parameters: error, Caller
+            return new Object[]{error, callerObject};
+        }
+
+        // Default: only error
+        return new Object[]{error};
     }
 
     /**

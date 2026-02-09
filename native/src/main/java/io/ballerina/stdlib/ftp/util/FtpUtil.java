@@ -594,6 +594,59 @@ public class FtpUtil {
                 .findFirst();
     }
 
+    /**
+     * Gets the onError method from a service if it exists.
+     *
+     * @param service The BObject service
+     * @return Optional containing the MethodType if onError method exists
+     */
+    public static Optional<MethodType> getOnErrorMethod(BObject service) {
+        MethodType[] methodTypes = ((ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service))).getMethods();
+        return Stream.of(methodTypes)
+                .filter(methodType -> FtpConstants.ON_ERROR_REMOTE_FUNCTION.equals(methodType.getName()))
+                .findFirst();
+    }
+
+    /**
+     * Creates a ContentBindingError with the given message and cause.
+     *
+     * @param message The error message
+     * @param cause The underlying cause (can be null)
+     * @param filePath The path of the file that caused the error
+     * @param content The raw file content as bytes that failed to bind (can be null)
+     * @return A ContentBindingError BError
+     */
+    public static BError createContentBindingError(String message, Throwable cause, String filePath,
+                                                    byte[] content) {
+        Map<String, Object> detailMap = new HashMap<>();
+        if (filePath != null) {
+            detailMap.put("filePath", StringUtils.fromString(filePath));
+        }
+        if (content != null) {
+            detailMap.put("content", ValueCreator.createArrayValue(content));
+        }
+
+        BMap<BString, Object> detailRecord = ValueCreator.createRecordValue(
+                new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME, getFtpPackage().getMajorVersion()),
+                "ContentBindingErrorDetail",
+                detailMap
+        );
+
+        String safeMessage = maskUrlPassword(message);
+        BError causeError = null;
+        if (cause != null) {
+            if (cause instanceof BError) {
+                causeError = (BError) cause;
+            } else {
+                String causeMsg = cause.getMessage() != null ? cause.getMessage() : "Unknown error";
+                String safeCauseMsg = maskUrlPassword(causeMsg);
+                causeError = ErrorCreator.createError(StringUtils.fromString(safeCauseMsg));
+            }
+        }
+        return ErrorCreator.createError(ModuleUtils.getModule(), ErrorType.ContentBindingError.errorType(),
+                StringUtils.fromString(safeMessage), causeError, detailRecord);
+    }
+
     public static String getAuthMethod(Object authMethodObj) {
         return authMethodObj.toString().toLowerCase().replace("_", "-");
     }
@@ -624,6 +677,7 @@ public class FtpUtil {
         FileAlreadyExistsError("FileAlreadyExistsError"),
         InvalidConfigError("InvalidConfigError"),
         ServiceUnavailableError("ServiceUnavailableError"),
+        ContentBindingError("ContentBindingError"),
         AllRetryAttemptsFailedError("AllRetryAttemptsFailedError"),
         CircuitBreakerOpenError("CircuitBreakerOpenError");
 

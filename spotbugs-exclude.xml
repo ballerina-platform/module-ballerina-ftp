@@ -28,4 +28,8 @@
         <Class name="io.ballerina.stdlib.ftp.plugin.FtpFileDeletedValidator"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <Match>
+        <Class name="io.ballerina.stdlib.ftp.plugin.FtpOnErrorValidator"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>
