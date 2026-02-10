@@ -45,6 +45,7 @@ The conforming implementation of the specification is released and included in t
     - [4.4. Usage](#44-usage)
       - [4.4.1. Service-Level Monitoring Configuration](#441-service-level-monitoring-configuration)
       - [4.4.2. Format-Specific Listener Callbacks](#442-format-specific-listener-callbacks)
+      - [4.4.3. Post-Processing Actions](#443-post-processing-actions)
     - [4.5. Distributed Coordination](#45-distributed-coordination)
       - [4.5.1. Coordination Configuration](#451-coordination-configuration)
       - [4.5.2. Coordination Mechanism](#452-coordination-mechanism)
@@ -838,7 +839,6 @@ public type WatchEvent record {|
     string[] deletedFiles;
 |};
 ```
-
 ### 4.2. Service Configuration Annotation
 
 The `@ftp:ServiceConfig` annotation allows configuring monitoring paths and file patterns at the service level rather than the listener level. This enables multiple services attached to a single listener to monitor different directories independently.
@@ -1164,6 +1164,120 @@ If `onError` is not defined, binding errors are logged and the file is skipped.
 All format-specific callbacks receive `fileInfo` (metadata about the file) and optionally `caller`
 (to perform additional FTP operations). The data is automatically parsed based on the callback type.
 
+#### 4.4.3. Post-Processing Actions
+
+The `@ftp:FunctionConfig` annotation supports automatic file actions after processing completes. This enables common patterns like moving processed files to an archive directory or deleting files after successful processing.
+
+**Configuration Types:**
+
+* `DELETE` - Delete the file after processing
+```ballerina
+public const DELETE = "DELETE";
+```
+
+* `Move` - Move the file to a specified directory
+```ballerina
+# Type alias for Move record, used in union types for post-processing actions.
+public type MOVE Move;
+
+# Configuration for moving a file after processing.
+#
+# + moveTo - Destination directory path where the file will be moved
+# + preserveSubDirs - If true, preserves the subdirectory structure relative to the
+#                     listener's root path. Defaults to true.
+public type Move record {|
+    string moveTo;
+    boolean preserveSubDirs = true;
+|};
+```
+
+**Updated FtpFunctionConfig:**
+```ballerina
+public type FtpFunctionConfig record {|
+    string fileNamePattern?;
+    MOVE|DELETE afterProcess?;
+    MOVE|DELETE afterError?;
+|};
+```
+
+**Action Fields:**
+- `afterProcess` - Action to perform after successful processing. If not specified, no action is taken.
+- `afterError` - Action to perform after the handler returns an error or panics. If not specified, no action is taken.
+
+**Prerequisites:**
+- When using `MOVE` action with `preserveSubDirs: true`, the destination directory structure must be pre-created on the FTP server. The move operation will fail if the destination parent directories do not exist.
+
+**Behavior:**
+1. **After Successful Processing:** If the handler returns successfully (no error), the `afterProcess` action is executed.
+2. **After Error:** If the handler returns an error, the `afterError` action is executed.
+3. **Subdirectory Preservation:** When using `MOVE` with `preserveSubDirs: true` (default), the subdirectory structure relative to the listener's monitored path is preserved. For example, if listening to `/input/` and processing `/input/orders/2024/file.csv` with `moveTo: "/archive/"`, the file is moved to `/archive/orders/2024/file.csv`.
+
+**Examples:**
+
+Delete after successful processing:
+```ballerina
+service on ftpListener {
+    @ftp:FunctionConfig {
+        fileNamePattern: ".*\\.json",
+        afterProcess: ftp:DELETE
+    }
+    remote function onFileJson(json content, ftp:FileInfo fileInfo) returns error? {
+        // Process JSON - file is automatically deleted after successful return
+        processJson(content);
+    }
+}
+```
+
+Move to archive after processing:
+```ballerina
+service on ftpListener {
+    @ftp:FunctionConfig {
+        fileNamePattern: ".*\\.csv",
+        afterProcess: {
+            moveTo: "/archive/processed/"
+        }
+    }
+    remote function onFileCsv(Employee[] content, ftp:FileInfo fileInfo) returns error? {
+        // Process CSV - file is moved to archive after success
+        saveEmployees(content);
+    }
+}
+```
+
+Different actions for success and error:
+```ballerina
+service on ftpListener {
+    @ftp:FunctionConfig {
+        fileNamePattern: ".*\\.xml",
+        afterProcess: {
+            moveTo: "/archive/success/"
+        },
+        afterError: {
+            moveTo: "/archive/failed/"
+        }
+    }
+    remote function onFileXml(xml content, ftp:FileInfo fileInfo) returns error? {
+        // On success: moved to /archive/success/
+        // On error: moved to /archive/failed/
+        check processXml(content);
+    }
+}
+```
+
+Move without preserving subdirectories:
+```ballerina
+service on ftpListener {
+    @ftp:FunctionConfig {
+        afterProcess: {
+            moveTo: "/archive/flat/",
+            preserveSubDirs: false
+        }
+    }
+    remote function onFile(byte[] content, ftp:FileInfo fileInfo) returns error? {
+        // All files moved directly to /archive/flat/ regardless of source subdirectory
+    }
+}
+```
 
 The Listener has following functions to manage a service.
 * `attach()` - can be used to bind a service to the `ftp:Listener`.
