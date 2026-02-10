@@ -28,7 +28,7 @@ public class ServiceContext {
     private final BObject service;
     private final ServiceConfiguration configuration;
     private final FormatMethodsHolder formatMethodsHolder;
-    private BObject caller;
+    private volatile BObject caller;
 
     public ServiceContext(BObject service, ServiceConfiguration configuration,
                           FormatMethodsHolder formatMethodsHolder, BObject caller) {

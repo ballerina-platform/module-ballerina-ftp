@@ -282,7 +282,31 @@ public class FtpListenerHelper {
             needsCaller = true;
         }
 
-        ServiceContext context = new ServiceContext(service, serviceConfiguration, formatMethodsHolder, null);
+        BObject caller = null;
+        if (needsCaller) {
+            BMap<BString, Object> serviceEndpointConfig =
+                    (BMap<BString, Object>) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
+            if (serviceConfiguration != null) {
+                BMap<BString, Object> callerConfig =
+                        createCallerConfigWithPath(serviceEndpointConfig, serviceConfiguration.getPath());
+                BObject createdCaller = createCaller(callerConfig);
+                if (createdCaller instanceof BError) {
+                    return createdCaller;
+                }
+                caller = createdCaller;
+            } else {
+                if (listener.getCaller() == null) {
+                    BObject createdCaller = createCaller(serviceEndpointConfig);
+                    if (createdCaller instanceof BError) {
+                        return createdCaller;
+                    }
+                    listener.setCaller(createdCaller);
+                }
+                caller = listener.getCaller();
+            }
+        }
+
+        ServiceContext context = new ServiceContext(service, serviceConfiguration, formatMethodsHolder, caller);
         if (!listener.addServiceContext(context)) {
             if (serviceConfiguration != null) {
                 return FtpUtil.createError(
@@ -290,31 +314,6 @@ public class FtpListenerHelper {
                         "Each service must monitor a unique path.", null, InvalidConfigError.errorType());
             }
             return FtpUtil.createError("Failed to register service.", null, InvalidConfigError.errorType());
-        }
-
-        if (needsCaller) {
-            BMap<BString, Object> serviceEndpointConfig =
-                    (BMap<BString, Object>) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
-            if (serviceConfiguration != null) {
-                BMap<BString, Object> callerConfig =
-                        createCallerConfigWithPath(serviceEndpointConfig, serviceConfiguration.getPath());
-                BObject caller = createCaller(callerConfig);
-                if (caller instanceof BError) {
-                    listener.removeServiceContext(context);
-                    return caller;
-                }
-                context.setCaller(caller);
-            } else {
-                if (listener.getCaller() == null) {
-                    BObject caller = createCaller(serviceEndpointConfig);
-                    if (caller instanceof BError) {
-                        listener.removeServiceContext(context);
-                        return caller;
-                    }
-                    listener.setCaller(caller);
-                }
-                context.setCaller(listener.getCaller());
-            }
         }
         return null;
     }
