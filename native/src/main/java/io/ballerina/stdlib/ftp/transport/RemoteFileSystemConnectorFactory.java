@@ -19,6 +19,7 @@
 package io.ballerina.stdlib.ftp.transport;
 
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.server.FtpListener;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
@@ -51,6 +52,16 @@ public interface RemoteFileSystemConnectorFactory {
     RemoteFileSystemServerConnector createServerConnector(Map<String, Object> connectorConfig,
                                                           List<FileDependencyCondition> dependencyConditions,
                                                           RemoteFileSystemListener remoteFileSystemListener)
+            throws RemoteFileSystemConnectorException;
+
+    /**
+     * @param connectorConfig properties required for the multi-path server connector.
+     * @param ftpListener     listener used for routing events to services.
+     * @return RemoteFileSystemServerConnector instance.
+     * @throws RemoteFileSystemConnectorException if any error occurred when creating the connector.
+     */
+    RemoteFileSystemServerConnector createMultiPathServerConnector(Map<String, Object> connectorConfig,
+                                                                   FtpListener ftpListener)
             throws RemoteFileSystemConnectorException;
 
     /**

@@ -38,14 +38,16 @@ The conforming implementation of the specification is released and included in t
       - [Usage Example](#usage-example)
   - [4. Listener](#4-listener)
     - [4.1. Configurations](#41-configurations)
-    - [4.2. Initialization](#42-initialization)
-      - [4.2.1. Insecure Listener](#421-insecure-listener)
-      - [4.2.2. Secure Listener](#422-secure-listener)
-      - [4.3. Usage](#43-usage)
-      - [4.3.1. Format-Specific Listener Callbacks](#431-format-specific-listener-callbacks)
-    - [4.4. Distributed Coordination](#44-distributed-coordination)
-      - [4.4.1. Coordination Configuration](#441-coordination-configuration)
-      - [4.4.2. Coordination Mechanism](#442-coordination-mechanism)
+    - [4.2. Service Configuration Annotation](#42-service-configuration-annotation)
+    - [4.3. Initialization](#43-initialization)
+      - [4.3.1. Insecure Listener](#431-insecure-listener)
+      - [4.3.2. Secure Listener](#432-secure-listener)
+    - [4.4. Usage](#44-usage)
+      - [4.4.1. Service-Level Monitoring Configuration](#441-service-level-monitoring-configuration)
+      - [4.4.2. Format-Specific Listener Callbacks](#442-format-specific-listener-callbacks)
+    - [4.5. Distributed Coordination](#45-distributed-coordination)
+      - [4.5.1. Coordination Configuration](#451-coordination-configuration)
+      - [4.5.2. Coordination Mechanism](#452-coordination-mechanism)
   - [5. Caller](#5-caller)
     - [5.1. Initialization](#51-initialization)
     - [5.2. Functions](#52-functions)
@@ -778,6 +780,9 @@ files are added to or deleted from the directory. The `onFileChange` function is
 and/or deleted.
 ### 4.1. Configurations
 * When initializing the `ftp:Listener`, following configurations can be provided.
+
+> **Note:** The monitoring-related fields (`path`, `fileNamePattern`, `fileAgeFilter`, `fileDependencyConditions`) are deprecated at the listener level. Use the `@ftp:ServiceConfig` annotation on services instead. See [Section 4.2](#42-service-configuration-annotation) for details.
+
 ```ballerina
 public type ListenerConfiguration record {|
     # Supported FTP protocols
@@ -788,8 +793,10 @@ public type ListenerConfiguration record {|
     int port = 21;
     # Authentication options
     AuthConfiguration auth?;
+    # @deprecated Use @ftp:ServiceConfig annotation on service instead.
     # Remote FTP directory location
     string path = "/";
+    # @deprecated Use @ftp:ServiceConfig annotation on service instead.
     # File name pattern that event need to trigger
     string fileNamePattern?;
     # Periodic time interval to check new update
@@ -799,6 +806,12 @@ public type ListenerConfiguration record {|
     # If `false`, treats the actual server root as `/`, which may cause a `CWD /` command
     # that can fail on servers restricting root access (e.g., chrooted environments).
     boolean userDirIsRoot = false;
+    # @deprecated Use @ftp:ServiceConfig annotation on service instead.
+    # Configuration for filtering files based on age
+    FileAgeFilter fileAgeFilter?;
+    # @deprecated Use @ftp:ServiceConfig annotation on service instead.
+    # Array of dependency conditions for conditional file processing
+    FileDependencyCondition[] fileDependencyConditions = [];
     # If set to `true`, allows missing or null values when reading files in structured formats
     boolean laxDataBinding = false;
     # Configuration for distributed task coordination using warm backup approach.
@@ -806,6 +819,16 @@ public type ListenerConfiguration record {|
     CoordinationConfig coordination?;
 |};
 ```
+
+**Deprecated Fields Migration:**
+
+| Deprecated Field | Migration |
+|-----------------|-----------|
+| `path` | Move to `@ftp:ServiceConfig { path: "..." }` on service |
+| `fileNamePattern` | Move to `@ftp:ServiceConfig { fileNamePattern: "..." }` on service |
+| `fileAgeFilter` | Move to `@ftp:ServiceConfig { fileAgeFilter: {...} }` on service |
+| `fileDependencyConditions` | Move to `@ftp:ServiceConfig { fileDependencyConditions: [...] }` on service |
+
 * `WatchEvent` record represents the latest status change of the server from the last status change.
 ```ballerina
 public type WatchEvent record {|
@@ -815,8 +838,84 @@ public type WatchEvent record {|
     string[] deletedFiles;
 |};
 ```
-### 4.2. Initialization
-#### 4.2.1. Insecure Listener
+
+### 4.2. Service Configuration Annotation
+
+The `@ftp:ServiceConfig` annotation allows configuring monitoring paths and file patterns at the service level rather than the listener level. This enables multiple services attached to a single listener to monitor different directories independently.
+
+```ballerina
+# Configuration for FTP service monitoring.
+# Use this to specify the directory path and file patterns this service should monitor.
+#
+# + path - Directory path on the FTP server to monitor for file changes
+# + fileNamePattern - File name pattern (regex) to filter which files trigger events
+# + fileAgeFilter - Configuration for filtering files based on age (optional)
+# + fileDependencyConditions - Array of dependency conditions for conditional file processing
+public type ServiceConfiguration record {|
+    string path;
+    string fileNamePattern?;
+    FileAgeFilter fileAgeFilter?;
+    FileDependencyCondition[] fileDependencyConditions = [];
+|};
+
+# Annotation to configure FTP service monitoring path and file patterns.
+public annotation ServiceConfiguration ServiceConfig on service;
+```
+
+**Usage Rules:**
+
+1. **Consistency Requirement**: If any service attached to a listener uses `@ftp:ServiceConfig`, then ALL services attached to that listener must use it.
+
+2. **Mutual Exclusion**: When `@ftp:ServiceConfig` is used:
+   - The deprecated listener-level fields (`path`, `fileNamePattern`, `fileAgeFilter`, `fileDependencyConditions`) are completely ignored
+   - A deprecation warning is logged if these fields were set in listener configuration
+
+3. **Required Field**: The `path` field is mandatory in `@ftp:ServiceConfig`
+
+**Validation Error Messages:**
+
+| Scenario | Error Type | Message |
+|----------|-----------|---------|
+| Mixed usage (some services with annotation, some without) | InvalidConfigError | "All services attached to a listener must use @ftp:ServiceConfig annotation when any service uses it. Service '{serviceName}' is missing the annotation." |
+| Invalid path pattern | InvalidConfigError | "Invalid path '{path}' in @ftp:ServiceConfig. Path must be an absolute path starting with '/'." |
+| Invalid fileNamePattern regex | InvalidConfigError | "Invalid regex pattern '{pattern}' in @ftp:ServiceConfig.fileNamePattern: {error}" |
+
+**Example: Multiple Services Monitoring Different Directories**
+
+```ballerina
+listener ftp:Listener ftpListener = check new({
+    protocol: ftp:SFTP,
+    host: "ftp.example.com",
+    port: 22,
+    auth: {
+        credentials: {username: "user", password: "pass"}
+    },
+    pollingInterval: 30
+});
+
+@ftp:ServiceConfig {
+    path: "/incoming/csv",
+    fileNamePattern: ".*\\.csv"
+}
+service on ftpListener {
+    remote function onFileCsv(record {}[] content, ftp:FileInfo fileInfo) returns error? {
+        // Processes CSV files from /incoming/csv
+    }
+}
+
+@ftp:ServiceConfig {
+    path: "/incoming/json",
+    fileNamePattern: ".*\\.json"
+}
+service on ftpListener {
+    remote function onFileJson(json content, ftp:FileInfo fileInfo) returns error? {
+        // Processes JSON files from /incoming/json
+    }
+}
+```
+
+### 4.3. Initialization
+#### 4.3.1. Insecure Listener
 An insecure FTP listener can be initialized by providing the mandatory `protocol`, `host`, and  `path` parameters to the 
 `ftp:ListenerConfiguration`.
 ```ballerina
@@ -826,17 +925,19 @@ An insecure FTP listener can be initialized by providing the mandatory `protocol
 # + return - `()` or else an `ftp:Error` upon failure to initialize the listener
 public isolated function init(*ListenerConfiguration listenerConfig) returns Error?;
 ```
-#### 4.2.2. Secure Listener
+#### 4.3.2. Secure Listener
 A secure listener can be initialized by providing `ftp:SFTP` as the protocol and by providing `ftp:Credentials`
 and `ftp:PrivateKey` to `ftp:AuthConfiguration`.
+
+**Using deprecated listener-level configuration (for backward compatibility):**
 ```ballerina
 ftp:ListenerConfiguration ftpConfig = {
     protocol: ftp:SFTP,
     host: "<The SFTP host>",
     port: <The SFTP port>,
-    path: "<The remote SFTP directory location>",
+    path: "<The remote SFTP directory location>",        // Deprecated - use @ftp:ServiceConfig instead
     pollingInterval: <Polling interval>,
-    fileNamePattern: "<File name pattern>",
+    fileNamePattern: "<File name pattern>",              // Deprecated - use @ftp:ServiceConfig instead
     auth: {
         credentials: {username: "<The SFTP username>", password: "<The SFTP password>"},
         privateKey: {
@@ -848,7 +949,35 @@ ftp:ListenerConfiguration ftpConfig = {
 };
 ```
 
-#### 4.3. Usage
+**Recommended approach using @ftp:ServiceConfig:**
+```ballerina
+ftp:ListenerConfiguration ftpConfig = {
+    protocol: ftp:SFTP,
+    host: "<The SFTP host>",
+    port: <The SFTP port>,
+    pollingInterval: <Polling interval>,
+    auth: {
+        credentials: {username: "<The SFTP username>", password: "<The SFTP password>"},
+        privateKey: {
+            path: "<The private key file path>",
+            password: "<The private key file password>"
+        }
+    },
+    userDirIsRoot: true
+};
+
+listener ftp:Listener ftpListener = check new(ftpConfig);
+
+@ftp:ServiceConfig {
+    path: "<The remote SFTP directory location>",
+    fileNamePattern: "<File name pattern>"
+}
+service on ftpListener {
+    // Service implementation
+}
+```
+
+### 4.4. Usage
 After initializing the listener, a service must be attached to the listener. There are two ways for this.
 1. Attach the service to the listener directly.
 ```ballerina
@@ -870,7 +999,50 @@ ftp:Service ftpListener = service object {
 The remote method `onFileChange()` is invoked when the listener notices a file change in the FTP server. This function supports
 having both `ftp:WatchEvent` and `ftp:Caller` parameters or having only `ftp:WatchEvent` parameter.
 
-#### 4.3.1. Format-Specific Listener Callbacks
+#### 4.4.1. Service-Level Monitoring Configuration
+
+When using the `@ftp:ServiceConfig` annotation, each service can specify its own monitoring path and file patterns:
+
+```ballerina
+listener ftp:Listener ftpListener = check new({
+    host: "ftp.example.com",
+    pollingInterval: 30
+});
+
+// Service monitoring /incoming/orders for CSV files
+@ftp:ServiceConfig {
+    path: "/incoming/orders",
+    fileNamePattern: "order_.*\\.csv",
+    fileDependencyConditions: [
+        {
+            targetPattern: "order_(\\d+)\\.csv",
+            requiredFiles: ["order_$1.marker"],
+            matchingMode: ALL
+        }
+    ]
+}
+service on ftpListener {
+    remote function onFileCsv(record {}[] content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+        // Process order CSV files only when marker file exists
+        check caller->move(fileInfo.path, "/processed/orders/" + fileInfo.name);
+    }
+}
+
+// Service monitoring /incoming/configs for JSON files
+@ftp:ServiceConfig {
+    path: "/incoming/configs",
+    fileNamePattern: ".*\\.json"
+}
+service on ftpListener {
+    remote function onFileJson(json content, ftp:FileInfo fileInfo) returns error? {
+        // Process configuration JSON files
+    }
+}
+```
+
+Each service operates independently, receiving events only for files in its configured path that match its pattern.
+
+#### 4.4.2. Format-Specific Listener Callbacks
 
 In addition to the generic `onFileChange()` callback, the listener supports specialized format-specific callbacks that automatically parse files into structured data formats. These callbacks simplify handling files of specific types.
 
@@ -1072,11 +1244,11 @@ public isolated function poll() returns error?
 public isolated function register(Service ftpService, string? name) returns error?
 ```
 
-### 4.4. Distributed Coordination
+### 4.5. Distributed Coordination
 
 The FTP listener supports distributed coordination for high availability deployments. When multiple listener instances are deployed across different nodes, coordination ensures that only one instance actively polls the FTP server while others act as warm standby nodes. This prevents duplicate file processing and provides automatic failover.
 
-#### 4.4.1. Coordination Configuration
+#### 4.5.1. Coordination Configuration
 * `CoordinationConfig` record represents the configuration for distributed task coordination.
 ```ballerina
 public type CoordinationConfig record {|
@@ -1115,7 +1287,7 @@ public type PostgresqlConfig record {
 };
 ```
 
-#### 4.4.2. Coordination Mechanism
+#### 4.5.2. Coordination Mechanism
 1. **Leader election**: Members in the same `coordinationGroup` coordinate via the database to elect an active member
 2. **Heartbeat**: The active member updates its heartbeat at `heartbeatFrequency` intervals
 3. **Liveness monitoring**: Standby members check the active member's heartbeat every `livenessCheckInterval` seconds
@@ -1510,6 +1682,8 @@ public function main() returns error? {
 }
 ```
 ### 6.2. Listening to file changes
+
+**Recommended approach using @ftp:ServiceConfig:**
 ```ballerina
 import ballerina/ftp;
 import ballerina/io;
@@ -1528,9 +1702,50 @@ listener ftp:Listener remoteServer = check new({
         }
     },
     port: 21,
-    path: "/home/in",
     pollingInterval: 2,
-    fileNamePattern: "(.*).txt",
+    userDirIsRoot: true
+});
+
+@ftp:ServiceConfig {
+    path: "/home/in",
+    fileNamePattern: "(.*).txt"
+}
+service on remoteServer {
+
+    remote function onFileText(string content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
+        io:println("Processing file: " + fileInfo.path);
+        io:println("Content: " + content);
+        check caller->delete(fileInfo.path);
+    }
+
+    remote function onFileDelete(string deletedFile) {
+        io:println("Deleted file path: " + deletedFile);
+    }
+}
+```
+
+**Legacy approach (deprecated):**
+```ballerina
+import ballerina/ftp;
+import ballerina/io;
+
+listener ftp:Listener remoteServer = check new({
+    protocol: ftp:SFTP,
+    host: "ftp.example.com",
+    auth: {
+        credentials: {
+            username: "wso2",
+            password: "wso2123"
+        },
+        privateKey: {
+            path: "resources/keys/sftp.private.key",
+            password: "password"
+        }
+    },
+    port: 21,
+    path: "/home/in",                    // Deprecated
+    pollingInterval: 2,
+    fileNamePattern: "(.*).txt",         // Deprecated
     userDirIsRoot: true
 });
 

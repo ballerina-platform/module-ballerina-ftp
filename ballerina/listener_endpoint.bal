@@ -168,20 +168,24 @@ isolated function getPollingService(Listener initializedListener) returns task:S
 # + host - Target server hostname or IP address
 # + port - Port number of the remote service
 # + auth - Authentication options for connecting to the server
-# + path - Directory path on the FTP server to monitor for file changes
-# + fileNamePattern - File name pattern (regex) to filter which files trigger events
+# + path - Deprecated: Use @ftp:ServiceConfig annotation on service instead.
+#          Directory path on the FTP server to monitor for file changes
+# + fileNamePattern - Deprecated: Use @ftp:ServiceConfig annotation on service instead.
+#                     File name pattern (regex) to filter which files trigger events
 # + pollingInterval - Polling interval in seconds for checking file changes
 # + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and
 #                   prevents the underlying VFS from attempting to change to the actual server root.
 #                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command
 #                   that can fail on servers restricting root access (e.g., chrooted environments).
-# + fileAgeFilter - Configuration for filtering files based on age (optional)
-# + fileDependencyConditions - Array of dependency conditions for conditional file processing (default: [])
+# + fileAgeFilter - Deprecated: Use @ftp:ServiceConfig annotation on service instead.
+#                   Configuration for filtering files based on age (optional)
+# + fileDependencyConditions - Deprecated: Use @ftp:ServiceConfig annotation on service instead.
+#                              Array of dependency conditions for conditional file processing (default: [])
 # + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
 #                    null values in JSON/XML are allowed to be mapped to optional fields
 #                    missing fields in JSON/XML are allowed to be mapped as null values
-# + connectTimeout - Connection timeout in seconds 
-# + socketConfig - Socket timeout configurations 
+# + connectTimeout - Connection timeout in seconds
+# + socketConfig - Socket timeout configurations
 # + fileTransferMode - File transfer mode: BINARY or ASCII (FTP only)
 # + sftpCompression - Compression algorithms (SFTP only)
 # + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
@@ -195,11 +199,15 @@ public type ListenerConfiguration record {|
     string host = "127.0.0.1";
     int port = 21;
     AuthConfiguration auth?;
+    @deprecated
     string path = "/";
+    @deprecated
     string fileNamePattern?;
     decimal pollingInterval = 60;
     boolean userDirIsRoot = false;
+    @deprecated
     FileAgeFilter fileAgeFilter?;
+    @deprecated
     FileDependencyCondition[] fileDependencyConditions = [];
     boolean laxDataBinding = false;
     decimal connectTimeout = 30.0;
