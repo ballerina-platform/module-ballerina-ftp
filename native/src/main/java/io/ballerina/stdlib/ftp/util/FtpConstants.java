@@ -226,4 +226,10 @@ public class FtpConstants {
     // Service-level configuration annotation
     public static final String SERVICE_CONFIG_ANNOTATION = "ServiceConfig";
     public static final String SERVICE_CONFIG_PATH = "path";
+
+    // Post-processing action annotation fields
+    public static final String ANNOTATION_AFTER_PROCESS = "afterProcess";
+    public static final String ANNOTATION_AFTER_ERROR = "afterError";
+    public static final String ANNOTATION_MOVE_TO = "moveTo";
+    public static final String ANNOTATION_PRESERVE_SUB_DIRS = "preserveSubDirs";
 }
