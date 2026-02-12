@@ -283,31 +283,7 @@ public class FtpListenerHelper {
             needsCaller = true;
         }
 
-        BObject caller = null;
-        if (needsCaller) {
-            BMap<BString, Object> serviceEndpointConfig =
-                    (BMap<BString, Object>) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
-            if (serviceConfiguration != null) {
-                BMap<BString, Object> callerConfig =
-                        createCallerConfigWithPath(serviceEndpointConfig, serviceConfiguration.getPath());
-                BObject createdCaller = createCaller(callerConfig);
-                if (TypeUtils.getType(createdCaller).getTag() == TypeTags.ERROR_TAG) {
-                    return createdCaller;
-                }
-                caller = createdCaller;
-            } else {
-                if (listener.getCaller() == null) {
-                    BObject createdCaller = createCaller(serviceEndpointConfig);
-                    if (TypeUtils.getType(createdCaller).getTag() == TypeTags.ERROR_TAG) {
-                        return createdCaller;
-                    }
-                    listener.setCaller(createdCaller);
-                }
-                caller = listener.getCaller();
-            }
-        }
-
-        ServiceContext context = new ServiceContext(service, serviceConfiguration, formatMethodsHolder, caller);
+        ServiceContext context = new ServiceContext(service, serviceConfiguration, formatMethodsHolder, null);
         if (!listener.addServiceContext(context)) {
             if (serviceConfiguration != null) {
                 return FtpUtil.createError(
@@ -315,6 +291,33 @@ public class FtpListenerHelper {
                         "Each service must monitor a unique path.", null, InvalidConfigError.errorType());
             }
             return FtpUtil.createError("Failed to register service.", null, InvalidConfigError.errorType());
+        }
+
+        if (needsCaller) {
+            BMap<BString, Object> serviceEndpointConfig =
+                    (BMap<BString, Object>) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
+            BObject caller;
+            if (serviceConfiguration != null) {
+                BMap<BString, Object> callerConfig =
+                        createCallerConfigWithPath(serviceEndpointConfig, serviceConfiguration.getPath());
+                BObject createdCaller = createCaller(callerConfig);
+                if (TypeUtils.getType(createdCaller).getTag() == TypeTags.ERROR_TAG) {
+                    listener.removeServiceContext(context);
+                    return createdCaller;
+                }
+                caller = createdCaller;
+            } else {
+                if (listener.getCaller() == null) {
+                    BObject createdCaller = createCaller(serviceEndpointConfig);
+                    if (TypeUtils.getType(createdCaller).getTag() == TypeTags.ERROR_TAG) {
+                        listener.removeServiceContext(context);
+                        return createdCaller;
+                    }
+                    listener.setCaller(createdCaller);
+                }
+                caller = listener.getCaller();
+            }
+            context.setCaller(caller);
         }
         return null;
     }

@@ -450,7 +450,11 @@ public class FtpContentCallbackHandler {
 
     private String calculateMoveDestination(String filePath, String listenerPath, PostProcessAction action) {
         String moveTo = action.getMoveTo();
-        String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+        String normalizedFilePath = normalizeFilePath(filePath);
+        String fileName = extractFileName(normalizedFilePath);
+        if (fileName.isEmpty()) {
+            return ensureTrailingSlash(moveTo);
+        }
 
         if (!action.isPreserveSubDirs() || listenerPath == null || listenerPath.isEmpty()) {
             // Simple case: just append filename to moveTo directory
@@ -459,11 +463,13 @@ public class FtpContentCallbackHandler {
 
         // Calculate relative path from listener root
         String normalizedListenerPath = ensureTrailingSlash(listenerPath);
-        String normalizedFilePath = filePath;
 
         if (normalizedFilePath.startsWith(normalizedListenerPath)) {
             // Extract relative path including subdirectories
             String relativePath = normalizedFilePath.substring(normalizedListenerPath.length());
+            if (relativePath.isEmpty()) {
+                return ensureTrailingSlash(moveTo) + fileName;
+            }
             return ensureTrailingSlash(moveTo) + relativePath;
         } else {
             // File path doesn't start with listener path, fall back to simple append
@@ -476,5 +482,24 @@ public class FtpContentCallbackHandler {
             return "/";
         }
         return path.endsWith("/") ? path : path + "/";
+    }
+
+    private String normalizeFilePath(String path) {
+        if (path == null || path.isEmpty()) {
+            return "";
+        }
+        int end = path.length();
+        while (end > 1 && path.charAt(end - 1) == '/') {
+            end--;
+        }
+        return path.substring(0, end);
+    }
+
+    private String extractFileName(String path) {
+        if (path == null || path.isEmpty()) {
+            return "";
+        }
+        int lastSlashIndex = path.lastIndexOf('/');
+        return lastSlashIndex >= 0 ? path.substring(lastSlashIndex + 1) : path;
     }
 }
