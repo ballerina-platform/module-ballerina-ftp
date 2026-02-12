@@ -402,6 +402,26 @@ function testGetCsvContentBindingError() returns error? {
     check (<Client>clientEp)->delete(path);
 }
 
+// Test that getCsvAsStream returns ContentBindingError when CSV parsing fails
+@test:Config {dependsOn: [testPutFileContent]}
+function testGetCsvAsStreamContentBindingError() returns error? {
+    string path = "/home/in/invalid-csv-stream.csv";
+    // Write malformed CSV content (invalid escape sequence)
+    check (<Client>clientEp)->putText(path, "name,age\nAlice,\\q\nBob,25");
+
+    stream<string[], error?> result = check (<Client>clientEp)->getCsvAsStream(path);
+    string[][]|error consumed = from string[] row in result
+        select row;
+    if consumed is ContentBindingError {
+        test:assertTrue(true, msg = "getCsvAsStream should return ContentBindingError for malformed CSV");
+    } else {
+        test:assertFail(msg = "getCsvAsStream should return ContentBindingError for malformed CSV");
+    }
+
+    // Cleanup
+    check (<Client>clientEp)->delete(path);
+}
+
 @test:Config {dependsOn: [testPutFileContent]}
 function testPutText() returns error? {
     string txt = "hello text content";
@@ -809,10 +829,12 @@ function testCsvStreamTypedBinding_strict_and_lax() returns error? {
         // Try to consume the stream - should error when hitting the row with missing age
         CsvPersonStrict[]|error consumed = from CsvPersonStrict row in strictStreamRes
             select row;
-        test:assertTrue(consumed is error, msg = "Strict CSV stream should error on missing required field");
+        test:assertTrue(consumed is ContentBindingError,
+            msg = "Strict CSV stream should return ContentBindingError on missing required field");
     } else {
-        // Also acceptable if the stream creation itself fails
-        test:assertTrue(true, msg = "Strict CSV stream failed at creation, which is acceptable");
+        // Stream creation itself should fail with ContentBindingError
+        test:assertTrue(strictStreamRes is ContentBindingError,
+            msg = "Strict CSV stream should return ContentBindingError at creation");
     }
 
     // Lax streaming should succeed
