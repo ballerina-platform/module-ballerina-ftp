@@ -27,9 +27,9 @@ boolean deleteCallerEventReceived = false;
 string[] deletedFilesWithCaller = [];
 
 // Test file paths
-const string DELETE_TEST_FILE_PATH = "tests/resources/datafiles/file2.txt";
+const DELETE_TEST_FILE_PATH = "tests/resources/datafiles/file2.txt";
 // Isolated directory for file deletion tests
-const string DELETE_TEST_DIR = "/home/in/delete";
+const DELETE_TEST_DIR = "/home/in/delete";
 
 @test:Config {
     groups: ["onDelete"]

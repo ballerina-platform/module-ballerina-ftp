@@ -19,9 +19,9 @@ import ballerina/log;
 import ballerina/test;
 
 // Test directory for post-process action tests
-const string POST_PROCESS_TEST_DIR = "/home/in/post-process";
-const string POST_PROCESS_ARCHIVE_DIR = "/home/in/post-process-archive";
-const string POST_PROCESS_ERROR_DIR = "/home/in/post-process-error";
+const POST_PROCESS_TEST_DIR = "/home/in/post-process";
+const POST_PROCESS_ARCHIVE_DIR = "/home/in/post-process-archive";
+const POST_PROCESS_ERROR_DIR = "/home/in/post-process-error";
 
 // Global tracking variables for post-process tests
 boolean deleteAfterProcessInvoked = false;

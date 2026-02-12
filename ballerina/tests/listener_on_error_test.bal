@@ -32,7 +32,7 @@ string lastErrorFilePath = "";
 int onErrorInvocationCount = 0;
 
 // Directory for onError tests
-const string ON_ERROR_TEST_DIR = "/home/in/onerror-tests";
+const ON_ERROR_TEST_DIR = "/home/in/onerror-tests";
 
 @test:Config {
     enable: true

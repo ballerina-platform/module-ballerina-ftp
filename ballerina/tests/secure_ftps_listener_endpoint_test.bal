@@ -20,8 +20,8 @@ import ballerina/log;
 import ballerina/test;
 
 // Constants for test configuration
-const string KEYSTORE_PATH = "tests/resources/keystore.jks";
-const string KEYSTORE_PASSWORD = "changeit";
+const KEYSTORE_PATH = "tests/resources/keystore.jks";
+const KEYSTORE_PASSWORD = "changeit";
 
 // --- Global State for Event Capture (Managed per test) ---
 isolated boolean ftpsEventReceived = false;

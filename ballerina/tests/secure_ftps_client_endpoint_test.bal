@@ -20,10 +20,10 @@ import ballerina/lang.runtime as runtime;
 import ballerina/test;
 
 // Constants for test configuration
-const string KEYSTORE_PATH = "tests/resources/keystore.jks";
-const string KEYSTORE_PASSWORD = "changeit";
-const string FTPS_CLIENT_ROOT = "/ftps-client";
-const string PUT_FILE_PATH = "tests/resources/datafiles/file2.txt";
+const KEYSTORE_PATH = "tests/resources/keystore.jks";
+const KEYSTORE_PASSWORD = "changeit";
+const FTPS_CLIENT_ROOT = "/ftps-client";
+const PUT_FILE_PATH = "tests/resources/datafiles/file2.txt";
 
 // Create the config to access mock FTPS server in EXPLICIT mode
 ClientConfiguration ftpsExplicitConfig = {

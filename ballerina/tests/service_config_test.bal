@@ -23,10 +23,10 @@ import ballerina/test;
 // Isolated directories – each test group gets its own FTP subtree so that
 // polling from one listener never picks up files meant for another.
 // ---------------------------------------------------------------------------
-const string SC_ROUTE_A_DIR  = "/home/in/sc-route-a";
-const string SC_ROUTE_B_DIR  = "/home/in/sc-route-b";
-const string SC_SINGLE_DIR   = "/home/in/sc-single";
-const string SC_LEGACY_DIR   = "/home/in/sc-legacy";
+const SC_ROUTE_A_DIR  = "/home/in/sc-route-a";
+const SC_ROUTE_B_DIR  = "/home/in/sc-route-b";
+const SC_SINGLE_DIR   = "/home/in/sc-single";
+const SC_LEGACY_DIR   = "/home/in/sc-legacy";
 
 // ---------------------------------------------------------------------------
 // Test-specific client for file uploads
