@@ -63,5 +63,5 @@ path = "./lib/data.xmldata-native-1.5.2.jar"
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib"
 artifactId = "data.csv-native"
-version = "0.9.0-20251209-183500-7b18d54"
-path = "./lib/data.csv-native-0.9.0-20251209-183500-7b18d54.jar"
+version = "0.10.0-20260212-193600-e021b1e"
+path = "./lib/data.csv-native-0.10.0-20260212-193600-e021b1e.jar"

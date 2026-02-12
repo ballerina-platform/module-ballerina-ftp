@@ -22,7 +22,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "data.csv"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "log"}
@@ -46,7 +46,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "data.xmldata"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.object"}
@@ -58,7 +58,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "file"
-version = "1.11.0"
+version = "1.12.0"
 scope = "testOnly"
 dependencies = [
 	{org = "ballerina", name = "io"},
@@ -215,7 +215,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "observe"
-version = "1.5.1"
+version = "1.6.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
