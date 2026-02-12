@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- [Add post processing action support](https://github.com/ballerina-platform/ballerina-library/issues/8604)
 - [Add service level monitoring config](https://github.com/ballerina-platform/ballerina-library/issues/8606)
 - [Introduce onError remote function](https://github.com/ballerina-platform/ballerina-library/issues/8605)
 - [Add Circuit breaker support](https://github.com/ballerina-platform/ballerina-library/issues/8382)

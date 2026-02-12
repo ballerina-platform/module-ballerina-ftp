@@ -29,6 +29,7 @@ import io.ballerina.runtime.api.types.Parameter;
 import io.ballerina.runtime.api.types.StreamType;
 import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.types.TypeTags;
+import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
@@ -97,6 +98,7 @@ public class FtpContentCallbackHandler {
     public void processContentCallbacks(Environment env, BObject service, RemoteFileSystemEvent event,
                                         FormatMethodsHolder holder, BObject callerObject) {
         List<FileInfo> addedFiles = event.getAddedFiles();
+        String listenerPath = event.getSourcePath();
 
         for (FileInfo fileInfo : addedFiles) {
             try {
@@ -120,7 +122,7 @@ public class FtpContentCallbackHandler {
                 // Check if content conversion returned an error (ContentBindingError)
                 if (convertedContent instanceof BError bError) {
                     log.error("Content binding failed for file: {}", fileInfo.getPath());
-                    routeToOnError(service, holder, bError, callerObject);
+                    routeToOnError(service, holder, bError, callerObject, fileInfo, listenerPath);
                     continue;
                 }
 
@@ -128,8 +130,13 @@ public class FtpContentCallbackHandler {
                 Object[] methodArguments = prepareContentMethodArguments(methodType, convertedContent,
                         fileInfo, callerObject);
 
-                // Invoke method asynchronously
-                invokeContentMethodAsync(service, methodType.getName(), methodArguments);
+                // Get post-processing actions
+                Optional<PostProcessAction> afterProcess = holder.getAfterProcessAction(methodType.getName());
+                Optional<PostProcessAction> afterError = holder.getAfterErrorAction(methodType.getName());
+
+                // Invoke method asynchronously with post-processing
+                invokeContentMethodAsync(service, methodType.getName(), methodArguments,
+                        fileInfo, callerObject, listenerPath, afterProcess, afterError);
 
             } catch (Exception exception) {
                 log.error("Failed to process file: " + fileInfo.getPath(), exception);
@@ -138,9 +145,6 @@ public class FtpContentCallbackHandler {
         }
     }
 
-    /**
-     * Fetches file content from the remote FTP/SFTP server.
-     */
     private byte[] fetchAllFileContentFromRemote(FileObject fileObject, InputStream inputStream) throws Exception {
         try {
             return FtpContentConverter.convertInputStreamToByteArray(inputStream);
@@ -162,9 +166,6 @@ public class FtpContentCallbackHandler {
         }
     }
 
-    /**
-     * Converts file content to the appropriate Ballerina type based on the method signature.
-     */
     private Object convertFileContent(Environment environment, FileObject fileObject, InputStream inputStream,
                                       MethodType methodType)
             throws Exception {
@@ -207,9 +208,6 @@ public class FtpContentCallbackHandler {
         }
     }
 
-    /**
-     * Prepares method arguments for content handler methods.
-     */
     private Object[] prepareContentMethodArguments(MethodType methodType, Object convertedContent,
                                                    FileInfo fileInfo, BObject callerObject) {
         Parameter[] parameters = methodType.getParameters();
@@ -236,9 +234,6 @@ public class FtpContentCallbackHandler {
         return new Object[]{convertedContent};
     }
 
-    /**
-     * Creates a Ballerina FileInfo record from Java FileInfo object.
-     */
     private BMap<BString, Object> createFileInfoRecord(FileInfo fileInfo) {
         Map<String, Object> fileInfoParams = new HashMap<>();
         fileInfoParams.put("path", fileInfo.getPath());
@@ -277,10 +272,8 @@ public class FtpContentCallbackHandler {
         );
     }
 
-    /**
-     * Routes error to onError handler if available.
-     */
-    private void routeToOnError(BObject service, FormatMethodsHolder holder, BError error, BObject callerObject) {
+    private void routeToOnError(BObject service, FormatMethodsHolder holder, BError error, BObject callerObject,
+                                FileInfo fileInfo, String listenerPath) {
         if (!holder.hasOnErrorMethod()) {
             // No onError handler, error is already logged
             return;
@@ -293,17 +286,20 @@ public class FtpContentCallbackHandler {
 
         MethodType onErrorMethod = onErrorMethodOpt.get();
 
+        Optional<PostProcessAction> onErrorAfterProcess = holder.getAfterProcessAction(onErrorMethod.getName());
+        Optional<PostProcessAction> onErrorAfterError = holder.getAfterErrorAction(onErrorMethod.getName());
+        boolean hasOnErrorActions = onErrorAfterProcess.isPresent() || onErrorAfterError.isPresent();
+
         // Prepare arguments for onError method
         Object[] methodArguments = prepareOnErrorMethodArguments(onErrorMethod, error, callerObject);
 
-        // Invoke onError asynchronously
-        invokeContentMethodAsync(service, onErrorMethod.getName(), methodArguments);
+        // Invoke onError asynchronously and apply afterProcess/afterError actions
+        invokeOnErrorMethodAsync(service, onErrorMethod.getName(), methodArguments, fileInfo, callerObject,
+                listenerPath,
+                hasOnErrorActions ? onErrorAfterProcess : Optional.empty(),
+                hasOnErrorActions ? onErrorAfterError : Optional.empty());
     }
 
-    /**
-     * Prepares method arguments for onError handler.
-     * onError accepts: (error) or (error, caller)
-     */
     private Object[] prepareOnErrorMethodArguments(MethodType methodType, BError error, BObject callerObject) {
         Parameter[] parameters = methodType.getParameters();
 
@@ -316,11 +312,45 @@ public class FtpContentCallbackHandler {
         return new Object[]{error};
     }
 
-    /**
-     * Invokes the content handler method asynchronously.
-     */
-    private void invokeContentMethodAsync(BObject service, String methodName, Object[] methodArguments) {
+    private void invokeOnErrorMethodAsync(BObject service, String methodName, Object[] methodArguments,
+                                          FileInfo fileInfo, BObject callerObject, String listenerPath,
+                                          Optional<PostProcessAction> afterProcess,
+                                          Optional<PostProcessAction> afterError) {
         Thread.startVirtualThread(() -> {
+            boolean isSuccess = false;
+            try {
+                ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
+                boolean isConcurrentSafe = serviceType.isIsolated() && serviceType.isIsolated(methodName);
+                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, null);
+
+                Object result = ballerinaRuntime.callMethod(service, methodName, strandMetadata, methodArguments);
+                if (result instanceof BError) {
+                    ((BError) result).printStackTrace();
+                } else {
+                    isSuccess = true;
+                }
+            } catch (BError error) {
+                error.printStackTrace();
+            } catch (Exception exception) {
+                log.error("Error invoking onError method: " + methodName, exception);
+            }
+
+            if (isSuccess) {
+                afterProcess.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
+                        listenerPath, "afterProcess"));
+            } else {
+                afterError.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
+                        listenerPath, "afterError"));
+            }
+        });
+    }
+
+    private void invokeContentMethodAsync(BObject service, String methodName, Object[] methodArguments,
+                                          FileInfo fileInfo, BObject callerObject, String listenerPath,
+                                          Optional<PostProcessAction> afterProcess,
+                                          Optional<PostProcessAction> afterError) {
+        Thread.startVirtualThread(() -> {
+            boolean isSuccess = false;
             try {
                 ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
                 boolean isConcurrentSafe = serviceType.isIsolated() && serviceType.isIsolated(methodName);
@@ -330,12 +360,146 @@ public class FtpContentCallbackHandler {
 
                 if (result instanceof BError) {
                     ((BError) result).printStackTrace();
+                    // Method returned an error - execute afterError action
+                    afterError.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
+                            listenerPath, "afterError"));
+                } else {
+                    isSuccess = true;
                 }
             } catch (BError error) {
                 error.printStackTrace();
+                // Method threw an error - execute afterError action
+                afterError.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
+                        listenerPath, "afterError"));
             } catch (Exception exception) {
                 log.error("Error invoking content method: " + methodName, exception);
+                // Method threw an exception - execute afterError action
+                afterError.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
+                        listenerPath, "afterError"));
+            }
+
+            // Execute afterProcess action on success
+            if (isSuccess) {
+                afterProcess.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
+                        listenerPath, "afterProcess"));
             }
         });
+    }
+
+    private void executePostProcessAction(PostProcessAction action, FileInfo fileInfo, BObject callerObject,
+                                          String listenerPath, String actionContext) {
+
+        String filePath;
+        try {
+            filePath = fileInfo.getFileName().getPathDecoded();
+        } catch (Exception e) {
+            log.warn("Cannot execute {} action: Failed to retrieve file path from FileInfo: {}", actionContext, 
+            e.getMessage());
+            return;
+        }
+
+        try {
+            if (action.isDelete()) {
+                executeDeleteAction(callerObject, filePath, actionContext);
+            } else if (action.isMove()) {
+                executeMoveAction(callerObject, filePath, listenerPath, action, actionContext);
+            }
+        } catch (Exception e) {
+            log.error("Failed to execute {} action on file: {}", actionContext, filePath, e);
+        }
+    }
+
+    private void executeDeleteAction(BObject callerObject, String filePath, String actionContext) {
+        try {
+            BObject clientObj = callerObject.getObjectValue(StringUtils.fromString("client"));
+            StrandMetadata strandMetadata = new StrandMetadata(true, null);
+            Object result = ballerinaRuntime.callMethod(clientObj, "delete", strandMetadata,
+                    StringUtils.fromString(filePath));
+
+            if (result instanceof BError) {
+                log.error("Failed to delete file during {}: {} - {}", actionContext, filePath,
+                        ((BError) result).getErrorMessage());
+            } else {
+                log.debug("Successfully deleted file during {}: {}", actionContext, filePath);
+            }
+        } catch (Exception e) {
+            log.error("Exception during delete action ({}): {}", actionContext, filePath, e);
+        }
+    }
+
+    private void executeMoveAction(BObject callerObject, String filePath, String listenerPath,
+                                   PostProcessAction action, String actionContext) {
+        try {
+            String destinationPath = calculateMoveDestination(filePath, listenerPath, action);
+
+            BObject clientObj = callerObject.getObjectValue(StringUtils.fromString("client"));
+            StrandMetadata strandMetadata = new StrandMetadata(true, null);
+            Object result = ballerinaRuntime.callMethod(clientObj, "move", strandMetadata,
+                    StringUtils.fromString(filePath), StringUtils.fromString(destinationPath));
+
+            if (result instanceof BError) {
+                log.error("Failed to move file during {}: {} -> {} - {}", actionContext, filePath,
+                        destinationPath, ((BError) result).getErrorMessage());
+            } else {
+                log.debug("Successfully moved file during {}: {} -> {}", actionContext, filePath, destinationPath);
+            }
+        } catch (Exception e) {
+            log.error("Exception during move action ({}): {}", actionContext, filePath, e);
+        }
+    }
+
+    private String calculateMoveDestination(String filePath, String listenerPath, PostProcessAction action) {
+        String moveTo = action.getMoveTo();
+        String normalizedFilePath = normalizeFilePath(filePath);
+        String fileName = extractFileName(normalizedFilePath);
+        if (fileName.isEmpty()) {
+            return ensureTrailingSlash(moveTo);
+        }
+
+        if (!action.isPreserveSubDirs() || listenerPath == null || listenerPath.isEmpty()) {
+            // Simple case: just append filename to moveTo directory
+            return ensureTrailingSlash(moveTo) + fileName;
+        }
+
+        // Calculate relative path from listener root
+        String normalizedListenerPath = ensureTrailingSlash(listenerPath);
+
+        if (normalizedFilePath.startsWith(normalizedListenerPath)) {
+            // Extract relative path including subdirectories
+            String relativePath = normalizedFilePath.substring(normalizedListenerPath.length());
+            if (relativePath.isEmpty()) {
+                return ensureTrailingSlash(moveTo) + fileName;
+            }
+            return ensureTrailingSlash(moveTo) + relativePath;
+        } else {
+            // File path doesn't start with listener path, fall back to simple append
+            return ensureTrailingSlash(moveTo) + fileName;
+        }
+    }
+
+    private String ensureTrailingSlash(String path) {
+        if (path == null || path.isEmpty()) {
+            return "/";
+        }
+        return path.endsWith("/") ? path : path + "/";
+    }
+
+    private String normalizeFilePath(String path) {
+        if (path == null || path.isEmpty()) {
+            return "";
+        }
+        int end = path.length();
+        while (end > 1 && path.charAt(end - 1) == '/') {
+            end--;
+        }
+        return path.substring(0, end);
+    }
+
+    private String extractFileName(String path) {
+        if (path == null || path.isEmpty()) {
+            return "";
+        }
+        int lastSlashIndex = path.lastIndexOf('/');
+        return lastSlashIndex >= 0 ? path.substring(lastSlashIndex + 1) : path;
     }
 }

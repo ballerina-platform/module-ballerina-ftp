@@ -37,6 +37,7 @@ import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
@@ -81,14 +82,14 @@ public class FtpListener implements RemoteFileSystemListener {
     private static final Logger log = LoggerFactory.getLogger(FtpListener.class);
     private final Runtime runtime;
     private Environment environment = null;
-    private Map<String, BObject> registeredServices = new ConcurrentHashMap<>();
-    private Map<String, ServiceConfiguration> serviceConfigurations = new ConcurrentHashMap<>();
-    private Map<String, BObject> pathToService = new ConcurrentHashMap<>();
+    private Map<String, ServiceContext> serviceContexts = new ConcurrentHashMap<>();
+    private Map<String, ServiceContext> pathToServiceContext = new ConcurrentHashMap<>();
     private AtomicBoolean usesServiceLevelConfig = new AtomicBoolean(false);
     private BObject caller;
     private FileSystemManager fileSystemManager;
     private FileSystemOptions fileSystemOptions;
     private boolean laxDataBinding;
+    private String legacyListenerPath;
     private BMap<?, ?> csvFailSafe = ValueCreator.createMapValue();
 
     FtpListener(Runtime runtime) {
@@ -124,14 +125,17 @@ public class FtpListener implements RemoteFileSystemListener {
             if (runtime != null) {
                 if (usesServiceLevelConfig.get() && event.getSourcePath() != null) {
                     // Path-keyed routing: dispatch only to the service monitoring this path
-                    BObject service = pathToService.get(event.getSourcePath());
-                    if (service != null) {
-                        dispatchFileEventToService(this.environment, service, event);
+                    ServiceContext context = pathToServiceContext.get(event.getSourcePath());
+                    if (context != null) {
+                        dispatchFileEventToService(this.environment, context, event);
                     }
                 } else {
+                    if (event.getSourcePath() == null && legacyListenerPath != null) {
+                        event.setSourcePath(legacyListenerPath);
+                    }
                     // Legacy single-path mode: dispatch to all registered services
-                    for (BObject service : registeredServices.values()) {
-                        dispatchFileEventToService(this.environment, service, event);
+                    for (ServiceContext context : serviceContexts.values()) {
+                        dispatchFileEventToService(this.environment, context, event);
                     }
                 }
             } else {
@@ -141,23 +145,34 @@ public class FtpListener implements RemoteFileSystemListener {
         return true;
     }
 
-    private void dispatchFileEventToService(Environment env, BObject service, RemoteFileSystemEvent event) {
-        FormatMethodsHolder formatMethodHolder = new FormatMethodsHolder(service);
+    private void dispatchFileEventToService(Environment env, ServiceContext context, RemoteFileSystemEvent event) {
+        BObject service = context.getService();
+        BObject caller = context.getCaller();
+        FormatMethodsHolder formatMethodHolder = context.getFormatMethodsHolder();
+        if (formatMethodHolder == null) {
+            try {
+                formatMethodHolder = new FormatMethodsHolder(service);
+            } catch (FtpInvalidConfigException e) {
+                // This should not happen as validation occurs during attach
+                log.error("Invalid post-process action configuration: {}", e.getMessage());
+                return;
+            }
+        }
         Optional<MethodType> onFileDeletedMethodType = getOnFileDeletedMethod(service);
 
         // Dispatch Strategy: Check handler availability in order
         if (formatMethodHolder.hasContentMethods()) {
-            processContentBasedCallbacks(env, service, event, formatMethodHolder);
+            processContentBasedCallbacks(env, service, event, formatMethodHolder, caller);
         } else if (onFileDeletedMethodType.isPresent()) {
             if (!event.getDeletedFiles().isEmpty()) {
-                processDeletionCallback(service, event, onFileDeletedMethodType.get());
+                processDeletionCallback(service, event, onFileDeletedMethodType.get(), caller);
             }
         } else {
             // Strategy 3: Fall back to legacy onFileChange handler
             Optional<MethodType> onFileChangeMethodType = getOnFileChangeMethod(service);
             if (onFileChangeMethodType.isPresent()) {
                 log.debug("Service uses deprecated onFileChange handler for file events.");
-                processMetadataOnlyCallbacks(service, event, onFileChangeMethodType.get());
+                processMetadataOnlyCallbacks(service, event, onFileChangeMethodType.get(), caller);
             } else {
                 log.error("Service has no valid handler method. Must have one of: " +
                         "onFile, onFileText, onFileJson, onFileXml, onFileCsv (format-specific), " +
@@ -172,7 +187,7 @@ public class FtpListener implements RemoteFileSystemListener {
      * Also handles file deletion events via onFileDeleted method if available.
      */
     private void processContentBasedCallbacks(Environment env, BObject service, RemoteFileSystemEvent event,
-                                              FormatMethodsHolder holder) {
+                                              FormatMethodsHolder holder, BObject caller) {
         // Process added files with content methods
         if (!event.getAddedFiles().isEmpty()) {
             if (fileSystemManager == null || fileSystemOptions == null) {
@@ -193,7 +208,7 @@ public class FtpListener implements RemoteFileSystemListener {
         if (!event.getDeletedFiles().isEmpty()) {
             Optional<MethodType> onFileDeletedMethodType = getOnFileDeletedMethod(service);
             if (onFileDeletedMethodType.isPresent()) {
-                processDeletionCallback(service, event, onFileDeletedMethodType.get());
+                processDeletionCallback(service, event, onFileDeletedMethodType.get(), caller);
             } else {
                 log.debug("No onFileDeleted method found. Skipping deletion event processing for {} deleted files.",
                         event.getDeletedFiles().size());
@@ -202,7 +217,7 @@ public class FtpListener implements RemoteFileSystemListener {
     }
 
     private void processDeletionCallback(BObject service, RemoteFileSystemEvent event,
-                                        MethodType methodType) {
+                                        MethodType methodType, BObject caller) {
         Parameter[] params = methodType.getParameters();
 
         // Check first parameter type to determine method variant
@@ -211,10 +226,10 @@ public class FtpListener implements RemoteFileSystemListener {
 
         if (isArrayType) {
             // onFileDeleted(string[] deletedFiles) - call once with all files
-            processFileDeletedCallback(service, event, methodType);
+            processFileDeletedCallback(service, event, methodType, caller);
         } else {
             // onFileDelete(string deletedFile) - call once per file
-            processFileDeleteCallback(service, event, methodType);
+            processFileDeleteCallback(service, event, methodType, caller);
         }
     }
 
@@ -223,14 +238,14 @@ public class FtpListener implements RemoteFileSystemListener {
      * Calls the method once per deleted file with a single string parameter.
      */
     private void processFileDeleteCallback(BObject service, RemoteFileSystemEvent event,
-                                          MethodType methodType) {
+                                          MethodType methodType, BObject caller) {
         List<String> deletedFilesList = event.getDeletedFiles();
         Parameter[] params = methodType.getParameters();
 
         // Call onFileDelete once per deleted file
         for (String deletedFile : deletedFilesList) {
             BString deletedFileBString = StringUtils.fromString(deletedFile);
-            Object[] args = getOnFileDeleteMethodArguments(params, deletedFileBString);
+            Object[] args = getOnFileDeleteMethodArguments(params, deletedFileBString, caller);
             if (args != null) {
                 invokeOnFileDeleteAsync(service, args);
             }
@@ -241,7 +256,7 @@ public class FtpListener implements RemoteFileSystemListener {
      * Processes file deletion callback for onFileDeleted method (deprecated).
      */
     private void processFileDeletedCallback(BObject service, RemoteFileSystemEvent event,
-                                           MethodType methodType) {
+                                           MethodType methodType, BObject caller) {
         List<String> deletedFilesList = event.getDeletedFiles();
         BString[] deletedFilesBStringArray = new BString[deletedFilesList.size()];
         for (int i = 0; i < deletedFilesList.size(); i++) {
@@ -252,7 +267,7 @@ public class FtpListener implements RemoteFileSystemListener {
         BArray deletedFilesArray = ValueCreator.createArrayValue(deletedFilesBStringArray);
 
         Parameter[] params = methodType.getParameters();
-        Object[] args = getOnFileDeletedMethodArguments(params, deletedFilesArray);
+        Object[] args = getOnFileDeletedMethodArguments(params, deletedFilesArray, caller);
         if (args != null) {
             invokeOnFileDeletedAsync(service, args);
         }
@@ -262,16 +277,17 @@ public class FtpListener implements RemoteFileSystemListener {
      * Processes metadata-only callbacks for the traditional onFileChange method.
      */
     private void processMetadataOnlyCallbacks(BObject service, RemoteFileSystemEvent event,
-                                              MethodType methodType) {
+                                              MethodType methodType, BObject caller) {
         Map<String, Object> watchEventParamValues = processWatchEventParamValues(event);
         Parameter[] params = methodType.getParameters();
-        Object[] args = getMethodArguments(params, watchEventParamValues);
+        Object[] args = getMethodArguments(params, watchEventParamValues, caller);
         if (args != null) {
             invokeMethodAsync(service, args);
         }
     }
 
-    private Object[] getMethodArguments(Parameter[] params, Map<String, Object> watchEventParamValues) {
+    private Object[] getMethodArguments(Parameter[] params, Map<String, Object> watchEventParamValues,
+                                        BObject caller) {
         if (params.length == 1) {
             return new Object[] {getWatchEvent(params[0], watchEventParamValues)};
         } else if (params.length == 2) {
@@ -290,7 +306,7 @@ public class FtpListener implements RemoteFileSystemListener {
         return null;
     }
 
-    private Object[] getOnFileDeleteMethodArguments(Parameter[] params, BString deletedFile) {
+    private Object[] getOnFileDeleteMethodArguments(Parameter[] params, BString deletedFile, BObject caller) {
         if (params.length == 1) {
             // Only deletedFile parameter
             return new Object[] {deletedFile};
@@ -303,7 +319,7 @@ public class FtpListener implements RemoteFileSystemListener {
         return null;
     }
 
-    private Object[] getOnFileDeletedMethodArguments(Parameter[] params, BArray deletedFiles) {
+    private Object[] getOnFileDeletedMethodArguments(Parameter[] params, BArray deletedFiles, BObject caller) {
         if (params.length == 1) {
             // Only deletedFiles parameter
             return new Object[] {deletedFiles};
@@ -477,9 +493,9 @@ public class FtpListener implements RemoteFileSystemListener {
 
     @Override
     public BError done() {
-        Set<Map.Entry<String, BObject>> serviceEntries = registeredServices.entrySet();
-        for (Map.Entry<String, BObject> serviceEntry : serviceEntries) {
-            BObject service = serviceEntry.getValue();
+        Set<Map.Entry<String, ServiceContext>> serviceEntries = serviceContexts.entrySet();
+        for (Map.Entry<String, ServiceContext> serviceEntry : serviceEntries) {
+            BObject service = serviceEntry.getValue().getService();
             try {
                 Object serverConnectorObject = service.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
                 if (serverConnectorObject instanceof RemoteFileSystemServerConnector) {
@@ -500,29 +516,52 @@ public class FtpListener implements RemoteFileSystemListener {
         return null;
     }
 
-    protected void addService(BObject service) {
-        Type serviceType = TypeUtils.getType(service);
-        if (service != null && serviceType != null && serviceType.getName() != null) {
-            registeredServices.put(serviceType.getName(), service);
-        }
-    }
-
     /**
-     * Registers a service with its path-based configuration.
-     * Path must be unique across all services on this listener.
+     * Registers a service context.
      *
-     * @param service The service object
-     * @param config The service configuration
-     * @return true if added successfully, false if path is already registered
+     * @param context The service context
+     * @return true if added successfully, false if path is already registered or service type is invalid
      */
-    public boolean addServiceConfiguration(BObject service, ServiceConfiguration config) {
-        String path = config.getPath();
-        if (pathToService.putIfAbsent(path, service) != null) {
+    public boolean addServiceContext(ServiceContext context) {
+        BObject service = context.getService();
+        Type serviceType = TypeUtils.getType(service);
+        if (service == null || serviceType == null || serviceType.getName() == null) {
             return false;
         }
-        serviceConfigurations.put(path, config);
-        usesServiceLevelConfig.set(true);
+        ServiceConfiguration config = context.getConfiguration();
+        if (config != null) {
+            String path = config.getPath();
+            if (pathToServiceContext.putIfAbsent(path, context) != null) {
+                return false;
+            }
+            usesServiceLevelConfig.set(true);
+        }
+        if (serviceContexts.putIfAbsent(serviceType.getName(), context) != null) {
+            if (config != null) {
+                pathToServiceContext.remove(config.getPath(), context);
+                if (pathToServiceContext.isEmpty()) {
+                    usesServiceLevelConfig.set(false);
+                }
+            }
+            return false;
+        }
         return true;
+    }
+
+    public void removeServiceContext(ServiceContext context) {
+        BObject service = context.getService();
+        Type serviceType = TypeUtils.getType(service);
+        if (serviceType == null || serviceType.getName() == null) {
+            return;
+        }
+        serviceContexts.remove(serviceType.getName(), context);
+        ServiceConfiguration config = context.getConfiguration();
+        if (config != null) {
+            pathToServiceContext.remove(config.getPath(), context);
+            if (pathToServiceContext.isEmpty()) {
+                usesServiceLevelConfig.set(false);
+            }
+        }
     }
 
     /**
@@ -532,7 +571,8 @@ public class FtpListener implements RemoteFileSystemListener {
      * @return The service configuration, or null if not configured
      */
     public ServiceConfiguration getServiceConfiguration(String path) {
-        return serviceConfigurations.get(path);
+        ServiceContext context = pathToServiceContext.get(path);
+        return context == null ? null : context.getConfiguration();
     }
 
     /**
@@ -550,16 +590,24 @@ public class FtpListener implements RemoteFileSystemListener {
      * @return The count of registered services
      */
     public int getServiceCount() {
-        return registeredServices.size();
+        return serviceContexts.size();
+    }
+
+    public Iterable<ServiceContext> getServiceContexts() {
+        return serviceContexts.values();
     }
 
     /**
      * Gets all service configurations.
      *
-     * @return Map of service name to configuration
+     * @return Map of path to configuration
      */
     public Map<String, ServiceConfiguration> getServiceConfigurations() {
-        return serviceConfigurations;
+        Map<String, ServiceConfiguration> configs = new HashMap<>();
+        for (Map.Entry<String, ServiceContext> entry : pathToServiceContext.entrySet()) {
+            configs.put(entry.getKey(), entry.getValue().getConfiguration());
+        }
+        return configs;
     }
 
     public void setCaller(BObject caller) {
@@ -570,13 +618,17 @@ public class FtpListener implements RemoteFileSystemListener {
         return caller;
     }
 
+    public void setLegacyListenerPath(String legacyListenerPath) {
+        this.legacyListenerPath = legacyListenerPath;
+    }
+
     void cleanup() {
-        registeredServices.clear();
+        serviceContexts.clear();
         usesServiceLevelConfig.set(false);
-        serviceConfigurations.clear();
-        pathToService.clear();
+        pathToServiceContext.clear();
         caller = null;
         fileSystemManager = null;
         fileSystemOptions = null;
+        legacyListenerPath = null;
     }
 }

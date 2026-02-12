@@ -71,15 +71,15 @@ PersonRecord? xmlRecordTypeReceived = ();
 int xmlRecordFilesProcessed = 0;
 
 // Test data file paths
-const string JSON_TEST_FILE = "tests/resources/datafiles/test_data.json";
-const string XML_TEST_FILE = "tests/resources/datafiles/test_data.xml";
-const string CSV_TEST_FILE = "tests/resources/datafiles/test_data.csv";
-const string CSV_TEST_FILE_WITH_ERROR = "tests/resources/datafiles/test_data_with_error.csv";
-const string TEXT_TEST_FILE = "tests/resources/datafiles/test_text.txt";
-const string GENERIC_TEST_FILE = "tests/resources/datafiles/file2.txt";
+const JSON_TEST_FILE = "tests/resources/datafiles/test_data.json";
+const XML_TEST_FILE = "tests/resources/datafiles/test_data.xml";
+const CSV_TEST_FILE = "tests/resources/datafiles/test_data.csv";
+const CSV_TEST_FILE_WITH_ERROR = "tests/resources/datafiles/test_data_with_error.csv";
+const TEXT_TEST_FILE = "tests/resources/datafiles/test_text.txt";
+const GENERIC_TEST_FILE = "tests/resources/datafiles/file2.txt";
 
 // Isolated directory for content listener tests to avoid interfering with testListFiles
-const string CONTENT_TEST_DIR = "/home/in/content-methods";
+const CONTENT_TEST_DIR = "/home/in/content-methods";
 
 @test:Config {
 }

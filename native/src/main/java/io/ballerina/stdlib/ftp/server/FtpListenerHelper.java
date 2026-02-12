@@ -24,6 +24,7 @@ import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.types.ObjectType;
 import io.ballerina.runtime.api.types.Parameter;
+import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BArray;
@@ -130,6 +131,7 @@ public class FtpListenerHelper {
 
         // Check for @ftp:ServiceConfig annotation
         Optional<BMap<BString, Object>> serviceConfigAnnotation = getServiceConfigAnnotation(service);
+        ServiceConfiguration serviceConfiguration = null;
 
         // First service registration - create the appropriate connector type
         if (ftpConnector == null) {
@@ -137,7 +139,7 @@ public class FtpListenerHelper {
                 // First service has @ServiceConfig - create multi-path connector
                 try {
                     ServiceConfiguration config = parseServiceConfiguration(serviceConfigAnnotation.get());
-                    listener.addServiceConfiguration(service, config);
+                    serviceConfiguration = config;
                     log.warn("Creating multi-path connector for service with @ftp:ServiceConfig annotation " +
                             "and path '{}'. The listener-level 'path' configuration will be ignored.",
                             config.getPath());
@@ -203,30 +205,36 @@ public class FtpListenerHelper {
             if (serviceConfigAnnotation.isPresent()) {
                 try {
                     ServiceConfiguration config = parseServiceConfiguration(serviceConfigAnnotation.get());
+                    serviceConfiguration = config;
 
                     // Path must be unique across services on the same listener
-                    if (!listener.addServiceConfiguration(service, config)) {
+                    if (listener.getServiceConfiguration(config.getPath()) != null) {
                         return FtpUtil.createError(
                                 "Duplicate path '" + config.getPath() + "' in @ftp:ServiceConfig. " +
                                 "Each service must monitor a unique path.", null, InvalidConfigError.errorType());
                     }
-                    log.debug("Service registered with path: {}", config.getPath());
 
                     // Add consumer for this service's path
-                    if (ftpConnector instanceof MultiPathServerConnector) {
-                        MultiPathServerConnector multiPathConnector = (MultiPathServerConnector) ftpConnector;
-                        if (!multiPathConnector.hasConsumerForPath(config.getPath())) {
-                            log.debug("Adding path consumer for: {}", config.getPath());
-                            multiPathConnector.addPathConsumer(
-                                    config.getPath(),
-                                    config.getFileNamePattern(),
-                                    config.getMinAge(),
-                                    config.getMaxAge(),
-                                    config.getAgeCalculationMode(),
-                                    config.getDependencyConditions()
-                            );
-                        }
+                    if (!(ftpConnector instanceof MultiPathServerConnector)) {
+                        return FtpUtil.createError(
+                                "Invalid connector state: expected multi-path connector for services with " +
+                                "@ftp:ServiceConfig annotation.", null, InvalidConfigError.errorType());
                     }
+
+                    MultiPathServerConnector multiPathConnector = (MultiPathServerConnector) ftpConnector;
+                    if (!multiPathConnector.hasConsumerForPath(config.getPath())) {
+                        log.debug("Adding path consumer for: {}", config.getPath());
+                        multiPathConnector.addPathConsumer(
+                                config.getPath(),
+                                config.getFileNamePattern(),
+                                config.getMinAge(),
+                                config.getMaxAge(),
+                                config.getAgeCalculationMode(),
+                                config.getDependencyConditions()
+                        );
+                    }
+
+                    log.debug("Service registered with path: {}", config.getPath());
                 } catch (FtpInvalidConfigException e) {
                     return FtpUtil.createError(e.getMessage(), findRootCause(e), InvalidConfigError.errorType());
                 } catch (RemoteFileSystemConnectorException e) {
@@ -235,7 +243,12 @@ public class FtpListenerHelper {
             }
         }
 
-        listener.addService(service);
+        FormatMethodsHolder formatMethodsHolder;
+        try {
+            formatMethodsHolder = new FormatMethodsHolder(service);
+        } catch (FtpInvalidConfigException e) {
+            return FtpUtil.createError(e.getMessage(), e, FtpUtil.ErrorType.InvalidConfigError.errorType());
+        }
 
         // Check if caller is needed (for onFileChange with 2 params or content methods with caller param)
         boolean needsCaller = false;
@@ -265,18 +278,46 @@ public class FtpListenerHelper {
             }
         }
 
-        if (!needsCaller) {
-            return null;
+        // Post-processing actions require a caller even if the handler doesn't accept one
+        if (!needsCaller && formatMethodsHolder.hasPostProcessingActions()) {
+            needsCaller = true;
         }
-        if (listener.getCaller() != null) {
-            return null;
+
+        ServiceContext context = new ServiceContext(service, serviceConfiguration, formatMethodsHolder, null);
+        if (!listener.addServiceContext(context)) {
+            if (serviceConfiguration != null) {
+                return FtpUtil.createError(
+                        "Duplicate path '" + serviceConfiguration.getPath() + "' in @ftp:ServiceConfig. " +
+                        "Each service must monitor a unique path.", null, InvalidConfigError.errorType());
+            }
+            return FtpUtil.createError("Failed to register service.", null, InvalidConfigError.errorType());
         }
-        BMap serviceEndpointConfig = (BMap) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
-        BObject caller = createCaller(serviceEndpointConfig);
-        if (caller instanceof BError) {
-            return caller;
-        } else {
-            listener.setCaller(caller);
+
+        if (needsCaller) {
+            BMap<BString, Object> serviceEndpointConfig =
+                    (BMap<BString, Object>) ftpListener.getNativeData(FTP_SERVICE_ENDPOINT_CONFIG);
+            BObject caller;
+            if (serviceConfiguration != null) {
+                BMap<BString, Object> callerConfig =
+                        createCallerConfigWithPath(serviceEndpointConfig, serviceConfiguration.getPath());
+                BObject createdCaller = createCaller(callerConfig);
+                if (TypeUtils.getType(createdCaller).getTag() == TypeTags.ERROR_TAG) {
+                    listener.removeServiceContext(context);
+                    return createdCaller;
+                }
+                caller = createdCaller;
+            } else {
+                if (listener.getCaller() == null) {
+                    BObject createdCaller = createCaller(serviceEndpointConfig);
+                    if (TypeUtils.getType(createdCaller).getTag() == TypeTags.ERROR_TAG) {
+                        listener.removeServiceContext(context);
+                        return createdCaller;
+                    }
+                    listener.setCaller(createdCaller);
+                }
+                caller = listener.getCaller();
+            }
+            context.setCaller(caller);
         }
         return null;
     }
@@ -330,6 +371,11 @@ public class FtpListenerHelper {
                         (RemoteFileSystemServerConnectorImpl) serverConnector;
                 listener.setFileSystemManager(connectorImpl.getFileSystemManager());
                 listener.setFileSystemOptions(connectorImpl.getFileSystemOptions());
+                BString path = serviceEndpointConfig.getStringValue(
+                        StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PATH));
+                if (path != null && !path.getValue().isEmpty()) {
+                    listener.setLegacyListenerPath(path.getValue());
+                }
             }
 
             ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, serverConnector);
@@ -782,6 +828,15 @@ public class FtpListenerHelper {
         return ValueCreator.createObjectValue(ModuleUtils.getModule(), FTP_CALLER, client);
     }
 
+    private static BMap<BString, Object> createCallerConfigWithPath(BMap<BString, Object> baseConfig, String path) {
+        Map<String, Object> configCopy = new HashMap<>();
+        for (BString key : baseConfig.getKeys()) {
+            configCopy.put(key.getValue(), baseConfig.get(key));
+        }
+        configCopy.put(FtpConstants.ENDPOINT_CONFIG_PATH, StringUtils.fromString(path));
+        return ValueCreator.createRecordValue(ModuleUtils.getModule(), "ListenerConfiguration", configCopy);
+    }
+
     public static Object closeCaller(Environment env, BObject ftpListener) {
         RemoteFileSystemServerConnector ftpConnector = (RemoteFileSystemServerConnector) ftpListener
                 .getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
@@ -789,10 +844,28 @@ public class FtpListenerHelper {
             return null;
         }
         FtpListener listener = ftpConnector.getFtpListener();
+        if (listener.usesServiceLevelConfig()) {
+            for (ServiceContext context : listener.getServiceContexts()) {
+                BObject caller = context.getCaller();
+                if (caller == null) {
+                    continue;
+                }
+                Object result = closeCallerClient(env, caller);
+                if (result != null) {
+                    return result;
+                }
+            }
+            return null;
+        }
+
         BObject caller = listener.getCaller();
         if (caller == null) {
             return null;
         }
+        return closeCallerClient(env, caller);
+    }
+
+    private static Object closeCallerClient(Environment env, BObject caller) {
         BObject ftpClient = caller.getObjectValue(CLIENT_INSTANCE);
         return env.yieldAndRun(() -> {
             StrandMetadata strandMetadata = new StrandMetadata(true,
