@@ -24,6 +24,7 @@ import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.types.ObjectType;
 import io.ballerina.runtime.api.types.Parameter;
+import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BArray;
@@ -290,14 +291,14 @@ public class FtpListenerHelper {
                 BMap<BString, Object> callerConfig =
                         createCallerConfigWithPath(serviceEndpointConfig, serviceConfiguration.getPath());
                 BObject createdCaller = createCaller(callerConfig);
-                if (createdCaller instanceof BError) {
+                if (TypeUtils.getType(createdCaller).getTag() == TypeTags.ERROR_TAG) {
                     return createdCaller;
                 }
                 caller = createdCaller;
             } else {
                 if (listener.getCaller() == null) {
                     BObject createdCaller = createCaller(serviceEndpointConfig);
-                    if (createdCaller instanceof BError) {
+                    if (TypeUtils.getType(createdCaller).getTag() == TypeTags.ERROR_TAG) {
                         return createdCaller;
                     }
                     listener.setCaller(createdCaller);
