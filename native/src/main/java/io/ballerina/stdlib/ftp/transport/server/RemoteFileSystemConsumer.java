@@ -262,8 +262,8 @@ public class RemoteFileSystemConsumer {
      */
     private void handleDirectory(FileObject[] children) throws FileSystemException {
         for (FileObject child : children) {
-            if (!(fileNamePattern == null || child.getName().getBaseName().matches(fileNamePattern))) {
-                logDebugDirFileNamePatternNotMatchedInDirHandler();
+            if (fileNamePattern != null && !child.getName().getBaseName().matches(fileNamePattern)) {
+                logDebugFileNamePatternNotMatched(child);
             } else {
                 FileType childType = child.getType();
                 if (childType == FileType.FOLDER) {
@@ -512,10 +512,10 @@ public class RemoteFileSystemConsumer {
     }
 
     @ExcludeCoverageFromGeneratedReport
-    private void logDebugDirFileNamePatternNotMatchedInDirHandler() {
+    private void logDebugFileNamePatternNotMatched(FileObject file) {
         if (log.isDebugEnabled()) {
-            log.debug("File " + listeningDir.getName().getFriendlyURI()
-                    + " is not processed because it did not match the specified pattern.");
+            log.debug(file.getName().getFriendlyURI()
+                    + " is not processed because it did not match the specified pattern: " + fileNamePattern);
         }
     }
 

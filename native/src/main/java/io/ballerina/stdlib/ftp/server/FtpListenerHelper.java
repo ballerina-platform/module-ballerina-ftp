@@ -778,14 +778,15 @@ public class FtpListenerHelper {
         return conditions;
     }
 
-    private static void addStringProperty(BMap config, Map<String, Object> params) 
+    private static void addStringProperty(BMap config, Map<String, Object> params)
     throws FtpInvalidConfigException {
         BString namePatternString = config.getStringValue(StringUtils.fromString(
                 FtpConstants.ENDPOINT_CONFIG_FILE_PATTERN));
-        String fileNamePattern = (namePatternString != null && !namePatternString.getValue().isEmpty()) ?
-                namePatternString.getValue() : "";
-        FtpUtil.validateRegexPattern(fileNamePattern, "fileNamePattern");
-        params.put(FtpConstants.FILE_NAME_PATTERN, fileNamePattern);
+        if (namePatternString != null && !namePatternString.getValue().isEmpty()) {
+            String fileNamePattern = namePatternString.getValue();
+            FtpUtil.validateRegexPattern(fileNamePattern, "fileNamePattern");
+            params.put(FtpConstants.FILE_NAME_PATTERN, fileNamePattern);
+        }
     }
 
     public static Object poll(BObject ftpListener) {

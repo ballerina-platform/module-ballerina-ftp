@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- [Fix FTP/SFTP listener not triggering when fileNamePattern is not specified](https://github.com/wso2/product-ballerina-integrator/issues/656)
 
 ## [2.16.0] - 2025-12-19
 
