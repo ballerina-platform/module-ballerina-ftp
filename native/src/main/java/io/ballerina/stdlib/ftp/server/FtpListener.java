@@ -154,7 +154,8 @@ public class FtpListener implements RemoteFileSystemListener {
                 formatMethodHolder = new FormatMethodsHolder(service);
             } catch (FtpInvalidConfigException e) {
                 // This should not happen as validation occurs during attach
-                log.error("Invalid post-process action configuration: {}", e.getMessage());
+                FtpUtil.createError("Invalid post-process action configuration: " + e.getMessage(),
+                        e, FtpConstants.FTP_ERROR).printStackTrace();
                 return;
             }
         }
@@ -170,14 +171,7 @@ public class FtpListener implements RemoteFileSystemListener {
         } else {
             // Strategy 3: Fall back to legacy onFileChange handler
             Optional<MethodType> onFileChangeMethodType = getOnFileChangeMethod(service);
-            if (onFileChangeMethodType.isPresent()) {
-                log.debug("Service uses deprecated onFileChange handler for file events.");
-                processMetadataOnlyCallbacks(service, event, onFileChangeMethodType.get(), caller);
-            } else {
-                log.error("Service has no valid handler method. Must have one of: " +
-                        "onFile, onFileText, onFileJson, onFileXml, onFileCsv (format-specific), " +
-                        "onFileDeleted, or onFileChange (deprecated)");
-            }
+            processMetadataOnlyCallbacks(service, event, onFileChangeMethodType.get(), caller);
         }
     }
 
@@ -199,7 +193,8 @@ public class FtpListener implements RemoteFileSystemListener {
                             runtime, fileSystemManager, fileSystemOptions, laxDataBinding, csvFailSafe);
                     contentHandler.processContentCallbacks(env, service, event, holder, caller);
                 } catch (Exception e) {
-                    log.error("Error in content callback processing for added files", e);
+                    FtpUtil.createError("Error in content callback processing for added files: " + e.getMessage(),
+                            e, FtpConstants.FTP_ERROR).printStackTrace();
                 }
             }
         }
@@ -297,11 +292,7 @@ public class FtpListener implements RemoteFileSystemListener {
             } else if ((params[1].type.isReadOnly() || TypeUtils.getReferredType(params[1].type).getTag() ==
                     RECORD_TYPE_TAG) && TypeUtils.getReferredType(params[0].type).getTag() == OBJECT_TYPE_TAG) {
                 return new Object[] {caller, getWatchEvent(params[1], watchEventParamValues)};
-            } else {
-                log.error("Invalid parameter types in onFileChange method");
             }
-        } else {
-            log.error("Invalid parameter count in onFileChange method");
         }
         return null;
     }
@@ -313,8 +304,6 @@ public class FtpListener implements RemoteFileSystemListener {
         } else if (params.length == 2) {
             // deletedFile and caller parameters
             return new Object[] {deletedFile, caller};
-        } else {
-            log.error("Invalid parameter count in onFileDelete method");
         }
         return null;
     }
@@ -326,8 +315,6 @@ public class FtpListener implements RemoteFileSystemListener {
         } else if (params.length == 2) {
             // deletedFiles and caller parameters
             return new Object[] {deletedFiles, caller};
-        } else {
-            log.error("Invalid parameter count in onFileDeleted method");
         }
         return null;
     }
