@@ -93,13 +93,11 @@ public final class FtpContentConverter {
 
             Object result = io.ballerina.lib.data.jsondata.json.Native.parseBytes(byteArray, options, typedesc);
             if (result instanceof BError bError) {
-                log.error("Failed to parse JSON content: {}", bError.getMessage());
                 return FtpUtil.createContentBindingError(bError.getErrorMessage().getValue(), bError, filePath, 
                 content);
             }
             return result;
         } catch (Exception e) {
-            log.error("Error converting bytes to JSON", e);
             return FtpUtil.createContentBindingError("Failed to parse JSON content: " + e.getMessage(), e,
                     filePath, content);
         }
@@ -157,14 +155,12 @@ public final class FtpContentConverter {
             Object result = parseBytes(env, byteArray, options, typedesc);
 
             if (result instanceof BError bError) {
-                log.error("Failed to parse CSV content: {}", bError.getMessage());
                 return FtpUtil.createContentBindingError("Failed to parse CSV content: " + bError.getErrorMessage(),
                         bError, filePath, content);
             }
 
             return result;
         } catch (Exception e) {
-            log.error("Error converting bytes to CSV", e);
             return FtpUtil.createContentBindingError("Failed to parse CSV content: " + e.getMessage(), e,
                     filePath, content);
         }
