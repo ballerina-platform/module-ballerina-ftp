@@ -99,7 +99,6 @@ class FtpClientHelper {
                 balFuture.complete(streamEntry);
             }
         } catch (IOException e) {
-            log.error("{}", FtpConstants.ERR_READING_STREAM, e);
             balFuture.complete(FtpUtil.createError(FtpConstants.ERR_READING_STREAM, e, FTP_ERROR));
         }
         return true;
@@ -130,7 +129,6 @@ class FtpClientHelper {
             return ContentCsvStreamIteratorUtils.createRecordStream(content, streamValueType,
                     laxDataBinding, null);
         } catch (Exception e) {
-            log.error("Failed to create stream with content", e);
             return FtpUtil.createError(FtpConstants.ERR_CREATE_STREAM, e, FTP_ERROR);
         }
     }
