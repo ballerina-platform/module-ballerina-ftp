@@ -86,6 +86,8 @@ public class FormatMethodsHolder {
                 Object patternObj = annotation.get(StringUtils.fromString(ANNOTATION_PATTERN_FIELD));
                 if (patternObj != null) {
                     String pattern = patternObj.toString();
+                    FtpUtil.validateRegexPattern(pattern,
+                            "@ftp:FunctionConfig.fileNamePattern for method '" + methodName + "'");
                     annotationPatternToMethod.put(pattern, method);
                     log.debug("Registered annotation pattern '{}' for method '{}'", pattern, methodName);
                 }
@@ -207,12 +209,9 @@ public class FormatMethodsHolder {
     private Optional<MethodType> findMethodByAnnotationPattern(String fileName) {
         for (Map.Entry<String, MethodType> entry : annotationPatternToMethod.entrySet()) {
             String pattern = entry.getKey();
-            try {
-                if (Pattern.matches(pattern, fileName)) {
-                    return Optional.of(entry.getValue());
-                }
-            } catch (Exception e) {
-                log.warn("Invalid regex pattern '{}' in FileConfig annotation: {}", pattern, e.getMessage());
+            // Patterns are validated during initialization, so no try-catch needed
+            if (Pattern.matches(pattern, fileName)) {
+                return Optional.of(entry.getValue());
             }
         }
         return Optional.empty();

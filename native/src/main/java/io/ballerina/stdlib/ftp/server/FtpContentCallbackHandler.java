@@ -121,7 +121,6 @@ public class FtpContentCallbackHandler {
 
                 // Check if content conversion returned an error (ContentBindingError)
                 if (convertedContent instanceof BError bError) {
-                    log.error("Content binding failed for file: {}", fileInfo.getPath());
                     routeToOnError(service, holder, bError, callerObject, fileInfo, listenerPath);
                     continue;
                 }
@@ -139,7 +138,8 @@ public class FtpContentCallbackHandler {
                         fileInfo, callerObject, listenerPath, afterProcess, afterError);
 
             } catch (Exception exception) {
-                log.error("Failed to process file: " + fileInfo.getPath(), exception);
+                FtpUtil.createError("Failed to process file: " + fileInfo.getPath() + " - " + exception.getMessage(),
+                        exception, FtpConstants.FTP_ERROR).printStackTrace();
                 // Continue processing other files even if one fails
             }
         }
@@ -276,11 +276,13 @@ public class FtpContentCallbackHandler {
                                 FileInfo fileInfo, String listenerPath) {
         if (!holder.hasOnErrorMethod()) {
             // No onError handler, error is already logged
+            error.printStackTrace();
             return;
         }
 
         Optional<MethodType> onErrorMethodOpt = holder.getOnErrorMethod();
         if (onErrorMethodOpt.isEmpty()) {
+            error.printStackTrace();
             return;
         }
 
@@ -332,7 +334,8 @@ public class FtpContentCallbackHandler {
             } catch (BError error) {
                 error.printStackTrace();
             } catch (Exception exception) {
-                log.error("Error invoking onError method: " + methodName, exception);
+                FtpUtil.createError("Error invoking onError method: " + methodName + " - " + exception.getMessage(),
+                        exception, FtpConstants.FTP_ERROR).printStackTrace();
             }
 
             if (isSuccess) {
@@ -372,7 +375,8 @@ public class FtpContentCallbackHandler {
                 afterError.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
                         listenerPath, "afterError"));
             } catch (Exception exception) {
-                log.error("Error invoking content method: " + methodName, exception);
+                FtpUtil.createError("Error invoking content method: " + methodName + " - " + exception.getMessage(),
+                        exception, FtpConstants.FTP_ERROR).printStackTrace();
                 // Method threw an exception - execute afterError action
                 afterError.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
                         listenerPath, "afterError"));
@@ -405,7 +409,8 @@ public class FtpContentCallbackHandler {
                 executeMoveAction(callerObject, filePath, listenerPath, action, actionContext);
             }
         } catch (Exception e) {
-            log.error("Failed to execute {} action on file: {}", actionContext, filePath, e);
+            FtpUtil.createError("Failed to execute " + actionContext + " action on file: " + filePath +
+                    " - " + e.getMessage(), e, FtpConstants.FTP_ERROR).printStackTrace();
         }
     }
 
@@ -417,13 +422,13 @@ public class FtpContentCallbackHandler {
                     StringUtils.fromString(filePath));
 
             if (result instanceof BError) {
-                log.error("Failed to delete file during {}: {} - {}", actionContext, filePath,
-                        ((BError) result).getErrorMessage());
+                ((BError) result).printStackTrace();
             } else {
                 log.debug("Successfully deleted file during {}: {}", actionContext, filePath);
             }
         } catch (Exception e) {
-            log.error("Exception during delete action ({}): {}", actionContext, filePath, e);
+            FtpUtil.createError("Exception during delete action (" + actionContext + "): " + filePath +
+                    " - " + e.getMessage(), e, FtpConstants.FTP_ERROR).printStackTrace();
         }
     }
 
@@ -438,13 +443,13 @@ public class FtpContentCallbackHandler {
                     StringUtils.fromString(filePath), StringUtils.fromString(destinationPath));
 
             if (result instanceof BError) {
-                log.error("Failed to move file during {}: {} -> {} - {}", actionContext, filePath,
-                        destinationPath, ((BError) result).getErrorMessage());
+                ((BError) result).printStackTrace();
             } else {
                 log.debug("Successfully moved file during {}: {} -> {}", actionContext, filePath, destinationPath);
             }
         } catch (Exception e) {
-            log.error("Exception during move action ({}): {}", actionContext, filePath, e);
+            FtpUtil.createError("Exception during move action (" + actionContext + "): " + filePath +
+                    " - " + e.getMessage(), e, FtpConstants.FTP_ERROR).printStackTrace();
         }
     }
 
