@@ -458,7 +458,6 @@ public class FtpUtil {
      */
     public static int extractPortValue(long longValue) {
         if (longValue <= 0 || longValue > MAX_PORT) {
-            log.error("Invalid port number given in configuration");
             return -1;
         }
         try {
