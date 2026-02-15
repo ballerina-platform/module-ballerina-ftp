@@ -17,16 +17,14 @@
 import ballerina/jballerina.java;
 
 # Record returned from the `ContentByteStream.next()` method.
-#
-# + value - The array of bytes
 public type ContentStreamEntry record {|
+    # The array of bytes
     byte[] value;
 |};
 
 # Record returned from the `ContentCsvStream.next()` method.
-#
-# + value - The array of strings representing a CSV row
 public type ContentCsvStreamEntry record {|
+    # The array of strings representing a CSV row
     string[] value;
 |};
 

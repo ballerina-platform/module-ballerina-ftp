@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - [Add distinct error types](https://github.com/ballerina-platform/ballerina-library/issues/8597)
 - [Incorporate the csv fail safe support in the FTP listener](https://github.com/ballerina-platform/ballerina-library/issues/8502)
 
+### Changed
+
+- Improve API documentation for public types, records, and client/listener methods
+
 ### Fixed
 
 

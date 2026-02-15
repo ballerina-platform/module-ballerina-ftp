@@ -15,57 +15,55 @@
 // under the License.
 
 # Metadata about a file or directory on the FTP server.
-#
-# + path - Relative file path
-# + size - Size of the file in bytes
-# + lastModifiedTimestamp - Last-modified timestamp in UNIX Epoch time
-# + name - File name (without path)
-# + isFolder - `true` if the resource is a directory
-# + isFile - `true` if the resource is a regular file
-# + pathDecoded - Normalized absolute path within the file system
-# + extension - File name extension (e.g., 'txt', 'pdf')
-# + publicURIString - File URI formatted for public display
-# + fileType - MIME type or file classification
-# + isAttached - `true` if the file object is currently attached
-# + isContentOpen - `true` if the file is currently being read or written
-# + isExecutable - `true` if the file has execute permissions
-# + isHidden - `true` if the file is marked as hidden
-# + isReadable - `true` if the file has read permissions
-# + isWritable - `true` if the file has write permissions
-# + depth - Directory nesting level within the file system
-# + scheme - URI scheme (e.g., 'ftp', 'sftp')
-# + uri - Absolute URI of the file
-# + rootURI - Root URI of the file system
-# + friendlyURI - Access path that does not require authentication
 public type FileInfo record {|
+    # Relative file path
     string path;
+    # Size of the file in bytes
     int size;
+    # Last-modified timestamp in UNIX Epoch time
     int lastModifiedTimestamp;
+    # File name (without path)
     string name;
+    # `true` if the resource is a directory
     boolean isFolder;
+    # `true` if the resource is a regular file
     boolean isFile;
+    # Normalized absolute path within the file system
     string pathDecoded;
+    # File name extension (e.g., `txt`, `pdf`)
     string extension;
+    # File URI formatted for public display
     string publicURIString;
+    # MIME type or file classification
     string fileType;
+    # `true` if the file object is currently attached
     boolean isAttached;
+    # `true` if the file is currently being read or written
     boolean isContentOpen;
+    # `true` if the file has execute permissions
     boolean isExecutable;
+    # `true` if the file is marked as hidden
     boolean isHidden;
+    # `true` if the file has read permissions
     boolean isReadable;
+    # `true` if the file has write permissions
     boolean isWritable;
+    # Directory nesting level within the file system
     int depth;
+    # URI scheme (e.g., `ftp`, `sftp`)
     string scheme;
+    # Absolute URI of the file
     string uri;
+    # Root URI of the file system
     string rootURI;
+    # Access path that does not require authentication
     string friendlyURI;
 |};
 
 # File system changes detected by the FTP listener in a polling cycle.
-#
-# + addedFiles - Array of newly added files
-# + deletedFiles - Array of deleted file names
 public type WatchEvent record {|
+    # Array of newly added files
     FileInfo[] addedFiles;
+    # Array of deleted file names
     string[] deletedFiles;
 |};

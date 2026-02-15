@@ -163,74 +163,72 @@ isolated function getPollingService(Listener initializedListener) returns task:S
 }
 
 # Configuration for the FTP listener.
-#
-# + protocol - Protocol to use for the connection: FTP (unsecure) or SFTP (over SSH)
-# + host - Target server hostname or IP address
-# + port - Port number of the remote service
-# + auth - Authentication options for connecting to the server
-# + path - Deprecated: Use @ftp:ServiceConfig annotation on service instead.
-#          Directory path on the FTP server to monitor for file changes
-# + fileNamePattern - Deprecated: Use @ftp:ServiceConfig annotation on service instead.
-#                     File name pattern (regex) to filter which files trigger events
-# + pollingInterval - Polling interval in seconds for checking file changes
-# + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and
-#                   prevents the underlying VFS from attempting to change to the actual server root.
-#                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command
-#                   that can fail on servers restricting root access (e.g., chrooted environments).
-# + fileAgeFilter - Deprecated: Use @ftp:ServiceConfig annotation on service instead.
-#                   Configuration for filtering files based on age (optional)
-# + fileDependencyConditions - Deprecated: Use @ftp:ServiceConfig annotation on service instead.
-#                              Array of dependency conditions for conditional file processing (default: [])
-# + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
-#                    null values in JSON/XML are allowed to be mapped to optional fields
-#                    missing fields in JSON/XML are allowed to be mapped as null values
-# + connectTimeout - Connection timeout in seconds
-# + socketConfig - Socket timeout configurations
-# + fileTransferMode - File transfer mode: BINARY or ASCII (FTP only)
-# + sftpCompression - Compression algorithms (SFTP only)
-# + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
-# + proxy - Proxy configuration for SFTP connections (SFTP only)
-# + csvFailSafe - Configuration for fail-safe CSV content processing. In the fail-safe mode,
-#                 malformed CSV records are skipped and written to a separate file in the current directory
-# + coordination - Configuration for distributed task coordination using warm backup approach.
-#                  When configured, only one member in the group will actively poll while others act as standby.
 public type ListenerConfiguration record {|
+    # Protocol to use for the connection: FTP (unsecure) or SFTP (over SSH)
     Protocol protocol = FTP;
+    # Target server hostname or IP address
     string host = "127.0.0.1";
+    # Port number of the remote service
     int port = 21;
+    # Authentication options for connecting to the server
     AuthConfiguration auth?;
+    # Directory path on the FTP server to monitor for file changes.
+    # Deprecated: Use `@ftp:ServiceConfig` annotation on the service instead
     @deprecated
     string path = "/";
+    # File name pattern (regex) to filter which files trigger events.
+    # Deprecated: Use `@ftp:ServiceConfig` annotation on the service instead
     @deprecated
     string fileNamePattern?;
+    # Polling interval in seconds for checking file changes
     decimal pollingInterval = 60;
+    # If `true`, treats the login home directory as the root (`/`) and prevents the underlying VFS from
+    # attempting to change to the actual server root. Set to `true` for chrooted/jailed environments
     boolean userDirIsRoot = false;
+    # Configuration for filtering files based on age.
+    # Deprecated: Use `@ftp:ServiceConfig` annotation on the service instead
     @deprecated
     FileAgeFilter fileAgeFilter?;
+    # Dependency conditions for conditional file processing.
+    # Deprecated: Use `@ftp:ServiceConfig` annotation on the service instead
     @deprecated
     FileDependencyCondition[] fileDependencyConditions = [];
+    # If `true`, enables relaxed data binding: null values in JSON/XML map to optional fields,
+    # and missing fields map to null values
     boolean laxDataBinding = false;
+    # Connection timeout in seconds
     decimal connectTimeout = 30.0;
+    # Socket timeout configurations
     SocketConfig socketConfig?;
+    # Proxy configuration for SFTP connections (SFTP only)
     ProxyConfiguration proxy?;
+    # File transfer mode: BINARY or ASCII (FTP only)
     FileTransferMode fileTransferMode = BINARY;
+    # Compression algorithms to use (SFTP only)
     TransferCompression[] sftpCompression = [NO];
+    # Path to SSH known_hosts file (SFTP only)
     string sftpSshKnownHosts?;
+    # Configuration for fail-safe CSV content processing. In fail-safe mode,
+    # malformed CSV records are skipped and written to a separate file in the current directory
     FailSafeOptions csvFailSafe?;
+    # Configuration for distributed task coordination. When configured, only one member
+    # in the group actively polls while others act as warm standby
     CoordinationConfig coordination?;
 |};
 
 # Fail-safe options for CSV content processing.
-#
-# + contentType - Specifies the type of content to log in case of errors
 public type FailSafeOptions record {|
+    # Specifies the type of content to log in case of errors
     ErrorLogContentType contentType = METADATA;
 |};
 
 # Specifies the type of content to log in case of errors during fail-safe CSV processing.
 public enum ErrorLogContentType {
+    # Log only file metadata (path, size, etc.)
     METADATA,
+    # Log only the raw file content that caused the error
     RAW,
+    # Log both raw content and file metadata
     RAW_AND_METADATA
 };
 
@@ -238,20 +236,18 @@ public enum ErrorLogContentType {
 public type Service distinct service object {
 };
 
-# Represents the configuration required for distributed task coordination.
+# Configuration for distributed task coordination.
 # When configured, multiple FTP listener members coordinate so that only one actively polls
 # while others act as warm standby members.
-#
-# + databaseConfig - The database configuration for task coordination
-# + livenessCheckInterval - The interval (in seconds) to check the liveness of the active node. Default is 30 seconds.
-# + memberId - Unique identifier for the current member. Must be distinct for each node in the distributed system.
-# + coordinationGroup - The name of the coordination group of FTP listeners that coordinate together.
-#                       It is recommended to use a unique name for each group.
-# + heartbeatFrequency - The interval (in seconds) for the node to update its heartbeat status. Default is 1 second.
 public type CoordinationConfig record {|
+    # Database configuration used for task coordination state
     task:DatabaseConfig databaseConfig = <task:MysqlConfig>{};
+    # Interval in seconds to check the liveness of the active node
     int livenessCheckInterval = 30;
+    # Unique identifier for this member. Must be distinct for each node in the distributed system
     string memberId;
+    # Name of the coordination group. Use a unique name per group of listeners that coordinate together
     string coordinationGroup;
+    # Interval in seconds for the node to update its heartbeat status
     int heartbeatFrequency = 1;
 |};
