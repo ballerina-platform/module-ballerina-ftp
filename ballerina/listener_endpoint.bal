@@ -164,7 +164,7 @@ isolated function getPollingService(Listener initializedListener) returns task:S
 
 # Configuration for the FTP listener.
 public type ListenerConfiguration record {|
-    # Protocol to use for the connection: FTP (unsecure) or SFTP (over SSH)
+    # Protocol to use for the connection: FTP (unsecure), SFTP (over SSH), or FTPS (FTP over SSL/TLS)
     Protocol protocol = FTP;
     # Target server hostname or IP address
     string host = "127.0.0.1";
