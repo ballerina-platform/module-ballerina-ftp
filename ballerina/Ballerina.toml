@@ -57,11 +57,11 @@ path = "./lib/data.jsondata-native-1.1.3.jar"
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib"
 artifactId = "data.xmldata-native"
-version = "1.5.2"
-path = "./lib/data.xmldata-native-1.5.2.jar"
+version = "1.6.0"
+path = "./lib/data.xmldata-native-1.6.0.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib"
 artifactId = "data.csv-native"
-version = "0.10.0-20260212-193600-e021b1e"
-path = "./lib/data.csv-native-0.10.0-20260212-193600-e021b1e.jar"
+version = "0.10.0-20260213-222400-abbe789"
+path = "./lib/data.csv-native-0.10.0-20260213-222400-abbe789.jar"
