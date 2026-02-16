@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Improve API documentation for public types, records, and client/listener methods
 
 ### Fixed
-
+- [Fix Listener silently fails when errors occur](https://github.com/ballerina-platform/ballerina-library/issues/8655)
 
 ## [2.16.0] - 2025-12-19
 
