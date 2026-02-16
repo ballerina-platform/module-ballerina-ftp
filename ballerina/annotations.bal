@@ -14,17 +14,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Represents the delete action for file processing.
+# Delete action for file processing.
 # When specified, the file will be deleted after processing.
 public const DELETE = "DELETE";
 
 # Configuration for moving a file after processing.
-#
-# + moveTo - Destination directory path where the file will be moved
-# + preserveSubDirs - If true, preserves the subdirectory structure relative to the
-#                     listener's root path. Defaults to true.
 public type Move record {|
+    # Destination directory path where the file will be moved
     string moveTo;
+    # If `true`, preserves the subdirectory structure relative to the listener's root path
     boolean preserveSubDirs = true;
 |};
 
@@ -34,17 +32,15 @@ public type MOVE Move;
 # Configuration for FTP service remote functions.
 # Use this to override default file extension routing for content methods and
 # specify automatic file actions after processing.
-#
-# + fileNamePattern - File name pattern (regex) that should be routed to this method.
-#                     Must be a subset of the listener's `fileNamePattern`.
-# + afterProcess - Action to perform after successful processing. Can be DELETE or MOVE.
-#                  If not specified, no action is taken (file remains in place).
-# + afterError - Action to perform after processing error. Can be DELETE or MOVE.
-#                This action is executed immediately after the content handler returns an error or panics.
-#                If not specified, no action is taken (file remains in place).
 public type FtpFunctionConfig record {|
+    # File name pattern (regex) that routes files to this method. Must be a subset of the listener's `fileNamePattern`
     string fileNamePattern?;
+    # Action to perform after successful processing. Can be `DELETE` or `MOVE`.
+    # If not specified, no action is taken (file remains in place)
     MOVE|DELETE afterProcess?;
+    # Action to perform after a processing error. Can be `DELETE` or `MOVE`.
+    # Executed immediately after the content handler returns an error or panics.
+    # If not specified, no action is taken (file remains in place)
     MOVE|DELETE afterError?;
 |};
 
@@ -55,17 +51,14 @@ public annotation FtpFunctionConfig FunctionConfig on service remote function;
 
 # Configuration for FTP service monitoring.
 # Use this to specify the directory path and file patterns this service should monitor.
-# When this annotation is used, the listener-level `path`, `fileNamePattern`, `fileAgeFilter`,
-# and `fileDependencyConditions` fields are ignored.
-#
-# + path - Directory path on the FTP server to monitor for file changes
-# + fileNamePattern - File name pattern (regex) to filter which files trigger events
-# + fileAgeFilter - Configuration for filtering files based on age (optional)
-# + fileDependencyConditions - Array of dependency conditions for conditional file processing
 public type ServiceConfiguration record {|
+    # Directory path on the FTP server to monitor for file changes
     string path;
+    # File name pattern (regex) to filter which files trigger events
     string fileNamePattern?;
+    # Configuration for filtering files based on age
     FileAgeFilter fileAgeFilter?;
+    # Dependency conditions for conditional file processing
     FileDependencyCondition[] fileDependencyConditions = [];
 |};
 

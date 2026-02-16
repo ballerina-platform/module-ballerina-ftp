@@ -17,9 +17,8 @@
 import ballerina/jballerina.java;
 
 # Record returned from the `ContentByteStream.next()` method.
-#
-# + value - The array of bytes
 type ContentStreamEntry record {|
+    # The array of bytes
     byte[] value;
 |};
 

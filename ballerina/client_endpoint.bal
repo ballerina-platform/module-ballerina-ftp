@@ -43,6 +43,7 @@ public isolated client class Client {
     #
     # + path - The resource path
     # + return - A byte stream from which the file can be read or `ftp:Error` in case of errors
+    #
     # # Deprecated: Use the format specific get methods(`getJson`, `getXml`, `getCsv`, `getBytes`, `getText`) instead.
     @deprecated
     remote isolated function get(string path) returns stream<byte[] & readonly, io:Error?>|Error {
@@ -162,6 +163,7 @@ public isolated client class Client {
     # + path - The resource path
     # + content - Content to be written to the file in server
     # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
+    #
     # # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     @deprecated
     remote isolated function append(string path, stream<byte[] & readonly, io:Error?>|string|xml|json content)
@@ -178,6 +180,7 @@ public isolated client class Client {
     # + content - Content to be written to the file in server
     # + compressionType - Type of the compression to be used if the file should be compressed before uploading
     # + return - `()` or else an `ftp:Error` if failed to establish the communication with the FTP server
+    #
     # # Deprecated: Use the format specific put methods(`putJson`, `putXml`, `putCsv`, `putBytes`, `putText`) instead.
     @deprecated
     remote isolated function put(string path, stream<byte[] & readonly, io:Error?>
@@ -413,63 +416,58 @@ public isolated client class Client {
 }
 
 # File write options for write operations.
-# OVERWRITE - Overwrite the existing file content
-# APPEND - Append to the existing file content
 public enum FileWriteOption {
+    # Overwrite the existing file content
     OVERWRITE,
+    # Append to the existing file content
     APPEND
 }
 
 # Compression type for file uploads.
-# ZIP - Zip compression
-# NONE - No compression
 public enum Compression {
+    # Zip compression
     ZIP,
+    # No compression
     NONE
 }
 
 # Configuration for FTP client.
-#
-# + protocol - Protocol to use for the connection: FTP (unsecure) or SFTP (over SSH)
-# + host - Target server hostname or IP address
-# + port - Port number of the remote service. 
-#          For FTPS IMPLICIT, this is typically 990. 
-#          For FTPS EXPLICIT and FTP, this is typically 21.
-# + auth - Authentication options for connecting to the server
-# + userDirIsRoot - If set to `true`, treats the login home directory as the root (`/`) and
-#                   prevents the underlying VFS from attempting to change to the actual server root.
-#                   If `false`, treats the actual server root as `/`, which may cause a `CWD /` command
-#                   that can fail on servers restricting root access (e.g., chrooted environments).
-# + laxDataBinding - If set to `true`, enables relaxed data binding for XML and JSON responses.
-#                    null values in JSON/XML are allowed to be mapped to optional fields
-#                    missing fields in JSON/XML are allowed to be mapped as null values
-# + connectTimeout - Connection timeout in seconds 
-# + socketConfig - Socket timeout configurations 
-# + fileTransferMode - File transfer mode: BINARY or ASCII (FTP only)
-# + sftpCompression - Compression algorithms (SFTP only)
-# + sftpSshKnownHosts - Path to SSH known_hosts file (SFTP only)
-# + proxy - Proxy configuration for SFTP connections (SFTP only)
-# + csvFailSafe - Configuration for fail-safe CSV content processing. In the fail-safe mode, 
-#                 malformed CSV records are skipped and written to a separate file in the current directory
-# + retryConfig - Configuration for retry behavior on transient failures for non-streaming read operations
-#                 (getBytes, getText, getJson, getXml, getCsv). If not specified, no retry is attempted.
-# + circuitBreaker - Circuit breaker configuration for handling server failures gracefully.
-#                    When enabled, the client will fail fast if the server is experiencing issues.
 public type ClientConfiguration record {|
+    # Protocol to use for the connection: FTP (unsecure), FTPS (FTP over SSL/TLS), or SFTP (over SSH)
     Protocol protocol = FTP;
+    # Target server hostname or IP address
     string host = "127.0.0.1";
+    # Port number of the remote service.
+    # For FTPS IMPLICIT, this is typically 990. For FTPS EXPLICIT and FTP, this is typically 21
     int port = 21;
+    # Authentication options for connecting to the server
     AuthConfiguration auth?;
+    # If `true`, treats the login home directory as the root (`/`) and prevents the underlying VFS from
+    # attempting to change to the actual server root. Set to `true` for chrooted/jailed environments
     boolean userDirIsRoot = false;
+    # If `true`, enables relaxed data binding: null values in JSON/XML map to optional fields,
+    # and missing fields map to null values
     boolean laxDataBinding = false;
+    # Connection timeout in seconds
     decimal connectTimeout = 30.0;
+    # Socket timeout configurations
     SocketConfig socketConfig?;
+    # Proxy configuration for SFTP connections (SFTP only)
     ProxyConfiguration proxy?;
+    # File transfer mode: BINARY or ASCII (FTP only)
     FileTransferMode fileTransferMode = BINARY;
+    # Compression algorithms to use (SFTP only)
     TransferCompression[] sftpCompression = [NO];
+    # Path to SSH known_hosts file (SFTP only)
     string sftpSshKnownHosts?;
+    # Configuration for fail-safe CSV content processing. In fail-safe mode,
+    # malformed CSV records are skipped and written to a separate file in the current directory
     FailSafeOptions csvFailSafe?;
+    # Retry configuration for transient failures on non-streaming read operations
+    # (getBytes, getText, getJson, getXml, getCsv). If not specified, no retry is attempted
     RetryConfig retryConfig?;
+    # Circuit breaker configuration for handling server failures gracefully.
+    # When enabled, the client fails fast if the server is experiencing persistent issues
     CircuitBreakerConfig circuitBreaker?;
 |};
 
