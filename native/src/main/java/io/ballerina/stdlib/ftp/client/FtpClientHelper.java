@@ -123,7 +123,7 @@ class FtpClientHelper {
                 if (arrayElementType.getTag() == TypeTags.BYTE_TAG) {
                     return ContentByteStreamIteratorUtils.createStream(content, streamValueType, laxDataBinding, null);
                 }
-                return ContentCsvStreamIteratorUtils.createStringArrayStream(content, streamValueType,
+                return ContentCsvStreamIteratorUtils.createRecordStream(content, streamValueType,
                         laxDataBinding, null);
             }
             return ContentCsvStreamIteratorUtils.createRecordStream(content, streamValueType,
