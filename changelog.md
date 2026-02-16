@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - [Incorporate the csv fail safe support in the FTP listener](https://github.com/ballerina-platform/ballerina-library/issues/8502)
 
 ### Fixed
+
+- [Fix FTP/SFTP listener not triggering when fileNamePattern is not specified](https://github.com/wso2/product-ballerina-integrator/issues/656)
 - [Fix Listener silently fails when errors occur](https://github.com/ballerina-platform/ballerina-library/issues/8655)
 
 ## [2.16.0] - 2025-12-19
