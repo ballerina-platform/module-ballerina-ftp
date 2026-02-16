@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static io.ballerina.runtime.api.types.TypeTags.ARRAY_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CSV_REMOTE_FUNCTION;
@@ -181,10 +180,6 @@ public class FtpContentCallbackHandler {
                             constrainedType, laxDataBinding, fileObject);
                 }
                 case ON_FILE_CSV_REMOTE_FUNCTION -> {
-                    if (constrainedType.getTag() == ARRAY_TAG) {
-                        return ContentCsvStreamIteratorUtils.createStringArrayStream(inputStream,
-                                constrainedType, laxDataBinding, fileObject);
-                    }
                     return ContentCsvStreamIteratorUtils.createRecordStream(inputStream,
                             constrainedType, laxDataBinding, fileObject);
                 }

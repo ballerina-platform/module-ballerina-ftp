@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/data.csv as _;
 import ballerina/data.jsondata as _;
 import ballerina/data.xmldata;
 import ballerina/io;
