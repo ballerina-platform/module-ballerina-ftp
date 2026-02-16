@@ -17,9 +17,8 @@
 import ballerina/jballerina.java;
 
 # Record returned from the `ContentCsvRecordStream.next()` method.
-#
-# + value - The record deserialized from a CSV row
 public type ContentCsvRecordStreamEntry record {|
+    # The record deserialized from a CSV row
     record {} value;
 |};
 

@@ -19,254 +19,230 @@ import ballerina/crypto;
 
 # Protocol to use for FTP server connections.
 # Determines whether to use basic FTP, FTPS, or SFTP.
-# FTP - Unsecure File Transfer Protocol
-# FTPS - Secure File Transfer Protocol (FTP over SSL/TLS)
-# SFTP - File Transfer Protocol over SSH
 public enum Protocol {
+    # Unsecure File Transfer Protocol
     FTP = "ftp",
+    # Secure File Transfer Protocol (FTP over SSL/TLS)
     FTPS = "ftps",
+    # File Transfer Protocol over SSH
     SFTP = "sftp"
 }
 
 # FTPS connection mode.
-# IMPLICIT - SSL/TLS connection is established immediately upon connection. 
-#            Note: The port must be explicitly set (standard port is 990).
-# EXPLICIT - Starts as regular FTP, then upgrades to SSL/TLS using AUTH TLS command.
-#            Note: The port must be explicitly set (standard port is 21).
 public enum FtpsMode {
+    # SSL/TLS connection is established immediately upon connection.
     IMPLICIT,
+    # Starts as regular FTP, then upgrades to SSL/TLS using AUTH TLS command.
     EXPLICIT
 }
 
 # FTPS data channel protection level.
 # Controls whether the data channel (file transfers) is encrypted.
-# CLEAR - Data channel is not encrypted (PROT C). Not recommended for security.
-# PRIVATE - Data channel is encrypted (PROT P). Recommended for secure transfers.
-# SAFE - Data channel has integrity protection only (PROT S). Rarely used.
-# CONFIDENTIAL - Data channel is encrypted (PROT E). Similar to PRIVATE.
 public enum FtpsDataChannelProtection {
+    # Data channel is not encrypted (PROT C). Not recommended for security
     CLEAR,
+    # Data channel is encrypted (PROT P). Recommended for secure transfers
     PRIVATE,
+    # Data channel has integrity protection only (PROT S). Rarely used
     SAFE,
+    # Data channel is encrypted (PROT E). Similar to PRIVATE
     CONFIDENTIAL
 }
 
 # Private key configuration for SSH-based authentication (used with SFTP).
-#
-# + path - Path to the private key file
-# + password - Optional password for the private key
 public type PrivateKey record {|
+    # Path to the private key file
     string path;
+    # Password to decrypt the private key, if it is encrypted
     string password?;
 |};
 
 # Secure socket configuration for FTPS (FTP over SSL/TLS).
 # Used for configuring SSL/TLS certificates and keystores for FTPS connections.
-#
-# + key - Keystore configuration for client authentication
-# + cert - Certificate configuration for server certificate validation
-# + mode - FTPS connection mode (IMPLICIT or EXPLICIT). Defaults to EXPLICIT if not specified.
-# + dataChannelProtection - Data channel protection level (CLEAR, PRIVATE, SAFE, or CONFIDENTIAL).
-#                           Controls encryption of the data channel used for file transfers.
-#                           Defaults to PRIVATE (encrypted) for secure transfers.
 public type SecureSocket record {|
+    # Keystore configuration for client authentication
     crypto:KeyStore key?;
+    # Certificate configuration for server certificate validation
     crypto:TrustStore cert?;
+    # FTPS connection mode.
     FtpsMode mode = EXPLICIT;
+    # Data channel protection level. Controls encryption of the data channel used for file transfers.
     FtpsDataChannelProtection dataChannelProtection = PRIVATE;
 |};
 
 # Basic authentication credentials for connecting to FTP/FTPS servers using username and password.
-#
-# + username - Username for authentication
-# + password - Optional password for authentication
 public type Credentials record {|
+    # Username for authentication
     string username;
+    # Password for authentication
     string password?;
 |};
 
-# Specifies authentication options for FTP server connections.
-#
-# + credentials - Username and password for basic authentication
-# + privateKey - Private key and password for SSH-based authentication (used with SFTP protocol)
-# + secureSocket - Secure socket configuration for SSL/TLS (used with FTPS protocol)
-# + preferredMethods - Preferred authentication methods (used with SFTP protocol)
+# Authentication options for FTP server connections.
 public type AuthConfiguration record {|
+    # Username and password for basic authentication
     Credentials credentials?;
+    # Private key for SSH-based authentication (used with SFTP protocol)
     PrivateKey privateKey?;
+    # Secure socket configuration for SSL/TLS (used with FTPS protocol)
     SecureSocket secureSocket?;
+    # Preferred authentication methods in priority order (used with SFTP protocol)
     PreferredMethod[] preferredMethods = [PUBLICKEY, PASSWORD];
 |};
 
 # Authentication methods to use when connecting to FTP/SFTP servers.
-#
-# KEYBOARD_INTERACTIVE - Keyboard interactive authentication (user prompted for credentials)
-# GSSAPI_WITH_MIC - GSSAPI with MIC (Generic Security Service Application Program Interface)
-# PASSWORD - Password-based authentication using username and password
-# PUBLICKEY - Public key-based authentication using SSH key pairs
 public enum PreferredMethod {
+    # Keyboard interactive authentication (user prompted for credentials)
     KEYBOARD_INTERACTIVE,
+    # GSSAPI with MIC (Generic Security Service Application Program Interface)
     GSSAPI_WITH_MIC,
+    # Password-based authentication using username and password
     PASSWORD,
+    # Public key-based authentication using SSH key pairs
     PUBLICKEY
 }
 
-# File transfer mode
-#
-# + BINARY - Binary mode (no conversion, suitable for all file types)
-# + ASCII - ASCII mode (CRLF conversion for text files)
+# File transfer mode for FTP connections.
 public enum FileTransferMode {
+    # Binary mode (no conversion, suitable for all file types)
     BINARY,
+    # ASCII mode (CRLF conversion for text files)
     ASCII
 }
 
 # Compression algorithms for SFTP file transfers.
-# Specifies which compression method to apply during data transfer.
-#
-# + ZLIB - Standard ZLIB compression
-# + ZLIBOPENSSH - OpenSSH variant of ZLIB compression
-# + NO - No compression
 public enum TransferCompression {
+    # Standard ZLIB compression
     ZLIB = "zlib",
+    # OpenSSH variant of ZLIB compression
     ZLIBOPENSSH = "zlib@openssh.com",
+    # No compression
     NO = "none"
 }
 
-# Proxy type for SFTP connections
-#
-# + HTTP - HTTP CONNECT proxy
-# + SOCKS5 - SOCKS version 5 proxy
-# + STREAM - Stream proxy (advanced usage)
+# Proxy type for SFTP connections.
 public enum ProxyType {
+    # HTTP CONNECT proxy
     HTTP,
+    # SOCKS version 5 proxy
     SOCKS5,
+    # Stream proxy (advanced usage)
     STREAM
 }
 
-# Proxy authentication credentials
-#
-# + username - Proxy username
-# + password - Proxy password
+# Proxy authentication credentials.
 public type ProxyCredentials record {|
+    # Proxy username
     string username;
+    # Proxy password
     string password;
 |};
 
-# Proxy configuration for SFTP connections
-#
-# + host - Proxy server hostname or IP address
-# + port - Proxy server port number
-# + type - Type of proxy (HTTP, SOCKS5, or STREAM)
-# + auth - Optional proxy authentication credentials
-# + command - STREAM-only: proxy command (SFTP jump-host), e.g., "ssh -W %h:%p jumphost"
+# Proxy configuration for SFTP connections.
 public type ProxyConfiguration record {|
+    # Proxy server hostname or IP address
     string host;
+    # Proxy server port number
     int port;
+    # Type of proxy (HTTP, SOCKS5, or STREAM)
     ProxyType 'type = HTTP;
+    # Proxy authentication credentials
     ProxyCredentials auth?;
+    # Proxy command for STREAM type (SFTP jump-host), e.g., `ssh -W %h:%p jumphost`
     string command?;
 |};
 
-# Socket timeout configurations
-#
-# + ftpDataTimeout - Data transfer timeout in seconds (FTP only, default: 120.0)
-# + ftpSocketTimeout - Socket operation timeout in seconds (FTP only, default: 60.0)
-# + sftpSessionTimeout - SSH session timeout in seconds (SFTP only, default: 300.0)
+# Socket timeout configurations.
 public type SocketConfig record {|
+    # Data transfer timeout in seconds (FTP only)
     decimal ftpDataTimeout = 120.0;
+    # Socket operation timeout in seconds (FTP only)
     decimal ftpSocketTimeout = 60.0;
+    # SSH session timeout in seconds (SFTP only)
     decimal sftpSessionTimeout = 300.0;
 |};
 
 # Configuration for retry behavior on transient failures.
 # Enables automatic retry with exponential backoff for read operations.
-#
-# + count - Maximum number of retry attempts
-# + interval - Initial wait time in seconds between retries
-# + backOffFactor - Multiplier for exponential backoff
-# + maxWaitInterval - Maximum wait time cap in seconds
 public type RetryConfig record {|
+    # Maximum number of retry attempts
     int count = 3;
+    # Initial wait time in seconds between retries
     decimal interval = 1.0;
+    # Multiplier applied to the wait interval after each retry (exponential backoff)
     decimal backOffFactor = 2.0;
+    # Maximum wait time cap in seconds between retries
     decimal maxWaitInterval = 30.0;
 |};
 
 # Internal configuration for content to be written in put and append operations.
-#
-# + filePath - Path of the file to be created or appended
-# + isFile - `true` if the input type is a file stream
-# + fileContent - The content read from the input file stream
-# + textContent - The input content as text
-# + compressInput - If `true`, input will be compressed before uploading
 public type InputContent record {|
+    # Path of the file to be created or appended
     string filePath;
+    # `true` if the input type is a file stream
     boolean isFile = false;
+    # Content read from the input file stream
     stream<byte[] & readonly, io:Error?> fileContent?;
+    # Input content as text
     string textContent?;
+    # If `true`, input will be compressed before uploading
     boolean compressInput = false;
 |};
 
 # Determines the timestamp used when calculating file age for filtering.
-#
-# LAST_MODIFIED - Use file's last modified timestamp (default)
-# CREATION_TIME - Use file's creation timestamp (where supported by file system)
 public enum AgeCalculationMode {
+    # Use file's last modified timestamp
     LAST_MODIFIED,
+    # Use file's creation timestamp (where supported by file system)
     CREATION_TIME
 }
 
 # Filters files based on their age to control which files trigger listener events.
 # Useful for processing only files within a specific age range (e.g., skip very new files or very old files).
-#
-# + minAge - Minimum age of file in seconds since last modification/creation (inclusive).
-#            Files younger than this will be skipped. If not specified, no minimum age requirement.
-# + maxAge - Maximum age of file in seconds since last modification/creation (inclusive).
-#            Files older than this will be skipped. If not specified, no maximum age requirement.
-# + ageCalculationMode - Whether to calculate age based on last modified time or creation time
 public type FileAgeFilter record {|
+    # Minimum age of the file in seconds (inclusive). Files younger than this are skipped.
+    # If not specified, no minimum age requirement is applied
     decimal minAge?;
+    # Maximum age of the file in seconds (inclusive). Files older than this are skipped.
+    # If not specified, no maximum age requirement is applied
     decimal maxAge?;
+    # Whether to calculate age based on last modified time or creation time
     AgeCalculationMode ageCalculationMode = LAST_MODIFIED;
 |};
 
 # Determines how to match required files when evaluating file dependencies.
 # Controls whether all dependencies must be present, at least one, or a specific count.
-# ALL - All required file patterns must have at least one matching file (default)
-# ANY - At least one required file pattern must have a matching file
-# EXACT_COUNT - Exact number of required files must match (count specified in requiredFileCount)
 public enum DependencyMatchingMode {
+    # All required file patterns must have at least one matching file
     ALL,
+    # At least one required file pattern must have a matching file
     ANY,
+    # Exact number of required files must match (count specified in `requiredFileCount`)
     EXACT_COUNT
 }
 
 # Defines a dependency condition where processing of target files depends on the existence of other files.
 # This allows conditional file processing based on the presence of related files (e.g., processing a data file only
 # when a corresponding marker file exists). Supports capture group substitution to dynamically match related files.
-#
-# + targetPattern - Regex pattern for files that should be processed conditionally
-# + requiredFiles - Array of file patterns that must exist. Supports capture group substitution (e.g., "$1")
-# + matchingMode - How to match required files (ALL, ANY, or EXACT_COUNT)
-# + requiredFileCount - For EXACT_COUNT mode, specifies the exact number of required files
 public type FileDependencyCondition record {|
+    # Regex pattern for files that should be processed conditionally
     string targetPattern;
+    # File patterns that must exist before processing. Supports capture group substitution (e.g., `$1`)
     string[] requiredFiles;
+    # How to match required files
     DependencyMatchingMode matchingMode = ALL;
+    # For EXACT_COUNT mode, specifies the exact number of required files that must match
     int requiredFileCount = 1;
 |};
 
 # Categories of errors that can trip the circuit breaker.
 # Used to configure which types of failures should count towards the circuit breaker threshold.
 public enum FailureCategory {
-    # Connection-level failures (timeout, refused, reset, DNS resolution).
-    # Maps to ConnectionError type.
+    # Connection-level failures (timeout, refused, reset, DNS resolution)
     CONNECTION_ERROR,
-    # Authentication failures (invalid credentials, key rejected).
-    # Detected via FTP 530 response code.
+    # Authentication failures (invalid credentials, key rejected)
     AUTHENTICATION_ERROR,
-    # Transient server errors that may succeed on retry.
-    # Maps to ServiceUnavailableError type (FTP codes 421, 425, 426, 450, 451, 452).
+    # Transient server errors that may succeed on retry (FTP codes 421, 425, 426, 450, 451, 452)
     TRANSIENT_ERROR,
     # All errors regardless of type
     ALL_ERRORS
@@ -274,29 +250,26 @@ public enum FailureCategory {
 
 # Configuration for the sliding time window used in failure calculation.
 # The rolling window divides time into discrete buckets for efficient tracking of request success/failure rates.
-#
-# + requestVolumeThreshold - Minimum number of requests in the window before evaluating failure threshold.
-#                            Circuit breaker will not trip until this many requests have been made.
-# + timeWindow - Time period in seconds for the sliding window
-# + bucketSize - Granularity of time buckets in seconds. Must be less than timeWindow.
 public type RollingWindow record {|
+    # Minimum number of requests in the window before the circuit breaker evaluates the failure threshold.
+    # The circuit breaker will not trip until this many requests have been made
     int requestVolumeThreshold = 10;
+    # Time period in seconds for the sliding window
     decimal timeWindow = 60;
+    # Granularity of time buckets in seconds. Must be less than `timeWindow`
     decimal bucketSize = 10;
 |};
 
 # Configuration for circuit breaker behavior.
 # The circuit breaker prevents cascade failures by temporarily blocking requests when the server is experiencing issues.
-#
-# + rollingWindow - Time window configuration for failure tracking
-# + failureThreshold - Failure ratio threshold (0.0 to 1.0) that trips the circuit.
-#                      For example, 0.5 means the circuit will open when 50% of requests fail.
-# + resetTime - Seconds to wait in OPEN state before transitioning to HALF_OPEN to test recovery
-# + failureCategories - Error categories that count as failures for the circuit breaker.
-#                       Only errors matching these categories will contribute to the failure ratio.
 public type CircuitBreakerConfig record {|
+    # Time window configuration for failure tracking
     RollingWindow rollingWindow = {};
+    # Failure ratio threshold (0.0 to 1.0) that trips the circuit open.
+    # For example, 0.5 means the circuit opens when 50% of requests fail
     float failureThreshold = 0.5;
+    # Seconds to wait in OPEN state before transitioning to HALF_OPEN to test recovery
     decimal resetTime = 30;
+    # Error categories that count as failures. Only errors matching these categories contribute to the failure ratio
     FailureCategory[] failureCategories = [CONNECTION_ERROR, TRANSIENT_ERROR];
 |};
