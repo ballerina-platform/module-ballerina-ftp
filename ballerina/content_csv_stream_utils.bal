@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/data.csv as csv;
+import ballerina/data.csv;
 
 isolated function createCsvParseOptions(boolean laxDataBinding) returns csv:ParseOptions {
     csv:ParseOptions options = {};

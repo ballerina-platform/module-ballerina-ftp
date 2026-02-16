@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/data.csv as csv;
+import ballerina/data.csv;
 
 # Record returned from the `ContentCsvStream.next()` method.
 #
@@ -90,6 +90,5 @@ class ContentCsvStream {
         if closeResult is error {
             return toCloseError(closeResult);
         }
-        return;
     }
 }

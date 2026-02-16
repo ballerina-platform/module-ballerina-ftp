@@ -27,6 +27,7 @@ import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BStream;
 import io.ballerina.runtime.api.values.BString;
+import io.ballerina.stdlib.ftp.util.ModuleUtils;
 import org.apache.commons.vfs2.FileObject;
 
 import java.io.InputStream;
@@ -50,7 +51,7 @@ public class ContentCsvStreamIteratorUtils {
         BObject contentCsvStreamObject;
         try {
             contentCsvStreamObject = ValueCreator.createObjectValue(
-                    io.ballerina.stdlib.ftp.util.ModuleUtils.getModule(), "ContentCsvStream",
+                    ModuleUtils.getModule(), "ContentCsvStream",
                     ValueCreator.createTypedescValue(streamValueType), byteStream, laxDataBinding, filePath
             );
         } catch (BError bError) {
