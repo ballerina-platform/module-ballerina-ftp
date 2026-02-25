@@ -16,3 +16,4 @@ jobs:
       package-org: ballerina
       additional-build-flags: -x test
       additional-publish-flags: -x test
+      # The skipping of the tests is intentional, until an intermittent test failure is fixed
