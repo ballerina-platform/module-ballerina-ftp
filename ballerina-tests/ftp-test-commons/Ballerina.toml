@@ -1,0 +1,7 @@
+[package]
+org = "ballerina"
+name = "ftp_test_commons"
+version = "2.17.1"
+
+[platform.java21]
+graalvmCompatible = true

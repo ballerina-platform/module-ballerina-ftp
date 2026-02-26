@@ -1,0 +1,7 @@
+[package]
+org = "ballerina"
+name = "@package.name@"
+version = "@toml.version@"
+
+[platform.java21]
+graalvmCompatible = true
