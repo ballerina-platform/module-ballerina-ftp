@@ -12,17 +12,37 @@ ftp:ClientConfiguration ftpConfig = {
 
 ftp:Client? triggerClient = ();
 
+ftp:Listener? remoteServerListener = ();
+ftp:Listener? anonymousRemoteServerListener = ();
+
 string putFilePath = "tests/resources/datafiles/file2.txt";
 
 @test:BeforeSuite
 function initListenerTestEnvironment() returns error? {
     triggerClient = check new (ftpConfig);
+
+    ftp:Listener rsListener = check new (remoteServerConfiguration);
+    check rsListener.attach(remoteServerService);
+    check rsListener.'start();
+    remoteServerListener = rsListener;
+
+    ftp:Listener arsListener = check new (anonymousRemoteServerConfig);
+    check arsListener.attach(anonymousRemoteServerService);
+    check arsListener.'start();
+    anonymousRemoteServerListener = arsListener;
 }
 
 @test:AfterSuite {}
 function cleanListenerTestEnvironment() returns error? {
-    ftp:Client? ftpClient = triggerClient;
-    if ftpClient is ftp:Client {
-        triggerClient = ();
+    ftp:Listener? rsListener = remoteServerListener;
+    if rsListener is ftp:Listener {
+        check rsListener.gracefulStop();
     }
+    remoteServerListener = ();
+    ftp:Listener? arsListener = anonymousRemoteServerListener;
+    if arsListener is ftp:Listener {
+        check arsListener.gracefulStop();
+    }
+    anonymousRemoteServerListener = ();
+    triggerClient = ();
 }
