@@ -314,6 +314,7 @@ publishing {
 
 populateTestUtilExecutableName.dependsOn ":${packageName}-test-utils:build"
 startTestUtilAsDaemon.dependsOn populateTestUtilExecutableName
+startTestUtilAsDaemon.dependsOn ":${packageName}-ballerina:build"
 
 test {
     dependsOn(startTestUtilAsDaemon)
