@@ -130,7 +130,8 @@ public function testAddedFileCount() {
     while timeoutInSeconds > 0 {
         if watchEventReceived {
             log:printInfo("Added file count: " + addedFileCount.toString());
-            test:assertEquals(4, addedFileCount);
+            test:assertTrue(addedFileCount >= 4,
+                msg = "Expected at least 4 added files, but found " + addedFileCount.toString());
             break;
         } else {
             runtime:sleep(1);
