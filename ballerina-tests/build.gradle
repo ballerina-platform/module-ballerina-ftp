@@ -264,6 +264,8 @@ task ballerinaTest {
     dependsOn(updateTomlVersions)
     dependsOn(initializeVariables)
     dependsOn(publishTestCommonPackageToLocal)
+    dependsOn(startTestUtilAsDaemon)
+    dependsOn(waitForFtpsTestServer)
     finalizedBy(commitTomlFiles)
 
     doLast {
