@@ -21,4 +21,8 @@ function initListenerTestEnvironment() returns error? {
 
 @test:AfterSuite {}
 function cleanListenerTestEnvironment() returns error? {
+    ftp:Client? client = triggerClient;
+    if client is ftp:Client {
+        triggerClient = ();
+    }
 }
