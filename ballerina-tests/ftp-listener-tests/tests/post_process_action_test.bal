@@ -549,64 +549,64 @@ public function testNoActionWhenNotConfigured() returns error? {
 
 @test:AfterSuite
 function cleanupPostProcessTestDirectories() returns error? {
-    ftp:Client? client = triggerClient;
-    if client is () {
+    ftp:Client? ftpClient = triggerClient;
+    if ftpClient is () {
         return;
     }
     // Clean up test directories
-    boolean testDirExists = check client->exists(POST_PROCESS_TEST_DIR);
+    boolean testDirExists = check ftpClient->exists(POST_PROCESS_TEST_DIR);
     if testDirExists {
-        ftp:FileInfo[] files = check client->list(POST_PROCESS_TEST_DIR);
+        ftp:FileInfo[] files = check ftpClient->list(POST_PROCESS_TEST_DIR);
         foreach ftp:FileInfo file in files {
             if file.isFile {
-                check client->delete(file.path);
+                check ftpClient->delete(file.path);
             }
         }
         // Try to remove subdirectories
-        boolean subDirExists = check client->exists(POST_PROCESS_TEST_DIR + "/subdir");
+        boolean subDirExists = check ftpClient->exists(POST_PROCESS_TEST_DIR + "/subdir");
         if subDirExists {
-            check client->rmdir(POST_PROCESS_TEST_DIR + "/subdir");
+            check ftpClient->rmdir(POST_PROCESS_TEST_DIR + "/subdir");
         }
-        boolean preserveSubDirExists = check client->exists(POST_PROCESS_TEST_DIR + "/preserve-subdir");
+        boolean preserveSubDirExists = check ftpClient->exists(POST_PROCESS_TEST_DIR + "/preserve-subdir");
         if preserveSubDirExists {
-            ftp:FileInfo[] preserveFiles = check client->list(POST_PROCESS_TEST_DIR + "/preserve-subdir");
+            ftp:FileInfo[] preserveFiles = check ftpClient->list(POST_PROCESS_TEST_DIR + "/preserve-subdir");
             foreach ftp:FileInfo file in preserveFiles {
                 if file.isFile {
-                    check client->delete(file.path);
+                    check ftpClient->delete(file.path);
                 }
             }
-            check client->rmdir(POST_PROCESS_TEST_DIR + "/preserve-subdir");
+            check ftpClient->rmdir(POST_PROCESS_TEST_DIR + "/preserve-subdir");
         }
     }
 
-    boolean archiveDirExists = check client->exists(POST_PROCESS_ARCHIVE_DIR);
+    boolean archiveDirExists = check ftpClient->exists(POST_PROCESS_ARCHIVE_DIR);
     if archiveDirExists {
-        ftp:FileInfo[] archiveFiles = check client->list(POST_PROCESS_ARCHIVE_DIR);
+        ftp:FileInfo[] archiveFiles = check ftpClient->list(POST_PROCESS_ARCHIVE_DIR);
         foreach ftp:FileInfo file in archiveFiles {
             if file.isFile {
-                check client->delete(file.path);
+                check ftpClient->delete(file.path);
             }
         }
-        boolean preserveArchiveDirExists = check client->exists(POST_PROCESS_ARCHIVE_DIR +
+        boolean preserveArchiveDirExists = check ftpClient->exists(POST_PROCESS_ARCHIVE_DIR +
             "/preserve-subdir");
         if preserveArchiveDirExists {
-            ftp:FileInfo[] preserveArchiveFiles = check client->list(POST_PROCESS_ARCHIVE_DIR +
+            ftp:FileInfo[] preserveArchiveFiles = check ftpClient->list(POST_PROCESS_ARCHIVE_DIR +
                 "/preserve-subdir");
             foreach ftp:FileInfo file in preserveArchiveFiles {
                 if file.isFile {
-                    check client->delete(file.path);
+                    check ftpClient->delete(file.path);
                 }
             }
-            check client->rmdir(POST_PROCESS_ARCHIVE_DIR + "/preserve-subdir");
+            check ftpClient->rmdir(POST_PROCESS_ARCHIVE_DIR + "/preserve-subdir");
         }
     }
 
-    boolean errorDirExists = check client->exists(POST_PROCESS_ERROR_DIR);
+    boolean errorDirExists = check ftpClient->exists(POST_PROCESS_ERROR_DIR);
     if errorDirExists {
-        ftp:FileInfo[] errorFiles = check client->list(POST_PROCESS_ERROR_DIR);
+        ftp:FileInfo[] errorFiles = check ftpClient->list(POST_PROCESS_ERROR_DIR);
         foreach ftp:FileInfo file in errorFiles {
             if file.isFile {
-                check client->delete(file.path);
+                check ftpClient->delete(file.path);
             }
         }
     }
