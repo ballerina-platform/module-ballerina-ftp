@@ -549,60 +549,64 @@ public function testNoActionWhenNotConfigured() returns error? {
 
 @test:AfterSuite
 function cleanupPostProcessTestDirectories() returns error? {
+    ftp:Client? client = triggerClient;
+    if client is () {
+        return;
+    }
     // Clean up test directories
-    boolean testDirExists = check (<ftp:Client>triggerClient)->exists(POST_PROCESS_TEST_DIR);
+    boolean testDirExists = check client->exists(POST_PROCESS_TEST_DIR);
     if testDirExists {
-        ftp:FileInfo[] files = check (<ftp:Client>triggerClient)->list(POST_PROCESS_TEST_DIR);
+        ftp:FileInfo[] files = check client->list(POST_PROCESS_TEST_DIR);
         foreach ftp:FileInfo file in files {
             if file.isFile {
-                check (<ftp:Client>triggerClient)->delete(file.path);
+                check client->delete(file.path);
             }
         }
         // Try to remove subdirectories
-        boolean subDirExists = check (<ftp:Client>triggerClient)->exists(POST_PROCESS_TEST_DIR + "/subdir");
+        boolean subDirExists = check client->exists(POST_PROCESS_TEST_DIR + "/subdir");
         if subDirExists {
-            check (<ftp:Client>triggerClient)->rmdir(POST_PROCESS_TEST_DIR + "/subdir");
+            check client->rmdir(POST_PROCESS_TEST_DIR + "/subdir");
         }
-        boolean preserveSubDirExists = check (<ftp:Client>triggerClient)->exists(POST_PROCESS_TEST_DIR + "/preserve-subdir");
+        boolean preserveSubDirExists = check client->exists(POST_PROCESS_TEST_DIR + "/preserve-subdir");
         if preserveSubDirExists {
-            ftp:FileInfo[] preserveFiles = check (<ftp:Client>triggerClient)->list(POST_PROCESS_TEST_DIR + "/preserve-subdir");
+            ftp:FileInfo[] preserveFiles = check client->list(POST_PROCESS_TEST_DIR + "/preserve-subdir");
             foreach ftp:FileInfo file in preserveFiles {
                 if file.isFile {
-                    check (<ftp:Client>triggerClient)->delete(file.path);
+                    check client->delete(file.path);
                 }
             }
-            check (<ftp:Client>triggerClient)->rmdir(POST_PROCESS_TEST_DIR + "/preserve-subdir");
+            check client->rmdir(POST_PROCESS_TEST_DIR + "/preserve-subdir");
         }
     }
 
-    boolean archiveDirExists = check (<ftp:Client>triggerClient)->exists(POST_PROCESS_ARCHIVE_DIR);
+    boolean archiveDirExists = check client->exists(POST_PROCESS_ARCHIVE_DIR);
     if archiveDirExists {
-        ftp:FileInfo[] archiveFiles = check (<ftp:Client>triggerClient)->list(POST_PROCESS_ARCHIVE_DIR);
+        ftp:FileInfo[] archiveFiles = check client->list(POST_PROCESS_ARCHIVE_DIR);
         foreach ftp:FileInfo file in archiveFiles {
             if file.isFile {
-                check (<ftp:Client>triggerClient)->delete(file.path);
+                check client->delete(file.path);
             }
         }
-        boolean preserveArchiveDirExists = check (<ftp:Client>triggerClient)->exists(POST_PROCESS_ARCHIVE_DIR +
+        boolean preserveArchiveDirExists = check client->exists(POST_PROCESS_ARCHIVE_DIR +
             "/preserve-subdir");
         if preserveArchiveDirExists {
-            ftp:FileInfo[] preserveArchiveFiles = check (<ftp:Client>triggerClient)->list(POST_PROCESS_ARCHIVE_DIR +
+            ftp:FileInfo[] preserveArchiveFiles = check client->list(POST_PROCESS_ARCHIVE_DIR +
                 "/preserve-subdir");
             foreach ftp:FileInfo file in preserveArchiveFiles {
                 if file.isFile {
-                    check (<ftp:Client>triggerClient)->delete(file.path);
+                    check client->delete(file.path);
                 }
             }
-            check (<ftp:Client>triggerClient)->rmdir(POST_PROCESS_ARCHIVE_DIR + "/preserve-subdir");
+            check client->rmdir(POST_PROCESS_ARCHIVE_DIR + "/preserve-subdir");
         }
     }
 
-    boolean errorDirExists = check (<ftp:Client>triggerClient)->exists(POST_PROCESS_ERROR_DIR);
+    boolean errorDirExists = check client->exists(POST_PROCESS_ERROR_DIR);
     if errorDirExists {
-        ftp:FileInfo[] errorFiles = check (<ftp:Client>triggerClient)->list(POST_PROCESS_ERROR_DIR);
+        ftp:FileInfo[] errorFiles = check client->list(POST_PROCESS_ERROR_DIR);
         foreach ftp:FileInfo file in errorFiles {
             if file.isFile {
-                check (<ftp:Client>triggerClient)->delete(file.path);
+                check client->delete(file.path);
             }
         }
     }

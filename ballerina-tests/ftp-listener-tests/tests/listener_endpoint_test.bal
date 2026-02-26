@@ -47,9 +47,11 @@ ftp:ListenerConfiguration remoteServerConfiguration = {
 
 ftp:Service remoteServerService = service object {
     remote function onFileChange(ftp:Caller caller, ftp:WatchEvent & readonly event) {
-        addedFileCount = event.addedFiles.length();
-        deletedFileCount = event.deletedFiles.length();
-        watchEventReceived = true;
+        if !watchEventReceived {
+            addedFileCount = event.addedFiles.length();
+            deletedFileCount = event.deletedFiles.length();
+            watchEventReceived = true;
+        }
     }
 };
 
