@@ -1,0 +1,402 @@
+// Copyright (c) 2021 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+//
+// WSO2 Inc. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+import ballerina/ftp;
+import ballerina/ftp_test_commons;
+import ballerina/io;
+import ballerina/test;
+import ballerina/log;
+
+@test:Config {}
+public function testSecureGetFileContent() returns error? {
+    stream<byte[] & readonly, io:Error?>|ftp:Error str = (<ftp:Client>sftpClientEp)->get("/file2.txt");
+    if str is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check ftp_test_commons:matchStreamContent(str, "Put content"),
+            msg = "Found unexpected content from secure `get` operation");
+        io:Error? closeResult = str.close();
+        if closeResult is io:Error {
+            test:assertFail(msg = "Error while closing stream in `get` operation." + closeResult.message());
+        }
+    } else {
+        test:assertFail("Found unexpected response type" + str.message());
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecureConnectWithWrongProtocol() returns error? {
+    ftp:ClientConfiguration sftpConfig = {
+        protocol: ftp:FTP,
+        host: "127.0.0.1",
+        port: 21213,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+
+    ftp:Client|ftp:Error sftpClientEp = new (sftpConfig);
+    if sftpClientEp is ftp:Error {
+        test:assertTrue(sftpClientEp.message().includes("privateKey can only be used with SFTP protocol"),
+            msg = "Unexpected error during the FTP client initialization with a SFTP server. " + sftpClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing FTP client with a SFTP server.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecureConnectWithEmptySecurityConfigs() returns error? {
+    ftp:ClientConfiguration emptySftpConfig = {
+        protocol: ftp:SFTP,
+        host: "127.0.0.1",
+        port: 21213
+    };
+
+    ftp:Client|ftp:Error emptySftpClientEp = new (emptySftpConfig);
+    if emptySftpClientEp is ftp:Error {
+        test:assertTrue(emptySftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with no security configs. " + emptySftpClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with no security configs.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecureConnectWithEmptyCredentialsConfig() returns error? {
+    ftp:ClientConfiguration sftpClientConfig = {
+        protocol: ftp:SFTP,
+        host: "127.0.0.1",
+        port: 21213,
+        auth: {
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+
+    ftp:Client|ftp:Error sftpClientEp = new (sftpClientConfig);
+    if sftpClientEp is ftp:Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with no credentials. " + sftpClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with no credentials.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecureConnectWithWrongPassword() returns error? {
+    ftp:ClientConfiguration incorrectSftpConfig = {
+        protocol: ftp:SFTP,
+        host: "127.0.0.1",
+        port: 21213,
+        auth: {
+            credentials: {username: "wso2", password: "wrongPassword"},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+
+    ftp:Client|ftp:Error incorrectSftpClientEp = new (incorrectSftpConfig);
+    if incorrectSftpClientEp is ftp:Error {
+        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with wrong password. " + incorrectSftpClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with wrong password.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecureConnectWithWrongUsername() returns error? {
+    ftp:ClientConfiguration sftpConfig = {
+        protocol: ftp:SFTP,
+        host: "127.0.0.1",
+        port: 21213,
+        auth: {
+            credentials: {username: "ballerina", password: "wso2123"},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+
+    ftp:Client|ftp:Error sftpClientEp = new (sftpConfig);
+    if sftpClientEp is ftp:Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with wrong username. " + sftpClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with wrong username.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecureConnectWithEmptyUsername() returns error? {
+    ftp:ClientConfiguration sftpConfig = {
+        protocol: ftp:SFTP,
+        host: "127.0.0.1",
+        port: 21213,
+        auth: {
+            credentials: {username: "", password: "wso2123"},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+
+    ftp:Client|ftp:Error sftpClientEp = new (sftpConfig);
+    if sftpClientEp is ftp:Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with empty username. " + sftpClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with empty username.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecureConnectWithEmptyPassword() returns error? {
+    ftp:ClientConfiguration sftpConfig = {
+        protocol: ftp:SFTP,
+        host: "127.0.0.1",
+        port: 21213,
+        auth: {
+            credentials: {username: "wso2", password: ""},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+
+    ftp:Client|ftp:Error sftpClientEp = new (sftpConfig);
+    if sftpClientEp is ftp:Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with empty password. " + sftpClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with empty password.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureConnectWithWrongPassword]
+}
+public function testSecureConnectWithWrongKey() returns error? {
+    ftp:ClientConfiguration incorrectSftpConfig = {
+        protocol: ftp:SFTP,
+        host: "127.0.0.1",
+        port: 21213,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            privateKey: {
+                path: "tests/resources/sftp.wrong.private.key",
+                password: "changeit"
+            }
+        }
+    };
+
+    ftp:Client|ftp:Error incorrectSftpClientEp = new (incorrectSftpConfig);
+    if incorrectSftpClientEp is ftp:Error {
+        test:assertTrue(incorrectSftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with an invalid key. " + incorrectSftpClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid key.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureConnectWithWrongPassword]
+}
+public function testSecureConnectWithInvalidKeyPath() returns error? {
+    ftp:ClientConfiguration sftpConfig = {
+        protocol: ftp:SFTP,
+        host: "127.0.0.1",
+        port: 21213,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            privateKey: {
+                path: "tests/invalid_resources/sftp.wrong.private.key",
+                password: "changeit"
+            }
+        }
+    };
+    ftp:Client|ftp:Error sftpClientEp = new (sftpConfig);
+    if sftpClientEp is ftp:Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with an invalid key path. " + sftpClientEp.message());
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid key path.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecureConnectWithInvalidPortDetailedError() returns error? {
+    ftp:ClientConfiguration sftpConfig = {
+        protocol: ftp:SFTP,
+        host: "127.0.0.1",
+        port: 21299,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+    ftp:Client|ftp:Error sftpClientEp = new (sftpConfig);
+    if sftpClientEp is ftp:Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with an invalid port. " + sftpClientEp.message());
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(sftpClientEp.message().length() > "Error while connecting to the FTP server with URL: sftp://wso2:***@127.0.0.1:21299".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid port.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecureConnectWithInvalidHostDetailedError() returns error? {
+    ftp:ClientConfiguration sftpConfig = {
+        protocol: ftp:SFTP,
+        host: "nonexistent.invalid.host.example",
+        port: 22,
+        auth: {
+            credentials: {username: "wso2", password: "wso2123"},
+            privateKey: {
+                path: "tests/resources/sftp.private.key",
+                password: "changeit"
+            }
+        }
+    };
+    ftp:Client|ftp:Error sftpClientEp = new (sftpConfig);
+    if sftpClientEp is ftp:Error {
+        test:assertTrue(sftpClientEp.message().startsWith("Error while connecting to the FTP server with URL: "),
+            msg = "Unexpected error during the SFTP client initialization with an invalid host. " + sftpClientEp.message());
+        // Verify that the error message contains additional details from the root cause
+        test:assertTrue(sftpClientEp.message().length() > "Error while connecting to the FTP server with URL: ".length(),
+            msg = "Error message should contain detailed root cause information");
+    } else {
+        test:assertFail(msg = "Found a non-error response while initializing SFTP client with an invalid host.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecureGetFileContent]
+}
+public function testSecurePutFileContent() returns error? {
+    stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+
+    ftp:Error? response = (<ftp:Client>sftpClientEp)->put("/tempFile1.txt", bStream);
+    if response is ftp:Error {
+        test:assertFail(msg = "Error in secure `put` operation" + response.message());
+    }
+    log:printInfo("Executed secure `put` operation");
+
+    stream<byte[] & readonly, io:Error?>|ftp:Error str = (<ftp:Client>sftpClientEp)->get("/tempFile1.txt");
+    if str is stream<byte[] & readonly, io:Error?> {
+        test:assertTrue(check ftp_test_commons:matchStreamContent(str, "Put content"),
+            msg = "Found unexpected content from secure `get` operation after `put` operation");
+        io:Error? closeResult = str.close();
+        if closeResult is io:Error {
+            test:assertFail(msg = "Error while closing stream in secure `get` operation." + closeResult.message());
+        }
+    } else {
+        test:assertFail(msg = "Found unexpected response type" + str.message());
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecurePutFileContent]
+}
+public function testSecureDeleteFileContent() returns error? {
+    ftp:Error? response = (<ftp:Client>sftpClientEp)->delete("/tempFile1.txt");
+    if response is ftp:Error {
+        test:assertFail(msg = "Error in secure `delete` operation" + response.message());
+    }
+    log:printInfo("Executed secure `delete` operation");
+
+    stream<byte[] & readonly, io:Error?>|ftp:Error str = (<ftp:Client>sftpClientEp)->get("/tempFile1.txt");
+    if str is stream<byte[] & readonly, io:Error?> {
+        test:assertFalse(check ftp_test_commons:matchStreamContent(str, "Put content"),
+            msg = "File was not deleted with secure `delete` operation");
+        io:Error? closeResult = str.close();
+        if closeResult is io:Error {
+            test:assertFail(msg = "Error while closing the stream in secure `get` operation." + closeResult.message());
+        }
+    } else {
+        test:assertEquals(str.message(),
+            "Failed to read file: sftp://wso2:***@127.0.0.1:21213/tempFile1.txt not found",
+            msg = "Correct error is not given when trying to get a non-existing file.");
+    }
+}
+
+@test:Config {
+    dependsOn: [testSecurePutFileContent]
+}
+public function testSecureFileStreamReuse() returns error? {
+    stream<io:Block, io:Error?> localFileStream = check io:fileReadBlocksAsStream(putFilePath, 5);
+    check (<ftp:Client>sftpClientEp)->put("/tempFile1.txt", localFileStream);
+    stream<byte[] & readonly, io:Error?> remoteFileStream = check (<ftp:Client>sftpClientEp)->get("/tempFile1.txt");
+    check (<ftp:Client>sftpClientEp)->put("/tempFile2.txt", remoteFileStream);
+    stream<byte[] & readonly, io:Error?> remoteFileStream2 = check (<ftp:Client>sftpClientEp)->get("/tempFile2.txt");
+
+    test:assertTrue(check ftp_test_commons:matchStreamContent(remoteFileStream2, "Put content"));
+    check (<ftp:Client>sftpClientEp)->delete("/tempFile1.txt");
+    check (<ftp:Client>sftpClientEp)->delete("/tempFile2.txt");
+}
+
+@test:Config {
+    dependsOn: [testSecureFileStreamReuse]
+}
+public function testSecureLargeFileStreamReuse() returns error? {
+    int i = 0;
+    string nonFittingContent = "";
+    while i < 1000 {
+        nonFittingContent += "123456789";
+        i += 1;
+    }
+    check (<ftp:Client>sftpClientEp)->put("/tempFile3.txt", nonFittingContent);
+    stream<byte[] & readonly, io:Error?> remoteFileStream = check (<ftp:Client>sftpClientEp)->get("/tempFile3.txt");
+    check (<ftp:Client>sftpClientEp)->put("/tempFile4.txt", remoteFileStream);
+    stream<byte[] & readonly, io:Error?> remoteFileStream2 = check (<ftp:Client>sftpClientEp)->get("/tempFile4.txt");
+
+    test:assertTrue(check ftp_test_commons:matchStreamContent(remoteFileStream2, nonFittingContent));
+    check (<ftp:Client>sftpClientEp)->delete("/tempFile3.txt");
+    check (<ftp:Client>sftpClientEp)->delete("/tempFile4.txt");
+}

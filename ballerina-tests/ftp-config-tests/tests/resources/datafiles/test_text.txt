@@ -1,0 +1,5 @@
+Hello from Ballerina FTP Content Listener!
+This is a test text file with multiple lines.
+It contains UTF-8 encoded text.
+Testing line breaks and special characters: @#$%^&*()
+End of test file.
