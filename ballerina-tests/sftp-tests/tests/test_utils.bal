@@ -15,8 +15,6 @@
 // under the License.
 
 import ballerina/ftp;
-import ballerina/io;
-import ballerina/lang.'string as strings;
 import ballerina/test;
 
 string appendFilePath = "tests/resources/datafiles/file1.txt";
