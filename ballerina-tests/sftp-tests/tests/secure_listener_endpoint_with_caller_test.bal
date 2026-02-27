@@ -238,7 +238,7 @@ ftp:Service callerService = service object {
 public function testFilePutWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/put.caller", bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
     stream<byte[] & readonly, io:Error?> str = check (<ftp:Client>sftpClientEp)->get("/out/put2.caller");
     test:assertTrue(check ftp_test_commons:matchStreamContent(str, "Put content"));
     check str.close();
@@ -250,7 +250,7 @@ public function testFilePutWithCaller() returns error? {
 public function testFileAppendWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/append.caller", bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
     stream<byte[] & readonly, io:Error?> str = check (<ftp:Client>sftpClientEp)->get("/out/append.caller");
     test:assertTrue(check ftp_test_commons:matchStreamContent(str, "Put contentAppend content"));
     check str.close();
@@ -261,7 +261,7 @@ public function testFileAppendWithCaller() returns error? {
 public function testFileRenameWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/rename.caller", bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
     stream<byte[] & readonly, io:Error?> str = check (<ftp:Client>sftpClientEp)->get("/out/rename.caller");
     test:assertTrue(check ftp_test_commons:matchStreamContent(str, "Put content"));
     check str.close();
@@ -272,7 +272,7 @@ public function testFileRenameWithCaller() returns error? {
 public function testFileDeleteWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/delete.caller", bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
     stream<byte[] & readonly, io:Error?>|ftp:Error result = (<ftp:Client>sftpClientEp)->get("/in/delete.caller");
     if result is ftp:Error {
         test:assertTrue(result.message().endsWith("delete.caller not found"));
@@ -285,7 +285,7 @@ public function testFileDeleteWithCaller() returns error? {
 public function testFileListWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/list.caller", bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
     test:assertEquals(fileList.length(), 1);
     test:assertEquals(fileList[0].path, "/in/list.caller");
     check (<ftp:Client>sftpClientEp)->delete("/out/list.caller");
@@ -295,7 +295,7 @@ public function testFileListWithCaller() returns error? {
 public function testFileGetWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/get.caller", bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
     test:assertTrue(fileGetContentCorrect);
     check (<ftp:Client>sftpClientEp)->delete("/out/get.caller");
 }
@@ -304,7 +304,7 @@ public function testFileGetWithCaller() returns error? {
 public function testMkDirWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/mkdir.caller", bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
     boolean isDir = check (<ftp:Client>sftpClientEp)->isDirectory("/out/callerDir");
     test:assertTrue(isDir);
     check (<ftp:Client>sftpClientEp)->delete("/out/mkdir.caller");
@@ -316,7 +316,7 @@ public function testMkDirWithCaller() returns error? {
 public function testIsDirectoryWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/isdirectory.caller", bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
     test:assertTrue(isDir);
     check (<ftp:Client>sftpClientEp)->delete("/out/isdirectory.caller");
 }
@@ -327,7 +327,7 @@ public function testIsDirectoryWithCaller() returns error? {
 public function testRmDirWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/rmdir.caller", bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
     boolean|ftp:Error result = (<ftp:Client>sftpClientEp)->isDirectory("/out/callerDir");
     if result is ftp:Error {
         test:assertEquals(result.message(), "/out/callerDir does not exist to check if it is a directory.");
@@ -341,7 +341,7 @@ public function testRmDirWithCaller() returns error? {
 public function testFileSizeWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/size.caller", bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
     test:assertEquals(fileSize, 11);
     check (<ftp:Client>sftpClientEp)->delete("/out/size.caller");
 }
@@ -652,9 +652,11 @@ public function testMutableWatchEventWithCaller() returns error? {
     ftp:Listener 'listener = check new (callerListenerConfig);
     check 'listener.attach(watchEventService);
     check 'listener.start();
+    runtime:registerListener('listener);
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/" + filename, bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
+    runtime:deregisterListener('listener);
     check 'listener.gracefulStop();
     test:assertEquals(addedFile, filename);
     check (<ftp:Client>sftpClientEp)->delete("/in/" + filename);
@@ -683,9 +685,11 @@ public function testFileMoveWithCaller() returns error? {
     ftp:Listener 'listener = check new (callerListenerConfig);
     check 'listener.attach(moveService);
     check 'listener.start();
+    runtime:registerListener('listener);
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/" + sourceName, bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
+    runtime:deregisterListener('listener);
     check 'listener.gracefulStop();
     test:assertTrue(fileMoved);
     check (<ftp:Client>sftpClientEp)->delete("/in/" + destName);
@@ -710,9 +714,11 @@ public function testFileCopyWithCaller() returns error? {
     ftp:Listener 'listener = check new (callerListenerConfig);
     check 'listener.attach(copyService);
     check 'listener.start();
+    runtime:registerListener('listener);
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/" + sourceName, bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
+    runtime:deregisterListener('listener);
     check 'listener.gracefulStop();
     test:assertTrue(fileCopied);
     check (<ftp:Client>sftpClientEp)->delete("/in/" + sourceName);
@@ -736,9 +742,11 @@ public function testFileExistsWithCaller() returns error? {
     ftp:Listener 'listener = check new (callerListenerConfig);
     check 'listener.attach(existsService);
     check 'listener.start();
+    runtime:registerListener('listener);
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/" + checkName, bStream);
-    runtime:sleep(3);
+    runtime:sleep(10);
+    runtime:deregisterListener('listener);
     check 'listener.gracefulStop();
     test:assertTrue(fileExists);
     check (<ftp:Client>sftpClientEp)->delete("/in/" + checkName);

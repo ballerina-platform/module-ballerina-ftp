@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/ftp;
+import ballerina/lang.runtime as runtime;
 import ballerina/test;
 
 string appendFilePath = "tests/resources/datafiles/file1.txt";
@@ -62,14 +63,24 @@ function initSftpTestEnvironment() returns error? {
     callerListener = check new (callerListenerConfig);
     check (<ftp:Listener>callerListener).attach(callerService);
     check (<ftp:Listener>callerListener).'start();
+    runtime:registerListener(<ftp:Listener>callerListener);
 
     secureRemoteServerListener = check new (secureRemoteServerConfig);
     check (<ftp:Listener>secureRemoteServerListener).attach(secureRemoteServerService);
     check (<ftp:Listener>secureRemoteServerListener).'start();
+    runtime:registerListener(<ftp:Listener>secureRemoteServerListener);
 }
 
 @test:AfterSuite {}
-function cleanSftpTestEnvironment() returns error? {
-    check (<ftp:Listener>callerListener).gracefulStop();
-    check (<ftp:Listener>secureRemoteServerListener).gracefulStop();
+function cleanSftpTestEnvironment() {
+    ftp:Listener? cl = callerListener;
+    if cl is ftp:Listener {
+        runtime:deregisterListener(cl);
+        error? e = cl.gracefulStop();
+    }
+    ftp:Listener? sl = secureRemoteServerListener;
+    if sl is ftp:Listener {
+        runtime:deregisterListener(sl);
+        error? e = sl.gracefulStop();
+    }
 }
