@@ -1,5 +1,6 @@
 import ballerina/ftp;
 import ballerina/lang.runtime as runtime;
+import ballerina/log;
 import ballerina/test;
 
 // FTP client config for triggering listener events
@@ -41,12 +42,18 @@ function cleanListenerTestEnvironment() {
     if rsListener is ftp:Listener {
         runtime:deregisterListener(rsListener);
         error? e = rsListener.gracefulStop();
+        if e is error {
+            log:printError("Error stopping remoteServerListener", 'error = e);
+        }
     }
     remoteServerListener = ();
     ftp:Listener? arsListener = anonymousRemoteServerListener;
     if arsListener is ftp:Listener {
         runtime:deregisterListener(arsListener);
         error? e = arsListener.gracefulStop();
+        if e is error {
+            log:printError("Error stopping anonymousRemoteServerListener", 'error = e);
+        }
     }
     anonymousRemoteServerListener = ();
     triggerClient = ();

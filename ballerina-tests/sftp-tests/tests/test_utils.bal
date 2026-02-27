@@ -16,6 +16,7 @@
 
 import ballerina/ftp;
 import ballerina/lang.runtime as runtime;
+import ballerina/log;
 import ballerina/test;
 
 string appendFilePath = "tests/resources/datafiles/file1.txt";
@@ -77,10 +78,16 @@ function cleanSftpTestEnvironment() {
     if cl is ftp:Listener {
         runtime:deregisterListener(cl);
         error? e = cl.gracefulStop();
+        if e is error {
+            log:printError("Error stopping callerListener", 'error = e);
+        }
     }
     ftp:Listener? sl = secureRemoteServerListener;
     if sl is ftp:Listener {
         runtime:deregisterListener(sl);
         error? e = sl.gracefulStop();
+        if e is error {
+            log:printError("Error stopping secureRemoteServerListener", 'error = e);
+        }
     }
 }
