@@ -655,6 +655,7 @@ public function testMutableWatchEventWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/" + filename, bStream);
     runtime:sleep(3);
+    check 'listener.gracefulStop();
     test:assertEquals(addedFile, filename);
     check (<ftp:Client>sftpClientEp)->delete("/in/" + filename);
 }
@@ -685,6 +686,7 @@ public function testFileMoveWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/" + sourceName, bStream);
     runtime:sleep(3);
+    check 'listener.gracefulStop();
     test:assertTrue(fileMoved);
     check (<ftp:Client>sftpClientEp)->delete("/in/" + destName);
 }
@@ -711,6 +713,7 @@ public function testFileCopyWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/" + sourceName, bStream);
     runtime:sleep(3);
+    check 'listener.gracefulStop();
     test:assertTrue(fileCopied);
     check (<ftp:Client>sftpClientEp)->delete("/in/" + sourceName);
     check (<ftp:Client>sftpClientEp)->delete("/in/" + destName);
@@ -736,6 +739,7 @@ public function testFileExistsWithCaller() returns error? {
     stream<io:Block, io:Error?> bStream = check io:fileReadBlocksAsStream(putFilePath, 5);
     check (<ftp:Client>sftpClientEp)->put("/in/" + checkName, bStream);
     runtime:sleep(3);
+    check 'listener.gracefulStop();
     test:assertTrue(fileExists);
     check (<ftp:Client>sftpClientEp)->delete("/in/" + checkName);
 }
