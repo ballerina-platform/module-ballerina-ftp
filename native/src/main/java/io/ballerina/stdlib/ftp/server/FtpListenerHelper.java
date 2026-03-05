@@ -121,6 +121,10 @@ public class FtpListenerHelper {
                         StringUtils.fromString(FtpConstants.RETRY_BACKOFF_FACTOR))).floatValue();
                 double maxWaitInterval = ((BDecimal) retryConfig.get(
                         StringUtils.fromString(FtpConstants.RETRY_MAX_WAIT_INTERVAL))).floatValue();
+                BError validationError = FtpUtil.validateRetryConfig(count, interval, backOffFactor, maxWaitInterval);
+                if (validationError != null) {
+                    return validationError;
+                }
                 listener.setRetryConfig(true, count, interval, backOffFactor, maxWaitInterval);
             }
 
