@@ -1247,7 +1247,8 @@ public function testListFiles() {
         "/home/in/sc-legacy": 0,
         "/home/in/post-process": 0,
         "/home/in/post-process-archive": 0,
-        "/home/in/post-process-error": 0
+        "/home/in/post-process-error": 0,
+        "/home/in/listener-retry": 0
     };
     FileInfo[]|Error response = (<Client>clientEp)->list("/home/in");
     if response is FileInfo[] {
