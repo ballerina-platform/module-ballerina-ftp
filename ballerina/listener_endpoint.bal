@@ -216,7 +216,7 @@ public type ListenerConfiguration record {|
     CoordinationConfig coordination?;
     # Configuration for retry behavior when retrieving file content from the server.
     # When configured, transient failures during file retrieval are automatically retried
-    # with exponential backoff before propagating the error
+    # with exponential backoff before the error is logged or otherwise handled
     RetryConfig retryConfig?;
 |};
 
