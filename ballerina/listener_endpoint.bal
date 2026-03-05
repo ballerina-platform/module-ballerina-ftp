@@ -214,6 +214,10 @@ public type ListenerConfiguration record {|
     # Configuration for distributed task coordination. When configured, only one member
     # in the group actively polls while others act as warm standby
     CoordinationConfig coordination?;
+    # Configuration for retry behavior when retrieving file content from the server.
+    # When configured, transient failures during file retrieval are automatically retried
+    # with exponential backoff before propagating the error
+    RetryConfig retryConfig?;
 |};
 
 # Fail-safe options for CSV content processing.

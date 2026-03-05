@@ -25,6 +25,7 @@ import io.ballerina.stdlib.ftp.util.FtpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import static io.ballerina.stdlib.ftp.util.FtpUtil.ErrorType.AllRetryAttemptsFailedError;
@@ -129,5 +130,75 @@ public final class FtpRetryHelper {
     private static double getWaitTime(double backOffFactor, double maxWaitTime, double interval) {
         double waitTime = interval * backOffFactor;
         return Math.min(waitTime, maxWaitTime);
+    }
+
+    /**
+     * Executes an operation with retry and exponential backoff for listener-side file retrieval.
+     * Exceptions are caught and converted to BError, mirroring the client-side overload.
+     * Returns either the operation result or a BError on failure.
+     */
+    public static Object executeWithRetry(Callable<Object> operation, String operationName, String filePath,
+                                          boolean retryEnabled, long count, double interval,
+                                          double backOffFactor, double maxWaitInterval) {
+        // First attempt
+        Object result;
+        try {
+            result = operation.call();
+        } catch (Exception e) {
+            result = FtpUtil.createError(e.getMessage(), e, Error.errorType());
+        }
+
+        if (!(result instanceof BError)) {
+            return result;
+        }
+
+        if (!retryEnabled) {
+            return result;
+        }
+
+        // Note: circuit breaker is not applicable at the listener level.
+        BError lastError = (BError) result;
+        double currentInterval = interval;
+
+        log.debug("Operation '{}' failed for path '{}', starting retry with count={}, interval={}, " +
+                "backOffFactor={}, maxWaitInterval={}", operationName, filePath, count, interval,
+                backOffFactor, maxWaitInterval);
+
+        for (int attempt = 1; attempt <= count; attempt++) {
+            if (attempt > 1) {
+                currentInterval = getWaitTime(backOffFactor, maxWaitInterval, currentInterval);
+            }
+
+            log.debug("FTP retry attempt {}/{} for operation '{}' on path '{}', waiting {}s",
+                    attempt, count, operationName, filePath, currentInterval);
+
+            try {
+                long sleepMs = (long) (currentInterval * 1000);
+                Thread.sleep(sleepMs);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                return FtpUtil.createError("Retry interrupted for operation '" + operationName + "'",
+                        ie, Error.errorType());
+            }
+
+            try {
+                result = operation.call();
+            } catch (Exception e) {
+                result = FtpUtil.createError(e.getMessage(), e, Error.errorType());
+            }
+
+            if (!(result instanceof BError)) {
+                log.debug("Operation '{}' succeeded on retry attempt {} for path '{}'",
+                        operationName, attempt, filePath);
+                return result;
+            }
+
+            lastError = (BError) result;
+        }
+
+        log.debug("Operation '{}' failed after {} retry attempts for path '{}'",
+                operationName, count, filePath);
+        return FtpUtil.createError("Operation '" + operationName + "' failed after " + count +
+                " retry attempts: " + lastError.getMessage(), lastError, AllRetryAttemptsFailedError.errorType());
     }
 }

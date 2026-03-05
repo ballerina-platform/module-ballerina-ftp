@@ -91,6 +91,11 @@ public class FtpListener implements RemoteFileSystemListener {
     private boolean laxDataBinding;
     private String legacyListenerPath;
     private BMap<?, ?> csvFailSafe = ValueCreator.createMapValue();
+    private boolean retryEnabled = false;
+    private long retryCount = 0;
+    private double retryInterval = 0;
+    private double retryBackoffFactor = 0;
+    private double retryMaxWaitInterval = 0;
 
     FtpListener(Runtime runtime) {
         this.runtime = runtime;
@@ -115,6 +120,15 @@ public class FtpListener implements RemoteFileSystemListener {
 
     public void setCsvFailSafeConfigs(BMap<?, ?> csvFailSafe) {
         this.csvFailSafe = csvFailSafe;
+    }
+
+    public void setRetryConfig(boolean retryEnabled, long retryCount, double retryInterval,
+                               double retryBackoffFactor, double retryMaxWaitInterval) {
+        this.retryEnabled = retryEnabled;
+        this.retryCount = retryCount;
+        this.retryInterval = retryInterval;
+        this.retryBackoffFactor = retryBackoffFactor;
+        this.retryMaxWaitInterval = retryMaxWaitInterval;
     }
 
     @Override
@@ -190,7 +204,8 @@ public class FtpListener implements RemoteFileSystemListener {
             } else {
                 try {
                     FtpContentCallbackHandler contentHandler = new FtpContentCallbackHandler(
-                            runtime, fileSystemManager, fileSystemOptions, laxDataBinding, csvFailSafe);
+                            runtime, fileSystemManager, fileSystemOptions, laxDataBinding, csvFailSafe,
+                            retryEnabled, retryCount, retryInterval, retryBackoffFactor, retryMaxWaitInterval);
                     contentHandler.processContentCallbacks(env, service, event, holder, caller);
                 } catch (Exception e) {
                     FtpUtil.createError("Error in content callback processing for added files: " + e.getMessage(),

@@ -28,6 +28,7 @@ import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BArray;
+import io.ballerina.runtime.api.values.BDecimal;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
@@ -108,6 +109,20 @@ public class FtpListenerHelper {
 
             BMap<?, ?> csvFailSafe = serviceEndpointConfig.getMapValue(CSV_FAIL_SAFE);
             listener.setCsvFailSafeConfigs(csvFailSafe);
+
+            // Extract retry config if present
+            BMap<?, ?> retryConfig = serviceEndpointConfig.getMapValue(
+                    StringUtils.fromString(FtpConstants.RETRY_CONFIG));
+            if (retryConfig != null) {
+                long count = retryConfig.getIntValue(StringUtils.fromString(FtpConstants.RETRY_COUNT));
+                double interval = ((BDecimal) retryConfig.get(
+                        StringUtils.fromString(FtpConstants.RETRY_INTERVAL))).floatValue();
+                double backOffFactor = ((BDecimal) retryConfig.get(
+                        StringUtils.fromString(FtpConstants.RETRY_BACKOFF_FACTOR))).floatValue();
+                double maxWaitInterval = ((BDecimal) retryConfig.get(
+                        StringUtils.fromString(FtpConstants.RETRY_MAX_WAIT_INTERVAL))).floatValue();
+                listener.setRetryConfig(true, count, interval, backOffFactor, maxWaitInterval);
+            }
 
             // Store all necessary data for connector creation during first service registration
             ftpListener.addNativeData(BASE_PARAMS_KEY, paramMap);
