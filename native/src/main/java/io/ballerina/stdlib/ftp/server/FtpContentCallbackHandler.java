@@ -190,10 +190,10 @@ public class FtpContentCallbackHandler {
 
     private Object fetchAndConvertContent(Environment environment, String fileUri, String methodName,
                                           Type firstParamType) throws Exception {
-        FileObject fo = fileSystemManager.resolveFile(fileUri, fileSystemOptions);
-        String fileNamePrefix = deriveFileNamePrefix(fo);
+        FileObject fo = null;
         InputStream is = null;
         try {
+            fo = fileSystemManager.resolveFile(fileUri, fileSystemOptions);
             is = fo.getContent().getInputStream();
             byte[] fileContent = FtpContentConverter.convertInputStreamToByteArray(is);
             return switch (methodName) {
@@ -203,22 +203,27 @@ public class FtpContentCallbackHandler {
                         laxDataBinding, fileUri);
                 case ON_FILE_XML_REMOTE_FUNCTION -> convertBytesToXml(fileContent, firstParamType,
                         laxDataBinding, fileUri);
-                case ON_FILE_CSV_REMOTE_FUNCTION -> convertBytesToCsv(environment, fileContent, firstParamType,
-                        laxDataBinding, csvFailSafe, fileNamePrefix, fileUri);
+                case ON_FILE_CSV_REMOTE_FUNCTION -> {
+                    String fileNamePrefix = deriveFileNamePrefix(fo);
+                    yield convertBytesToCsv(environment, fileContent, firstParamType,
+                            laxDataBinding, csvFailSafe, fileNamePrefix, fileUri);
+                }
                 default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
             };
         } finally {
             if (is != null) {
-                try { 
-                    is.close(); 
-                } catch (Exception e) { 
-                    log.warn("Failed to close input stream", e); 
+                try {
+                    is.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close input stream", e);
                 }
             }
-            try { 
-                fo.close(); 
-            } catch (Exception e) { 
-                log.warn("Failed to close file object", e); 
+            if (fo != null) {
+                try {
+                    fo.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close file object", e);
+                }
             }
         }
     }

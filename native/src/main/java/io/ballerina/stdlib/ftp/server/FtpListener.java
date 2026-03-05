@@ -632,5 +632,10 @@ public class FtpListener implements RemoteFileSystemListener {
         fileSystemManager = null;
         fileSystemOptions = null;
         legacyListenerPath = null;
+        retryEnabled = false;
+        retryCount = 0;
+        retryInterval = 0;
+        retryBackoffFactor = 0;
+        retryMaxWaitInterval = 0;
     }
 }
