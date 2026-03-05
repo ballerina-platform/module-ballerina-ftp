@@ -19,14 +19,16 @@ import ballerina/log;
 import ballerina/test;
 
 const LISTENER_RETRY_TEST_DIR = "/home/in/listener-retry";
+boolean onFileInvoked = false;
+string receivedContent = "";
 
 // Verifies that retryConfig is accepted by ListenerConfiguration and passed through
 // FtpListenerHelper → FtpListener → FtpContentCallbackHandler without interfering
 // with normal file delivery on the happy path.
 @test:Config {}
 public function testListenerRetryConfig_SuccessPath() returns error? {
-    boolean onFileInvoked = false;
-    string receivedContent = "";
+    onFileInvoked = false;
+    receivedContent = "";
 
     Service retrySuccessService = service object {
         remote function onFileText(string content, FileInfo fileInfo, Caller caller) returns error? {
