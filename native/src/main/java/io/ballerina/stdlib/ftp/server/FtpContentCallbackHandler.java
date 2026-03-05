@@ -169,15 +169,35 @@ public class FtpContentCallbackHandler {
             // so retry is not applicable here. Any exception propagates to processContentCallbacks
             // where a BError is created and printed.
             Type constrainedType = ((StreamType) firstParamType).getConstrainedType();
-            FileObject fileObject = fileSystemManager.resolveFile(fileUri, fileSystemOptions);
-            InputStream inputStream = fileObject.getContent().getInputStream();
-            return switch (methodName) {
-                case ON_FILE_REMOTE_FUNCTION -> ContentByteStreamIteratorUtils.createStream(
-                        inputStream, constrainedType, laxDataBinding, fileObject);
-                case ON_FILE_CSV_REMOTE_FUNCTION -> ContentCsvStreamIteratorUtils.createRecordStream(
-                        inputStream, constrainedType, laxDataBinding, fileObject);
-                default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
-            };
+            FileObject fileObject = null;
+            InputStream inputStream = null;
+            try {
+                fileObject = fileSystemManager.resolveFile(fileUri, fileSystemOptions);
+                inputStream = fileObject.getContent().getInputStream();
+                return switch (methodName) {
+                    case ON_FILE_REMOTE_FUNCTION -> ContentByteStreamIteratorUtils.createStream(
+                            inputStream, constrainedType, laxDataBinding, fileObject);
+                    case ON_FILE_CSV_REMOTE_FUNCTION -> ContentCsvStreamIteratorUtils.createRecordStream(
+                            inputStream, constrainedType, laxDataBinding, fileObject);
+                    default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
+                };
+            } catch (Exception e) {
+                if (inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (Exception closeErr) {
+                        log.warn("Failed to close input stream", closeErr);
+                    }
+                }
+                if (fileObject != null) {
+                    try {
+                        fileObject.close();
+                    } catch (Exception closeErr) {
+                        log.warn("Failed to close file object", closeErr);
+                    }
+                }
+                throw e;
+            }
         } else {
             // Non-stream case: retry covers the full synchronous transfer — resolveFile + getInputStream
             // + reading all bytes. On failure the file object is closed so the next attempt starts fresh.
