@@ -154,6 +154,8 @@ public final class MockFtpServer {
         fileSystem.add(new DirectoryEntry("/home/in/post-process-archive"));
         fileSystem.add(new DirectoryEntry("/home/in/post-process-error"));
 
+        fileSystem.add(new DirectoryEntry("/home/in/listener-retry"));
+
         ftpServer.setFileSystem(fileSystem);
         ftpServer.start();
         logger.info("Starting FTP server...");
