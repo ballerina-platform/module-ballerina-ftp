@@ -148,16 +148,13 @@ public final class FtpRetryHelper {
             result = FtpUtil.createError(e.getMessage(), e, Error.errorType());
         }
 
-        if (!(result instanceof BError)) {
+        if (!(result instanceof BError lastError)) {
             return result;
         }
 
         if (!retryEnabled) {
             return result;
         }
-
-        // Note: circuit breaker is not applicable at the listener level.
-        BError lastError = (BError) result;
         double currentInterval = interval;
 
         log.debug("Operation '{}' failed for path '{}', starting retry with count={}, interval={}, " +
