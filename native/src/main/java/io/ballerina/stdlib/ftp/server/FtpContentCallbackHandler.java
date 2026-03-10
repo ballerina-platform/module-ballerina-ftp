@@ -182,20 +182,7 @@ public class FtpContentCallbackHandler {
                     default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
                 };
             } catch (Exception e) {
-                if (inputStream != null) {
-                    try {
-                        inputStream.close();
-                    } catch (Exception closeErr) {
-                        log.warn("Failed to close input stream", closeErr);
-                    }
-                }
-                if (fileObject != null) {
-                    try {
-                        fileObject.close();
-                    } catch (Exception closeErr) {
-                        log.warn("Failed to close file object", closeErr);
-                    }
-                }
+                closeQuietly(inputStream, fileObject);
                 throw e;
             }
         } else {
@@ -231,19 +218,23 @@ public class FtpContentCallbackHandler {
                 default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
             };
         } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Exception e) {
-                    log.warn("Failed to close input stream", e);
-                }
+            closeQuietly(is, fo);
+        }
+    }
+
+    private void closeQuietly(InputStream inputStream, FileObject fileObject) {
+        if (inputStream != null) {
+            try {
+                inputStream.close();
+            } catch (Exception e) {
+                log.warn("Failed to close input stream", e);
             }
-            if (fo != null) {
-                try {
-                    fo.close();
-                } catch (Exception e) {
-                    log.warn("Failed to close file object", e);
-                }
+        }
+        if (fileObject != null) {
+            try {
+                fileObject.close();
+            } catch (Exception e) {
+                log.warn("Failed to close file object", e);
             }
         }
     }
