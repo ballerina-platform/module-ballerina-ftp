@@ -34,8 +34,8 @@ ftp:Client depFtpClient = check new ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function deleteIfExistsDep(ftp:Client ftpClient, string path) returns error? {
-    check ftpClient->delete(path);
+function deleteIfExistsDep(ftp:Client ftpClient, string path) {
+    error? ignore = ftpClient->delete(path);
 }
 
 function waitUntilDep(function() returns boolean cond, int timeoutSec) returns boolean {
@@ -65,9 +65,9 @@ function testFileDependency_ALL_BlockedThenDelivered() returns error? {
     string csvPath = DEP_ALL_DIR + "/invoice_all.csv";
     string flagPath = DEP_ALL_DIR + "/invoice_all.flag";
 
-    check deleteIfExistsDep(depFtpClient, xmlPath);
-    check deleteIfExistsDep(depFtpClient, csvPath);
-    check deleteIfExistsDep(depFtpClient, flagPath);
+    deleteIfExistsDep(depFtpClient, xmlPath);
+    deleteIfExistsDep(depFtpClient, csvPath);
+    deleteIfExistsDep(depFtpClient, flagPath);
 
     ftp:Service depService = @ftp:ServiceConfig {
         path: DEP_ALL_DIR,
@@ -126,9 +126,9 @@ function testFileDependency_ALL_BlockedThenDelivered() returns error? {
     test:assertTrue(delivered, "Target file should be delivered once ALL deps are present");
     test:assertEquals(depAllFile, "invoice_all.xml", "Delivered file name should match target");
 
-    check deleteIfExistsDep(depFtpClient, xmlPath);
-    check deleteIfExistsDep(depFtpClient, csvPath);
-    check deleteIfExistsDep(depFtpClient, flagPath);
+    deleteIfExistsDep(depFtpClient, xmlPath);
+    deleteIfExistsDep(depFtpClient, csvPath);
+    deleteIfExistsDep(depFtpClient, flagPath);
 }
 
 // ─── TEST: ANY mode — target delivered when at least ONE dep is present ───────
@@ -145,9 +145,9 @@ function testFileDependency_ANY_DeliveredWithOneDep() returns error? {
     string csvPath = DEP_ANY_DIR + "/report_any.csv";
     string txtPath = DEP_ANY_DIR + "/report_any.txt";
 
-    check deleteIfExistsDep(depFtpClient, xmlPath);
-    check deleteIfExistsDep(depFtpClient, csvPath);
-    check deleteIfExistsDep(depFtpClient, txtPath);
+    deleteIfExistsDep(depFtpClient, xmlPath);
+    deleteIfExistsDep(depFtpClient, csvPath);
+    deleteIfExistsDep(depFtpClient, txtPath);
 
     ftp:Service depService = @ftp:ServiceConfig {
         path: DEP_ANY_DIR,
@@ -200,9 +200,9 @@ function testFileDependency_ANY_DeliveredWithOneDep() returns error? {
 
     test:assertTrue(delivered, "Target should be delivered when ANY required dep is present");
 
-    check deleteIfExistsDep(depFtpClient, xmlPath);
-    check deleteIfExistsDep(depFtpClient, csvPath);
-    check deleteIfExistsDep(depFtpClient, txtPath);
+    deleteIfExistsDep(depFtpClient, xmlPath);
+    deleteIfExistsDep(depFtpClient, csvPath);
+    deleteIfExistsDep(depFtpClient, txtPath);
 }
 
 // ─── TEST: Capture group substitution in requiredFiles ────────────────────────
@@ -218,8 +218,8 @@ function testFileDependency_CaptureGroupSubstitution() returns error? {
     string xmlPath = DEP_ALL_DIR + "/order_123.xml";
     string csvPath = DEP_ALL_DIR + "/order_123.csv";
 
-    check deleteIfExistsDep(depFtpClient, xmlPath);
-    check deleteIfExistsDep(depFtpClient, csvPath);
+    deleteIfExistsDep(depFtpClient, xmlPath);
+    deleteIfExistsDep(depFtpClient, csvPath);
 
     // targetPattern uses capture group (\\d+); requiredFiles uses $1 substitution
     ftp:Service depService = @ftp:ServiceConfig {
@@ -273,8 +273,8 @@ function testFileDependency_CaptureGroupSubstitution() returns error? {
 
     test:assertTrue(delivered, "Capture group substitution in requiredFiles should resolve correctly");
 
-    check deleteIfExistsDep(depFtpClient, xmlPath);
-    check deleteIfExistsDep(depFtpClient, csvPath);
+    deleteIfExistsDep(depFtpClient, xmlPath);
+    deleteIfExistsDep(depFtpClient, csvPath);
 
 }
 

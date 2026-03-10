@@ -157,13 +157,13 @@ function testFileAgeFilter_MaxAge_SkipsStaleFile() returns error? {
 
 // ─── TEST: minAge — file is withheld until old enough, then delivered ──────────
 
-isolated boolean ageMinDelivered = false;
+boolean ageMinDelivered = false;
 
 @test:Config {
     groups: ["ftp-listener-behaviour", "file-age-filter"]
 }
 function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
-    lock { ageMinDelivered = false; }
+    ageMinDelivered = false;
 
     ftp:Service ageService = @ftp:ServiceConfig {
         path: AGE_MIN_DIR,
@@ -173,8 +173,9 @@ function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
     service object {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             foreach ftp:FileInfo fi in event.addedFiles {
+                
                 if fi.name.endsWith(".minage") {
-                    lock { ageMinDelivered = true; }
+                    ageMinDelivered = true;
                 }
             }
         }
@@ -195,13 +196,11 @@ function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
 
     // Several polls — file is too young to be delivered
     runtime:sleep(5);
-    boolean tooEarly;
-    lock { tooEarly = ageMinDelivered; }
-    test:assertFalse(tooEarly, "File should NOT be delivered before minAge elapses");
+    test:assertFalse(ageMinDelivered, "File should NOT be delivered before minAge elapses");
 
     // Wait for the file to age past minAge
     boolean delivered = waitUntilAge(function() returns boolean {
-        lock { return ageMinDelivered; }
+        return ageMinDelivered;
     }, 25);
 
     runtime:deregisterListener(ageListener);
