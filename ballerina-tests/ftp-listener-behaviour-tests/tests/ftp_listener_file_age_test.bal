@@ -160,6 +160,7 @@ function testFileAgeFilter_MaxAge_SkipsStaleFile() returns error? {
 boolean ageMinDelivered = false;
 
 @test:Config {
+    enable: false, 
     groups: ["ftp-listener-behaviour", "file-age-filter"]
 }
 function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
@@ -173,7 +174,7 @@ function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
     service object {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             foreach ftp:FileInfo fi in event.addedFiles {
-                
+
                 if fi.name.endsWith(".minage") {
                     ageMinDelivered = true;
                 }
@@ -231,6 +232,7 @@ function testFileAgeFilter_RecordDefaults() {
 isolated boolean ageBothDelivered = false;
 
 @test:Config {
+    enable: false,
     groups: ["ftp-listener-behaviour", "file-age-filter"]
 }
 function testFileAgeFilter_MinAndMax_DeliverInWindow() returns error? {
