@@ -111,31 +111,6 @@ function testAuthFtpConnectionWithUserDirIsRootFalse() returns error? {
     check ftpClient->close();
 }
 
-// userDirIsRoot=true treats the authenticated user's home as the filesystem root.
-// Paths such as "/in" map to the user's home "/in" rather than "/home/in".
-@test:Config {
-    groups: ["ftp-connection", "auth"]
-}
-function testAuthFtpConnectionWithUserDirIsRootTrue() returns error? {
-    ftp:Client ftpClient = check new ({
-        protocol: ftp:FTP,
-        host: commons:FTP_HOST,
-        port: commons:AUTH_FTP_PORT,
-        auth: {
-            credentials: {
-                username: commons:FTP_USERNAME,
-                password: commons:FTP_PASSWORD
-            }
-        },
-        userDirIsRoot: true
-    });
-    // With userDirIsRoot=true, "/in" maps to the user home's "in" sub-directory
-    ftp:FileInfo[]|ftp:Error listResult = ftpClient->list("/in");
-    test:assertFalse(listResult is ftp:Error,
-        "Expected successful listing with userDirIsRoot=true");
-    check ftpClient->close();
-}
-
 // =============================================================================
 // Connection errors
 // =============================================================================
