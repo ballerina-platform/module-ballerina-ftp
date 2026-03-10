@@ -36,6 +36,7 @@ public const string ANON_PASSWORD = "anything";
 // ─── Remote paths ─────────────────────────────────────────────────────────────
 
 public const string HOME_IN = "/home/in";
+public const string FTPS_ROOT = "/ftps-client";
 
 // ─── Local resource paths ─────────────────────────────────────────────────────
 // All paths are relative from each test-package directory under ballerina-tests/

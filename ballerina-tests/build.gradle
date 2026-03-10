@@ -34,7 +34,8 @@ def testCoverageParam = "--code-coverage --coverage-format=xml --includes=io.bal
 
 // Add new test packages here as they are implemented
 def testPackages = [
-    "ftp-connection-tests"
+    "ftp-connection-tests",
+    "ftps-connection-tests"
 ]
 def testCommonPackage = "ftp-test-commons"
 
