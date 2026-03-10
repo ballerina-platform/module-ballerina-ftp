@@ -179,6 +179,7 @@ public final class MockFtpServer {
         fileSystem.add(new DirectoryEntry("/home/in/adv-sc-dup"));
         fileSystem.add(new DirectoryEntry("/home/in/adv-sc-mixed"));
         fileSystem.add(new DirectoryEntry("/home/in/adv-sc-badregex"));
+        fileSystem.add(new DirectoryEntry("/home/in/listener-retry"));
 
         ftpServer.setFileSystem(fileSystem);
         ftpServer.start();

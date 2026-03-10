@@ -242,28 +242,7 @@ public class FtpClient {
 
     private static BError validateRetryConfig(long count, double interval, double backOffFactor,
                                               double maxWaitInterval) {
-        if (count <= 0) {
-            return FtpUtil.createError("retryConfig.count must be greater than 0.",
-                    InvalidConfigError.errorType());
-        }
-        if (interval <= 0) {
-            return FtpUtil.createError("retryConfig.interval must be greater than 0.",
-                    InvalidConfigError.errorType());
-        }
-        if (backOffFactor < 1.0) {
-            return FtpUtil.createError("retryConfig.backOffFactor must be greater than or equal to 1.0.",
-                    InvalidConfigError.errorType());
-        }
-        if (maxWaitInterval <= 0) {
-            return FtpUtil.createError("retryConfig.maxWaitInterval must be greater than 0.",
-                    InvalidConfigError.errorType());
-        }
-        if (maxWaitInterval < interval) {
-            return FtpUtil.createError(
-                    "retryConfig.maxWaitInterval must be greater than or equal to retryConfig.interval.",
-                    InvalidConfigError.errorType());
-        }
-        return null;
+        return FtpUtil.validateRetryConfig(count, interval, backOffFactor, maxWaitInterval);
     }
 
     private static Object configureAuthentication(BMap<Object, Object> config, String protocol, 

@@ -732,5 +732,30 @@ public class FtpUtil {
             throw new BallerinaFtpException("Failed to load KeyStore from path: " + path + ". " + e.getMessage(), e);
         }
     }
+
+    public static BError validateRetryConfig(long count, double interval, double backOffFactor,
+                                             double maxWaitInterval) {
+        if (count <= 0) {
+            return createError("retryConfig.count must be greater than 0.", ErrorType.InvalidConfigError.errorType());
+        }
+        if (interval <= 0) {
+            return createError("retryConfig.interval must be greater than 0.",
+                    ErrorType.InvalidConfigError.errorType());
+        }
+        if (backOffFactor < 1.0) {
+            return createError("retryConfig.backOffFactor must be greater than or equal to 1.0.",
+                    ErrorType.InvalidConfigError.errorType());
+        }
+        if (maxWaitInterval <= 0) {
+            return createError("retryConfig.maxWaitInterval must be greater than 0.",
+                    ErrorType.InvalidConfigError.errorType());
+        }
+        if (maxWaitInterval < interval) {
+            return createError(
+                    "retryConfig.maxWaitInterval must be greater than or equal to retryConfig.interval.",
+                    ErrorType.InvalidConfigError.errorType());
+        }
+        return null;
+    }
 }
 

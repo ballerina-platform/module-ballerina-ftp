@@ -7,6 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- [Add automatic retry support with exponential backoff for FTP listener](https://github.com/ballerina-platform/ballerina-library/issues/8585)
+
+### Changed
+
+## [2.17.1] - 2026-02-26
+
+### Changed
+
+- Downgrade data.csv version from 0.10.0 to 0.8.2
+
+## [2.17.0] - 2026-02-20
+
+### Added
+
 - [Add post processing action support](https://github.com/ballerina-platform/ballerina-library/issues/8604)
 - [Add service level monitoring config](https://github.com/ballerina-platform/ballerina-library/issues/8606)
 - [Introduce onError remote function](https://github.com/ballerina-platform/ballerina-library/issues/8605)

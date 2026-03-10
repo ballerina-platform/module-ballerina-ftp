@@ -37,6 +37,7 @@ import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.ContentByteStreamIteratorUtils;
 import io.ballerina.stdlib.ftp.ContentCsvStreamIteratorUtils;
+import io.ballerina.stdlib.ftp.client.FtpRetryHelper;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
@@ -79,15 +80,27 @@ public class FtpContentCallbackHandler {
     private final FileSystemOptions fileSystemOptions;
     private final boolean laxDataBinding;
     private final BMap<?, ?> csvFailSafe;
+    private final boolean retryEnabled;
+    private final long retryCount;
+    private final double retryInterval;
+    private final double retryBackoffFactor;
+    private final double retryMaxWaitInterval;
 
     public FtpContentCallbackHandler(Runtime ballerinaRuntime, FileSystemManager fileSystemManager,
                                      FileSystemOptions fileSystemOptions, boolean laxDataBinding,
-                                     BMap<?, ?> csvFailSafe) {
+                                     BMap<?, ?> csvFailSafe, boolean retryEnabled, long retryCount,
+                                     double retryInterval, double retryBackoffFactor,
+                                     double retryMaxWaitInterval) {
         this.ballerinaRuntime = ballerinaRuntime;
         this.fileSystemManager = fileSystemManager;
         this.fileSystemOptions = fileSystemOptions;
         this.laxDataBinding = laxDataBinding;
         this.csvFailSafe = csvFailSafe;
+        this.retryEnabled = retryEnabled;
+        this.retryCount = retryCount;
+        this.retryInterval = retryInterval;
+        this.retryBackoffFactor = retryBackoffFactor;
+        this.retryMaxWaitInterval = retryMaxWaitInterval;
     }
 
     /**
@@ -111,16 +124,17 @@ public class FtpContentCallbackHandler {
                 }
 
                 String fileUri = fileInfo.getPath();
-                FileObject fileObject = fileSystemManager.resolveFile(fileUri, fileSystemOptions);
-                InputStream inputStream = fileObject.getContent().getInputStream();
 
-                // Convert content based on method signature
+                // Convert content based on method signature (retry is handled inside)
                 MethodType methodType = methodTypeOpt.get();
-                Object convertedContent = convertFileContent(env, fileObject, inputStream, methodType);
+                Object convertedContent = convertFileContent(env, fileUri, methodType);
 
-                // Check if content conversion returned an error (ContentBindingError)
                 if (convertedContent instanceof BError bError) {
-                    routeToOnError(service, holder, bError, callerObject, fileInfo, listenerPath);
+                    if (FtpUtil.ErrorType.ContentBindingError.errorType().equals(bError.getType().getName())) {
+                        routeToOnError(service, holder, bError, callerObject, fileInfo, listenerPath);
+                    } else {
+                        bError.printStackTrace();
+                    }
                     continue;
                 }
 
@@ -144,62 +158,84 @@ public class FtpContentCallbackHandler {
         }
     }
 
-    private byte[] fetchAllFileContentFromRemote(FileObject fileObject, InputStream inputStream) throws Exception {
-        try {
-            return FtpContentConverter.convertInputStreamToByteArray(inputStream);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (Exception e) {
-                    log.warn("Failed to close input stream", e);
-                }
-            }
-            if (fileObject != null) {
-                try {
-                    fileObject.close();
-                } catch (Exception e) {
-                    log.warn("Failed to close file object", e);
-                }
-            }
-        }
-    }
-
-    private Object convertFileContent(Environment environment, FileObject fileObject, InputStream inputStream,
-                                      MethodType methodType)
+    private Object convertFileContent(Environment environment, String fileUri, MethodType methodType)
             throws Exception {
         String methodName = methodType.getName();
         Parameter firstParameter = methodType.getParameters()[0];
         Type firstParamType = TypeUtils.getReferredType(firstParameter.type);
 
         if (firstParamType.getTag() == TypeTags.STREAM_TAG) {
+            // Stream case: actual data transfer is lazy (stream.next() reads in the Ballerina service),
+            // so retry is not applicable here. Any exception propagates to processContentCallbacks
+            // where a BError is created and printed.
             Type constrainedType = ((StreamType) firstParamType).getConstrainedType();
-            switch (methodName) {
-                case ON_FILE_REMOTE_FUNCTION -> {
-                    return ContentByteStreamIteratorUtils.createStream(inputStream,
-                            constrainedType, laxDataBinding, fileObject);
-                }
-                case ON_FILE_CSV_REMOTE_FUNCTION -> {
-                    return ContentCsvStreamIteratorUtils.createRecordStream(inputStream,
-                            constrainedType, laxDataBinding, fileObject);
-                }
-                default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
+            FileObject fileObject = null;
+            InputStream inputStream = null;
+            try {
+                fileObject = fileSystemManager.resolveFile(fileUri, fileSystemOptions);
+                inputStream = fileObject.getContent().getInputStream();
+                return switch (methodName) {
+                    case ON_FILE_REMOTE_FUNCTION -> ContentByteStreamIteratorUtils.createStream(
+                            inputStream, constrainedType, laxDataBinding, fileObject);
+                    case ON_FILE_CSV_REMOTE_FUNCTION -> ContentCsvStreamIteratorUtils.createRecordStream(
+                            inputStream, constrainedType, laxDataBinding, fileObject);
+                    default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
+                };
+            } catch (Exception e) {
+                closeQuietly(inputStream, fileObject);
+                throw e;
             }
         } else {
-            byte[] fileContent = fetchAllFileContentFromRemote(fileObject, inputStream);
-            String fileNamePrefix = deriveFileNamePrefix(fileObject);
-            String filePath = fileObject.getName().getURI();
+            // Non-stream case: retry covers the full synchronous transfer — resolveFile + getInputStream
+            // + reading all bytes. On failure the file object is closed so the next attempt starts fresh.
+            return FtpRetryHelper.executeWithRetry(
+                    () -> fetchAndConvertContent(environment, fileUri, methodName, firstParamType),
+                    "fetchContent", fileUri,
+                    retryEnabled, retryCount, retryInterval, retryBackoffFactor, retryMaxWaitInterval);
+        }
+    }
+
+    private Object fetchAndConvertContent(Environment environment, String fileUri, String methodName,
+                                          Type firstParamType) throws Exception {
+        FileObject fo = null;
+        InputStream is = null;
+        try {
+            fo = fileSystemManager.resolveFile(fileUri, fileSystemOptions);
+            is = fo.getContent().getInputStream();
+            byte[] fileContent = FtpContentConverter.convertInputStreamToByteArray(is);
             return switch (methodName) {
                 case ON_FILE_REMOTE_FUNCTION -> convertToBallerinaByteArray(fileContent);
                 case ON_FILE_TEXT_REMOTE_FUNCTION -> convertBytesToString(fileContent);
-                case ON_FILE_JSON_REMOTE_FUNCTION -> convertBytesToJson(fileContent, firstParamType, laxDataBinding,
-                        filePath);
-                case ON_FILE_XML_REMOTE_FUNCTION -> convertBytesToXml(fileContent, firstParamType, laxDataBinding,
-                        filePath);
-                case ON_FILE_CSV_REMOTE_FUNCTION -> convertBytesToCsv(environment, fileContent, firstParamType,
-                        laxDataBinding, csvFailSafe, fileNamePrefix, filePath);
+                case ON_FILE_JSON_REMOTE_FUNCTION -> convertBytesToJson(fileContent, firstParamType,
+                        laxDataBinding, fileUri);
+                case ON_FILE_XML_REMOTE_FUNCTION -> convertBytesToXml(fileContent, firstParamType,
+                        laxDataBinding, fileUri);
+                case ON_FILE_CSV_REMOTE_FUNCTION -> {
+                    String fileNamePrefix = deriveFileNamePrefix(fo);
+                    yield convertBytesToCsv(environment, fileContent, firstParamType,
+                            laxDataBinding, csvFailSafe, fileNamePrefix, fileUri);
+                }
                 default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
             };
+        } finally {
+            closeQuietly(is, fo);
+        }
+    }
+
+    private void closeQuietly(InputStream inputStream, FileObject fileObject) {
+        if (inputStream != null) {
+            try {
+                inputStream.close();
+            } catch (Exception e) {
+                log.warn("Failed to close input stream", e);
+            }
+        }
+        if (fileObject != null) {
+            try {
+                fileObject.close();
+            } catch (Exception e) {
+                log.warn("Failed to close file object", e);
+            }
         }
     }
 
