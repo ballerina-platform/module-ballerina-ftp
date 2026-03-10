@@ -486,7 +486,7 @@ function testGetXml_invalidContent_bindsError() returns error? {
     groups: ["ftp-client-api", "binding"]
 }
 function testGetJson_missingField_bindsError() returns error? {
-    check ftpClient->putJson(P_BIND_TYPED_JSON, {name: "Alice"}); // missing 'age'
+    check ftpClient->putJson(P_BIND_TYPED_JSON, <json> {name: "Alice"}); // missing 'age'
     Person|ftp:Error result = ftpClient->getJson(P_BIND_TYPED_JSON, Person);
     test:assertTrue(result is ftp:ContentBindingError,
         "getJson should return ContentBindingError when required field is absent");
@@ -503,7 +503,7 @@ function testGetJson_missingField_bindsError() returns error? {
 function testGetCsv_wrongType_bindsError() returns error? {
     string[][] data = [["name", "age"], ["Alice", "not-a-number"]];
     check ftpClient->putCsv(P_BINDING_CSV, data);
-    CsvPerson[]|ftp:Error result = ftpClient->getCsv(P_BINDING_CSV, CsvPerson[]);
+    CsvPerson[]|ftp:Error result = ftpClient->getCsv(P_BINDING_CSV);
     test:assertTrue(result is ftp:ContentBindingError,
         "getCsv should return ContentBindingError when field type mismatches");
     do {
@@ -533,7 +533,7 @@ function testGetTyped_nonExistentFile() {
     groups: ["ftp-client-api", "binding", "lax"]
 }
 function testJsonBinding_strictAndLax() returns error? {
-    check ftpClient->putJson(P_BIND_TYPED_JSON, {name: "Alice"}); // missing 'age'
+    check ftpClient->putJson(P_BIND_TYPED_JSON, <json> {name: "Alice"}); // missing 'age'
 
     Person|ftp:Error strictResult = ftpClient->getJson(P_BIND_TYPED_JSON, Person);
     test:assertTrue(strictResult is ftp:Error,
@@ -579,11 +579,11 @@ function testCsvBinding_strictAndLax() returns error? {
     string[][] data = [["name", "age"], ["Alice", "25"], ["Bob", ""]];
     check ftpClient->putCsv(P_BIND_TYPED_CSV, data, ftp:OVERWRITE);
 
-    CsvPerson[]|ftp:Error strictResult = ftpClient->getCsv(P_BIND_TYPED_CSV, CsvPerson[]);
+    CsvPerson[]|ftp:Error strictResult = ftpClient->getCsv(P_BIND_TYPED_CSV);
     test:assertTrue(strictResult is ftp:Error,
         "Strict CSV binding should fail when required field is empty");
 
-    CsvPersonLax[] laxResult = check ftpLaxClient->getCsv(P_BIND_TYPED_CSV, CsvPersonLax[]);
+    CsvPersonLax[] laxResult = check ftpLaxClient->getCsv(P_BIND_TYPED_CSV);
     test:assertEquals(laxResult.length(), 2, "Lax CSV should return 2 records");
     test:assertEquals(laxResult[0].name, "Alice");
     test:assertEquals(laxResult[1].name, "Bob");
@@ -870,7 +870,7 @@ function testClose_thenPutApis() returns error? {
     ftp:Error? r2 = c->putText("/x.txt", "v");
     test:assertTrue(isClosedError(r2, msg), "putText after close should return CLIENT_ALREADY_CLOSED_MSG");
 
-    ftp:Error? r3 = c->putJson("/x.json", {});
+    ftp:Error? r3 = c->putJson("/x.json", <json> {});
     test:assertTrue(isClosedError(r3, msg), "putJson after close should return CLIENT_ALREADY_CLOSED_MSG");
 
     ftp:Error? r4 = c->putXml("/x.xml", xml `<a/>`);
