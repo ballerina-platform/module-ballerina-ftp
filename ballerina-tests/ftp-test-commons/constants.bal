@@ -41,7 +41,7 @@ public const string FTPS_ROOT = "/ftps-client";
 // ─── Local resource paths ─────────────────────────────────────────────────────
 // All paths are relative from each test-package directory under ballerina-tests/
 
-public const string RESOURCES_PATH = "../../ballerina/tests/resources";
+public const string RESOURCES_PATH = "../resources";
 public const string PUT_FILE_PATH = RESOURCES_PATH + "/datafiles/file2.txt";
 public const string APPEND_FILE_PATH = RESOURCES_PATH + "/datafiles/file1.txt";
 public const string JSON_FILE_PATH = RESOURCES_PATH + "/datafiles/test_data.json";

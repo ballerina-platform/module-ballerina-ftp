@@ -145,19 +145,18 @@ task initializeVariables {
 }
 
 // ─── Mock server lifecycle ────────────────────────────────────────────────────
-// The startup scripts and resource files (keystore, SSH keys, datafiles) live
-// under ballerina/tests/resources/.  The scripts use paths relative to
-// ballerina/ so we keep that directory as workingDir for the daemon process.
+// Startup scripts and all resource files (keystore, SSH keys, datafiles) live
+// under ballerina-tests/resources/.  The scripts receive "resources" as the
+// resources-dir argument, resolved relative to workingDir (project.projectDir).
 
-def ballerinaDir = "${project.rootDir}/ballerina"
 def testUtilScript = Os.isFamily(Os.FAMILY_WINDOWS)
-        ? "${ballerinaDir}/tests/resources/startJava.bat"
-        : "${ballerinaDir}/tests/resources/startJava.sh"
+        ? "${project.projectDir}/resources/startJava.bat"
+        : "${project.projectDir}/resources/startJava.sh"
 
 task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
     dependsOn(":${packageName}-test-utils:build")
     executable = testUtilScript
-    workingDir = ballerinaDir
+    workingDir = "${project.projectDir}"
     standardOutput = new File("${project.buildDir}/mockServerLogs.log")
 }
 
