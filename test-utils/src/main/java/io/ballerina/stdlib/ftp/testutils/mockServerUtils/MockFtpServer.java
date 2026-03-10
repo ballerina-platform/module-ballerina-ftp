@@ -154,6 +154,32 @@ public final class MockFtpServer {
         fileSystem.add(new DirectoryEntry("/home/in/post-process-archive"));
         fileSystem.add(new DirectoryEntry("/home/in/post-process-error"));
 
+        // ftp-listener-advanced-tests: content methods & post-processing
+        fileSystem.add(new DirectoryEntry("/home/in/adv-content"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-routing"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-postproc"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-postproc-done"));
+
+        // ftp-listener-advanced-tests: onError
+        fileSystem.add(new DirectoryEntry("/home/in/adv-onerror"));
+
+        // ftp-listener-advanced-tests: onFileDeleted
+        fileSystem.add(new DirectoryEntry("/home/in/adv-deleted"));
+        fileSystem.add(new FileEntry("/home/in/adv-deleted/.init", ""));
+
+        // ftp-listener-advanced-tests: Caller operations
+        fileSystem.add(new DirectoryEntry("/home/in/adv-caller-in"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-caller-out"));
+
+        // ftp-listener-advanced-tests: @ServiceConfig
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-route-a"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-route-b"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-single"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-legacy"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-dup"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-mixed"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-badregex"));
+
         ftpServer.setFileSystem(fileSystem);
         ftpServer.start();
         logger.info("Starting FTP server...");
