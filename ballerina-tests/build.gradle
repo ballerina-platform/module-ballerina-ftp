@@ -155,6 +155,9 @@ def testUtilScript = Os.isFamily(Os.FAMILY_WINDOWS)
 
 task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
     dependsOn(":${packageName}-test-utils:build")
+    // Ensure all local Java/Groovy outputs consumed from the project directory
+    // are produced before this daemon startup task executes.
+    dependsOn(jar)
     executable = testUtilScript
     workingDir = "${project.projectDir}"
     standardOutput = new File("${project.buildDir}/mockServerLogs.log")
