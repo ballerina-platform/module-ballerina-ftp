@@ -56,7 +56,7 @@ function waitUntilBool(function() returns boolean cond, int timeoutSec) returns 
     return false;
 }
 
-function errDelListenerConfig(string dir, string pattern, int poll = 2)
+function errDelListenerConfig(string dir, string pattern, decimal poll = 2)
         returns ftp:ListenerConfiguration {
     return {
         protocol: ftp:FTP,
@@ -118,7 +118,7 @@ function testOnError_Basic() returns error? {
     test:assertTrue(lastBindingError is ftp:ContentBindingError, "Error should be ContentBindingError");
     test:assertTrue(lastErrorFilePath.endsWith(".json"), "Error filePath should reference the .json file");
 
-    ftp:Error? _ = errorDeleteFtpClient->delete(ON_ERROR_DIR + "/onerr-basic.json");
+    check errorDeleteFtpClient->delete(ON_ERROR_DIR + "/onerr-basic.json");
 }
 
 // onError with minimal signature (no Caller)
@@ -154,7 +154,7 @@ function testOnError_MinimalParams() returns error? {
 
     test:assertTrue(received, "onError without Caller should be invoked");
 
-    ftp:Error? _ = errorDeleteFtpClient->delete(ON_ERROR_DIR + "/onerr-min.json");
+    check errorDeleteFtpClient->delete(ON_ERROR_DIR + "/onerr-min.json");
 }
 
 // onError with Caller: use caller to delete the problematic file
@@ -204,7 +204,7 @@ function testOnError_CallerDeletesFile() returns error? {
     test:assertTrue(onErrorCallerFilePath.endsWith(".json"), "filePath should reference the .json file");
 
     // File should already be gone; ignore any error
-    ftp:Error? _ = errorDeleteFtpClient->delete(remotePath);
+    check errorDeleteFtpClient->delete(remotePath);
 }
 
 // ContentBindingError type structure is correct

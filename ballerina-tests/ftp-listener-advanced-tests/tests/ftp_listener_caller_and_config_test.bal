@@ -36,7 +36,7 @@ const CALLER_OUT = "/home/in/adv-caller-out";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function callerListenerConfig(string pattern, int poll = 1) returns ftp:ListenerConfiguration {
+function callerListenerConfig(string pattern, decimal poll = 1) returns ftp:ListenerConfiguration {
     return {
         protocol: ftp:FTP,
         host: commons:FTP_HOST,
@@ -108,8 +108,8 @@ function testCaller_Put() returns error? {
         test:assertTrue(exists, "Result file should have been created by caller->put()");
     }
 
-    ftp:Error? _ = callerFtpClient->delete(CALLER_OUT + "/caller-put-result.txt");
-    ftp:Error? __ = callerFtpClient->delete(CALLER_OUT + "/caller-put.trigger");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-put-result.txt");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-put.trigger");
 }
 
 // delete: service uses caller->delete() to remove the trigger file
@@ -191,7 +191,7 @@ function testCaller_List() returns error? {
     test:assertEquals(callerListResult[0].path, CALLER_IN + "/caller-list.trigger",
         "Listed file path should match");
 
-    ftp:Error? _ = callerFtpClient->delete(CALLER_OUT + "/caller-list.trigger");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-list.trigger");
 }
 
 // get: service reads the trigger file via caller->get() and validates content
@@ -239,7 +239,7 @@ function testCaller_Get() returns error? {
 
     test:assertTrue(callerGetOk, "Caller get should return non-empty content");
 
-    ftp:Error? _ = callerFtpClient->delete(CALLER_OUT + "/caller-get.trigger");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-get.trigger");
 }
 
 // size: service reads file size via caller->size()
@@ -278,7 +278,7 @@ function testCaller_Size() returns error? {
 
     test:assertTrue(callerFileSize > 0, "Caller size should return a positive byte count");
 
-    ftp:Error? _ = callerFtpClient->delete(CALLER_OUT + "/caller-size.trigger");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-size.trigger");
 }
 
 // mkdir / rmdir / isDirectory lifecycle
@@ -305,7 +305,8 @@ function testCaller_MkdirRmdirIsDirectory() returns error? {
                     callerMkdirOk = true;
                     callerIsDirOk = check caller->isDirectory(callerDir);
                     check caller->rmdir(callerDir);
-                    callerRmdirOk = !(check caller->exists(callerDir));
+                    boolean existCheck = check caller->exists(callerDir);
+                    callerRmdirOk = existCheck is true ? false : true;
                     check caller->rename(CALLER_IN + "/caller-mkdir.trigger",
                                          CALLER_OUT + "/caller-mkdir.trigger");
                 }
@@ -329,7 +330,7 @@ function testCaller_MkdirRmdirIsDirectory() returns error? {
     test:assertTrue(callerIsDirOk, "isDirectory should return true after mkdir");
     test:assertTrue(callerRmdirOk, "rmdir should remove the directory");
 
-    ftp:Error? _ = callerFtpClient->delete(CALLER_OUT + "/caller-mkdir.trigger");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-mkdir.trigger");
 }
 
 // =============================================================================
@@ -380,8 +381,8 @@ function testCaller_PutText() returns error? {
         test:assertFail("Failed to read putText result: " + content.message());
     }
 
-    ftp:Error? _ = callerFtpClient->delete(CALLER_OUT + "/caller-puttext-result.txt");
-    ftp:Error? __ = callerFtpClient->delete(CALLER_OUT + "/caller-puttext.trigger");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-puttext-result.txt");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-puttext.trigger");
 }
 
 // putJson / getJson round-trip
@@ -430,8 +431,8 @@ function testCaller_PutJson() returns error? {
         test:assertFail("Failed to read putJson result: " + content.message());
     }
 
-    ftp:Error? _ = callerFtpClient->delete(CALLER_OUT + "/caller-putjson-result.json");
-    ftp:Error? __ = callerFtpClient->delete(CALLER_OUT + "/caller-putjson.trigger");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-putjson-result.json");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-putjson.trigger");
 }
 
 // putCsv / getCsv round-trip
@@ -482,8 +483,8 @@ function testCaller_PutCsv() returns error? {
         test:assertFail("Failed to read putCsv result: " + rows.message());
     }
 
-    ftp:Error? _ = callerFtpClient->delete(CALLER_OUT + "/caller-putcsv-result.csv");
-    ftp:Error? __ = callerFtpClient->delete(CALLER_OUT + "/caller-putcsv.trigger");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-putcsv-result.csv");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-putcsv.trigger");
 }
 
 // move and copy
@@ -544,7 +545,7 @@ function testCaller_MoveAndCopy() returns error? {
         test:assertTrue(copyDest, "Copied file should exist at destination");
     }
 
-    ftp:Error? _ = callerFtpClient->delete(CALLER_OUT + "/caller-move-dest.txt");
+    check callerFtpClient->delete(CALLER_OUT + "/caller-move-dest.txt");
     ftp:Error? __ = callerFtpClient->delete(CALLER_OUT + "/caller-copy-dest.txt");
 }
 
@@ -618,7 +619,7 @@ function testServiceConfig_MultiPathRouting() returns error? {
     test:assertEquals(scRouteAName, "route-a-only.txt", "Service A should have received its file");
     test:assertEquals(scRouteBName, "route-b-only.txt", "Service B should have received its file");
 
-    ftp:Error? _ = callerFtpClient->delete(SC_PATH_A + "/route-a-only.txt");
+    check callerFtpClient->delete(SC_PATH_A + "/route-a-only.txt");
     ftp:Error? __ = callerFtpClient->delete(SC_PATH_B + "/route-b-only.txt");
 }
 
@@ -664,7 +665,7 @@ function testServiceConfig_SingleService() returns error? {
     test:assertTrue(received, "Single @ServiceConfig service should receive its file event");
     test:assertEquals(scSingleName, "sc-single-test.txt");
 
-    ftp:Error? _ = callerFtpClient->delete(SC_SINGLE + "/sc-single-test.txt");
+    check callerFtpClient->delete(SC_SINGLE + "/sc-single-test.txt");
 }
 
 // Backward compatibility: service without @ServiceConfig on a listener that has path set
@@ -710,7 +711,7 @@ function testServiceConfig_BackwardCompatibility() returns error? {
     test:assertTrue(received, "Legacy service (no @ServiceConfig) must receive events via listener path");
     test:assertEquals(scLegacyName, "legacy-compat.txt");
 
-    ftp:Error? _ = callerFtpClient->delete(SC_LEGACY + "/legacy-compat.txt");
+    check callerFtpClient->delete(SC_LEGACY + "/legacy-compat.txt");
 }
 
 // Duplicate path → attach must return an error

@@ -63,7 +63,7 @@ function waitUntil(function() returns boolean cond, int timeoutSec) returns bool
     return false;
 }
 
-function contentListenerConfig(string dir, string pattern, int poll = 2)
+function contentListenerConfig(string dir, string pattern, decimal poll = 2)
         returns ftp:ListenerConfiguration {
     return {
         protocol: ftp:FTP,
@@ -115,7 +115,7 @@ function testOnFileText_Basic() returns error? {
     ftp:FileInfo fi = check (textFileInfo).ensureType();
     test:assertTrue(fi.name.endsWith(".txt"), "FileInfo name should end with .txt");
 
-    ftp:Error? _ = contentFtpClient->delete(CONTENT_DIR + "/cnt-text-test.txt");
+    check contentFtpClient->delete(CONTENT_DIR + "/cnt-text-test.txt");
 }
 
 // onFileText without Caller parameter (optional Caller)
@@ -150,7 +150,7 @@ function testOnFileText_NoCaller() returns error? {
 
     test:assertTrue(received, "onFileText without Caller should be invoked");
 
-    ftp:Error? _ = contentFtpClient->delete(CONTENT_DIR + "/cnt-nocaller-test.txt");
+    check contentFtpClient->delete(CONTENT_DIR + "/cnt-nocaller-test.txt");
 }
 
 // =============================================================================
@@ -195,7 +195,7 @@ function testOnFileJson_Basic() returns error? {
     test:assertEquals(check j["age"].ensureType(), 30, "age field should match");
     test:assertEquals(j["city"], "New York", "city field should match");
 
-    ftp:Error? _ = contentFtpClient->delete(CONTENT_DIR + "/cnt-json-test.json");
+    check contentFtpClient->delete(CONTENT_DIR + "/cnt-json-test.json");
 }
 
 // onFileJson with record type binding
@@ -234,7 +234,7 @@ function testOnFileJson_RecordType() returns error? {
     test:assertEquals(person.city, "New York");
     test:assertEquals(person.isActive, true);
 
-    ftp:Error? _ = contentFtpClient->delete(CONTENT_DIR + "/cnt-jsonrec-test.json");
+    check contentFtpClient->delete(CONTENT_DIR + "/cnt-jsonrec-test.json");
 }
 
 // =============================================================================
@@ -275,7 +275,7 @@ function testOnFileXml_Basic() returns error? {
     test:assertTrue(xmlStr.includes("Jane Smith"), "XML should contain person name");
     test:assertTrue(xmlStr.includes("Los Angeles"), "XML should contain city");
 
-    ftp:Error? _ = contentFtpClient->delete(CONTENT_DIR + "/cnt-xml-test.xml");
+    check contentFtpClient->delete(CONTENT_DIR + "/cnt-xml-test.xml");
 }
 
 // =============================================================================
@@ -318,7 +318,7 @@ function testOnFileCsv_StringArray() returns error? {
     test:assertEquals(csvContent[0][0], "Alice Johnson", "First row name should match");
     test:assertEquals(csvContent[0][1], "25", "First row age should match");
 
-    ftp:Error? _ = contentFtpClient->delete(CONTENT_DIR + "/cnt-csv-test.csv");
+    check contentFtpClient->delete(CONTENT_DIR + "/cnt-csv-test.csv");
 }
 
 // onFileCsv — record array variant
@@ -355,7 +355,7 @@ function testOnFileCsv_RecordArray() returns error? {
     test:assertEquals(csvRecordContent[0].name, "Alice Johnson");
     test:assertEquals(csvRecordContent[0].age, 25);
 
-    ftp:Error? _ = contentFtpClient->delete(CONTENT_DIR + "/cnt-csvrec-test.csv");
+    check contentFtpClient->delete(CONTENT_DIR + "/cnt-csvrec-test.csv");
 }
 
 // onFileCsv — stream variant
@@ -393,7 +393,7 @@ function testOnFileCsv_Stream() returns error? {
     test:assertTrue(received, "onFileCsv (stream) should be invoked");
     test:assertTrue(csvStreamRowCount > 0, "Should have processed CSV rows");
 
-    ftp:Error? _ = contentFtpClient->delete(CONTENT_DIR + "/cnt-csvstream-test.csv");
+    check contentFtpClient->delete(CONTENT_DIR + "/cnt-csvstream-test.csv");
 }
 
 // =============================================================================
@@ -431,7 +431,7 @@ function testOnFile_ByteArray() returns error? {
     test:assertTrue(received, "onFile (byte[]) should be invoked");
     test:assertTrue(byteContent.length() > 0, "Byte content should be non-empty");
 
-    ftp:Error? _ = contentFtpClient->delete(CONTENT_DIR + "/cnt-bin-test.bin");
+    check contentFtpClient->delete(CONTENT_DIR + "/cnt-bin-test.bin");
 }
 
 int streamByteCount = 0;
@@ -470,7 +470,7 @@ function testOnFile_Stream() returns error? {
     test:assertTrue(received, "onFile (stream) should be invoked");
     test:assertTrue(streamByteCount > 0, "Should have processed bytes from stream");
 
-    ftp:Error? _ = contentFtpClient->delete(CONTENT_DIR + "/cnt-stream-test.stream1");
+    check contentFtpClient->delete(CONTENT_DIR + "/cnt-stream-test.stream1");
 }
 
 // =============================================================================
@@ -525,9 +525,9 @@ function testExtensionBasedRouting() returns error? {
 
     test:assertTrue(allReceived, "All three content methods should fire for their respective file types");
 
-    ftp:Error? _ = contentFtpClient->delete(ROUTING_DIR + "/routing1.txt");
-    ftp:Error? __ = contentFtpClient->delete(ROUTING_DIR + "/routing2.json");
-    ftp:Error? ___ = contentFtpClient->delete(ROUTING_DIR + "/routing3.xml");
+    check contentFtpClient->delete(ROUTING_DIR + "/routing1.txt");
+    check contentFtpClient->delete(ROUTING_DIR + "/routing2.json");
+    check contentFtpClient->delete(ROUTING_DIR + "/routing3.xml");
 }
 
 // Fallback: JSON gets onFileJson, unknown type falls back to onFile
@@ -571,8 +571,8 @@ function testFallbackToGenericOnFile() returns error? {
 
     test:assertTrue(received, "JSON file should use onFileJson, TXT should fall back to onFile");
 
-    ftp:Error? _ = contentFtpClient->delete(ROUTING_DIR + "/fallback1.json");
-    ftp:Error? __ = contentFtpClient->delete(ROUTING_DIR + "/fallback2.txt");
+    check contentFtpClient->delete(ROUTING_DIR + "/fallback1.json");
+    check contentFtpClient->delete(ROUTING_DIR + "/fallback2.txt");
 }
 
 // =============================================================================
@@ -613,7 +613,7 @@ function testFunctionConfig_PatternOverride() returns error? {
 
     test:assertTrue(received, "@FunctionConfig should route .special files to onFileJson");
 
-    ftp:Error? _ = contentFtpClient->delete(POSTPROC_DIR + "/override.special");
+    check contentFtpClient->delete(POSTPROC_DIR + "/override.special");
 }
 
 // @FunctionConfig.afterProcess = DELETE: file is removed from server after successful processing.
@@ -673,7 +673,7 @@ function testFunctionConfig_AfterProcessMove() returns error? {
     string moveTarget = "/home/in/adv-postproc-done";
 
     ftp:Service svc = service object {
-        @ftp:FunctionConfig {afterProcess: {moveTo: moveTarget}}
+        @ftp:FunctionConfig {afterProcess: {moveTo: "/home/in/adv-postproc-done"}}
         remote function onFileText(string content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
             afterMoveCount += 1;
         }
@@ -704,5 +704,5 @@ function testFunctionConfig_AfterProcessMove() returns error? {
     }
 
     // Cleanup the moved file (best effort)
-    ftp:Error? _ = contentFtpClient->delete(moveTarget + "/aftermove-test.txt");
+    check contentFtpClient->delete(moveTarget + "/aftermove-test.txt");
 }
