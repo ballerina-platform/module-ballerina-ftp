@@ -40,7 +40,8 @@ def testPackages = [
     "ftp-client-api-tests",
     "ftp-client-behaviour-tests",
     "ftp-listener-basic-tests",
-    "ftp-listener-advanced-tests"
+    "ftp-listener-advanced-tests",
+    "ftp-listener-behaviour-tests"
 ]
 def testCommonPackage = "ftp-test-commons"
 

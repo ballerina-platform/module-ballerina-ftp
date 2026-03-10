@@ -181,6 +181,18 @@ public final class MockFtpServer {
         fileSystem.add(new DirectoryEntry("/home/in/adv-sc-badregex"));
         fileSystem.add(new DirectoryEntry("/home/in/listener-retry"));
 
+        // ftp-listener-behaviour-tests: fileAgeFilter
+        fileSystem.add(new DirectoryEntry("/home/in/beh-age-max"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-age-min"));
+
+        // ftp-listener-behaviour-tests: fileDependencyConditions
+        fileSystem.add(new DirectoryEntry("/home/in/beh-dep-all"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-dep-any"));
+
+        // ftp-listener-behaviour-tests: VFS configs / polling / compression
+        fileSystem.add(new DirectoryEntry("/home/in/beh-vfs"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-poll"));
+
         ftpServer.setFileSystem(fileSystem);
         ftpServer.start();
         logger.info("Starting FTP server...");
