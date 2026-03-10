@@ -487,7 +487,7 @@ function testGetXml_invalidContent_bindsError() returns error? {
 }
 function testGetJson_missingField_bindsError() returns error? {
     check ftpClient->putJson(P_BIND_TYPED_JSON, <json> {name: "Alice"}); // missing 'age'
-    Person|ftp:Error result = ftpClient->getJson(P_BIND_TYPED_JSON, Person);
+    Person|ftp:Error result = ftpClient->getJson(P_BIND_TYPED_JSON);
     test:assertTrue(result is ftp:ContentBindingError,
         "getJson should return ContentBindingError when required field is absent");
     do {
