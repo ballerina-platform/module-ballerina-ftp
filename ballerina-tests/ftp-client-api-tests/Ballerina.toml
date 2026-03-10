@@ -1,0 +1,20 @@
+[package]
+org = "ballerina_tests"
+name = "ftp_client_api_tests"
+version = "2.17.2"
+distribution = "2201.12.0"
+
+[build-options]
+observabilityIncluded = true
+
+[[dependency]]
+org = "ballerina"
+name = "ftp"
+version = "2.17.2"
+repository = "local"
+
+[[dependency]]
+org = "ballerina_tests"
+name = "ftp_test_commons"
+version = "2.17.2"
+repository = "local"
