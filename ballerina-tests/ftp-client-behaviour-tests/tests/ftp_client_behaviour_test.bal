@@ -561,7 +561,7 @@ function testErrorType_FileAlreadyExistsOnMkdir() returns error? {
     test:assertTrue(result is ftp:FileAlreadyExistsError,
         "mkdir() on an existing directory should return FileAlreadyExistsError");
     // Cleanup (best effort).
-    ftp:Error? _ = ftpClient->rmdir(dir);
+    check ftpClient->rmdir(dir);
 }
 
 @test:Config {
@@ -577,8 +577,8 @@ function testErrorType_FileAlreadyExistsOnRename() returns error? {
     test:assertTrue(result is ftp:FileAlreadyExistsError,
         "rename() to an existing path should return FileAlreadyExistsError");
     // Cleanup (best effort).
-    ftp:Error? _ = ftpClient->delete(src);
-    ftp:Error? __ = ftpClient->delete(dst);
+    check ftpClient->delete(src);
+    check ftpClient->delete(dst);
 }
 
 @test:Config {
