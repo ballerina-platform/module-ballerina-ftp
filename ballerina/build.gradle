@@ -263,3 +263,7 @@ test.dependsOn ":${packageName}-compiler-plugin:build"
 
 publishToMavenLocal.dependsOn build
 publish.dependsOn build
+
+// Tests have been migrated to separate packages under ballerina-tests/
+// Run `./gradlew :ftp-ballerina-tests:test` to execute the new test suite
+test.enabled = false

@@ -1,0 +1,5 @@
+[package]
+org = "ballerina_tests"
+name = "ftp_test_commons"
+version = "2.17.2"
+distribution = "2201.12.0"

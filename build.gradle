@@ -107,4 +107,5 @@ release {
 
 task build {
     dependsOn('ftp-ballerina:build')
+    dependsOn('ftp-ballerina-tests:test')
 }
