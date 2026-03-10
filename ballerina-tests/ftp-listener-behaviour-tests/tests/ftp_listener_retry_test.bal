@@ -34,17 +34,15 @@ ftp:Client retryListenerClient = check new ({
 // through FtpListenerHelper → FtpListener → FtpContentCallbackHandler without
 // interfering with normal file delivery on the happy path.
 
-isolated boolean retryListenerDelivered = false;
-isolated string retryListenerContent = "";
+boolean retryListenerDelivered = false;
+string retryListenerContent = "";
 
 @test:Config {
     groups: ["ftp-listener-behaviour", "vfs-config"]
 }
 function testListenerRetryConfig_SuccessPath() returns error? {
-    lock {
         retryListenerDelivered = false;
         retryListenerContent = "";
-    }
 
     ftp:Service retrySvc = @ftp:ServiceConfig {
         path: RETRY_LISTENER_DIR,
@@ -53,10 +51,8 @@ function testListenerRetryConfig_SuccessPath() returns error? {
     service object {
         remote function onFileText(string content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
             log:printInfo(string `[retry-success] onFileText invoked: ${fileInfo.name}`);
-            lock {
                 retryListenerContent = content;
                 retryListenerDelivered = true;
-            }
         }
     };
 
@@ -82,18 +78,17 @@ function testListenerRetryConfig_SuccessPath() returns error? {
         "retry config test content");
 
     boolean delivered = waitUntilVfs(function() returns boolean {
-        lock { return retryListenerDelivered; }
+        return retryListenerDelivered;
     }, 20);
 
     runtime:deregisterListener(retryListener);
     check retryListener.gracefulStop();
 
-    deleteIfExistsVfs(retryListenerClient, RETRY_LISTENER_DIR + "/retry-success.txt");
-
     test:assertTrue(delivered,
         "onFileText should be invoked when retryConfig is configured");
-    string content;
-    lock { content = retryListenerContent; }
-    test:assertEquals(content, "retry config test content",
+    test:assertEquals(retryListenerContent, "retry config test content",
         "Content should be delivered correctly with retryConfig");
+
+    check deleteIfExistsVfs(retryListenerClient, RETRY_LISTENER_DIR + "/retry-success.txt");
+
 }

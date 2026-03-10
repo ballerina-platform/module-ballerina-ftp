@@ -35,8 +35,8 @@ ftp:Client vfsFtpClient = check new ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function deleteIfExistsVfs(ftp:Client ftpClient, string path) {
-    ftp:Error? _ = ftpClient->delete(path);
+function deleteIfExistsVfs(ftp:Client ftpClient, string path) returns error? {
+    check ftpClient->delete(path);
 }
 
 function waitUntilVfs(function() returns boolean cond, int timeoutSec) returns boolean {
@@ -142,9 +142,11 @@ function testListener_FileTransferMode_Binary_DeliversFile() returns error? {
 
     runtime:deregisterListener(binListener);
     check binListener.gracefulStop();
-    deleteIfExistsVfs(vfsFtpClient, VFS_DIR + "/test.bintransfer");
 
     test:assertTrue(delivered, "BINARY mode listener should deliver files correctly");
+
+    check deleteIfExistsVfs(vfsFtpClient, VFS_DIR + "/test.bintransfer");
+
 }
 
 // ─── TEST: fileTransferMode ASCII — listener initializes and delivers files ───
@@ -191,9 +193,10 @@ function testListener_FileTransferMode_Ascii_DeliversFile() returns error? {
 
     runtime:deregisterListener(asciiListener);
     check asciiListener.gracefulStop();
-    deleteIfExistsVfs(vfsFtpClient, VFS_DIR + "/test.asciitransfer");
+     test:assertTrue(delivered, "ASCII mode listener should deliver files correctly");
 
-    test:assertTrue(delivered, "ASCII mode listener should deliver files correctly");
+    check deleteIfExistsVfs(vfsFtpClient, VFS_DIR + "/test.asciitransfer");
+
 }
 
 // ─── TEST: default fileTransferMode is BINARY ─────────────────────────────────
@@ -275,10 +278,12 @@ function testListener_PollingInterval_DetectsFileWithinWindow() returns error? {
 
     runtime:deregisterListener(pollListener);
     check pollListener.gracefulStop();
-    deleteIfExistsVfs(vfsFtpClient, POLL_DIR + "/detect.polltest");
 
-    test:assertTrue(delivered,
+        test:assertTrue(delivered,
         "File should be detected within a few polling intervals");
+
+    check deleteIfExistsVfs(vfsFtpClient, POLL_DIR + "/detect.polltest");
+
 }
 
 // ─── TEST: retryConfig is accepted by the listener ────────────────────────────

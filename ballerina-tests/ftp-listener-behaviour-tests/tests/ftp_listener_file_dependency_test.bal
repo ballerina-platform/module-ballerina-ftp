@@ -34,8 +34,8 @@ ftp:Client depFtpClient = check new ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function deleteIfExistsDep(ftp:Client ftpClient, string path) {
-    ftp:Error? _ = ftpClient->delete(path);
+function deleteIfExistsDep(ftp:Client ftpClient, string path) returns error? {
+    check ftpClient->delete(path);
 }
 
 function waitUntilDep(function() returns boolean cond, int timeoutSec) returns boolean {
@@ -52,22 +52,22 @@ function waitUntilDep(function() returns boolean cond, int timeoutSec) returns b
 
 // ─── TEST: ALL mode — target blocked until ALL deps present ──────────────────
 
-isolated boolean depAllDelivered = false;
-isolated string depAllFile = "";
+boolean depAllDelivered = false;
+string depAllFile = "";
 
 @test:Config {
     groups: ["ftp-listener-behaviour", "file-dependency"]
 }
 function testFileDependency_ALL_BlockedThenDelivered() returns error? {
-    lock { depAllDelivered = false; depAllFile = ""; }
+    depAllDelivered = false; depAllFile = "";
 
     string xmlPath = DEP_ALL_DIR + "/invoice_all.xml";
     string csvPath = DEP_ALL_DIR + "/invoice_all.csv";
     string flagPath = DEP_ALL_DIR + "/invoice_all.flag";
 
-    deleteIfExistsDep(depFtpClient, xmlPath);
-    deleteIfExistsDep(depFtpClient, csvPath);
-    deleteIfExistsDep(depFtpClient, flagPath);
+    check deleteIfExistsDep(depFtpClient, xmlPath);
+    check deleteIfExistsDep(depFtpClient, csvPath);
+    check deleteIfExistsDep(depFtpClient, flagPath);
 
     ftp:Service depService = @ftp:ServiceConfig {
         path: DEP_ALL_DIR,
@@ -84,10 +84,8 @@ function testFileDependency_ALL_BlockedThenDelivered() returns error? {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             foreach ftp:FileInfo fi in event.addedFiles {
                 if fi.name.endsWith(".xml") {
-                    lock {
                         depAllDelivered = true;
                         depAllFile = fi.name;
-                    }
                 }
             }
         }
@@ -108,16 +106,12 @@ function testFileDependency_ALL_BlockedThenDelivered() returns error? {
     check depFtpClient->put(xmlPath, "invoice-data".toBytes());
     runtime:sleep(6);
 
-    boolean blockedEarly;
-    lock { blockedEarly = depAllDelivered; }
-    test:assertFalse(blockedEarly, "Target file should be blocked when ALL deps are absent");
+    test:assertFalse(depAllDelivered, "Target file should be blocked when ALL deps are absent");
 
     // Upload only one dep — still blocked (ALL requires both)
     check depFtpClient->put(csvPath, "csv-data".toBytes());
     runtime:sleep(4);
-    boolean blockedPartial;
-    lock { blockedPartial = depAllDelivered; }
-    test:assertFalse(blockedPartial, "Target should remain blocked when only one of ALL deps is present");
+    test:assertFalse(depAllDelivered, "Target should remain blocked when only one of ALL deps is present");
 
     // Upload the final dep — now the target should be delivered
     check depFtpClient->put(flagPath, "flag".toBytes());
@@ -129,14 +123,12 @@ function testFileDependency_ALL_BlockedThenDelivered() returns error? {
     runtime:deregisterListener(depListener);
     check depListener.gracefulStop();
 
-    deleteIfExistsDep(depFtpClient, xmlPath);
-    deleteIfExistsDep(depFtpClient, csvPath);
-    deleteIfExistsDep(depFtpClient, flagPath);
-
     test:assertTrue(delivered, "Target file should be delivered once ALL deps are present");
-    string matchedFile;
-    lock { matchedFile = depAllFile; }
-    test:assertEquals(matchedFile, "invoice_all.xml", "Delivered file name should match target");
+    test:assertEquals(depAllFile, "invoice_all.xml", "Delivered file name should match target");
+
+    check deleteIfExistsDep(depFtpClient, xmlPath);
+    check deleteIfExistsDep(depFtpClient, csvPath);
+    check deleteIfExistsDep(depFtpClient, flagPath);
 }
 
 // ─── TEST: ANY mode — target delivered when at least ONE dep is present ───────
@@ -153,9 +145,9 @@ function testFileDependency_ANY_DeliveredWithOneDep() returns error? {
     string csvPath = DEP_ANY_DIR + "/report_any.csv";
     string txtPath = DEP_ANY_DIR + "/report_any.txt";
 
-    deleteIfExistsDep(depFtpClient, xmlPath);
-    deleteIfExistsDep(depFtpClient, csvPath);
-    deleteIfExistsDep(depFtpClient, txtPath);
+    check deleteIfExistsDep(depFtpClient, xmlPath);
+    check deleteIfExistsDep(depFtpClient, csvPath);
+    check deleteIfExistsDep(depFtpClient, txtPath);
 
     ftp:Service depService = @ftp:ServiceConfig {
         path: DEP_ANY_DIR,
@@ -206,11 +198,11 @@ function testFileDependency_ANY_DeliveredWithOneDep() returns error? {
     runtime:deregisterListener(depListener);
     check depListener.gracefulStop();
 
-    deleteIfExistsDep(depFtpClient, xmlPath);
-    deleteIfExistsDep(depFtpClient, csvPath);
-    deleteIfExistsDep(depFtpClient, txtPath);
-
     test:assertTrue(delivered, "Target should be delivered when ANY required dep is present");
+
+    check deleteIfExistsDep(depFtpClient, xmlPath);
+    check deleteIfExistsDep(depFtpClient, csvPath);
+    check deleteIfExistsDep(depFtpClient, txtPath);
 }
 
 // ─── TEST: Capture group substitution in requiredFiles ────────────────────────
@@ -226,8 +218,8 @@ function testFileDependency_CaptureGroupSubstitution() returns error? {
     string xmlPath = DEP_ALL_DIR + "/order_123.xml";
     string csvPath = DEP_ALL_DIR + "/order_123.csv";
 
-    deleteIfExistsDep(depFtpClient, xmlPath);
-    deleteIfExistsDep(depFtpClient, csvPath);
+    check deleteIfExistsDep(depFtpClient, xmlPath);
+    check deleteIfExistsDep(depFtpClient, csvPath);
 
     // targetPattern uses capture group (\\d+); requiredFiles uses $1 substitution
     ftp:Service depService = @ftp:ServiceConfig {
@@ -279,10 +271,11 @@ function testFileDependency_CaptureGroupSubstitution() returns error? {
     runtime:deregisterListener(depListener);
     check depListener.gracefulStop();
 
-    deleteIfExistsDep(depFtpClient, xmlPath);
-    deleteIfExistsDep(depFtpClient, csvPath);
-
     test:assertTrue(delivered, "Capture group substitution in requiredFiles should resolve correctly");
+
+    check deleteIfExistsDep(depFtpClient, xmlPath);
+    check deleteIfExistsDep(depFtpClient, csvPath);
+
 }
 
 // ─── TEST: FileDependencyCondition record defaults ────────────────────────────

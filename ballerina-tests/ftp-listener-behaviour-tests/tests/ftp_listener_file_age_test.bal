@@ -34,8 +34,8 @@ ftp:Client ageFtpClient = check new ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function deleteIfExistsAge(ftp:Client ftpClient, string path) {
-    ftp:Error? _ = ftpClient->delete(path);
+function deleteIfExistsAge(ftp:Client ftpClient, string path) returns error? {
+    check ftpClient->delete(path);
 }
 
 function waitUntilAge(function() returns boolean cond, int timeoutSec) returns boolean {
@@ -94,9 +94,10 @@ function testFileAgeFilter_MaxAge_DeliversFreshFile() returns error? {
 
     runtime:deregisterListener(ageListener);
     check ageListener.gracefulStop();
-    deleteIfExistsAge(ageFtpClient, AGE_MAX_DIR + "/fresh.maxfresh");
 
     test:assertTrue(delivered, "Fresh file within maxAge window should be delivered");
+
+    check deleteIfExistsAge(ageFtpClient, AGE_MAX_DIR + "/fresh.maxfresh");
 }
 
 // ─── TEST: maxAge — file already older than maxAge is NOT delivered ────────────
@@ -146,11 +147,12 @@ function testFileAgeFilter_MaxAge_SkipsStaleFile() returns error? {
 
     runtime:deregisterListener(ageListener);
     check ageListener.gracefulStop();
-    deleteIfExistsAge(ageFtpClient, AGE_MAX_DIR + "/stale.maxold");
 
     boolean delivered;
     lock { delivered = ageMaxOldDelivered; }
     test:assertFalse(delivered, "File already older than maxAge should NOT be delivered");
+
+    check deleteIfExistsAge(ageFtpClient, AGE_MAX_DIR + "/stale.maxold");
 }
 
 // ─── TEST: minAge — file is withheld until old enough, then delivered ──────────
@@ -204,9 +206,10 @@ function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
 
     runtime:deregisterListener(ageListener);
     check ageListener.gracefulStop();
-    deleteIfExistsAge(ageFtpClient, AGE_MIN_DIR + "/aging.minage");
 
     test:assertTrue(delivered, "File should be delivered once it satisfies minAge");
+
+    check deleteIfExistsAge(ageFtpClient, AGE_MIN_DIR + "/aging.minage");
 }
 
 // ─── TEST: FileAgeFilter record — default values ───────────────────────────────
@@ -272,7 +275,9 @@ function testFileAgeFilter_MinAndMax_DeliverInWindow() returns error? {
 
     runtime:deregisterListener(ageListener);
     check ageListener.gracefulStop();
-    deleteIfExistsAge(ageFtpClient, AGE_MIN_DIR + "/window.minmax");
 
     test:assertTrue(delivered, "File within [minAge, maxAge] window should be delivered");
+
+    check deleteIfExistsAge(ageFtpClient, AGE_MIN_DIR + "/window.minmax");
+
 }
