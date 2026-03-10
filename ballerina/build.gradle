@@ -18,7 +18,6 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-    id 'com.github.psxpaul.execfork'
     id 'io.ballerina.plugin'
 }
 
@@ -31,8 +30,6 @@ def ballerinaTomlFilePlaceHolder = new File("${project.rootDir}/build-config/res
 def compilerPluginTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/CompilerPlugin.toml")
 def ballerinaTomlFile = new File("$project.projectDir/Ballerina.toml")
 def ballerinaCompilerPluginFile = new File("$project.projectDir/CompilerPlugin.toml")
-def testUtilExecutable = ""
-
 def stripBallerinaExtensionVersion(String extVersion) {
     if (extVersion.matches(project.ext.timestampedVersionRegex)) {
         def splitVersion = extVersion.split('-')
@@ -144,99 +141,6 @@ task commitTomlFiles {
     }
 }
 
-task populateTestUtilExecutableName() {
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        testUtilExecutable = "$projectDir/tests/resources/startJava.bat"
-    } else {
-        testUtilExecutable = "$projectDir/tests/resources/startJava.sh"
-    }
-}
-
-task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
-    executable = testUtilExecutable
-    workingDir = "$projectDir"
-    standardOutput = new File("$buildDir/tempUtilLogs.log")
-}
-
-task waitForFtpsTestServer() {
-    dependsOn startTestUtilAsDaemon
-    doLast {
-        def host = "127.0.0.1"
-        // FTP ports that must respond with a 220 banner
-        def ftpPorts = [21210, 21212, 21214]
-        // TCP-only ports (SFTP SSH, implicit FTPS — no plaintext 220 banner)
-        def tcpPorts = [21213, 21217]
-
-        def connectTimeoutMs = 500
-        def readTimeoutMs = 500
-        def maxWaitMs = 60_000
-        def pollIntervalMs = 500
-
-        // Returns true if the port is reachable AND the server sends a "220 " FTP banner
-        def isFtpReady = { int port ->
-            java.net.Socket socket = null
-            try {
-                socket = new java.net.Socket()
-                socket.connect(new java.net.InetSocketAddress(host, port as int), connectTimeoutMs)
-                socket.setSoTimeout(readTimeoutMs)
-                def reader = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream()))
-                def line = reader.readLine()
-                try {
-                    if (line != null && line.startsWith("220")) {
-                        def out = new java.io.OutputStreamWriter(socket.getOutputStream())
-                        out.write("QUIT\r\n")
-                        out.flush()
-                    }
-                } catch (Exception ignored) {
-                    // ignore write errors during teardown
-                }
-                return (line != null && line.startsWith("220"))
-            } catch (Exception ignored) {
-                return false
-            } finally {
-                try { socket?.close() } catch (Exception ignored) {}
-            }
-        }
-
-        // Returns true if the port accepts a TCP connection
-        def isTcpPortOpen = { int port ->
-            java.net.Socket socket = null
-            try {
-                socket = new java.net.Socket()
-                socket.connect(new java.net.InetSocketAddress(host, port as int), connectTimeoutMs)
-                return true
-            } catch (Exception ignored) {
-                return false
-            } finally {
-                try { socket?.close() } catch (Exception ignored) {}
-            }
-        }
-
-        def allReady = { ->
-            for (int port : ftpPorts) {
-                if (!isFtpReady(port)) return false
-            }
-            for (int port : tcpPorts) {
-                if (!isTcpPortOpen(port)) return false
-            }
-            return true
-        }
-
-        long start = System.currentTimeMillis()
-        while (System.currentTimeMillis() - start < maxWaitMs) {
-            if (allReady()) {
-                logger.lifecycle("All mock servers ready (FTP: ${ftpPorts}, TCP: ${tcpPorts})")
-                return
-            }
-            sleep(pollIntervalMs)
-        }
-
-        throw new GradleException(
-            "Mock servers were not ready after ${maxWaitMs / 1000}s. " +
-            "Expected FTP 220 on ports ${ftpPorts} and TCP on ports ${tcpPorts}.")
-    }
-}
-
 publishing {
     publications {
         maven(MavenPublication) {
@@ -258,16 +162,10 @@ publishing {
 
 updateTomlFiles.dependsOn copyStdlibs
 
-tasks.generatePomFileForMavenPublication.dependsOn(startTestUtilAsDaemon)
-tasks.copyToLib.dependsOn(startTestUtilAsDaemon)
 build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":${packageName}-native:build"
 build.dependsOn ":${packageName}-compiler-plugin:build"
 test.dependsOn ":${packageName}-native:build"
-populateTestUtilExecutableName.dependsOn ":${packageName}-test-utils:build"
-startTestUtilAsDaemon.dependsOn populateTestUtilExecutableName
-test.dependsOn startTestUtilAsDaemon
-test.dependsOn waitForFtpsTestServer
 test.dependsOn ":${packageName}-compiler-plugin:build"
 
 publishToMavenLocal.dependsOn build

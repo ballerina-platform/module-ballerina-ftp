@@ -356,7 +356,7 @@ function testListener_SftpCompression_Config_Accepted() returns error? {
         auth: {
             credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD},
             privateKey: {
-                path: "../../ballerina/tests/resources/sftp.private.key",
+                path: "../resources/sftp.private.key",
                 password: "changeit"
             }
         },
