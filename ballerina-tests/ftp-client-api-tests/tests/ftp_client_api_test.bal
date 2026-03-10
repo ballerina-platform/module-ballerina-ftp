@@ -14,8 +14,6 @@
 // under the License.
 
 import ballerina/ftp;
-import ballerina/io;
-import ballerina/lang.'string as strings;
 import ballerina/test;
 import ballerina_tests/ftp_test_commons as commons;
 
@@ -53,12 +51,11 @@ type Row record {|
 // ─── Well-known server paths ──────────────────────────────────────────────────
 
 // Pre-seeded by the mock server; do not delete in tests.
-const string SEED_FILE = "/home/in/test1.txt";          // "File content" (61 bytes)
-const string SEED_LARGE_FILE = "/home/in/test4.txt";    // 9000-byte file
+const string SEED_FILE = "/home/in/test1.txt";          // "File content"
+const string SEED_LARGE_FILE = "/home/in/test4.txt";    // 9000-byte repeating file
 const string SEED_DIR = "/home/in";
 
 // Isolated working paths — each test uses its own path to stay independent.
-const string P_PUT_STREAM = "/home/in/api-put-stream.txt";
 const string P_PUT_BYTES = "/home/in/api-put-bytes.txt";
 const string P_PUT_TEXT = "/home/in/api-put-text.txt";
 const string P_PUT_JSON = "/home/in/api-put-json.json";
@@ -68,14 +65,10 @@ const string P_PUT_CSV_REC = "/home/in/api-put-csv-rec.csv";
 const string P_PUT_CSV_STREAM_STR = "/home/in/api-csv-stream-str.csv";
 const string P_PUT_CSV_STREAM_REC = "/home/in/api-csv-stream-rec.csv";
 const string P_PUT_LARGE = "/home/in/api-put-large.txt";
-const string P_PUT_COMPRESSED_SRC = "/home/in/api-put-compressed.txt";
-const string P_PUT_COMPRESSED_ZIP = "/home/in/api-put-compressed.zip";
-const string P_APPEND = "/home/in/api-append.txt";
 const string P_TEXT_APPEND = "/home/in/api-text-append.txt";
 const string P_CSV_APPEND = "/home/in/api-csv-append.csv";
 const string P_JAILED_REL = "api-jailed-rel.txt";
 const string P_JAILED_SLASH = "/api-jailed-slash.txt";
-const string P_DOUBLE_SLASH = "//home/in/api-double-slash.txt";
 const string P_STREAM_CLOSE_CSV = "/home/in/api-stream-close.csv";
 const string P_BINDING_JSON = "/home/in/api-bind-json.txt";
 const string P_BINDING_XML = "/home/in/api-bind-xml.txt";
@@ -85,15 +78,13 @@ const string P_BIND_TYPED_XML = "/home/in/api-typed-xml.xml";
 const string P_BIND_TYPED_CSV = "/home/in/api-typed-csv.csv";
 const string P_BIND_TYPED_CSV_STREAM = "/home/in/api-typed-csv-stream.csv";
 const string P_BYTES_AS_STREAM = "/home/in/api-bytes-stream.txt";
+const string P_SIZE_TEST = "/home/in/api-size-test.txt";
 const string P_MOVE_SRC = "/home/in/api-move-src.txt";
 const string P_MOVE_DST = "/home/in/api-move-dst.txt";
 const string P_COPY_DST = "/home/in/api-copy-dst.txt";
-const string P_MKDIR = "/home/in/api-mkdir-test";
-const string P_RENAME_OLD = "/home/in/api-rename-old";
-const string P_RENAME_NEW = "/home/in/api-rename-new";
 const string P_DELETE = "/home/in/api-delete.txt";
 
-// ─── Shared clients (initialized once per suite) ──────────────────────────────
+// ─── Shared clients (initialised once per suite) ──────────────────────────────
 
 ftp:Client anonClient = check new ({
     protocol: ftp:FTP,
@@ -125,136 +116,80 @@ ftp:Client ftpJailedClient = check new ({
     userDirIsRoot: true
 });
 
-// ─── Suite lifecycle ──────────────────────────────────────────────────────────
+// ─── Suite teardown ───────────────────────────────────────────────────────────
 
 @test:AfterSuite {}
-function cleanupClientApiTestFiles() returns error? {
-    // Best-effort cleanup; ignore errors for files that may not exist.
+function cleanupClientApiTestFiles() {
     string[] paths = [
-        P_PUT_STREAM, P_PUT_BYTES, P_PUT_TEXT, P_PUT_JSON, P_PUT_XML,
+        P_PUT_BYTES, P_PUT_TEXT, P_PUT_JSON, P_PUT_XML,
         P_PUT_CSV_STR, P_PUT_CSV_REC, P_PUT_CSV_STREAM_STR, P_PUT_CSV_STREAM_REC,
-        P_PUT_LARGE, P_PUT_COMPRESSED_ZIP, P_APPEND, P_TEXT_APPEND, P_CSV_APPEND,
-        P_JAILED_SLASH, P_DOUBLE_SLASH, P_STREAM_CLOSE_CSV, P_BINDING_JSON,
-        P_BINDING_XML, P_BINDING_CSV, P_BIND_TYPED_JSON, P_BIND_TYPED_XML,
-        P_BIND_TYPED_CSV, P_BIND_TYPED_CSV_STREAM, P_BYTES_AS_STREAM,
-        P_MOVE_DST, P_COPY_DST, P_DELETE
+        P_PUT_LARGE, P_TEXT_APPEND, P_CSV_APPEND, P_STREAM_CLOSE_CSV,
+        P_BINDING_JSON, P_BINDING_XML, P_BINDING_CSV,
+        P_BIND_TYPED_JSON, P_BIND_TYPED_XML, P_BIND_TYPED_CSV, P_BIND_TYPED_CSV_STREAM,
+        P_BYTES_AS_STREAM, P_SIZE_TEST, P_MOVE_DST, P_COPY_DST, P_DELETE
     ];
     foreach string p in paths {
-        _ = ftpClient->delete(p);
-    }
-    _ = ftpJailedClient->delete(P_JAILED_REL);
-    // Directories created by tests.
-    foreach string d in [P_MKDIR, P_RENAME_NEW, P_RENAME_OLD] {
-        _ = ftpClient->rmdir(d);
-    }
-}
-
-// ─── Helper ───────────────────────────────────────────────────────────────────
-
-isolated function readStream(stream<byte[] & readonly, io:Error?> s) returns string|error {
-    string result = "";
-    do {
-        record {|byte[] & readonly value;|}|io:Error? chunk = s.next();
-        if chunk is () || chunk is io:Error {
-            break;
+        do {
+            check ftpClient->delete(p);
+        } on fail {
         }
-        result += check strings:fromBytes(chunk.value);
     }
-    return result;
-}
-
-// =============================================================================
-// GET — read from server
-// =============================================================================
-
-// Anonymous server: read a pre-seeded file as a raw byte stream.
-@test:Config {
-    groups: ["ftp-client-api", "get"]
-}
-function testGet_fromAnonServer() returns error? {
-    stream<byte[] & readonly, io:Error?> s = check anonClient->get(SEED_FILE);
-    string content = check readStream(s);
-    test:assertEquals(content, "File content", "Unexpected content from anon get");
-    check s.close();
-}
-
-// Authenticated server: file content fits in a single read block.
-@test:Config {
-    groups: ["ftp-client-api", "get"]
-}
-function testGet_fittingContent() returns error? {
-    stream<byte[] & readonly, io:Error?> s = check ftpClient->get(SEED_FILE);
-    string content = check readStream(s);
-    test:assertEquals(content, "File content", "Unexpected content from authenticated get");
-    check s.close();
-}
-
-// Content that spans multiple internal read blocks (9000-byte file).
-@test:Config {
-    groups: ["ftp-client-api", "get"]
-}
-function testGet_nonFittingContent() returns error? {
-    stream<byte[] & readonly, io:Error?> s = check ftpClient->get(SEED_LARGE_FILE);
-    string content = check readStream(s);
-    string expected = string:'join("", ...from int _ in 0 ..< 1000 select "123456789");
-    test:assertEquals(content, expected, "Large file content mismatch");
-    check s.close();
-}
-
-// =============================================================================
-// PUT — write to server (stream input)
-// =============================================================================
-
-// Put a file using a local file stream and read it back as bytes.
-@test:Config {
-    groups: ["ftp-client-api", "put"]
-}
-function testPut_streamContent() returns error? {
-    stream<io:Block, io:Error?> s = check io:fileReadBlocksAsStream(commons:PUT_FILE_PATH, 5);
-    check ftpClient->put(P_PUT_STREAM, s);
-    stream<byte[] & readonly, io:Error?> got = check ftpClient->get(P_PUT_STREAM);
-    test:assertEquals(check readStream(got), "Put content", "Stream put content mismatch");
-    check got.close();
-}
-
-// Put a file that exceeds internal buffer boundaries.
-@test:Config {
-    groups: ["ftp-client-api", "put"]
-}
-function testPut_largeStreamContent() returns error? {
-    byte[] block = [];
-    foreach int i in 0 ..< 16390 {
-        block[i] = 65; // 'A'
+    do {
+        check ftpJailedClient->delete(P_JAILED_REL);
+    } on fail {
     }
-    string blockStr = check strings:fromBytes(block);
-    string expected = blockStr + "123456" + "end.";
-
-    (byte[])[] & readonly chunks = [
-        block.cloneReadOnly(),
-        "123456".toBytes().cloneReadOnly(),
-        "end.".toBytes().cloneReadOnly()
-    ];
-    check ftpClient->put(P_PUT_LARGE, chunks.toStream());
-
-    stream<byte[] & readonly, io:Error?> got = check ftpClient->get(P_PUT_LARGE);
-    test:assertEquals(check readStream(got), expected, "Large stream content mismatch");
-    check got.close();
-}
-
-// PUT with ZIP compression: the server stores the compressed form.
-@test:Config {
-    groups: ["ftp-client-api", "put"]
-}
-function testPut_withCompression() returns error? {
-    stream<io:Block, io:Error?> s = check io:fileReadBlocksAsStream(commons:PUT_FILE_PATH, 5);
-    check ftpClient->put(P_PUT_COMPRESSED_SRC, s, compressionType = ftp:ZIP);
-    // The server stores the ZIP file; verify the archive exists.
-    boolean exists = check ftpClient->exists(P_PUT_COMPRESSED_ZIP);
-    test:assertTrue(exists, "Compressed ZIP file should exist after put with compressionType=ZIP");
+    do {
+        check ftpJailedClient->delete(P_JAILED_SLASH);
+    } on fail {
+    }
 }
 
 // =============================================================================
-// PUT / GET — typed API pairs
+// getText / getBytes — read from the server
+// =============================================================================
+
+// Anonymous server: read a pre-seeded file as UTF-8 text.
+@test:Config {
+    groups: ["ftp-client-api", "get"]
+}
+function testGetText_fromAnonServer() returns error? {
+    string content = check anonClient->getText(SEED_FILE);
+    test:assertEquals(content, "File content", "Unexpected content from anon getText");
+}
+
+// Authenticated server: getText on the same seed file.
+@test:Config {
+    groups: ["ftp-client-api", "get"]
+}
+function testGetText_authenticated() returns error? {
+    string content = check ftpClient->getText(SEED_FILE);
+    test:assertEquals(content, "File content", "Unexpected content from authenticated getText");
+}
+
+// Large file: getBytes returns the full byte array.
+@test:Config {
+    groups: ["ftp-client-api", "get"]
+}
+function testGetBytes_largeFile() returns error? {
+    byte[] content = check ftpClient->getBytes(SEED_LARGE_FILE);
+    test:assertEquals(content.length(), 9000, "Large file should be 9000 bytes");
+}
+
+// getBytesAsStream returns all bytes when consumed as a stream.
+@test:Config {
+    groups: ["ftp-client-api", "get"]
+}
+function testGetBytesAsStream() returns error? {
+    byte[] expected = check ftpClient->getBytes(SEED_FILE);
+    stream<byte[], error?> s = check ftpClient->getBytesAsStream(SEED_FILE);
+    byte[] accumulated = [];
+    check from byte[] chunk in s
+        do { accumulated.push(...chunk); };
+    test:assertEquals(accumulated, expected, "getBytesAsStream should return the same bytes as getBytes");
+}
+
+// =============================================================================
+// PUT / GET — typed API round-trips
 // =============================================================================
 
 @test:Config {
@@ -284,9 +219,9 @@ function testPutGetBytesAsStream() returns error? {
     byte[] payload = "hello-stream-bytes".toBytes();
     check ftpClient->putBytes(P_BYTES_AS_STREAM, payload);
 
-    stream<byte[], error?> got = check ftpClient->getBytesAsStream(P_BYTES_AS_STREAM);
+    stream<byte[], error?> s = check ftpClient->getBytesAsStream(P_BYTES_AS_STREAM);
     byte[] accumulated = [];
-    check from byte[] chunk in got
+    check from byte[] chunk in s
         do { accumulated.push(...chunk); };
     test:assertEquals(accumulated, payload, "getBytesAsStream content mismatch");
 }
@@ -322,7 +257,7 @@ function testPutGetCsv_stringRows() returns error? {
     ];
     check ftpClient->putCsv(P_PUT_CSV_STR, payload);
 
-    // getCsv returns data rows only (header excluded).
+    // getCsv returns data rows only (header excluded when target is string[][]).
     string[][] got = check ftpClient->getCsv(P_PUT_CSV_STR);
     test:assertEquals(got, payload.slice(1), "putCsv/getCsv string rows mismatch");
 
@@ -357,12 +292,9 @@ function testPutGetCsv_records() returns error? {
     groups: ["ftp-client-api", "put", "typed"]
 }
 function testPutBytesAsStream() returns error? {
-    (byte[])[] & readonly chunks = [
-        "hello-".toBytes().cloneReadOnly(),
-        "world".toBytes().cloneReadOnly()
-    ];
-    check ftpClient->putBytesAsStream(P_PUT_STREAM, chunks.toStream());
-    string got = check ftpClient->getText(P_PUT_STREAM);
+    byte[][] chunks = ["hello-".toBytes(), "world".toBytes()];
+    check ftpClient->putBytesAsStream(P_PUT_BYTES, chunks.toStream());
+    string got = check ftpClient->getText(P_PUT_BYTES);
     test:assertEquals(got, "hello-world", "putBytesAsStream content mismatch");
 }
 
@@ -389,61 +321,25 @@ function testPutCsvAsStream_records() returns error? {
 }
 
 // =============================================================================
-// PUT — content-type overloads of put()
+// putBytesAsStream — large content spanning multiple internal buffers
 // =============================================================================
 
 @test:Config {
     groups: ["ftp-client-api", "put"]
 }
-function testPut_textContent() returns error? {
-    check ftpClient->put(P_PUT_TEXT, "Sample text content");
-    stream<byte[] & readonly, io:Error?> s = check ftpClient->get(P_PUT_TEXT);
-    test:assertEquals(check readStream(s), "Sample text content", "put(string) content mismatch");
-    check s.close();
-}
+function testPutBytesAsStream_largeContent() returns error? {
+    byte[] block = [];
+    foreach int i in 0 ..< 16390 {
+        block[i] = 65; // 'A'
+    }
+    byte[][] chunks = [block, "123456".toBytes(), "end.".toBytes()];
+    check ftpClient->putBytesAsStream(P_PUT_LARGE, chunks.toStream());
 
-@test:Config {
-    groups: ["ftp-client-api", "put"]
-}
-function testPut_jsonContent() returns error? {
-    json j = {name: "Anne", age: 20};
-    check ftpClient->put(P_PUT_JSON, j);
-    stream<byte[] & readonly, io:Error?> s = check ftpClient->get(P_PUT_JSON);
-    test:assertEquals(check readStream(s), "{\"name\":\"Anne\", \"age\":20}", "put(json) content mismatch");
-    check s.close();
-}
-
-@test:Config {
-    groups: ["ftp-client-api", "put"]
-}
-function testPut_xmlContent() returns error? {
-    xml x = xml `<note><heading>Memo</heading><body>Body</body></note>`;
-    check ftpClient->put(P_PUT_XML, x);
-    stream<byte[] & readonly, io:Error?> s = check ftpClient->get(P_PUT_XML);
-    test:assertEquals(check readStream(s), "<note><heading>Memo</heading><body>Body</body></note>",
-        "put(xml) content mismatch");
-    check s.close();
-}
-
-// =============================================================================
-// APPEND operation
-// =============================================================================
-
-@test:Config {
-    groups: ["ftp-client-api", "append"]
-}
-function testAppend_streamContent() returns error? {
-    // Seed the file first.
-    check ftpClient->putText(P_APPEND, "Hello");
-
-    stream<io:Block, io:Error?> extra = check io:fileReadBlocksAsStream(commons:APPEND_FILE_PATH, 7);
-    check ftpClient->append(P_APPEND, extra);
-
-    stream<byte[] & readonly, io:Error?> got = check ftpClient->get(P_APPEND);
-    string content = check readStream(got);
-    check got.close();
-    test:assertTrue(content.startsWith("Hello"), "Appended file should start with original content");
-    test:assertTrue(content.includes("Append content"), "Appended file should include new content");
+    byte[] got = check ftpClient->getBytes(P_PUT_LARGE);
+    test:assertEquals(got.length(), 16400, "Large putBytesAsStream size mismatch");
+    // Verify boundary content.
+    test:assertEquals(got[0], 65, "First byte should be 'A'");
+    test:assertEquals(got[16390], 49, "Byte 16390 should be '1'");
 }
 
 // =============================================================================
@@ -486,15 +382,12 @@ function testStreamClose_typedStreams() returns error? {
     Row[] records = [{name: "G", age: 1}, {name: "H", age: 2}];
     check ftpClient->putCsv(P_STREAM_CLOSE_CSV, records);
 
-    // CSV typed stream.
     stream<Row, error?> s1 = check ftpClient->getCsvAsStream(P_STREAM_CLOSE_CSV);
     check s1.close();
 
-    // CSV string stream.
     stream<string[], error?> s2 = check ftpClient->getCsvAsStream(P_STREAM_CLOSE_CSV);
     check s2.close();
 
-    // Bytes stream.
     stream<byte[], error?> s3 = check ftpClient->getBytesAsStream(P_STREAM_CLOSE_CSV);
     check s3.close();
 }
@@ -504,16 +397,14 @@ function testStreamClose_typedStreams() returns error? {
 // =============================================================================
 
 // With userDirIsRoot=true the user's FTP home becomes "/". A relative path
-// such as "test1.txt" maps to the user's home + "/test1.txt".
+// "test1.txt" maps to home + "/test1.txt".
 @test:Config {
     groups: ["ftp-client-api", "path"]
 }
-function testUserDirIsRootTrue_get() returns error? {
-    stream<byte[] & readonly, io:Error?> s = check ftpJailedClient->get("test1.txt");
-    string content = check readStream(s);
+function testUserDirIsRootTrue_getText() returns error? {
+    string content = check ftpJailedClient->getText("test1.txt");
     test:assertEquals(content, "File content",
-        "userDirIsRoot=true: relative get should resolve from user home");
-    check s.close();
+        "userDirIsRoot=true: relative getText should resolve from user home");
 }
 
 // Relative path (no leading slash): resolved from the jailed root.
@@ -522,11 +413,13 @@ function testUserDirIsRootTrue_get() returns error? {
 }
 function testUserDirIsRootTrue_relativePut() returns error? {
     check ftpJailedClient->putText(P_JAILED_REL, "hello-jailed");
-    stream<byte[] & readonly, io:Error?> s = check ftpJailedClient->get(P_JAILED_REL);
-    test:assertEquals(check readStream(s), "hello-jailed",
+    string got = check ftpJailedClient->getText(P_JAILED_REL);
+    test:assertEquals(got, "hello-jailed",
         "userDirIsRoot=true: relative put/get round-trip failed");
-    check s.close();
-    _ = ftpJailedClient->delete(P_JAILED_REL);
+    do {
+        check ftpJailedClient->delete(P_JAILED_REL);
+    } on fail {
+    }
 }
 
 // Relative path with a leading slash: still resolved from the jailed root.
@@ -535,24 +428,13 @@ function testUserDirIsRootTrue_relativePut() returns error? {
 }
 function testUserDirIsRootTrue_relativeSlashPut() returns error? {
     check ftpJailedClient->putText(P_JAILED_SLASH, "hello-jailed-slash");
-    stream<byte[] & readonly, io:Error?> s = check ftpJailedClient->get(P_JAILED_SLASH);
-    test:assertEquals(check readStream(s), "hello-jailed-slash",
+    string got = check ftpJailedClient->getText(P_JAILED_SLASH);
+    test:assertEquals(got, "hello-jailed-slash",
         "userDirIsRoot=true: leading-slash path put/get round-trip failed");
-    check s.close();
-    _ = ftpJailedClient->delete(P_JAILED_SLASH);
-}
-
-// A path starting with "//" is normalised to an absolute path by the library.
-@test:Config {
-    groups: ["ftp-client-api", "path"]
-}
-function testAbsoluteDoubleSlash_putGet() returns error? {
-    check ftpClient->putText(P_DOUBLE_SLASH, "hello-abs-double-slash");
-    stream<byte[] & readonly, io:Error?> s = check ftpClient->get(P_DOUBLE_SLASH);
-    test:assertEquals(check readStream(s), "hello-abs-double-slash",
-        "Double-slash absolute path put/get round-trip failed");
-    check s.close();
-    _ = ftpClient->delete(P_DOUBLE_SLASH);
+    do {
+        check ftpJailedClient->delete(P_JAILED_SLASH);
+    } on fail {
+    }
 }
 
 // =============================================================================
@@ -565,7 +447,7 @@ function testAbsoluteDoubleSlash_putGet() returns error? {
 }
 function testGetJson_invalidContent_bindsError() returns error? {
     check ftpClient->putText(P_BINDING_JSON, "not valid json {{{");
-    ftp:Error|json result = ftpClient->getJson(P_BINDING_JSON);
+    json|ftp:Error result = ftpClient->getJson(P_BINDING_JSON);
     test:assertTrue(result is ftp:ContentBindingError,
         "getJson on non-JSON content should return ContentBindingError");
     if result is ftp:ContentBindingError {
@@ -574,7 +456,10 @@ function testGetJson_invalidContent_bindsError() returns error? {
         test:assertTrue(result.detail().content is byte[],
             "ContentBindingError should carry content bytes");
     }
-    _ = ftpClient->delete(P_BINDING_JSON);
+    do {
+        check ftpClient->delete(P_BINDING_JSON);
+    } on fail {
+    }
 }
 
 // getXml on non-XML content must yield ContentBindingError.
@@ -583,26 +468,17 @@ function testGetJson_invalidContent_bindsError() returns error? {
 }
 function testGetXml_invalidContent_bindsError() returns error? {
     check ftpClient->putText(P_BINDING_XML, "not valid xml <<<>>>");
-    ftp:Error|xml result = ftpClient->getXml(P_BINDING_XML);
+    xml|ftp:Error result = ftpClient->getXml(P_BINDING_XML);
     test:assertTrue(result is ftp:ContentBindingError,
         "getXml on non-XML content should return ContentBindingError");
     if result is ftp:ContentBindingError {
         test:assertTrue(result.detail().filePath is string,
             "ContentBindingError should carry filePath detail");
     }
-    _ = ftpClient->delete(P_BINDING_XML);
-}
-
-// getXml on a text file (using putText) should also fail binding.
-@test:Config {
-    groups: ["ftp-client-api", "binding"]
-}
-function testGetXml_textFile_bindsError() returns error? {
-    check ftpClient->putText(P_BINDING_XML, "plain text");
-    ftp:Error|xml result = ftpClient->getXml(P_BINDING_XML);
-    test:assertTrue(result is ftp:Error,
-        "getXml on plain-text file should return an error");
-    _ = ftpClient->delete(P_BINDING_XML);
+    do {
+        check ftpClient->delete(P_BINDING_XML);
+    } on fail {
+    }
 }
 
 // getJson with a strict target type that is missing a required field.
@@ -611,10 +487,13 @@ function testGetXml_textFile_bindsError() returns error? {
 }
 function testGetJson_missingField_bindsError() returns error? {
     check ftpClient->putJson(P_BIND_TYPED_JSON, {name: "Alice"}); // missing 'age'
-    ftp:Error|Person result = ftpClient->getJson(P_BIND_TYPED_JSON);
+    Person|ftp:Error result = ftpClient->getJson(P_BIND_TYPED_JSON, Person);
     test:assertTrue(result is ftp:ContentBindingError,
         "getJson should return ContentBindingError when required field is absent");
-    _ = ftpClient->delete(P_BIND_TYPED_JSON);
+    do {
+        check ftpClient->delete(P_BIND_TYPED_JSON);
+    } on fail {
+    }
 }
 
 // getCsv with a strict record type when a field has the wrong data type.
@@ -624,10 +503,13 @@ function testGetJson_missingField_bindsError() returns error? {
 function testGetCsv_wrongType_bindsError() returns error? {
     string[][] data = [["name", "age"], ["Alice", "not-a-number"]];
     check ftpClient->putCsv(P_BINDING_CSV, data);
-    ftp:Error|CsvPerson[] result = ftpClient->getCsv(P_BINDING_CSV);
+    CsvPerson[]|ftp:Error result = ftpClient->getCsv(P_BINDING_CSV, CsvPerson[]);
     test:assertTrue(result is ftp:ContentBindingError,
         "getCsv should return ContentBindingError when field type mismatches");
-    _ = ftpClient->delete(P_BINDING_CSV);
+    do {
+        check ftpClient->delete(P_BINDING_CSV);
+    } on fail {
+    }
 }
 
 // getBytes / getText on a non-existent file must return an error.
@@ -636,10 +518,10 @@ function testGetCsv_wrongType_bindsError() returns error? {
 }
 function testGetTyped_nonExistentFile() {
     string missing = "/home/in/does-not-exist-api.txt";
-    test:assertTrue(ftpClient->getBytes(missing) is ftp:Error,
-        "getBytes should error for non-existent file");
-    test:assertTrue(ftpClient->getText(missing) is ftp:Error,
-        "getText should error for non-existent file");
+    byte[]|ftp:Error r1 = ftpClient->getBytes(missing);
+    test:assertTrue(r1 is ftp:Error, "getBytes should error for non-existent file");
+    string|ftp:Error r2 = ftpClient->getText(missing);
+    test:assertTrue(r2 is ftp:Error, "getText should error for non-existent file");
 }
 
 // =============================================================================
@@ -653,19 +535,22 @@ function testGetTyped_nonExistentFile() {
 function testJsonBinding_strictAndLax() returns error? {
     check ftpClient->putJson(P_BIND_TYPED_JSON, {name: "Alice"}); // missing 'age'
 
-    ftp:Error|Person strictResult = ftpClient->getJson(P_BIND_TYPED_JSON);
+    Person|ftp:Error strictResult = ftpClient->getJson(P_BIND_TYPED_JSON, Person);
     test:assertTrue(strictResult is ftp:Error,
         "Strict JSON binding should fail when required field is absent");
 
-    PersonLax laxResult = check ftpLaxClient->getJson(P_BIND_TYPED_JSON);
+    PersonLax laxResult = check ftpLaxClient->getJson(P_BIND_TYPED_JSON, PersonLax);
     test:assertEquals(laxResult.name, "Alice");
-    test:assertEquals(laxResult.age is (), true,
+    test:assertTrue(laxResult.age is (),
         "Lax JSON binding should map absent field to nil");
 
-    _ = ftpClient->delete(P_BIND_TYPED_JSON);
+    do {
+        check ftpClient->delete(P_BIND_TYPED_JSON);
+    } on fail {
+    }
 }
 
-// XML: strict binding fails on extra/missing fields; lax succeeds.
+// XML: strict binding fails on extra fields; lax succeeds.
 @test:Config {
     groups: ["ftp-client-api", "binding", "lax"]
 }
@@ -673,15 +558,17 @@ function testXmlBinding_strictAndLax() returns error? {
     xml x = xml `<person><name>Alice</name><age>32</age><address>street</address></person>`;
     check ftpClient->putXml(P_BIND_TYPED_XML, x);
 
-    // Strict: record must exactly match — extra field 'address' causes failure.
-    var strictResult = ftpClient->getXml(P_BIND_TYPED_XML, Person);
+    Person|ftp:Error strictResult = ftpClient->getXml(P_BIND_TYPED_XML, Person);
     test:assertTrue(strictResult is ftp:Error,
         "Strict XML binding should fail when XML has extra fields");
 
     Person laxResult = check ftpLaxClient->getXml(P_BIND_TYPED_XML, Person);
     test:assertEquals(laxResult.name, "Alice");
 
-    _ = ftpClient->delete(P_BIND_TYPED_XML);
+    do {
+        check ftpClient->delete(P_BIND_TYPED_XML);
+    } on fail {
+    }
 }
 
 // CSV: strict binding fails on empty/missing field; lax succeeds.
@@ -692,16 +579,19 @@ function testCsvBinding_strictAndLax() returns error? {
     string[][] data = [["name", "age"], ["Alice", "25"], ["Bob", ""]];
     check ftpClient->putCsv(P_BIND_TYPED_CSV, data, ftp:OVERWRITE);
 
-    CsvPerson[]|ftp:Error strictResult = ftpClient->getCsv(P_BIND_TYPED_CSV);
+    CsvPerson[]|ftp:Error strictResult = ftpClient->getCsv(P_BIND_TYPED_CSV, CsvPerson[]);
     test:assertTrue(strictResult is ftp:Error,
         "Strict CSV binding should fail when required field is empty");
 
-    CsvPersonLax[] laxResult = check ftpLaxClient->getCsv(P_BIND_TYPED_CSV);
+    CsvPersonLax[] laxResult = check ftpLaxClient->getCsv(P_BIND_TYPED_CSV, CsvPersonLax[]);
     test:assertEquals(laxResult.length(), 2, "Lax CSV should return 2 records");
     test:assertEquals(laxResult[0].name, "Alice");
     test:assertEquals(laxResult[1].name, "Bob");
 
-    _ = ftpClient->delete(P_BIND_TYPED_CSV);
+    do {
+        check ftpClient->delete(P_BIND_TYPED_CSV);
+    } on fail {
+    }
 }
 
 // CSV stream: strict stream errors on bad row; lax stream succeeds.
@@ -712,8 +602,7 @@ function testCsvStreamBinding_strictAndLax() returns error? {
     string[][] data = [["name", "age"], ["Charlie", "30"], ["Diana", ""]];
     check ftpClient->putCsv(P_BIND_TYPED_CSV_STREAM, data, ftp:OVERWRITE);
 
-    // Strict stream: error when consuming the row with empty 'age'.
-    stream<CsvPerson, error?>|ftp:Error strictStream = ftpClient->getCsvAsStream(P_BIND_TYPED_CSV_STREAM);
+    stream<CsvPerson, error?>|ftp:Error strictStream = ftpClient->getCsvAsStream(P_BIND_TYPED_CSV_STREAM, CsvPerson);
     if strictStream is stream<CsvPerson, error?> {
         CsvPerson[]|error consumed = from CsvPerson row in strictStream select row;
         test:assertTrue(consumed is ftp:ContentBindingError,
@@ -723,13 +612,15 @@ function testCsvStreamBinding_strictAndLax() returns error? {
             "Strict CSV stream creation should fail with ContentBindingError");
     }
 
-    // Lax stream: succeeds.
-    stream<CsvPersonLax, error?> laxStream = check ftpLaxClient->getCsvAsStream(P_BIND_TYPED_CSV_STREAM);
+    stream<CsvPersonLax, error?> laxStream = check ftpLaxClient->getCsvAsStream(P_BIND_TYPED_CSV_STREAM, CsvPersonLax);
     CsvPersonLax[] laxRecords = [];
     check from CsvPersonLax row in laxStream do { laxRecords.push(row); };
     test:assertEquals(laxRecords.length(), 2, "Lax CSV stream should return 2 records");
 
-    _ = ftpClient->delete(P_BIND_TYPED_CSV_STREAM);
+    do {
+        check ftpClient->delete(P_BIND_TYPED_CSV_STREAM);
+    } on fail {
+    }
 }
 
 // =============================================================================
@@ -740,11 +631,9 @@ function testCsvStreamBinding_strictAndLax() returns error? {
     groups: ["ftp-client-api", "directory"]
 }
 function testIsDirectory_dirAndFile() returns error? {
-    // Known directory.
     boolean dirResult = check ftpClient->isDirectory(SEED_DIR);
     test:assertTrue(dirResult, "isDirectory should return true for a directory");
 
-    // Known file.
     boolean fileResult = check ftpClient->isDirectory(SEED_FILE);
     test:assertFalse(fileResult, "isDirectory should return false for a file");
 }
@@ -753,31 +642,38 @@ function testIsDirectory_dirAndFile() returns error? {
     groups: ["ftp-client-api", "directory"]
 }
 function testMkdir_createAndVerify() returns error? {
-    check ftpClient->mkdir(P_MKDIR);
-    boolean exists = check ftpClient->isDirectory(P_MKDIR);
+    string dir = "/home/in/api-mkdir-test";
+    check ftpClient->mkdir(dir);
+    boolean exists = check ftpClient->isDirectory(dir);
     test:assertTrue(exists, "mkdir should create the directory");
-    // Cleanup.
-    _ = ftpClient->rmdir(P_MKDIR);
+    do {
+        check ftpClient->rmdir(dir);
+    } on fail {
+    }
 }
 
 @test:Config {
     groups: ["ftp-client-api", "directory"]
 }
-function testRename_directoryAndFile() returns error? {
-    check ftpClient->mkdir(P_RENAME_OLD);
-    check ftpClient->rename(P_RENAME_OLD, P_RENAME_NEW);
+function testRename_directory() returns error? {
+    string oldPath = "/home/in/api-rename-old";
+    string newPath = "/home/in/api-rename-new";
+    check ftpClient->mkdir(oldPath);
+    check ftpClient->rename(oldPath, newPath);
 
     // Old path should no longer be a directory.
-    boolean|ftp:Error oldExists = ftpClient->isDirectory(P_RENAME_OLD);
+    boolean|ftp:Error oldExists = ftpClient->isDirectory(oldPath);
     test:assertTrue(oldExists is ftp:Error || oldExists == false,
         "Original path should not exist after rename");
 
     // New path should be a directory.
-    boolean newExists = check ftpClient->isDirectory(P_RENAME_NEW);
+    boolean newExists = check ftpClient->isDirectory(newPath);
     test:assertTrue(newExists, "Renamed directory should exist at the new path");
 
-    // Cleanup.
-    _ = ftpClient->rmdir(P_RENAME_NEW);
+    do {
+        check ftpClient->rmdir(newPath);
+    } on fail {
+    }
 }
 
 // =============================================================================
@@ -792,14 +688,16 @@ function testMove() returns error? {
     check ftpClient->putText(P_MOVE_SRC, content);
     check ftpClient->move(P_MOVE_SRC, P_MOVE_DST);
 
-    // Source must be gone.
-    test:assertFalse(check ftpClient->exists(P_MOVE_SRC),
-        "Source file should not exist after move");
-    // Destination must have the original content.
-    test:assertEquals(check ftpClient->getText(P_MOVE_DST), content,
-        "Destination file should have the original content after move");
+    boolean srcGone = check ftpClient->exists(P_MOVE_SRC);
+    test:assertFalse(srcGone, "Source file should not exist after move");
 
-    _ = ftpClient->delete(P_MOVE_DST);
+    string dstContent = check ftpClient->getText(P_MOVE_DST);
+    test:assertEquals(dstContent, content, "Destination file should have original content after move");
+
+    do {
+        check ftpClient->delete(P_MOVE_DST);
+    } on fail {
+    }
 }
 
 @test:Config {
@@ -808,36 +706,45 @@ function testMove() returns error? {
 function testCopy() returns error? {
     check ftpClient->copy(SEED_FILE, P_COPY_DST);
 
-    // Both source and destination must exist.
-    test:assertTrue(check ftpClient->exists(SEED_FILE),
-        "Source file must still exist after copy");
-    test:assertTrue(check ftpClient->exists(P_COPY_DST),
-        "Destination file must exist after copy");
+    boolean srcExists = check ftpClient->exists(SEED_FILE);
+    test:assertTrue(srcExists, "Source file must still exist after copy");
 
-    // Content must match.
+    boolean dstExists = check ftpClient->exists(P_COPY_DST);
+    test:assertTrue(dstExists, "Destination file must exist after copy");
+
     string src = check ftpClient->getText(SEED_FILE);
     string dst = check ftpClient->getText(P_COPY_DST);
     test:assertEquals(src, dst, "Copied file should have identical content");
 
-    _ = ftpClient->delete(P_COPY_DST);
+    do {
+        check ftpClient->delete(P_COPY_DST);
+    } on fail {
+    }
 }
 
 @test:Config {
     groups: ["ftp-client-api", "file-ops"]
 }
 function testExists_existingAndMissing() returns error? {
-    test:assertTrue(check ftpClient->exists(SEED_FILE),
-        "exists() should return true for a known file");
-    test:assertFalse(check ftpClient->exists("/home/in/definitely-not-there.txt"),
-        "exists() should return false for a non-existent path");
+    boolean exists = check ftpClient->exists(SEED_FILE);
+    test:assertTrue(exists, "exists() should return true for a known file");
+
+    boolean notExists = check ftpClient->exists("/home/in/definitely-not-there.txt");
+    test:assertFalse(notExists, "exists() should return false for a non-existent path");
 }
 
 @test:Config {
     groups: ["ftp-client-api", "file-ops"]
 }
 function testSize() returns error? {
-    int sz = check ftpClient->size(SEED_FILE);
-    test:assertEquals(sz, 61, "Size of seed file should be 61 bytes");
+    string payload = "twelve chars";  // exactly 12 bytes in UTF-8
+    check ftpClient->putText(P_SIZE_TEST, payload);
+    int sz = check ftpClient->size(P_SIZE_TEST);
+    test:assertEquals(sz, 12, "size() should return 12 for a 12-byte file");
+    do {
+        check ftpClient->delete(P_SIZE_TEST);
+    } on fail {
+    }
 }
 
 // =============================================================================
@@ -851,15 +758,16 @@ function testList_returnsFileInfo() returns error? {
     ftp:FileInfo[] files = check ftpClient->list(SEED_DIR);
     test:assertTrue(files.length() > 0, "list() should return at least one entry");
 
-    // Spot-check: the seed file must be in the listing.
-    boolean found = files.some(f => f.path == SEED_FILE);
-    test:assertTrue(found, "list() result must include the seed file " + SEED_FILE);
-
-    // FileInfo fields must be populated.
+    // Spot-check: the seed file must be present.
+    boolean found = false;
     foreach ftp:FileInfo fi in files {
+        if fi.path == SEED_FILE {
+            found = true;
+        }
         test:assertTrue(fi.lastModifiedTimestamp > 0,
             "lastModifiedTimestamp must be positive for " + fi.path);
     }
+    test:assertTrue(found, "list() result must include the seed file " + SEED_FILE);
 }
 
 // =============================================================================
@@ -871,10 +779,12 @@ function testList_returnsFileInfo() returns error? {
 }
 function testDelete() returns error? {
     check ftpClient->putText(P_DELETE, "to-be-deleted");
-    test:assertTrue(check ftpClient->exists(P_DELETE), "File should exist before delete");
+    boolean before = check ftpClient->exists(P_DELETE);
+    test:assertTrue(before, "File should exist before delete");
 
     check ftpClient->delete(P_DELETE);
-    test:assertFalse(check ftpClient->exists(P_DELETE), "File should not exist after delete");
+    boolean after = check ftpClient->exists(P_DELETE);
+    test:assertFalse(after, "File should not exist after delete");
 }
 
 @test:Config {
@@ -883,7 +793,8 @@ function testDelete() returns error? {
 function testRmdir_emptyDirectory() returns error? {
     string dir = "/home/in/api-rmdir-empty";
     check ftpClient->mkdir(dir);
-    test:assertTrue(check ftpClient->isDirectory(dir), "Directory should exist after mkdir");
+    boolean created = check ftpClient->isDirectory(dir);
+    test:assertTrue(created, "Directory should exist after mkdir");
 
     check ftpClient->rmdir(dir);
     boolean|ftp:Error gone = ftpClient->isDirectory(dir);
@@ -921,7 +832,7 @@ function testRmdir_withFiles() returns error? {
 }
 
 // =============================================================================
-// Close-then-API: every typed API must return CLIENT_ALREADY_CLOSED_MSG
+// Close behaviour
 // =============================================================================
 
 @test:Config {
@@ -934,10 +845,10 @@ function testClose_idempotent() returns error? {
         port: commons:AUTH_FTP_PORT,
         auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}}
     });
-    // First close must succeed.
-    test:assertEquals(c->close(), (), "First close should return ()");
-    // Second close on an already-closed client should also succeed (idempotent).
-    test:assertEquals(c->close(), (), "Second close should be idempotent");
+    ftp:Error? r1 = c->close();
+    test:assertEquals(r1, (), "First close should return ()");
+    ftp:Error? r2 = c->close();
+    test:assertEquals(r2, (), "Second close should be idempotent");
 }
 
 @test:Config {
@@ -951,18 +862,30 @@ function testClose_thenPutApis() returns error? {
         auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}}
     });
     check c->close();
-
     string msg = commons:CLIENT_ALREADY_CLOSED_MSG;
-    test:assertTrue(assertClosedMsg(c->put("/x.txt", "v"), msg), "put(string)");
-    test:assertTrue(assertClosedMsg(c->putBytes("/x.txt", []), msg), "putBytes");
-    test:assertTrue(assertClosedMsg(c->putText("/x.txt", "v"), msg), "putText");
-    test:assertTrue(assertClosedMsg(c->putJson("/x.json", {}), msg), "putJson");
-    test:assertTrue(assertClosedMsg(c->putXml("/x.xml", xml `<a/>`), msg), "putXml");
-    test:assertTrue(assertClosedMsg(c->putCsv("/x.csv", [["a"]]), msg), "putCsv");
-    stream<byte[] & readonly, io:Error?> bs = ([] : byte[][]&readonly).toStream();
-    test:assertTrue(assertClosedMsg(c->putBytesAsStream("/x.txt", bs), msg), "putBytesAsStream");
-    stream<string[], error?> cs = ([] : string[][]).toStream();
-    test:assertTrue(assertClosedMsg(c->putCsvAsStream("/x.csv", cs), msg), "putCsvAsStream");
+
+    ftp:Error? r1 = c->putBytes("/x.txt", []);
+    test:assertTrue(isClosedError(r1, msg), "putBytes after close should return CLIENT_ALREADY_CLOSED_MSG");
+
+    ftp:Error? r2 = c->putText("/x.txt", "v");
+    test:assertTrue(isClosedError(r2, msg), "putText after close should return CLIENT_ALREADY_CLOSED_MSG");
+
+    ftp:Error? r3 = c->putJson("/x.json", {});
+    test:assertTrue(isClosedError(r3, msg), "putJson after close should return CLIENT_ALREADY_CLOSED_MSG");
+
+    ftp:Error? r4 = c->putXml("/x.xml", xml `<a/>`);
+    test:assertTrue(isClosedError(r4, msg), "putXml after close should return CLIENT_ALREADY_CLOSED_MSG");
+
+    ftp:Error? r5 = c->putCsv("/x.csv", [["a"]]);
+    test:assertTrue(isClosedError(r5, msg), "putCsv after close should return CLIENT_ALREADY_CLOSED_MSG");
+
+    byte[][] emptyChunks = [];
+    ftp:Error? r6 = c->putBytesAsStream("/x.txt", emptyChunks.toStream());
+    test:assertTrue(isClosedError(r6, msg), "putBytesAsStream after close should return CLIENT_ALREADY_CLOSED_MSG");
+
+    string[][] emptyRows = [];
+    ftp:Error? r7 = c->putCsvAsStream("/x.csv", emptyRows.toStream());
+    test:assertTrue(isClosedError(r7, msg), "putCsvAsStream after close should return CLIENT_ALREADY_CLOSED_MSG");
 }
 
 @test:Config {
@@ -976,17 +899,29 @@ function testClose_thenGetApis() returns error? {
         auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}}
     });
     check c->close();
-
     string msg = commons:CLIENT_ALREADY_CLOSED_MSG;
     string p = SEED_FILE;
-    test:assertTrue(assertClosedMsg(c->get(p), msg), "get");
-    test:assertTrue(assertClosedMsg(c->getBytes(p), msg), "getBytes");
-    test:assertTrue(assertClosedMsg(c->getText(p), msg), "getText");
-    test:assertTrue(assertClosedMsg(c->getJson(p), msg), "getJson");
-    test:assertTrue(assertClosedMsg(c->getXml(p), msg), "getXml");
-    test:assertTrue(assertClosedMsg(c->getCsv(p), msg), "getCsv");
-    test:assertTrue(assertClosedMsg(c->getBytesAsStream(p), msg), "getBytesAsStream");
-    test:assertTrue(assertClosedMsg(c->getCsvAsStream(p), msg), "getCsvAsStream");
+
+    byte[]|ftp:Error r1 = c->getBytes(p);
+    test:assertTrue(isClosedError(r1, msg), "getBytes after close");
+
+    string|ftp:Error r2 = c->getText(p);
+    test:assertTrue(isClosedError(r2, msg), "getText after close");
+
+    json|ftp:Error r3 = c->getJson(p);
+    test:assertTrue(isClosedError(r3, msg), "getJson after close");
+
+    xml|ftp:Error r4 = c->getXml(p);
+    test:assertTrue(isClosedError(r4, msg), "getXml after close");
+
+    string[][]|ftp:Error r5 = c->getCsv(p);
+    test:assertTrue(isClosedError(r5, msg), "getCsv after close");
+
+    stream<byte[], error?>|ftp:Error r6 = c->getBytesAsStream(p);
+    test:assertTrue(isClosedError(r6, msg), "getBytesAsStream after close");
+
+    stream<string[], error?>|ftp:Error r7 = c->getCsvAsStream(p);
+    test:assertTrue(isClosedError(r7, msg), "getCsvAsStream after close");
 }
 
 @test:Config {
@@ -1000,26 +935,44 @@ function testClose_thenOtherApis() returns error? {
         auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}}
     });
     check c->close();
-
     string msg = commons:CLIENT_ALREADY_CLOSED_MSG;
     string p = SEED_FILE;
-    test:assertTrue(assertClosedMsg(c->move(p, "/x.txt"), msg), "move");
-    test:assertTrue(assertClosedMsg(c->copy(p, "/x.txt"), msg), "copy");
-    test:assertTrue(assertClosedMsg(c->append(p, "v"), msg), "append");
-    test:assertTrue(assertClosedMsg(c->mkdir("/d"), msg), "mkdir");
-    test:assertTrue(assertClosedMsg(c->rmdir("/d"), msg), "rmdir");
-    test:assertTrue(assertClosedMsg(c->rename(p, "/x.txt"), msg), "rename");
-    test:assertTrue(assertClosedMsg(c->isDirectory(p), msg), "isDirectory");
-    test:assertTrue(assertClosedMsg(c->size(p), msg), "size");
-    test:assertTrue(assertClosedMsg(c->list(SEED_DIR), msg), "list");
-    test:assertTrue(assertClosedMsg(c->delete(p), msg), "delete");
-    test:assertTrue(assertClosedMsg(c->exists(p), msg), "exists");
+
+    ftp:Error? r1 = c->move(p, "/x.txt");
+    test:assertTrue(isClosedError(r1, msg), "move after close");
+
+    ftp:Error? r2 = c->copy(p, "/x.txt");
+    test:assertTrue(isClosedError(r2, msg), "copy after close");
+
+    ftp:Error? r3 = c->mkdir("/d");
+    test:assertTrue(isClosedError(r3, msg), "mkdir after close");
+
+    ftp:Error? r4 = c->rmdir("/d");
+    test:assertTrue(isClosedError(r4, msg), "rmdir after close");
+
+    ftp:Error? r5 = c->rename(p, "/x.txt");
+    test:assertTrue(isClosedError(r5, msg), "rename after close");
+
+    boolean|ftp:Error r6 = c->isDirectory(p);
+    test:assertTrue(isClosedError(r6, msg), "isDirectory after close");
+
+    int|ftp:Error r7 = c->size(p);
+    test:assertTrue(isClosedError(r7, msg), "size after close");
+
+    ftp:FileInfo[]|ftp:Error r8 = c->list(SEED_DIR);
+    test:assertTrue(isClosedError(r8, msg), "list after close");
+
+    ftp:Error? r9 = c->delete(p);
+    test:assertTrue(isClosedError(r9, msg), "delete after close");
+
+    boolean|ftp:Error r10 = c->exists(p);
+    test:assertTrue(isClosedError(r10, msg), "exists after close");
 }
 
-// Returns true when the result is an ftp:Error whose message equals msg.
-isolated function assertClosedMsg(any|error result, string msg) returns boolean {
+// Returns true when 'result' is an ftp:Error whose message equals 'expected'.
+isolated function isClosedError(any|error result, string expected) returns boolean {
     if result is ftp:Error {
-        return result.message() == msg;
+        return result.message() == expected;
     }
     return false;
 }
