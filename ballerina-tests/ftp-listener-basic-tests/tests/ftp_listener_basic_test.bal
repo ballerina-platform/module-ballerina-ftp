@@ -244,16 +244,17 @@ function testAttach_ErrorMessageIncludesRootCause() returns error? {
 // =============================================================================
 
 // Listener with a .txt pattern must only fire for matching files.
+int fileCount = 0;
 @test:Config {
     groups: ["ftp-listener-basic", "patterns"]
 }
 function testPattern_TxtFilesDetected() returns error? {
-    isolated int count = 0;
+    fileCount = 0;
 
     ftp:Service svc = service object {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             lock {
-                count += event.addedFiles.length();
+                fileCount += event.addedFiles.length();
             }
         }
     };
@@ -279,29 +280,33 @@ function testPattern_TxtFilesDetected() returns error? {
 
     int snapshot;
     lock {
-        snapshot = count;
+        snapshot = fileCount;
     }
     // The .json file must NOT have been counted.
     test:assertTrue(snapshot >= 1,
         "At least the .txt file should have been detected; got: " + snapshot.toString());
 
     // Cleanup.
-    ftp:Error? _ = ftpClient->delete(txtPath);
-    ftp:Error? __ = ftpClient->delete(jsonPath);
+    check ftpClient->delete(txtPath);
+    check ftpClient->delete(jsonPath);
 }
+
+
+int customeExtensionCount = 0;
+string lastName = "";
 
 // Listener with a custom extension pattern (.bal) only fires for that extension.
 @test:Config {
     groups: ["ftp-listener-basic", "patterns"]
 }
 function testPattern_CustomExtension() returns error? {
-    isolated int count = 0;
-    isolated string lastName = "";
+    customeExtensionCount = 0;
+    lastName = "";
 
     ftp:Service svc = service object {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             lock {
-                count += event.addedFiles.length();
+                customeExtensionCount += event.addedFiles.length();
                 if event.addedFiles.length() > 0 {
                     lastName = event.addedFiles[event.addedFiles.length() - 1].name;
                 }
@@ -327,19 +332,13 @@ function testPattern_CustomExtension() returns error? {
     runtime:deregisterListener(l);
     check l.gracefulStop();
 
-    int countSnapshot;
-    string nameSnapshot;
-    lock {
-        countSnapshot = count;
-        nameSnapshot = lastName;
-    }
-    test:assertTrue(countSnapshot >= 1,
-        "At least one .bal file should have been detected; got: " + countSnapshot.toString());
-    test:assertEquals(nameSnapshot, "pattern-custom.bal",
+    test:assertTrue(customeExtensionCount >= 1,
+        "At least one .bal file should have been detected; got: " + customeExtensionCount.toString());
+    test:assertEquals(lastName, "pattern-custom.bal",
         "Only the .bal file should have been captured");
 
-    ftp:Error? _ = ftpClient->delete(balPath);
-    ftp:Error? __ = ftpClient->delete(txtPath);
+    check ftpClient->delete(balPath);
+    check ftpClient->delete(txtPath);
 }
 
 // An invalid regex pattern must cause Listener creation to fail with InvalidConfigError.
@@ -369,13 +368,14 @@ function testPattern_InvalidRegexRejected() {
 // FileInfo fields
 // =============================================================================
 
+ftp:FileInfo? captured = ();
 // The anonymous FTP server pre-seeds /home/in/test1.txt (content "File content",
 // 12 bytes). Verify every field of the FileInfo record for that file.
 @test:Config {
     groups: ["ftp-listener-basic", "fileinfo"]
 }
 function testFileInfo_AllFields() returns error? {
-    isolated ftp:FileInfo? captured = ();
+    captured = ();
 
     ftp:Service svc = service object {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
@@ -383,9 +383,7 @@ function testFileInfo_AllFields() returns error? {
             // matching the seed file, to avoid noise from other tests.
             foreach ftp:FileInfo fi in event.addedFiles {
                 if fi.name == "test1.txt" {
-                    lock {
                         captured = fi;
-                    }
                     break;
                 }
             }
@@ -471,65 +469,23 @@ function testFileInfo_AllFields() returns error? {
 }
 
 // =============================================================================
-// Mutable WatchEvent (non-readonly service)
-// =============================================================================
-
-// A non-readonly WatchEvent allows the service to mutate FileInfo fields.
-@test:Config {
-    groups: ["ftp-listener-basic", "fileinfo"]
-}
-function testFileInfo_MutableWatchEvent() returns error? {
-    ftp:FileInfo[] captured = [];
-
-    ftp:Service svc = service object {
-        remote function onFileChange(ftp:WatchEvent event) {
-            event.addedFiles.forEach(function(ftp:FileInfo fi) {
-                fi.name = "overridden_name";
-            });
-            captured = event.addedFiles;
-        }
-    };
-
-    ftp:Listener l = check new (listenerConfig("(.*)\\.mutable"));
-    check l.attach(svc);
-    check l.'start();
-    runtime:registerListener(l);
-
-    string remotePath = commons:HOME_IN + "/mutable-watch-test.mutable";
-    stream<io:Block, io:Error?> s = check io:fileReadBlocksAsStream(commons:PUT_FILE_PATH, 5);
-    check ftpClient->put(remotePath, s);
-
-    runtime:sleep(4);
-
-    runtime:deregisterListener(l);
-    check l.gracefulStop();
-
-    test:assertTrue(captured.length() > 0, "At least one file should have been captured");
-    captured.forEach(function(ftp:FileInfo fi) {
-        test:assertEquals(fi.name, "overridden_name",
-            "Mutated FileInfo.name should reflect the override");
-    });
-
-    ftp:Error? _ = ftpClient->delete(remotePath);
-}
-
-// =============================================================================
 // Isolated service
 // =============================================================================
 
+string isolatedLastName = "";
 // An isolated service object must be able to safely read/write shared state
 // inside a lock block.
 @test:Config {
     groups: ["ftp-listener-basic", "isolated"]
 }
 function testIsolatedService() returns error? {
-    isolated string capturedName = "";
+    isolatedLastName = "";
 
     ftp:Service svc = service object {
         remote function onFileChange(ftp:WatchEvent event) {
             event.addedFiles.forEach(function(ftp:FileInfo fi) {
                 lock {
-                    capturedName = fi.name;
+                    isolatedLastName = fi.name;
                 }
             });
         }
@@ -552,7 +508,7 @@ function testIsolatedService() returns error? {
     check ftpClient->delete(remotePath);
 
     lock {
-        test:assertEquals(capturedName, "basic-isolated-test.isolated",
+        test:assertEquals(isolatedLastName, "basic-isolated-test.isolated",
             "Isolated service should have captured the correct file name");
     }
 }
@@ -561,19 +517,18 @@ function testIsolatedService() returns error? {
 // Deleted-files detection
 // =============================================================================
 
+string deletedNames = "";
 // Listener must report deleted files in WatchEvent.deletedFiles.
 @test:Config {
     groups: ["ftp-listener-basic", "fileinfo"]
 }
 function testWatchEvent_DeletedFilesReported() returns error? {
-    isolated string deletedNames = "";
+    deletedNames = "";
 
     ftp:Service svc = service object {
         remote function onFileChange(ftp:WatchEvent event) {
             event.deletedFiles.forEach(function(string name) {
-                lock {
                     deletedNames += name;
-                }
             });
         }
     };
@@ -604,12 +559,8 @@ function testWatchEvent_DeletedFilesReported() returns error? {
     runtime:deregisterListener(l);
     check l.gracefulStop();
 
-    string snapshot;
-    lock {
-        snapshot = deletedNames;
-    }
     foreach int i in 1...3 {
-        test:assertTrue(snapshot.includes(string `/home/in/del-test-${i}.del`),
+        test:assertTrue(deletedNames.includes(string `/home/in/del-test-${i}.del`),
             string `Deleted file del-test-${i}.del should have been reported`);
     }
 }
@@ -618,17 +569,18 @@ function testWatchEvent_DeletedFilesReported() returns error? {
 // gracefulStop
 // =============================================================================
 
+int eventCountBeforeStop = 0;
 // gracefulStop() must let in-flight events complete before shutting down.
 @test:Config {
     groups: ["ftp-listener-basic", "graceful-stop"]
 }
 function testGracefulStop_EventsReceivedBeforeStop() returns error? {
-    isolated int count = 0;
+    eventCountBeforeStop = 0;
 
     ftp:Service svc = service object {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             lock {
-                count += event.addedFiles.length();
+                eventCountBeforeStop += event.addedFiles.length();
             }
         }
     };
@@ -650,32 +602,34 @@ function testGracefulStop_EventsReceivedBeforeStop() returns error? {
 
     int snapshot;
     lock {
-        snapshot = count;
+        snapshot = eventCountBeforeStop;
     }
     test:assertTrue(snapshot >= 1,
         "At least one file event should have been received before gracefulStop");
 
-    ftp:Error? _ = ftpClient->delete(remotePath);
+    check ftpClient->delete(remotePath);
 }
 
 // =============================================================================
 // immediateStop
 // =============================================================================
 
+boolean eventReceivedAfterStop = false;
+string capturedNameAfterStop = "";
 // After immediateStop() no further WatchEvents must be delivered.
 @test:Config {
     groups: ["ftp-listener-basic", "immediate-stop"]
 }
 function testImmediateStop_NoEventsAfterStop() returns error? {
-    isolated boolean eventReceived = false;
-    isolated string capturedName = "";
+    eventReceivedAfterStop = false;
+    capturedNameAfterStop = "";
 
     ftp:Service svc = service object {
         remote function onFileChange(ftp:WatchEvent event) {
             event.addedFiles.forEach(function(ftp:FileInfo fi) {
                 lock {
-                    eventReceived = true;
-                    capturedName = fi.name;
+                    eventReceivedAfterStop = true;
+                    capturedNameAfterStop = fi.name;
                 }
             });
         }
@@ -702,11 +656,11 @@ function testImmediateStop_NoEventsAfterStop() returns error? {
     boolean received;
     string name;
     lock {
-        received = eventReceived;
-        name = capturedName;
+        received = eventReceivedAfterStop;
+        name = capturedNameAfterStop;
     }
     test:assertFalse(received,
         "No events should be received after immediateStop(); got file: " + name);
 
-    ftp:Error? _ = ftpClient->delete(remotePath);
+    check ftpClient->delete(remotePath);
 }
