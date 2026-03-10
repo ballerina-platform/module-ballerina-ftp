@@ -162,19 +162,22 @@ task waitForFtpsTestServer() {
     dependsOn startTestUtilAsDaemon
     doLast {
         def host = "127.0.0.1"
-        def explicitPort = 21214
-        def implicitPort = 21217
+        // FTP ports that must respond with a 220 banner
+        def ftpPorts = [21210, 21212, 21214]
+        // TCP-only ports (SFTP SSH, implicit FTPS — no plaintext 220 banner)
+        def tcpPorts = [21213, 21217]
 
         def connectTimeoutMs = 500
         def readTimeoutMs = 500
-        def maxWaitMs = 30_000
+        def maxWaitMs = 60_000
         def pollIntervalMs = 500
 
-        def isExplicitFtpsReady = { ->
+        // Returns true if the port is reachable AND the server sends a "220 " FTP banner
+        def isFtpReady = { int port ->
             java.net.Socket socket = null
             try {
                 socket = new java.net.Socket()
-                socket.connect(new java.net.InetSocketAddress(host, explicitPort as int), connectTimeoutMs)
+                socket.connect(new java.net.InetSocketAddress(host, port as int), connectTimeoutMs)
                 socket.setSoTimeout(readTimeoutMs)
                 def reader = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream()))
                 def line = reader.readLine()
@@ -185,20 +188,17 @@ task waitForFtpsTestServer() {
                         out.flush()
                     }
                 } catch (Exception ignored) {
-                    // ignore
+                    // ignore write errors during teardown
                 }
                 return (line != null && line.startsWith("220"))
             } catch (Exception ignored) {
                 return false
             } finally {
-                try {
-                    socket?.close()
-                } catch (Exception ignored) {
-                    // ignore
-                }
+                try { socket?.close() } catch (Exception ignored) {}
             }
         }
 
+        // Returns true if the port accepts a TCP connection
         def isTcpPortOpen = { int port ->
             java.net.Socket socket = null
             try {
@@ -208,23 +208,32 @@ task waitForFtpsTestServer() {
             } catch (Exception ignored) {
                 return false
             } finally {
-                try {
-                    socket?.close()
-                } catch (Exception ignored) {
-                    // ignore
-                }
+                try { socket?.close() } catch (Exception ignored) {}
             }
+        }
+
+        def allReady = { ->
+            for (int port : ftpPorts) {
+                if (!isFtpReady(port)) return false
+            }
+            for (int port : tcpPorts) {
+                if (!isTcpPortOpen(port)) return false
+            }
+            return true
         }
 
         long start = System.currentTimeMillis()
         while (System.currentTimeMillis() - start < maxWaitMs) {
-            if (isExplicitFtpsReady() && isTcpPortOpen(implicitPort)) {
+            if (allReady()) {
+                logger.lifecycle("All mock servers ready (FTP: ${ftpPorts}, TCP: ${tcpPorts})")
                 return
             }
             sleep(pollIntervalMs)
         }
 
-        throw new GradleException("FTPS mock server was not ready on ${host}:${explicitPort} after waiting ${maxWaitMs / 1000} seconds")
+        throw new GradleException(
+            "Mock servers were not ready after ${maxWaitMs / 1000}s. " +
+            "Expected FTP 220 on ports ${ftpPorts} and TCP on ports ${tcpPorts}.")
     }
 }
 
