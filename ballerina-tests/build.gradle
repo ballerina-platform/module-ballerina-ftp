@@ -17,6 +17,7 @@
 plugins {
     id 'jacoco'
     id 'groovy'
+    id 'com.github.psxpaul.execfork'
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -143,6 +144,103 @@ task initializeVariables {
     }
 }
 
+// ─── Mock server lifecycle ────────────────────────────────────────────────────
+// The startup scripts and resource files (keystore, SSH keys, datafiles) live
+// under ballerina/tests/resources/.  The scripts use paths relative to
+// ballerina/ so we keep that directory as workingDir for the daemon process.
+
+def ballerinaDir = "${project.rootDir}/ballerina"
+def testUtilScript = Os.isFamily(Os.FAMILY_WINDOWS)
+        ? "${ballerinaDir}/tests/resources/startJava.bat"
+        : "${ballerinaDir}/tests/resources/startJava.sh"
+
+task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
+    dependsOn(":${packageName}-test-utils:build")
+    executable = testUtilScript
+    workingDir = ballerinaDir
+    standardOutput = new File("${project.buildDir}/mockServerLogs.log")
+}
+
+task waitForMockServers {
+    dependsOn startTestUtilAsDaemon
+    doLast {
+        def host = "127.0.0.1"
+        // FTP ports that must respond with a 220 banner
+        def ftpPorts = [21210, 21212, 21214]
+        // TCP-only ports (SFTP SSH, implicit FTPS — no plaintext 220 banner)
+        def tcpPorts = [21213, 21217]
+
+        def connectTimeoutMs = 500
+        def readTimeoutMs = 500
+        def maxWaitMs = 60_000
+        def pollIntervalMs = 500
+
+        // Returns true if the port is reachable AND the server sends a "220 " FTP banner
+        def isFtpReady = { int port ->
+            java.net.Socket socket = null
+            try {
+                socket = new java.net.Socket()
+                socket.connect(new java.net.InetSocketAddress(host, port as int), connectTimeoutMs)
+                socket.setSoTimeout(readTimeoutMs)
+                def reader = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream()))
+                def line = reader.readLine()
+                try {
+                    if (line != null && line.startsWith("220")) {
+                        def out = new java.io.OutputStreamWriter(socket.getOutputStream())
+                        out.write("QUIT\r\n")
+                        out.flush()
+                    }
+                } catch (Exception ignored) {
+                    // ignore write errors during teardown
+                }
+                return (line != null && line.startsWith("220"))
+            } catch (Exception ignored) {
+                return false
+            } finally {
+                try { socket?.close() } catch (Exception ignored) {}
+            }
+        }
+
+        // Returns true if the port accepts a TCP connection
+        def isTcpPortOpen = { int port ->
+            java.net.Socket socket = null
+            try {
+                socket = new java.net.Socket()
+                socket.connect(new java.net.InetSocketAddress(host, port as int), connectTimeoutMs)
+                return true
+            } catch (Exception ignored) {
+                return false
+            } finally {
+                try { socket?.close() } catch (Exception ignored) {}
+            }
+        }
+
+        def allReady = { ->
+            for (int p : ftpPorts) {
+                if (!isFtpReady(p)) return false
+            }
+            for (int p : tcpPorts) {
+                if (!isTcpPortOpen(p)) return false
+            }
+            return true
+        }
+
+        long start = System.currentTimeMillis()
+        while (System.currentTimeMillis() - start < maxWaitMs) {
+            if (allReady()) {
+                logger.lifecycle("All mock servers ready (FTP: ${ftpPorts}, TCP: ${tcpPorts})")
+                return
+            }
+            sleep(pollIntervalMs)
+        }
+
+        throw new GradleException(
+            "Mock servers were not ready after ${maxWaitMs / 1000}s. " +
+            "Expected FTP 220 on ports ${ftpPorts} and TCP on ports ${tcpPorts}.")
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 task publishTestCommonPackageToLocal {
     dependsOn(":${packageName}-${packageOrg}:build")
     dependsOn(updateTomlVersions)
@@ -186,8 +284,8 @@ task ballerinaTest {
     dependsOn(updateTomlVersions)
     dependsOn(initializeVariables)
     dependsOn(publishTestCommonPackageToLocal)
-    dependsOn(":${packageName}-${packageOrg}:startTestUtilAsDaemon")
-    dependsOn(":${packageName}-${packageOrg}:waitForFtpsTestServer")
+    dependsOn(startTestUtilAsDaemon)
+    dependsOn(waitForMockServers)
     finalizedBy(commitTomlFiles)
 
     doLast {
