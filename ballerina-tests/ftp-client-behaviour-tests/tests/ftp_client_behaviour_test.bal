@@ -619,3 +619,87 @@ function testErrorType_InvalidConfigErrorOnBadRegex() {
             "InvalidConfigError message should indicate invalid regex");
     }
 }
+
+// ─── Circuit breaker: selective failure-category filtering ────────────────────
+// These tests exercise the FailureCategorizer code path inside
+// CircuitBreaker.shouldCountAsFailure(). All previous CB tests use
+// failureCategories: [ftp:ALL_ERRORS] which bypasses categorisation entirely.
+
+@test:Config {
+    groups: ["ftp-client-behaviour", "circuit-breaker"]
+}
+function testCircuitBreaker_SelectiveCategory_NonMatchingErrorDoesNotTrip() returns error? {
+    // Only CONNECTION_ERROR failures should count. FileNotFoundError is not a
+    // connection error, so the circuit must stay CLOSED even after the request-
+    // volume threshold is exceeded with nothing but FileNotFoundErrors.
+    ftp:Client c = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        circuitBreaker: {
+            rollingWindow: {requestVolumeThreshold: 2, timeWindow: 60, bucketSize: 10},
+            failureThreshold: 0.5,
+            resetTime: 30,
+            failureCategories: [ftp:CONNECTION_ERROR]
+        }
+    });
+
+    string absent = "/non/existent/beh-cb-selective.txt";
+
+    // Failure 1 — FileNotFoundError is not CONNECTION_ERROR → must NOT count.
+    ftp:Error|byte[] r1 = c->getBytes(absent);
+    test:assertTrue(r1 is ftp:Error, "Request should fail with a file error");
+    test:assertFalse(r1 is ftp:CircuitBreakerOpenError,
+        "FileNotFoundError should not trip a CONNECTION_ERROR-only circuit breaker");
+
+    // Failure 2 — still not CONNECTION_ERROR → still must NOT count.
+    ftp:Error|byte[] r2 = c->getBytes(absent);
+    test:assertTrue(r2 is ftp:Error, "Second request should fail with a file error");
+    test:assertFalse(r2 is ftp:CircuitBreakerOpenError,
+        "Circuit should remain CLOSED: non-matching errors do not count as failures");
+
+    // Third request: threshold exceeded only by non-matching errors → still CLOSED.
+    ftp:Error|byte[] r3 = c->getBytes(absent);
+    test:assertFalse(r3 is ftp:CircuitBreakerOpenError,
+        "Circuit must stay CLOSED when all failures are of a non-configured category");
+
+    check c->close();
+}
+
+@test:Config {
+    groups: ["ftp-client-behaviour", "circuit-breaker"],
+    dependsOn: [testCircuitBreaker_SelectiveCategory_NonMatchingErrorDoesNotTrip]
+}
+function testCircuitBreaker_SelectiveCategory_AuthCategory_DoesNotTripOnFileErrors() returns error? {
+    // Configure CB to only count AUTHENTICATION_ERROR failures.
+    // File-not-found errors are not auth errors — circuit must stay CLOSED.
+    // This exercises the same FailureCategorizer path as the CONNECTION_ERROR test
+    // but with a different category configured, confirming the
+    // configuredCategories.contains(category) check works for each value.
+    ftp:Client c = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        circuitBreaker: {
+            rollingWindow: {requestVolumeThreshold: 2, timeWindow: 60, bucketSize: 10},
+            failureThreshold: 0.5,
+            resetTime: 30,
+            failureCategories: [ftp:AUTHENTICATION_ERROR]
+        }
+    });
+
+    string absent = "/non/existent/beh-cb-auth-cat.txt";
+
+    ftp:Error|byte[] r1 = c->getBytes(absent);
+    test:assertTrue(r1 is ftp:Error, "Request should fail with a file error");
+    test:assertFalse(r1 is ftp:CircuitBreakerOpenError,
+        "FileNotFoundError should not trip an AUTHENTICATION_ERROR-only circuit breaker");
+
+    ftp:Error|byte[] r2 = c->getBytes(absent);
+    test:assertFalse(r2 is ftp:CircuitBreakerOpenError,
+        "Circuit should remain CLOSED: file errors are not auth errors");
+
+    check c->close();
+}

@@ -62,6 +62,8 @@ const string P_PUT_JSON = "/home/in/api-put-json.json";
 const string P_PUT_XML = "/home/in/api-put-xml.xml";
 const string P_PUT_CSV_STR = "/home/in/api-put-csv-str.csv";
 const string P_PUT_CSV_REC = "/home/in/api-put-csv-rec.csv";
+const string P_PUT_COMPRESSED_SRC = "/home/in/api-compressed.txt";
+const string P_PUT_COMPRESSED_ZIP = "/home/in/api-compressed.zip";
 const string P_PUT_CSV_STREAM_STR = "/home/in/api-csv-stream-str.csv";
 const string P_PUT_CSV_STREAM_REC = "/home/in/api-csv-stream-rec.csv";
 const string P_PUT_LARGE = "/home/in/api-put-large.txt";
@@ -967,6 +969,24 @@ function testClose_thenOtherApis() returns error? {
 
     boolean|ftp:Error r10 = c->exists(p);
     test:assertTrue(isClosedError(r10, msg), "exists after close");
+}
+
+// ─── PUT — compression ────────────────────────────────────────────────────────
+
+@test:Config {
+    groups: ["ftp-client-api", "put"]
+}
+function testPut_CompressedUpload_StoresZipFile() returns error? {
+    // put() with compressionType=ZIP passes compressInput=true to the Java layer,
+    // which calls FtpClientHelper.getCompressedMessage() and FtpUtil.compress().
+    // The file is stored with a .zip extension (FtpUtil.getCompressedFileName).
+    check ftpClient->put(P_PUT_COMPRESSED_SRC, "compress me", compressionType = ftp:ZIP);
+
+    boolean|ftp:Error exists = ftpClient->exists(P_PUT_COMPRESSED_ZIP);
+    test:assertTrue(exists is boolean && <boolean>exists,
+        "Compressed file should be stored at the .zip path");
+
+    check ftpClient->delete(P_PUT_COMPRESSED_ZIP);
 }
 
 // Returns true when 'result' is an ftp:Error whose message equals 'expected'.
