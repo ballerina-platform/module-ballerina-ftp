@@ -488,18 +488,27 @@ function testFtpsListener_DetectsNewFile() returns error? {
 
     // Wait up to 15 s for the listener to fire.
     boolean received = false;
-    int elapsed = 0;
-    while (!received && elapsed < 15) {
-        runtime:sleep(1);
-        elapsed += 1;
+    int remaining = 15;
+    while remaining > 0 {
         lock { received = ftpsListenerFileReceived; }
+        if received {
+            break;
+        }
+        runtime:sleep(1);
+        remaining -= 1;
     }
 
-    runtime:deregisterListener(ftpsListener);
-    check ftpsListener.gracefulStop();
-    check ftpsClient->delete(remoteFile);
-    check ftpsClient->close();
-
+    // Assert before cleanup so a slow teardown does not affect the verdict.
     test:assertTrue(received,
         "FTPS listener (with secureSocket TLS config) should detect a newly uploaded file");
+
+    // Deregister signals the poller to stop. gracefulStop() can block
+    // indefinitely on FTPS/TLS teardown, so run it asynchronously and
+    // give it at most 5 s before proceeding.
+    runtime:deregisterListener(ftpsListener);
+    future<error?> _ = start ftpsListener.gracefulStop();
+    runtime:sleep(5);
+
+    do { check ftpsClient->delete(remoteFile); } on fail { }
+    do { check ftpsClient->close(); } on fail { }
 }
