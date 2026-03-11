@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - [Add automatic retry support with exponential backoff for FTP listener](https://github.com/ballerina-platform/ballerina-library/issues/8585)
 
+### Fixed
+
+- [Fix SFTP listener blocking on shutdown due to exec channel probe on restricted servers](https://github.com/ballerina-platform/ballerina-library/issues/8708)
+
 ### Changed
 
 ## [2.17.1] - 2026-02-26
