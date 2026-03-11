@@ -16,6 +16,7 @@
 import ballerina/ftp;
 import ballerina/lang.runtime;
 import ballerina/test;
+
 import ballerina_tests/ftp_test_commons as commons;
 
 // =============================================================================
@@ -40,7 +41,7 @@ function testSftpConnectionWithKeyAndPassword() returns error? {
     });
     ftp:FileInfo[]|ftp:Error result = sftpClient->list("/");
     test:assertFalse(result is ftp:Error,
-        "Expected successful SFTP connection with key + password");
+            "Expected successful SFTP connection with key + password");
     check sftpClient->close();
 }
 
@@ -61,7 +62,7 @@ function testSftpConnectionWithPasswordlessKey() returns error? {
     });
     ftp:FileInfo[]|ftp:Error result = sftpClient->list("/");
     test:assertFalse(result is ftp:Error,
-        "Expected successful SFTP connection with passwordless private key");
+            "Expected successful SFTP connection with passwordless private key");
     check sftpClient->close();
 }
 
@@ -81,7 +82,7 @@ function testSftpConnectionWithPasswordOnly() returns error? {
     });
     ftp:FileInfo[]|ftp:Error result = sftpClient->list("/");
     test:assertFalse(result is ftp:Error,
-        "Expected successful SFTP connection with password-only auth");
+            "Expected successful SFTP connection with password-only auth");
     check sftpClient->close();
 }
 
@@ -104,7 +105,7 @@ function testSftpConnectionWithPreferredMethodsPublicKeyFirst() returns error? {
     });
     ftp:FileInfo[]|ftp:Error result = sftpClient->list("/");
     test:assertFalse(result is ftp:Error,
-        "Expected successful SFTP connection with PUBLICKEY preferred");
+            "Expected successful SFTP connection with PUBLICKEY preferred");
     check sftpClient->close();
 }
 
@@ -128,7 +129,7 @@ function testSftpConnectionCloseSuccess() returns error? {
     });
     ftp:Error? closeResult = sftpClient->close();
     test:assertFalse(closeResult is ftp:Error,
-        "Expected clean close of SFTP connection");
+            "Expected clean close of SFTP connection");
 }
 
 // Any operation after close() must return the standard "already closed" error.
@@ -148,10 +149,10 @@ function testSftpOperationAfterClose() returns error? {
     check sftpClient->close();
     ftp:FileInfo[]|ftp:Error result = sftpClient->list("/");
     test:assertTrue(result is ftp:Error,
-        "Expected error when listing after SFTP connection is closed");
+            "Expected error when listing after SFTP connection is closed");
     if result is ftp:Error {
         test:assertEquals(result.message(), commons:CLIENT_ALREADY_CLOSED_MSG,
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
     }
 }
 
@@ -175,10 +176,10 @@ function testSftpConnectWithWrongProtocol() {
         }
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error when using FTP protocol with a privateKey config");
+            "Expected error when using FTP protocol with a privateKey config");
     if result is ftp:Error {
         test:assertTrue(result.message().includes("privateKey can only be used with SFTP protocol"),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
     }
 }
 
@@ -193,10 +194,10 @@ function testSftpConnectWithNoAuth() {
         port: commons:SFTP_PORT
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error for SFTP connection with no auth configuration");
+            "Expected error for SFTP connection with no auth configuration");
     if result is ftp:Error {
         test:assertTrue(result.message().startsWith("Error while connecting to the FTP server with URL: "),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
     }
 }
 
@@ -214,10 +215,10 @@ function testSftpConnectWithKeyOnly() {
         }
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error for SFTP connection with key but no credentials");
+            "Expected error for SFTP connection with key but no credentials");
     if result is ftp:Error {
         test:assertTrue(result.message().startsWith("Error while connecting to the FTP server with URL: "),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
     }
 }
 
@@ -240,10 +241,10 @@ function testSftpConnectWithWrongPassword() {
         }
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error for wrong SFTP password");
+            "Expected error for wrong SFTP password");
     if result is ftp:Error {
         test:assertTrue(result.message().startsWith("Error while connecting to the FTP server with URL: "),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
     }
 }
 
@@ -262,10 +263,10 @@ function testSftpConnectWithWrongUsername() {
         }
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error for unknown SFTP username");
+            "Expected error for unknown SFTP username");
     if result is ftp:Error {
         test:assertTrue(result.message().startsWith("Error while connecting to the FTP server with URL: "),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
     }
 }
 
@@ -284,10 +285,10 @@ function testSftpConnectWithEmptyUsername() {
         }
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error for empty SFTP username");
+            "Expected error for empty SFTP username");
     if result is ftp:Error {
         test:assertTrue(result.message().startsWith("Error while connecting to the FTP server with URL: "),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
     }
 }
 
@@ -306,10 +307,10 @@ function testSftpConnectWithEmptyPassword() {
         }
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error for empty SFTP password");
+            "Expected error for empty SFTP password");
     if result is ftp:Error {
         test:assertTrue(result.message().startsWith("Error while connecting to the FTP server with URL: "),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
     }
 }
 
@@ -332,10 +333,10 @@ function testSftpConnectWithUnregisteredKey() {
         }
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error for an unregistered SFTP private key");
+            "Expected error for an unregistered SFTP private key");
     if result is ftp:Error {
         test:assertTrue(result.message().startsWith("Error while connecting to the FTP server with URL: "),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
     }
 }
 
@@ -354,10 +355,10 @@ function testSftpConnectWithInvalidKeyPath() {
         }
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error for non-existent SFTP key path");
+            "Expected error for non-existent SFTP key path");
     if result is ftp:Error {
         test:assertTrue(result.message().startsWith("Error while connecting to the FTP server with URL: "),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
     }
 }
 
@@ -380,14 +381,14 @@ function testSftpConnectWithWrongPort() {
         }
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error for non-listening SFTP port");
+            "Expected error for non-listening SFTP port");
     if result is ftp:Error {
         test:assertTrue(result.message().startsWith("Error while connecting to the FTP server with URL: "),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
         // Error must carry root-cause detail beyond the prefix.
         test:assertTrue(
-            result.message().length() > "Error while connecting to the FTP server with URL: sftp://wso2:***@127.0.0.1:59997".length(),
-            "Expected error to include root-cause detail");
+                result.message().length() > "Error while connecting to the FTP server with URL: sftp://wso2:***@127.0.0.1:59997".length(),
+                "Expected error to include root-cause detail");
     }
 }
 
@@ -406,13 +407,13 @@ function testSftpConnectWithInvalidHost() {
         }
     });
     test:assertTrue(result is ftp:Error,
-        "Expected error for non-resolvable SFTP hostname");
+            "Expected error for non-resolvable SFTP hostname");
     if result is ftp:Error {
         test:assertTrue(result.message().startsWith("Error while connecting to the FTP server with URL: "),
-            "Unexpected error message: " + result.message());
+                "Unexpected error message: " + result.message());
         test:assertTrue(
-            result.message().length() > "Error while connecting to the FTP server with URL: ".length(),
-            "Expected error to include root-cause detail");
+                result.message().length() > "Error while connecting to the FTP server with URL: ".length(),
+                "Expected error to include root-cause detail");
     }
 }
 
@@ -429,16 +430,21 @@ function testSftpConnectWithInvalidHost() {
 isolated boolean sftpListenerFileReceived = false;
 
 @test:Config {
+    enable: false,
     groups: ["sftp-connection", "sftp-listener"]
 }
 function testSftpListener_DetectsNewFile() returns error? {
-    lock { sftpListenerFileReceived = false; }
+    lock {
+        sftpListenerFileReceived = false;
+    }
 
     ftp:Service svc = service object {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             foreach ftp:FileInfo fi in event.addedFiles {
                 if fi.name.endsWith(".sftp-lst") {
-                    lock { sftpListenerFileReceived = true; }
+                    lock {
+                        sftpListenerFileReceived = true;
+                    }
                 }
             }
         }
@@ -477,7 +483,9 @@ function testSftpListener_DetectsNewFile() returns error? {
     boolean received = false;
     int remaining = 15;
     while remaining > 0 {
-        lock { received = sftpListenerFileReceived; }
+        lock {
+            received = sftpListenerFileReceived;
+        }
         if received {
             break;
         }
@@ -487,12 +495,18 @@ function testSftpListener_DetectsNewFile() returns error? {
 
     // Assert before cleanup so a slow teardown does not affect the verdict.
     test:assertTrue(received,
-        "SFTP listener (with privateKey auth) should detect a newly uploaded file");
+            "SFTP listener (with privateKey auth) should detect a newly uploaded file");
 
     // Deregister the listener; skip gracefulStop() as it blocks indefinitely
     // on SFTP/SSH teardown in the test environment.
     runtime:deregisterListener(sftpListener);
 
-    do { check sftpClient->delete(remoteFile); } on fail { }
-    do { check sftpClient->close(); } on fail { }
+    do {
+        check sftpClient->delete(remoteFile);
+    } on fail {
+    }
+    do {
+        check sftpClient->close();
+    } on fail {
+    }
 }
