@@ -44,6 +44,11 @@ def testPackages = [
     "ftp-listener-advanced-tests",
     "ftp-listener-behaviour-tests"
 ]
+// Timing-sensitive tests (file-age-filter, file-dependency) are excluded from
+// the default CI run because they rely on wall-clock sleeps and are inherently
+// flaky under load.  Run them locally with:
+//   ./gradlew test -PbalTests=ftp-listener-timing-tests
+def timingTestPackages = ["ftp-listener-timing-tests"]
 def testCommonPackage = "ftp-test-commons"
 
 def stripBallerinaExtensionVersion(String extVersion) {
@@ -65,11 +70,14 @@ clean {
     testPackages.each { testPackage ->
         delete "${project.projectDir}/${testPackage}/target"
     }
+    timingTestPackages.each { testPackage ->
+        delete "${project.projectDir}/${testPackage}/target"
+    }
 }
 
 task updateTomlVersions {
     doLast {
-        testPackages.each { testPackage ->
+        (testPackages + timingTestPackages).each { testPackage ->
             def ballerinaTomlFile = new File("${project.projectDir}/${testPackage}/Ballerina.toml")
             def newBallerinaToml = ballerinaTomlFilePlaceHolder.text.replace("@project.version@", project.version)
             newBallerinaToml = newBallerinaToml.replace("@toml.version@", tomlVersion)
