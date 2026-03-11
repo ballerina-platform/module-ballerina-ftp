@@ -126,6 +126,9 @@ public final class FileTransportUtils {
             log.debug("FTP socketTimeout set to {} seconds", socketTimeoutSeconds);
         }
 
+        // Use MDTM command for last-modified time (second-precision, avoiding minute-only LIST timestamps)
+        configBuilder.setMdtmLastModifiedTime(opts, true);
+
         // Use the renamed constant
         Object fileModeObj = options.get(FtpConstants.FILE_TRANSFER_MODE);
         if (fileModeObj != null) {

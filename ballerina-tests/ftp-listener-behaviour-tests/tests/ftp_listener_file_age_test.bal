@@ -34,8 +34,12 @@ ftp:Client ageFtpClient = check new ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function deleteIfExistsAge(ftp:Client ftpClient, string path) returns error? {
-    check ftpClient->delete(path);
+function deleteIfExistsAge(ftp:Client ftpClient, string path) {
+    do {
+        check ftpClient->delete(path);
+    } on fail {
+        // file may not exist — silently ignore
+    }
 }
 
 function waitUntilAge(function() returns boolean cond, int timeoutSec) returns boolean {
@@ -97,7 +101,7 @@ function testFileAgeFilter_MaxAge_DeliversFreshFile() returns error? {
 
     test:assertTrue(delivered, "Fresh file within maxAge window should be delivered");
 
-    check deleteIfExistsAge(ageFtpClient, AGE_MAX_DIR + "/fresh.maxfresh");
+    deleteIfExistsAge(ageFtpClient, AGE_MAX_DIR + "/fresh.maxfresh");
 }
 
 // ─── TEST: maxAge — file already older than maxAge is NOT delivered ────────────
@@ -152,31 +156,29 @@ function testFileAgeFilter_MaxAge_SkipsStaleFile() returns error? {
     lock { delivered = ageMaxOldDelivered; }
     test:assertFalse(delivered, "File already older than maxAge should NOT be delivered");
 
-    check deleteIfExistsAge(ageFtpClient, AGE_MAX_DIR + "/stale.maxold");
+    deleteIfExistsAge(ageFtpClient, AGE_MAX_DIR + "/stale.maxold");
 }
 
 // ─── TEST: minAge — file is withheld until old enough, then delivered ──────────
 
-boolean ageMinDelivered = false;
+isolated boolean ageMinDelivered = false;
 
 @test:Config {
-    enable: false, 
     groups: ["ftp-listener-behaviour", "file-age-filter"]
 }
 function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
-    ageMinDelivered = false;
+    lock { ageMinDelivered = false; }
 
     ftp:Service ageService = @ftp:ServiceConfig {
         path: AGE_MIN_DIR,
         fileNamePattern: ".*\\.minage",
-        fileAgeFilter: {minAge: 10.0}
+        fileAgeFilter: {minAge: 15.0}
     }
     service object {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             foreach ftp:FileInfo fi in event.addedFiles {
-
                 if fi.name.endsWith(".minage") {
-                    ageMinDelivered = true;
+                    lock { ageMinDelivered = true; }
                 }
             }
         }
@@ -197,11 +199,13 @@ function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
 
     // Several polls — file is too young to be delivered
     runtime:sleep(5);
-    test:assertFalse(ageMinDelivered, "File should NOT be delivered before minAge elapses");
+    boolean tooEarly;
+    lock { tooEarly = ageMinDelivered; }
+    test:assertFalse(tooEarly, "File should NOT be delivered before minAge elapses");
 
     // Wait for the file to age past minAge
     boolean delivered = waitUntilAge(function() returns boolean {
-        return ageMinDelivered;
+        lock { return ageMinDelivered; }
     }, 25);
 
     runtime:deregisterListener(ageListener);
@@ -209,7 +213,7 @@ function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
 
     test:assertTrue(delivered, "File should be delivered once it satisfies minAge");
 
-    check deleteIfExistsAge(ageFtpClient, AGE_MIN_DIR + "/aging.minage");
+    deleteIfExistsAge(ageFtpClient, AGE_MIN_DIR + "/aging.minage");
 }
 
 // ─── TEST: FileAgeFilter record — default values ───────────────────────────────
@@ -232,22 +236,21 @@ function testFileAgeFilter_RecordDefaults() {
 isolated boolean ageBothDelivered = false;
 
 @test:Config {
-    enable: false,
     groups: ["ftp-listener-behaviour", "file-age-filter"]
 }
 function testFileAgeFilter_MinAndMax_DeliverInWindow() returns error? {
     lock { ageBothDelivered = false; }
 
     // maxAge=60 means any file younger than 60s is accepted.
-    // minAge=8 means the file must be at least 8s old.
-    // Upload file, wait 10s → file should be in the [8, 60] window → delivered.
+    // minAge=15 means the file must be at least 15s old.
+    // Upload file, wait 20s → file should be in the [15, 60] window → delivered.
     check ageFtpClient->putText(AGE_MIN_DIR + "/window.minmax", "window-content");
-    runtime:sleep(10);
+    runtime:sleep(20);
 
     ftp:Service ageService = @ftp:ServiceConfig {
         path: AGE_MIN_DIR,
         fileNamePattern: ".*\\.minmax",
-        fileAgeFilter: {minAge: 8.0, maxAge: 60.0}
+        fileAgeFilter: {minAge: 15.0, maxAge: 60.0}
     }
     service object {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
@@ -279,6 +282,5 @@ function testFileAgeFilter_MinAndMax_DeliverInWindow() returns error? {
 
     test:assertTrue(delivered, "File within [minAge, maxAge] window should be delivered");
 
-    check deleteIfExistsAge(ageFtpClient, AGE_MIN_DIR + "/window.minmax");
-
+    deleteIfExistsAge(ageFtpClient, AGE_MIN_DIR + "/window.minmax");
 }

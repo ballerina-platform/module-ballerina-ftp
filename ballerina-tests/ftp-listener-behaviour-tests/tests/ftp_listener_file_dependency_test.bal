@@ -35,7 +35,11 @@ ftp:Client depFtpClient = check new ({
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function deleteIfExistsDep(ftp:Client ftpClient, string path) {
-    error? ignore = ftpClient->delete(path);
+    do {
+        check ftpClient->delete(path);
+    } on fail {
+        // file may not exist — silently ignore
+    }
 }
 
 function waitUntilDep(function() returns boolean cond, int timeoutSec) returns boolean {
