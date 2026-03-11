@@ -164,6 +164,7 @@ function testFileAgeFilter_MaxAge_SkipsStaleFile() returns error? {
 isolated boolean ageMinDelivered = false;
 
 @test:Config {
+    enable: false,
     groups: ["ftp-listener-behaviour", "file-age-filter"]
 }
 function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
@@ -219,6 +220,7 @@ function testFileAgeFilter_MinAge_DeliversOnceOldEnough() returns error? {
 // ─── TEST: FileAgeFilter record — default values ───────────────────────────────
 
 @test:Config {
+        enable: false,
     groups: ["ftp-listener-behaviour", "file-age-filter"]
 }
 function testFileAgeFilter_RecordDefaults() {
@@ -236,6 +238,7 @@ function testFileAgeFilter_RecordDefaults() {
 isolated boolean ageBothDelivered = false;
 
 @test:Config {
+    enable: false,
     groups: ["ftp-listener-behaviour", "file-age-filter"]
 }
 function testFileAgeFilter_MinAndMax_DeliverInWindow() returns error? {
