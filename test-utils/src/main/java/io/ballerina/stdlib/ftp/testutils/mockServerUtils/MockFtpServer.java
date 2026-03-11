@@ -147,6 +147,7 @@ public final class MockFtpServer {
         // ftp-listener-behaviour-tests: fileDependencyConditions
         fileSystem.add(new DirectoryEntry("/home/in/beh-dep-all"));
         fileSystem.add(new DirectoryEntry("/home/in/beh-dep-any"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-dep-exact"));
 
         // ftp-listener-behaviour-tests: VFS configs / polling / compression
         fileSystem.add(new DirectoryEntry("/home/in/beh-vfs"));

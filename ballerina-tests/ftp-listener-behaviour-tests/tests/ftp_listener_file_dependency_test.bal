@@ -22,6 +22,7 @@ import ballerina_tests/ftp_test_commons as commons;
 
 const string DEP_ALL_DIR = "/home/in/beh-dep-all";
 const string DEP_ANY_DIR = "/home/in/beh-dep-any";
+const string DEP_EXACT_DIR = "/home/in/beh-dep-exact";
 
 // ─── Shared client ────────────────────────────────────────────────────────────
 
@@ -368,4 +369,86 @@ function testFileDependency_InvalidRequiredFilesPattern() returns error? {
         test:assertTrue(result.message().includes("Invalid regex pattern"),
             "Error message should mention invalid regex pattern");
     }
+}
+
+// ─── TEST: EXACT_COUNT mode — delivered only when precisely N deps are present ─
+
+isolated boolean depExactDelivered = false;
+
+@test:Config {
+    groups: ["ftp-listener-behaviour", "file-dependency"]
+}
+function testFileDependency_ExactCount_BlockedUntilCountMet() returns error? {
+    lock { depExactDelivered = false; }
+
+    string xmlPath  = DEP_EXACT_DIR + "/data_ec.xml";
+    string dep1Path = DEP_EXACT_DIR + "/data_ec_001.dep";
+    string dep2Path = DEP_EXACT_DIR + "/data_ec_002.dep";
+
+    deleteIfExistsDep(depFtpClient, xmlPath);
+    deleteIfExistsDep(depFtpClient, dep1Path);
+    deleteIfExistsDep(depFtpClient, dep2Path);
+
+    // requiredFiles is a regex: exactly 2 files matching data_ec_\d+\.dep must exist
+    ftp:Service depService = @ftp:ServiceConfig {
+        path: DEP_EXACT_DIR,
+        fileNamePattern: "data_ec\\.xml",
+        fileDependencyConditions: [
+            {
+                targetPattern: "data_ec\\.xml",
+                requiredFiles: ["data_ec_\\d+\\.dep"],
+                matchingMode: ftp:EXACT_COUNT,
+                requiredFileCount: 2
+            }
+        ]
+    }
+    service object {
+        remote function onFileChange(ftp:WatchEvent & readonly event) {
+            foreach ftp:FileInfo fi in event.addedFiles {
+                if fi.name == "data_ec.xml" {
+                    lock { depExactDelivered = true; }
+                }
+            }
+        }
+    };
+
+    ftp:Listener depListener = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        pollingInterval: 2
+    });
+    check depListener.attach(depService);
+    check depListener.'start();
+    runtime:registerListener(depListener);
+
+    // Upload target with no deps → 0 matches ≠ 2 → blocked
+    check depFtpClient->put(xmlPath, "ec-data".toBytes());
+    runtime:sleep(6);
+    boolean blockedNoDeps;
+    lock { blockedNoDeps = depExactDelivered; }
+    test:assertFalse(blockedNoDeps, "Target should be blocked with 0 dep files (need exactly 2)");
+
+    // Upload only one dep → 1 match ≠ 2 → still blocked
+    check depFtpClient->put(dep1Path, "dep1".toBytes());
+    runtime:sleep(4);
+    boolean blockedOneDep;
+    lock { blockedOneDep = depExactDelivered; }
+    test:assertFalse(blockedOneDep, "Target should remain blocked with 1 dep file (need exactly 2)");
+
+    // Upload second dep → 2 matches = 2 → delivered
+    check depFtpClient->put(dep2Path, "dep2".toBytes());
+    boolean delivered = waitUntilDep(function() returns boolean {
+        lock { return depExactDelivered; }
+    }, 15);
+
+    runtime:deregisterListener(depListener);
+    check depListener.gracefulStop();
+
+    test:assertTrue(delivered, "Target should be delivered once exactly 2 dep files are present");
+
+    deleteIfExistsDep(depFtpClient, xmlPath);
+    deleteIfExistsDep(depFtpClient, dep1Path);
+    deleteIfExistsDep(depFtpClient, dep2Path);
 }

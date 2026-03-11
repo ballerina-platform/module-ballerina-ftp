@@ -287,3 +287,56 @@ function testFileAgeFilter_MinAndMax_DeliverInWindow() returns error? {
 
     deleteIfExistsAge(ageFtpClient, AGE_MIN_DIR + "/window.minmax");
 }
+
+// ─── TEST: ageCalculationMode=CREATION_TIME falls back to lastModified ─────────
+// FTP servers don't expose creationTime via VFS, so the implementation falls
+// back to lastModified. The fresh file should still be delivered within maxAge.
+
+isolated boolean ageCreationTimeFallbackDelivered = false;
+
+@test:Config {
+    groups: ["ftp-listener-behaviour", "file-age-filter"]
+}
+function testFileAgeFilter_CreationTimeMode_FallsBackToLastModified() returns error? {
+    lock { ageCreationTimeFallbackDelivered = false; }
+
+    ftp:Service ageService = @ftp:ServiceConfig {
+        path: AGE_MAX_DIR,
+        fileNamePattern: ".*\\.ctfb",
+        fileAgeFilter: {maxAge: 30.0, ageCalculationMode: ftp:CREATION_TIME}
+    }
+    service object {
+        remote function onFileChange(ftp:WatchEvent & readonly event) {
+            foreach ftp:FileInfo fi in event.addedFiles {
+                if fi.name.endsWith(".ctfb") {
+                    lock { ageCreationTimeFallbackDelivered = true; }
+                }
+            }
+        }
+    };
+
+    ftp:Listener ageListener = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        pollingInterval: 2
+    });
+    check ageListener.attach(ageService);
+    check ageListener.'start();
+    runtime:registerListener(ageListener);
+
+    check ageFtpClient->putText(AGE_MAX_DIR + "/fresh.ctfb", "ct-content");
+
+    boolean delivered = waitUntilAge(function() returns boolean {
+        lock { return ageCreationTimeFallbackDelivered; }
+    }, 20);
+
+    runtime:deregisterListener(ageListener);
+    check ageListener.gracefulStop();
+
+    test:assertTrue(delivered,
+        "CREATION_TIME mode should fall back to lastModified and deliver the fresh file");
+
+    deleteIfExistsAge(ageFtpClient, AGE_MAX_DIR + "/fresh.ctfb");
+}
