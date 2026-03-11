@@ -5,12 +5,12 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.12.0"
+distribution-version = "2201.13.2"
 
 [[package]]
 org = "ballerina"
 name = "crypto"
-version = "2.10.0"
+version = "2.10.1"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "time"}
@@ -46,7 +46,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "data.xmldata"
-version = "1.6.0"
+version = "1.6.1"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.object"}
@@ -73,7 +73,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "ftp"
-version = "2.17.1"
+version = "2.18.0"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "data.csv"},
@@ -201,7 +201,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "log"
-version = "2.14.0"
+version = "2.17.0"
 dependencies = [
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
@@ -215,7 +215,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "observe"
-version = "1.6.0"
+version = "1.7.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
@@ -233,7 +233,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "task"
-version = "2.11.0"
+version = "2.11.1"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "time"},
