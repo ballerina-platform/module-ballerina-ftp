@@ -489,12 +489,9 @@ function testSftpListener_DetectsNewFile() returns error? {
     test:assertTrue(received,
         "SFTP listener (with privateKey auth) should detect a newly uploaded file");
 
-    // Deregister signals the poller to stop. gracefulStop() can block
-    // indefinitely on SFTP/SSH teardown, so run it asynchronously and
-    // give it at most 5 s before proceeding.
+    // Deregister the listener; skip gracefulStop() as it blocks indefinitely
+    // on SFTP/SSH teardown in the test environment.
     runtime:deregisterListener(sftpListener);
-    future<error?> _ = start sftpListener.gracefulStop();
-    runtime:sleep(5);
 
     do { check sftpClient->delete(remoteFile); } on fail { }
     do { check sftpClient->close(); } on fail { }
