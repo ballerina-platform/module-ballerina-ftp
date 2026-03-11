@@ -37,6 +37,8 @@ public const string ANON_PASSWORD = "anything";
 
 public const string HOME_IN = "/home/in";
 public const string FTPS_ROOT = "/ftps-client";
+public const string FTPS_LISTENER_ROOT = "/ftps-listener";
+public const string SFTP_LISTENER_ROOT = "/sftp-listener";
 
 // ─── Local resource paths ─────────────────────────────────────────────────────
 // All paths are relative from each test-package directory under ballerina-tests/

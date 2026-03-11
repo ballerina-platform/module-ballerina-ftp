@@ -14,6 +14,7 @@
 // under the License.
 
 import ballerina/ftp;
+import ballerina/lang.runtime;
 import ballerina/test;
 import ballerina_tests/ftp_test_commons as commons;
 
@@ -416,4 +417,89 @@ function testFtpsConnectWithWrongUsername() {
     });
     test:assertTrue(result is ftp:Error,
         "Expected error when connecting with wrong username");
+}
+
+// =============================================================================
+// FTPS Listener — basic polling (exercises configureServerFtpsSecureSocket)
+// =============================================================================
+
+// An ftp:Listener with protocol=FTPS and a secureSocket auth config must poll
+// the FTPS server and deliver file-change events.
+// This is the first listener-side test for FTPS and exercises
+// FtpListenerHelper.configureServerFtpsSecureSocket() which sets the TLS
+// keystore/truststore VFS parameters for FTPS connections.
+
+isolated boolean ftpsListenerFileReceived = false;
+
+@test:Config {
+    groups: ["ftps-connection", "ftps-listener"]
+}
+function testFtpsListener_DetectsNewFile() returns error? {
+    lock { ftpsListenerFileReceived = false; }
+
+    ftp:Service svc = service object {
+        remote function onFileChange(ftp:WatchEvent & readonly event) {
+            foreach ftp:FileInfo fi in event.addedFiles {
+                if fi.name.endsWith(".ftps-lst") {
+                    lock { ftpsListenerFileReceived = true; }
+                }
+            }
+        }
+    };
+
+    ftp:Listener ftpsListener = check new ({
+        protocol: ftp:FTPS,
+        host: commons:FTP_HOST,
+        port: commons:FTPS_EXPLICIT_PORT,
+        auth: {
+            credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD},
+            secureSocket: {
+                key: {path: commons:KEYSTORE_PATH, password: "changeit"},
+                cert: {path: commons:KEYSTORE_PATH, password: "changeit"},
+                mode: ftp:EXPLICIT,
+                dataChannelProtection: ftp:PRIVATE
+            }
+        },
+        path: commons:FTPS_LISTENER_ROOT,
+        pollingInterval: 2
+    });
+    check ftpsListener.attach(svc);
+    check ftpsListener.'start();
+    runtime:registerListener(ftpsListener);
+
+    // Upload a file using an FTPS client so the listener can detect it.
+    ftp:Client ftpsClient = check new ({
+        protocol: ftp:FTPS,
+        host: commons:FTP_HOST,
+        port: commons:FTPS_EXPLICIT_PORT,
+        auth: {
+            credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD},
+            secureSocket: {
+                key: {path: commons:KEYSTORE_PATH, password: "changeit"},
+                cert: {path: commons:KEYSTORE_PATH, password: "changeit"},
+                mode: ftp:EXPLICIT,
+                dataChannelProtection: ftp:PRIVATE
+            }
+        }
+    });
+
+    string remoteFile = commons:FTPS_LISTENER_ROOT + "/trigger.ftps-lst";
+    check ftpsClient->putText(remoteFile, "ftps-listener-test");
+
+    // Wait up to 15 s for the listener to fire.
+    boolean received = false;
+    int elapsed = 0;
+    while (!received && elapsed < 15) {
+        runtime:sleep(1);
+        elapsed += 1;
+        lock { received = ftpsListenerFileReceived; }
+    }
+
+    runtime:deregisterListener(ftpsListener);
+    check ftpsListener.gracefulStop();
+    check ftpsClient->delete(remoteFile);
+    check ftpsClient->close();
+
+    test:assertTrue(received,
+        "FTPS listener (with secureSocket TLS config) should detect a newly uploaded file");
 }

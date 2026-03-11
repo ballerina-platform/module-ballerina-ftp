@@ -706,3 +706,54 @@ function testFunctionConfig_AfterProcessMove() returns error? {
     // Cleanup the moved file (best effort)
     check contentFtpClient->delete(moveTarget + "/aftermove-test.txt");
 }
+
+// @FunctionConfig.afterError = DELETE: file is removed when the content handler returns an error.
+// This exercises the afterError.ifPresent(...) paths in FtpContentCallbackHandler (lines that
+// were unreachable since no previous test used afterError).
+const string AFTER_ERR_DIR = "/home/in/adv-postproc-after-error";
+isolated boolean afterErrInvoked = false;
+
+@test:Config {
+    groups: ["ftp-listener-advanced", "function-config"],
+    dependsOn: [testFunctionConfig_AfterProcessMove]
+}
+function testFunctionConfig_AfterErrorDelete() returns error? {
+    lock { afterErrInvoked = false; }
+
+    // Handler that always returns an error to trigger afterError.
+    ftp:Service svc = service object {
+        @ftp:FunctionConfig {afterError: ftp:DELETE}
+        remote function onFileText(string content, ftp:FileInfo fileInfo) returns error? {
+            lock { afterErrInvoked = true; }
+            return error("Intentional processing error to trigger afterError");
+        }
+    };
+
+    ftp:Listener l = check new (contentListenerConfig(AFTER_ERR_DIR, "aftererr.*\\.txt", 2));
+    check l.attach(svc);
+    check l.'start();
+    runtime:registerListener(l);
+
+    string remotePath = AFTER_ERR_DIR + "/aftererr-test.txt";
+    check contentFtpClient->putText(remotePath, "trigger error");
+
+    // Wait for handler to be invoked and afterError to execute.
+    boolean invoked = false;
+    int elapsed = 0;
+    while (!invoked && elapsed < 15) {
+        runtime:sleep(1);
+        elapsed += 1;
+        lock { invoked = afterErrInvoked; }
+    }
+
+    runtime:sleep(2); // allow afterError delete to complete
+    runtime:deregisterListener(l);
+    check l.gracefulStop();
+
+    test:assertTrue(invoked, "onFileText should have been invoked");
+
+    // File must have been deleted by afterError=DELETE.
+    ftp:Error|boolean exists = contentFtpClient->exists(remotePath);
+    test:assertTrue(exists is boolean && !<boolean>exists,
+        "afterError=DELETE should remove the file when the handler returns an error");
+}

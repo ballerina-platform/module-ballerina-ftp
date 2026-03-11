@@ -14,6 +14,7 @@
 // under the License.
 
 import ballerina/ftp;
+import ballerina/lang.runtime;
 import ballerina/test;
 import ballerina_tests/ftp_test_commons as commons;
 
@@ -413,4 +414,79 @@ function testSftpConnectWithInvalidHost() {
             result.message().length() > "Error while connecting to the FTP server with URL: ".length(),
             "Expected error to include root-cause detail");
     }
+}
+
+// =============================================================================
+// SFTP Listener — basic polling (exercises configureServerPrivateKey)
+// =============================================================================
+
+// An ftp:Listener with protocol=SFTP and a private-key auth config must poll
+// the SFTP server and deliver file-change events.
+// This is the first listener-side test for SFTP and exercises
+// FtpListenerHelper.configureServerPrivateKey() which sets the IDENTITY and
+// IDENTITY_PASS_PHRASE VFS parameters used by the Apache Commons VFS SFTP connector.
+
+isolated boolean sftpListenerFileReceived = false;
+
+@test:Config {
+    groups: ["sftp-connection", "sftp-listener"]
+}
+function testSftpListener_DetectsNewFile() returns error? {
+    lock { sftpListenerFileReceived = false; }
+
+    ftp:Service svc = service object {
+        remote function onFileChange(ftp:WatchEvent & readonly event) {
+            foreach ftp:FileInfo fi in event.addedFiles {
+                if fi.name.endsWith(".sftp-lst") {
+                    lock { sftpListenerFileReceived = true; }
+                }
+            }
+        }
+    };
+
+    ftp:Listener sftpListener = check new ({
+        protocol: ftp:SFTP,
+        host: commons:FTP_HOST,
+        port: commons:SFTP_PORT,
+        auth: {
+            credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD},
+            privateKey: {path: commons:SFTP_PRIVATE_KEY_PATH, password: "changeit"}
+        },
+        path: commons:SFTP_LISTENER_ROOT,
+        pollingInterval: 2
+    });
+    check sftpListener.attach(svc);
+    check sftpListener.'start();
+    runtime:registerListener(sftpListener);
+
+    // Upload a file using an SFTP client so the listener can detect it.
+    ftp:Client sftpClient = check new ({
+        protocol: ftp:SFTP,
+        host: commons:FTP_HOST,
+        port: commons:SFTP_PORT,
+        auth: {
+            credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD},
+            privateKey: {path: commons:SFTP_PRIVATE_KEY_PATH, password: "changeit"}
+        }
+    });
+
+    string remoteFile = commons:SFTP_LISTENER_ROOT + "/trigger.sftp-lst";
+    check sftpClient->putText(remoteFile, "sftp-listener-test");
+
+    // Wait up to 15 s for the listener to fire.
+    boolean received = false;
+    int elapsed = 0;
+    while (!received && elapsed < 15) {
+        runtime:sleep(1);
+        elapsed += 1;
+        lock { received = sftpListenerFileReceived; }
+    }
+
+    runtime:deregisterListener(sftpListener);
+    check sftpListener.gracefulStop();
+    check sftpClient->delete(remoteFile);
+    check sftpClient->close();
+
+    test:assertTrue(received,
+        "SFTP listener (with privateKey auth) should detect a newly uploaded file");
 }

@@ -971,6 +971,24 @@ function testClose_thenOtherApis() returns error? {
     test:assertTrue(isClosedError(r10, msg), "exists after close");
 }
 
+// ─── Deprecated API ───────────────────────────────────────────────────────────
+
+// append() writes content to an existing file without truncating it.
+// The deprecated append() method is the only public Ballerina API for the Java
+// append operation (APPEND file write mode), so it must remain tested.
+const string P_APPEND = "/home/in/api-deprecated-append.txt";
+
+@test:Config {
+    groups: ["ftp-client-api", "put"]
+}
+function testDeprecated_append_AppendsContentToExistingFile() returns error? {
+    check ftpClient->putText(P_APPEND, "hello");
+    check ftpClient->append(P_APPEND, " world");
+    string result = check ftpClient->getText(P_APPEND);
+    test:assertEquals(result, "hello world", "append() should concatenate without truncation");
+    check ftpClient->delete(P_APPEND);
+}
+
 // ─── PUT — compression ────────────────────────────────────────────────────────
 
 @test:Config {
