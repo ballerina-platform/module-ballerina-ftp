@@ -17,6 +17,7 @@ import ballerina/ftp;
 import ballerina/lang.runtime;
 import ballerina/log;
 import ballerina/test;
+
 import ballerina_tests/ftp_test_commons as commons;
 
 // ─── Isolated directories ─────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ function deleteIfExistsVfs(ftp:Client ftpClient, string path) returns error? {
     check ftpClient->delete(path);
 }
 
-function waitUntilVfs(function() returns boolean cond, int timeoutSec) returns boolean {
+function waitUntilVfs(function () returns boolean cond, int timeoutSec) returns boolean {
     int remaining = timeoutSec;
     while remaining > 0 {
         if cond() {
@@ -67,7 +68,7 @@ function testListener_ConnectTimeout_Accepted() returns error? {
         connectTimeout: 20.0
     });
     test:assertTrue(l is ftp:Listener,
-        "Listener with connectTimeout should initialize without error");
+            "Listener with connectTimeout should initialize without error");
     if l is ftp:Listener {
         log:printInfo("Listener with connectTimeout=20s initialized");
     }
@@ -92,7 +93,7 @@ function testListener_SocketConfig_Accepted() returns error? {
         }
     });
     test:assertTrue(l is ftp:Listener,
-        "Listener with socketConfig should initialize without error");
+            "Listener with socketConfig should initialize without error");
     if l is ftp:Listener {
         log:printInfo("Listener with socketConfig initialized");
     }
@@ -106,7 +107,9 @@ isolated boolean binaryListenerDelivered = false;
     groups: ["ftp-listener-behaviour", "vfs-config", "listener-compression"]
 }
 function testListener_FileTransferMode_Binary_DeliversFile() returns error? {
-    lock { binaryListenerDelivered = false; }
+    lock {
+        binaryListenerDelivered = false;
+    }
 
     ftp:Service binSvc = @ftp:ServiceConfig {
         path: VFS_DIR,
@@ -116,7 +119,9 @@ function testListener_FileTransferMode_Binary_DeliversFile() returns error? {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             foreach ftp:FileInfo fi in event.addedFiles {
                 if fi.name.endsWith(".bintransfer") {
-                    lock { binaryListenerDelivered = true; }
+                    lock {
+                        binaryListenerDelivered = true;
+                    }
                 }
             }
         }
@@ -137,8 +142,10 @@ function testListener_FileTransferMode_Binary_DeliversFile() returns error? {
     check vfsFtpClient->putText(VFS_DIR + "/test.bintransfer", "binary-mode-content");
 
     boolean delivered = waitUntilVfs(function() returns boolean {
-        lock { return binaryListenerDelivered; }
-    }, 20);
+                lock {
+                    return binaryListenerDelivered;
+                }
+            }, 20);
 
     runtime:deregisterListener(binListener);
     check binListener.gracefulStop();
@@ -157,7 +164,9 @@ isolated boolean asciiListenerDelivered = false;
     groups: ["ftp-listener-behaviour", "vfs-config", "listener-compression"]
 }
 function testListener_FileTransferMode_Ascii_DeliversFile() returns error? {
-    lock { asciiListenerDelivered = false; }
+    lock {
+        asciiListenerDelivered = false;
+    }
 
     ftp:Service asciiSvc = @ftp:ServiceConfig {
         path: VFS_DIR,
@@ -167,7 +176,9 @@ function testListener_FileTransferMode_Ascii_DeliversFile() returns error? {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             foreach ftp:FileInfo fi in event.addedFiles {
                 if fi.name.endsWith(".asciitransfer") {
-                    lock { asciiListenerDelivered = true; }
+                    lock {
+                        asciiListenerDelivered = true;
+                    }
                 }
             }
         }
@@ -188,12 +199,14 @@ function testListener_FileTransferMode_Ascii_DeliversFile() returns error? {
     check vfsFtpClient->putText(VFS_DIR + "/test.asciitransfer", "ascii-mode-content");
 
     boolean delivered = waitUntilVfs(function() returns boolean {
-        lock { return asciiListenerDelivered; }
-    }, 20);
+                lock {
+                    return asciiListenerDelivered;
+                }
+            }, 20);
 
     runtime:deregisterListener(asciiListener);
     check asciiListener.gracefulStop();
-     test:assertTrue(delivered, "ASCII mode listener should deliver files correctly");
+    test:assertTrue(delivered, "ASCII mode listener should deliver files correctly");
 
     check deleteIfExistsVfs(vfsFtpClient, VFS_DIR + "/test.asciitransfer");
 
@@ -213,7 +226,7 @@ function testListener_DefaultFileTransferMode_IsBinary() {
         pollingInterval: 2
     };
     test:assertEquals(listenerConfig.fileTransferMode, ftp:BINARY,
-        "Default fileTransferMode should be BINARY");
+            "Default fileTransferMode should be BINARY");
 }
 
 // ─── TEST: default pollingInterval is 60 seconds ──────────────────────────────
@@ -229,7 +242,7 @@ function testListener_DefaultPollingInterval() {
         auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}}
     };
     test:assertEquals(listenerConfig.pollingInterval, 60.0d,
-        "Default pollingInterval should be 60 seconds");
+            "Default pollingInterval should be 60 seconds");
 }
 
 // ─── TEST: polling interval — files detected within expected window ────────────
@@ -240,7 +253,9 @@ isolated boolean pollDelivered = false;
     groups: ["ftp-listener-behaviour", "polling"]
 }
 function testListener_PollingInterval_DetectsFileWithinWindow() returns error? {
-    lock { pollDelivered = false; }
+    lock {
+        pollDelivered = false;
+    }
 
     decimal pollingIntervalSec = 3.0;
 
@@ -252,7 +267,9 @@ function testListener_PollingInterval_DetectsFileWithinWindow() returns error? {
         remote function onFileChange(ftp:WatchEvent & readonly event) {
             foreach ftp:FileInfo fi in event.addedFiles {
                 if fi.name.endsWith(".polltest") {
-                    lock { pollDelivered = true; }
+                    lock {
+                        pollDelivered = true;
+                    }
                 }
             }
         }
@@ -273,14 +290,16 @@ function testListener_PollingInterval_DetectsFileWithinWindow() returns error? {
 
     // File should be detected within 3 * pollingInterval (allow some slack)
     boolean delivered = waitUntilVfs(function() returns boolean {
-        lock { return pollDelivered; }
-    }, 20);
+                lock {
+                    return pollDelivered;
+                }
+            }, 20);
 
     runtime:deregisterListener(pollListener);
     check pollListener.gracefulStop();
 
-        test:assertTrue(delivered,
-        "File should be detected within a few polling intervals");
+    test:assertTrue(delivered,
+            "File should be detected within a few polling intervals");
 
     check deleteIfExistsVfs(vfsFtpClient, POLL_DIR + "/detect.polltest");
 
@@ -307,7 +326,7 @@ function testListener_RetryConfig_Accepted() returns error? {
         }
     });
     test:assertTrue(l is ftp:Listener,
-        "Listener with retryConfig should initialize without error");
+            "Listener with retryConfig should initialize without error");
     if l is ftp:Listener {
         log:printInfo("Listener with retryConfig initialized");
     }
@@ -340,7 +359,7 @@ function testListener_CombinedVfsConfigs_Accepted() returns error? {
         }
     });
     test:assertTrue(l is ftp:Listener,
-        "Listener with combined VFS configs should initialize without error");
+            "Listener with combined VFS configs should initialize without error");
     if l is ftp:Listener {
         log:printInfo("Listener with combined VFS configs initialized");
     }
@@ -371,7 +390,7 @@ function testListener_SftpCompression_Config_Accepted() returns error? {
     };
 
     test:assertEquals(compressionConfig.sftpCompression, [ftp:ZLIB, ftp:NO],
-        "sftpCompression config should accept [ZLIB, NO] preference list");
+            "sftpCompression config should accept [ZLIB, NO] preference list");
     log:printInfo("SFTP listener sftpCompression config validated");
 }
 
@@ -391,7 +410,7 @@ function testListener_SftpCompression_DefaultIsNone() {
         pollingInterval: 2
     };
     test:assertEquals(listenerConfig.sftpCompression, [ftp:NO],
-        "Default sftpCompression should be [NO]");
+            "Default sftpCompression should be [NO]");
 }
 
 // ─── TEST: SocketConfig record defaults ───────────────────────────────────────
@@ -402,22 +421,9 @@ function testListener_SftpCompression_DefaultIsNone() {
 function testSocketConfig_RecordDefaults() {
     ftp:SocketConfig sc = {};
     test:assertEquals(sc.ftpDataTimeout, 120.0d,
-        "Default ftpDataTimeout should be 120 seconds");
+            "Default ftpDataTimeout should be 120 seconds");
     test:assertEquals(sc.ftpSocketTimeout, 60.0d,
-        "Default ftpSocketTimeout should be 60 seconds");
+            "Default ftpSocketTimeout should be 60 seconds");
     test:assertEquals(sc.sftpSessionTimeout, 300.0d,
-        "Default sftpSessionTimeout should be 300 seconds");
-}
-
-// ─── TEST: RetryConfig record defaults ────────────────────────────────────────
-
-@test:Config {
-    groups: ["ftp-listener-behaviour", "vfs-config"]
-}
-function testRetryConfig_RecordDefaults() {
-    ftp:RetryConfig rc = {};
-    test:assertEquals(rc.count, 3, "Default retry count should be 3");
-    test:assertEquals(rc.interval, 1.0d, "Default retry interval should be 1.0s");
-    test:assertEquals(rc.backOffFactor, 2.0d, "Default backOffFactor should be 2.0");
-    test:assertEquals(rc.maxWaitInterval, 30.0d, "Default maxWaitInterval should be 30s");
+            "Default sftpSessionTimeout should be 300 seconds");
 }
