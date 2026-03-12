@@ -430,7 +430,6 @@ function testSftpConnectWithInvalidHost() {
 isolated boolean sftpListenerFileReceived = false;
 
 @test:Config {
-    enable: false,
     groups: ["sftp-connection", "sftp-listener"]
 }
 function testSftpListener_DetectsNewFile() returns error? {
