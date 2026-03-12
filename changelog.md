@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - [Add automatic retry support with exponential backoff for FTP listener](https://github.com/ballerina-platform/ballerina-library/issues/8585)
+- Updated minimum distribution version to 2201.13.2
 
 ### Fixed
 
