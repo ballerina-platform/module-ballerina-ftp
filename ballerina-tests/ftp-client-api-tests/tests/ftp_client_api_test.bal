@@ -15,6 +15,7 @@
 
 import ballerina/ftp;
 import ballerina/test;
+
 import ballerina_tests/ftp_test_commons as commons;
 
 // ─── Type definitions ─────────────────────────────────────────────────────────
@@ -51,8 +52,8 @@ type Row record {|
 // ─── Well-known server paths ──────────────────────────────────────────────────
 
 // Pre-seeded by the mock server; do not delete in tests.
-const string SEED_FILE = "/home/in/test1.txt";          // "File content"
-const string SEED_LARGE_FILE = "/home/in/test4.txt";    // 9000-byte repeating file
+const string SEED_FILE = "/home/in/test1.txt"; // "File content"
+const string SEED_LARGE_FILE = "/home/in/test4.txt"; // 9000-byte repeating file
 const string SEED_DIR = "/home/in";
 
 // Isolated working paths — each test uses its own path to stay independent.
@@ -123,12 +124,30 @@ ftp:Client ftpJailedClient = check new ({
 @test:AfterSuite {}
 function cleanupClientApiTestFiles() {
     string[] paths = [
-        P_PUT_BYTES, P_PUT_TEXT, P_PUT_JSON, P_PUT_XML,
-        P_PUT_CSV_STR, P_PUT_CSV_REC, P_PUT_CSV_STREAM_STR, P_PUT_CSV_STREAM_REC,
-        P_PUT_LARGE, P_TEXT_APPEND, P_CSV_APPEND, P_STREAM_CLOSE_CSV,
-        P_BINDING_JSON, P_BINDING_XML, P_BINDING_CSV,
-        P_BIND_TYPED_JSON, P_BIND_TYPED_XML, P_BIND_TYPED_CSV, P_BIND_TYPED_CSV_STREAM,
-        P_BYTES_AS_STREAM, P_SIZE_TEST, P_MOVE_DST, P_COPY_DST, P_DELETE
+        P_PUT_BYTES,
+        P_PUT_TEXT,
+        P_PUT_JSON,
+        P_PUT_XML,
+        P_PUT_CSV_STR,
+        P_PUT_CSV_REC,
+        P_PUT_CSV_STREAM_STR,
+        P_PUT_CSV_STREAM_REC,
+        P_PUT_LARGE,
+        P_TEXT_APPEND,
+        P_CSV_APPEND,
+        P_STREAM_CLOSE_CSV,
+        P_BINDING_JSON,
+        P_BINDING_XML,
+        P_BINDING_CSV,
+        P_BIND_TYPED_JSON,
+        P_BIND_TYPED_XML,
+        P_BIND_TYPED_CSV,
+        P_BIND_TYPED_CSV_STREAM,
+        P_BYTES_AS_STREAM,
+        P_SIZE_TEST,
+        P_MOVE_DST,
+        P_COPY_DST,
+        P_DELETE
     ];
     foreach string p in paths {
         do {
@@ -186,7 +205,9 @@ function testGetBytesAsStream() returns error? {
     stream<byte[], error?> s = check ftpClient->getBytesAsStream(SEED_FILE);
     byte[] accumulated = [];
     check from byte[] chunk in s
-        do { accumulated.push(...chunk); };
+        do {
+            accumulated.push(...chunk);
+        };
     test:assertEquals(accumulated, expected, "getBytesAsStream should return the same bytes as getBytes");
 }
 
@@ -224,7 +245,9 @@ function testPutGetBytesAsStream() returns error? {
     stream<byte[], error?> s = check ftpClient->getBytesAsStream(P_BYTES_AS_STREAM);
     byte[] accumulated = [];
     check from byte[] chunk in s
-        do { accumulated.push(...chunk); };
+        do {
+            accumulated.push(...chunk);
+        };
     test:assertEquals(accumulated, payload, "getBytesAsStream content mismatch");
 }
 
@@ -266,7 +289,10 @@ function testPutGetCsv_stringRows() returns error? {
     // Same rows via stream.
     stream<string[], error?> s = check ftpClient->getCsvAsStream(P_PUT_CSV_STR);
     string[][] fromStream = [];
-    check from string[] row in s do { fromStream.push(row); };
+    check from string[] row in s
+        do {
+            fromStream.push(row);
+        };
     test:assertEquals(fromStream, payload.slice(1), "getCsvAsStream string rows mismatch");
 }
 
@@ -282,7 +308,10 @@ function testPutGetCsv_records() returns error? {
 
     stream<Row, error?> s = check ftpClient->getCsvAsStream(P_PUT_CSV_REC);
     Row[] fromStream = [];
-    check from Row row in s do { fromStream.push(row); };
+    check from Row row in s
+        do {
+            fromStream.push(row);
+        };
     test:assertEquals(fromStream, payload, "getCsvAsStream record round-trip mismatch");
 }
 
@@ -370,7 +399,7 @@ function testPutCsv_appendMode() returns error? {
 
     string[][] got = check ftpClient->getCsv(P_CSV_APPEND);
     test:assertEquals(got, [["1", "Alpha"], ["2", "Beta"], ["3", "Gamma"]],
-        "putCsv APPEND should add rows without duplicating header");
+            "putCsv APPEND should add rows without duplicating header");
 }
 
 // =============================================================================
@@ -406,7 +435,7 @@ function testStreamClose_typedStreams() returns error? {
 function testUserDirIsRootTrue_getText() returns error? {
     string content = check ftpJailedClient->getText("test1.txt");
     test:assertEquals(content, "File content",
-        "userDirIsRoot=true: relative getText should resolve from user home");
+            "userDirIsRoot=true: relative getText should resolve from user home");
 }
 
 // Relative path (no leading slash): resolved from the jailed root.
@@ -417,7 +446,7 @@ function testUserDirIsRootTrue_relativePut() returns error? {
     check ftpJailedClient->putText(P_JAILED_REL, "hello-jailed");
     string got = check ftpJailedClient->getText(P_JAILED_REL);
     test:assertEquals(got, "hello-jailed",
-        "userDirIsRoot=true: relative put/get round-trip failed");
+            "userDirIsRoot=true: relative put/get round-trip failed");
     do {
         check ftpJailedClient->delete(P_JAILED_REL);
     } on fail {
@@ -432,7 +461,7 @@ function testUserDirIsRootTrue_relativeSlashPut() returns error? {
     check ftpJailedClient->putText(P_JAILED_SLASH, "hello-jailed-slash");
     string got = check ftpJailedClient->getText(P_JAILED_SLASH);
     test:assertEquals(got, "hello-jailed-slash",
-        "userDirIsRoot=true: leading-slash path put/get round-trip failed");
+            "userDirIsRoot=true: leading-slash path put/get round-trip failed");
     do {
         check ftpJailedClient->delete(P_JAILED_SLASH);
     } on fail {
@@ -451,12 +480,12 @@ function testGetJson_invalidContent_bindsError() returns error? {
     check ftpClient->putText(P_BINDING_JSON, "not valid json {{{");
     json|ftp:Error result = ftpClient->getJson(P_BINDING_JSON);
     test:assertTrue(result is ftp:ContentBindingError,
-        "getJson on non-JSON content should return ContentBindingError");
+            "getJson on non-JSON content should return ContentBindingError");
     if result is ftp:ContentBindingError {
         test:assertTrue(result.detail().filePath is string,
-            "ContentBindingError should carry filePath detail");
+                "ContentBindingError should carry filePath detail");
         test:assertTrue(result.detail().content is byte[],
-            "ContentBindingError should carry content bytes");
+                "ContentBindingError should carry content bytes");
     }
     do {
         check ftpClient->delete(P_BINDING_JSON);
@@ -472,10 +501,10 @@ function testGetXml_invalidContent_bindsError() returns error? {
     check ftpClient->putText(P_BINDING_XML, "not valid xml <<<>>>");
     xml|ftp:Error result = ftpClient->getXml(P_BINDING_XML);
     test:assertTrue(result is ftp:ContentBindingError,
-        "getXml on non-XML content should return ContentBindingError");
+            "getXml on non-XML content should return ContentBindingError");
     if result is ftp:ContentBindingError {
         test:assertTrue(result.detail().filePath is string,
-            "ContentBindingError should carry filePath detail");
+                "ContentBindingError should carry filePath detail");
     }
     do {
         check ftpClient->delete(P_BINDING_XML);
@@ -488,10 +517,10 @@ function testGetXml_invalidContent_bindsError() returns error? {
     groups: ["ftp-client-api", "binding"]
 }
 function testGetJson_missingField_bindsError() returns error? {
-    check ftpClient->putJson(P_BIND_TYPED_JSON, <json> {name: "Alice"}); // missing 'age'
+    check ftpClient->putJson(P_BIND_TYPED_JSON, <json>{name: "Alice"}); // missing 'age'
     Person|ftp:Error result = ftpClient->getJson(P_BIND_TYPED_JSON);
     test:assertTrue(result is ftp:ContentBindingError,
-        "getJson should return ContentBindingError when required field is absent");
+            "getJson should return ContentBindingError when required field is absent");
     do {
         check ftpClient->delete(P_BIND_TYPED_JSON);
     } on fail {
@@ -507,7 +536,7 @@ function testGetCsv_wrongType_bindsError() returns error? {
     check ftpClient->putCsv(P_BINDING_CSV, data);
     CsvPerson[]|ftp:Error result = ftpClient->getCsv(P_BINDING_CSV);
     test:assertTrue(result is ftp:ContentBindingError,
-        "getCsv should return ContentBindingError when field type mismatches");
+            "getCsv should return ContentBindingError when field type mismatches");
     do {
         check ftpClient->delete(P_BINDING_CSV);
     } on fail {
@@ -535,16 +564,16 @@ function testGetTyped_nonExistentFile() {
     groups: ["ftp-client-api", "binding", "lax"]
 }
 function testJsonBinding_strictAndLax() returns error? {
-    check ftpClient->putJson(P_BIND_TYPED_JSON, <json> {name: "Alice"}); // missing 'age'
+    check ftpClient->putJson(P_BIND_TYPED_JSON, <json>{name: "Alice"}); // missing 'age'
 
     Person|ftp:Error strictResult = ftpClient->getJson(P_BIND_TYPED_JSON, Person);
     test:assertTrue(strictResult is ftp:Error,
-        "Strict JSON binding should fail when required field is absent");
+            "Strict JSON binding should fail when required field is absent");
 
     PersonLax laxResult = check ftpLaxClient->getJson(P_BIND_TYPED_JSON, PersonLax);
     test:assertEquals(laxResult.name, "Alice");
     test:assertTrue(laxResult.age is (),
-        "Lax JSON binding should map absent field to nil");
+            "Lax JSON binding should map absent field to nil");
 
     do {
         check ftpClient->delete(P_BIND_TYPED_JSON);
@@ -562,7 +591,7 @@ function testXmlBinding_strictAndLax() returns error? {
 
     Person|ftp:Error strictResult = ftpClient->getXml(P_BIND_TYPED_XML, Person);
     test:assertTrue(strictResult is ftp:Error,
-        "Strict XML binding should fail when XML has extra fields");
+            "Strict XML binding should fail when XML has extra fields");
 
     Person laxResult = check ftpLaxClient->getXml(P_BIND_TYPED_XML, Person);
     test:assertEquals(laxResult.name, "Alice");
@@ -583,7 +612,7 @@ function testCsvBinding_strictAndLax() returns error? {
 
     CsvPerson[]|ftp:Error strictResult = ftpClient->getCsv(P_BIND_TYPED_CSV);
     test:assertTrue(strictResult is ftp:Error,
-        "Strict CSV binding should fail when required field is empty");
+            "Strict CSV binding should fail when required field is empty");
 
     CsvPersonLax[] laxResult = check ftpLaxClient->getCsv(P_BIND_TYPED_CSV);
     test:assertEquals(laxResult.length(), 2, "Lax CSV should return 2 records");
@@ -604,19 +633,26 @@ function testCsvStreamBinding_strictAndLax() returns error? {
     string[][] data = [["name", "age"], ["Charlie", "30"], ["Diana", ""]];
     check ftpClient->putCsv(P_BIND_TYPED_CSV_STREAM, data, ftp:OVERWRITE);
 
-    stream<CsvPerson, error?>|ftp:Error strictStream = ftpClient->getCsvAsStream(P_BIND_TYPED_CSV_STREAM, CsvPerson);
-    if strictStream is stream<CsvPerson, error?> {
-        CsvPerson[]|error consumed = from CsvPerson row in strictStream select row;
-        test:assertTrue(consumed is ftp:ContentBindingError,
-            "Strict CSV stream should error on row with missing required field");
-    } else {
-        test:assertTrue(strictStream is ftp:ContentBindingError,
-            "Strict CSV stream creation should fail with ContentBindingError");
+    stream<CsvPerson, error?> strictStream = check ftpClient->getCsvAsStream(P_BIND_TYPED_CSV_STREAM, CsvPerson);
+    error? streamError = ();
+    while true {
+        record {|CsvPerson value;|}|error? next = strictStream.next();
+        if next is error {
+            streamError = next;
+            break;
+        } else if next is () {
+            break;
+        }
     }
+    test:assertTrue(streamError is ftp:ContentBindingError,
+            "Strict CSV stream should error on row with missing required field");
 
     stream<CsvPersonLax, error?> laxStream = check ftpLaxClient->getCsvAsStream(P_BIND_TYPED_CSV_STREAM, CsvPersonLax);
     CsvPersonLax[] laxRecords = [];
-    check from CsvPersonLax row in laxStream do { laxRecords.push(row); };
+    check from CsvPersonLax row in laxStream
+        do {
+            laxRecords.push(row);
+        };
     test:assertEquals(laxRecords.length(), 2, "Lax CSV stream should return 2 records");
 
     do {
@@ -666,7 +702,7 @@ function testRename_directory() returns error? {
     // Old path should no longer be a directory.
     boolean|ftp:Error oldExists = ftpClient->isDirectory(oldPath);
     test:assertTrue(oldExists is ftp:Error || oldExists == false,
-        "Original path should not exist after rename");
+            "Original path should not exist after rename");
 
     // New path should be a directory.
     boolean newExists = check ftpClient->isDirectory(newPath);
@@ -739,7 +775,7 @@ function testExists_existingAndMissing() returns error? {
     groups: ["ftp-client-api", "file-ops"]
 }
 function testSize() returns error? {
-    string payload = "twelve chars";  // exactly 12 bytes in UTF-8
+    string payload = "twelve chars"; // exactly 12 bytes in UTF-8
     check ftpClient->putText(P_SIZE_TEST, payload);
     int sz = check ftpClient->size(P_SIZE_TEST);
     test:assertEquals(sz, 12, "size() should return 12 for a 12-byte file");
@@ -767,7 +803,7 @@ function testList_returnsFileInfo() returns error? {
             found = true;
         }
         test:assertTrue(fi.lastModifiedTimestamp > 0,
-            "lastModifiedTimestamp must be positive for " + fi.path);
+                "lastModifiedTimestamp must be positive for " + fi.path);
     }
     test:assertTrue(found, "list() result must include the seed file " + SEED_FILE);
 }
@@ -801,7 +837,7 @@ function testRmdir_emptyDirectory() returns error? {
     check ftpClient->rmdir(dir);
     boolean|ftp:Error gone = ftpClient->isDirectory(dir);
     test:assertTrue(gone is ftp:Error || gone == false,
-        "Directory should not exist after rmdir");
+            "Directory should not exist after rmdir");
 }
 
 @test:Config {
@@ -816,7 +852,7 @@ function testRmdir_withSubdirectory() returns error? {
     check ftpClient->rmdir(parent);
     boolean|ftp:Error gone = ftpClient->isDirectory(parent);
     test:assertTrue(gone is ftp:Error || gone == false,
-        "Parent directory (with subdirectory) should not exist after rmdir");
+            "Parent directory (with subdirectory) should not exist after rmdir");
 }
 
 @test:Config {
@@ -830,7 +866,7 @@ function testRmdir_withFiles() returns error? {
     check ftpClient->rmdir(dir);
     boolean|ftp:Error gone = ftpClient->isDirectory(dir);
     test:assertTrue(gone is ftp:Error || gone == false,
-        "Directory containing files should not exist after rmdir");
+            "Directory containing files should not exist after rmdir");
 }
 
 // =============================================================================
@@ -872,7 +908,7 @@ function testClose_thenPutApis() returns error? {
     ftp:Error? r2 = c->putText("/x.txt", "v");
     test:assertTrue(isClosedError(r2, msg), "putText after close should return CLIENT_ALREADY_CLOSED_MSG");
 
-    ftp:Error? r3 = c->putJson("/x.json", <json> {});
+    ftp:Error? r3 = c->putJson("/x.json", <json>{});
     test:assertTrue(isClosedError(r3, msg), "putJson after close should return CLIENT_ALREADY_CLOSED_MSG");
 
     ftp:Error? r4 = c->putXml("/x.xml", xml `<a/>`);
@@ -1002,7 +1038,7 @@ function testPut_CompressedUpload_StoresZipFile() returns error? {
 
     boolean|ftp:Error exists = ftpClient->exists(P_PUT_COMPRESSED_ZIP);
     test:assertTrue(exists is boolean && <boolean>exists,
-        "Compressed file should be stored at the .zip path");
+            "Compressed file should be stored at the .zip path");
 
     check ftpClient->delete(P_PUT_COMPRESSED_ZIP);
 }
