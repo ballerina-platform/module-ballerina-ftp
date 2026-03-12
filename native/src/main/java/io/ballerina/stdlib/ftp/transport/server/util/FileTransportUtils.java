@@ -328,6 +328,10 @@ public final class FileTransportUtils {
             }
             configBuilder.setIdentityInfo(opts, identityInfo);
         }
+        // Prevent JSch from probing server capabilities via exec channel (e.g. "id -u").
+        // Servers that expose only SFTP/SCP subsystems reject exec commands, which can stall shutdown.
+        configBuilder.setDisableDetectExecChannel(opts, true);
+
         Object avoidPermissionCheckObj = options.get(FtpConstants.AVOID_PERMISSION_CHECK);
         if (avoidPermissionCheckObj != null) {
             try {

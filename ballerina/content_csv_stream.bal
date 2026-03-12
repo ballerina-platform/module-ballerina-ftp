@@ -52,13 +52,13 @@ class ContentCsvStream {
     # Reads and return the next CSV record as `record{}` or `string[]`.
     #
     # + return - A record containing a `record{}` or array value when the stream is available,
-    #            `()` if the stream has reached the end or else an `error`
+    # `()` if the stream has reached the end or else an `error`
     public isolated function next() returns record {|record {}|anydata[] value;|}|error? {
         if self.isClosed {
             return;
         }
 
-        record {|record {}|anydata[] value;|}|error? nextEntry = self.csvStream.next();
+        record {|record {}|anydata[] value;|}|error? nextEntry = trap self.csvStream.next();
         if nextEntry is () {
             self.isClosed = true;
             ignoreCloseError(self.csvStream.close());
@@ -69,7 +69,7 @@ class ContentCsvStream {
             self.isClosed = true;
             ignoreCloseError(self.csvStream.close());
             return createContentBindingError("Error reading CSV stream: " + nextEntry.message(), nextEntry,
-                self.filePath);
+                    self.filePath);
         }
 
         return nextEntry;
