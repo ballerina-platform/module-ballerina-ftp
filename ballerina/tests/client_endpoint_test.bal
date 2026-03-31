@@ -410,9 +410,18 @@ function testGetCsvAsStreamContentBindingError() returns error? {
     check (<Client>clientEp)->putText(path, "name,age\nAlice,\\q\nBob,25");
 
     stream<string[], error?> result = check (<Client>clientEp)->getCsvAsStream(path);
-    string[][]|error consumed = from string[] row in result
-        select row;
-    if consumed is ContentBindingError {
+    error? iterError = ();
+    while true {
+        record {|string[] value;|}|error? nextRow = result.next();
+        if nextRow is () {
+            break;
+        }
+        if nextRow is error {
+            iterError = nextRow;
+            break;
+        }
+    }
+    if iterError is ContentBindingError {
         test:assertTrue(true, msg = "getCsvAsStream should return ContentBindingError for malformed CSV");
     } else {
         test:assertFail(msg = "getCsvAsStream should return ContentBindingError for malformed CSV");
@@ -824,18 +833,21 @@ function testCsvStreamTypedBinding_strict_and_lax() returns error? {
     check (<Client>clientEp)->putCsv(csvPath, csvData, OVERWRITE);
 
     // Strict streaming should fail
-    stream<CsvPersonStrict, error?>|Error strictStreamRes = (<Client>clientEp)->getCsvAsStream(csvPath);
-    if strictStreamRes is stream<CsvPersonStrict, error?> {
+    stream<CsvPersonStrict, error?> strictStreamRes = check (<Client>clientEp)->getCsvAsStream(csvPath);
         // Try to consume the stream - should error when hitting the row with missing age
-        CsvPersonStrict[]|error consumed = from CsvPersonStrict row in strictStreamRes
-            select row;
-        test:assertTrue(consumed is ContentBindingError,
-            msg = "Strict CSV stream should return ContentBindingError on missing required field");
-    } else {
-        // Stream creation itself should fail with ContentBindingError
-        test:assertTrue(strictStreamRes is ContentBindingError,
-            msg = "Strict CSV stream should return ContentBindingError at creation");
+    error? iterError = ();
+    while true {
+        record {|CsvPersonStrict value;|}|error? nextRow = strictStreamRes.next();
+        if nextRow is () {
+            break;
+        }
+        if nextRow is error {
+            iterError = nextRow;
+            break;
+        }
     }
+    test:assertTrue(iterError is ContentBindingError,
+            msg = "Strict CSV stream should return ContentBindingError on missing required field");
 
     // Lax streaming should succeed
     stream<CsvPersonLax, error?> laxStream = check (<Client>clientEpLaxDataBinding)->getCsvAsStream(csvPath);
