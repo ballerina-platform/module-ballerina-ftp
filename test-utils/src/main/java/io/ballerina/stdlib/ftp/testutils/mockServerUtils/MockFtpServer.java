@@ -106,55 +106,53 @@ public final class MockFtpServer {
 
         ftpServer.addUserAccount(new UserAccount(username, password, rootFolder));
         FileSystem fileSystem = new TimestampAwareFakeFileSystem();
+        // Seed files used by ftp-client-api-tests
         fileSystem.add(new DirectoryEntry(rootFolder));
         fileSystem.add(new FileEntry("/home/in/test1.txt", content1));
         fileSystem.add(new FileEntry("/home/in/test2.txt", content1));
         fileSystem.add(new FileEntry("/home/in/test3.txt", content1));
         fileSystem.add(new FileEntry("/home/in/test4.txt", content2));
-        fileSystem.add(new DirectoryEntry("/home/in/folder1"));
-        fileSystem.add(new DirectoryEntry("/home/in/folder1/subfolder1"));
-        fileSystem.add(new DirectoryEntry("/home/in/childDirectory"));
-        fileSystem.add(new DirectoryEntry("/home/in/complexDirectory/subfolder1/subSubFolder1"));
-        fileSystem.add(new DirectoryEntry("/home/in/complexDirectory/subfolder1/subSubFolder2"));
-        fileSystem.add(new DirectoryEntry("/home/in/complexDirectory/subfolder2"));
-        fileSystem.add(new FileEntry("/home/in/complexDirectory/subfolder1/subSubFolder1/content1.txt"));
-        fileSystem.add(new FileEntry("/home/in/complexDirectory/subfolder1/subSubFolder3/content1.txt"));
-        fileSystem.add(new FileEntry("/home/in/complexDirectory/subfolder1/subSubFolder3/content2.txt"));
-        fileSystem.add(new FileEntry("/home/in/child_directory/content1.txt"));
-        fileSystem.add(new FileEntry("/home/in/child_directory/content2.txt"));
 
-        fileSystem.add(new DirectoryEntry("/home/in/onerror-tests"));
-        fileSystem.add(new DirectoryEntry("/home/in/sc-route-a"));
-        fileSystem.add(new DirectoryEntry("/home/in/sc-route-b"));
-        fileSystem.add(new DirectoryEntry("/home/in/sc-single"));
-        fileSystem.add(new DirectoryEntry("/home/in/sc-legacy"));
-        fileSystem.add(new DirectoryEntry("/home/in/duplicate-test"));
-        fileSystem.add(new DirectoryEntry("/home/in/mixed-test-annotated"));
+        // ftp-listener-advanced-tests: content methods & post-processing
+        fileSystem.add(new DirectoryEntry("/home/in/adv-content"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-routing"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-postproc"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-postproc-done"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-postproc-after-error"));
 
-        fileSystem.add(new DirectoryEntry("/home/in/delete"));
-        fileSystem.add(new FileEntry("/home/in/delete/.init", ""));
+        // ftp-listener-advanced-tests: onError
+        fileSystem.add(new DirectoryEntry("/home/in/adv-onerror"));
 
-        fileSystem.add(new DirectoryEntry("/home/in/content-methods"));
-        fileSystem.add(new FileEntry("/home/in/content-methods/.init", ""));
+        // ftp-listener-advanced-tests: onFileDeleted
+        fileSystem.add(new DirectoryEntry("/home/in/adv-deleted"));
+        fileSystem.add(new FileEntry("/home/in/adv-deleted/.init", ""));
 
-        fileSystem.add(new DirectoryEntry("/home/in/retry"));
-        fileSystem.add(new FileEntry("/home/in/retry/test1.txt", content1));
+        // ftp-listener-advanced-tests: Caller operations
+        fileSystem.add(new DirectoryEntry("/home/in/adv-caller-in"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-caller-out"));
 
-        fileSystem.add(new DirectoryEntry("/home/in/advanced/cron"));
-        fileSystem.add(new FileEntry("/home/in/cron/.init", ""));
-
-        fileSystem.add(new DirectoryEntry("/home/in/advanced/age"));
-        fileSystem.add(new FileEntry("/home/in/age/.init", ""));
-
-        fileSystem.add(new DirectoryEntry("/home/in/advanced/dependency"));
-        fileSystem.add(new FileEntry("/home/in/dependency/.init", ""));
-
-        fileSystem.add(new DirectoryEntry("/home/in/post-process"));
-        fileSystem.add(new FileEntry("/home/in/post-process/.init", ""));
-        fileSystem.add(new DirectoryEntry("/home/in/post-process-archive"));
-        fileSystem.add(new DirectoryEntry("/home/in/post-process-error"));
-
+        // ftp-listener-advanced-tests: @ServiceConfig
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-route-a"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-route-b"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-single"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-legacy"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-dup"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-mixed"));
+        fileSystem.add(new DirectoryEntry("/home/in/adv-sc-badregex"));
         fileSystem.add(new DirectoryEntry("/home/in/listener-retry"));
+
+        // ftp-listener-behaviour-tests: fileAgeFilter
+        fileSystem.add(new DirectoryEntry("/home/in/beh-age-max"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-age-min"));
+
+        // ftp-listener-behaviour-tests: fileDependencyConditions
+        fileSystem.add(new DirectoryEntry("/home/in/beh-dep-all"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-dep-any"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-dep-exact"));
+
+        // ftp-listener-behaviour-tests: VFS configs / polling / compression
+        fileSystem.add(new DirectoryEntry("/home/in/beh-vfs"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-poll"));
 
         ftpServer.setFileSystem(fileSystem);
         ftpServer.start();

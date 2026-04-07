@@ -75,6 +75,7 @@ public final class SftpServerUtil {
                 = new VirtualFileSystemFactory(homeFolder.getAbsoluteFile().toPath());
         virtualFileSystemFactory.getDefaultHomeDir().resolve(IN_DIR).toFile().mkdirs();
         virtualFileSystemFactory.getDefaultHomeDir().resolve(OUT_DIR).toFile().mkdirs();
+        virtualFileSystemFactory.getDefaultHomeDir().resolve("sftp-listener").toFile().mkdirs();
 
         server.setFileSystemFactory(virtualFileSystemFactory);
         server.setHost(LOCALHOST);

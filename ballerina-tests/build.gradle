@@ -1,0 +1,354 @@
+/*
+ * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+plugins {
+    id 'jacoco'
+    id 'groovy'
+    id 'com.github.psxpaul.execfork'
+}
+
+import org.apache.tools.ant.taskdefs.condition.Os
+
+description = 'Ballerina - FTP module Ballerina Tests'
+
+def packageName = "ftp"
+def packageOrg = "ballerina"
+def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
+def ballerinaTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/FtpTest.toml")
+def testCommonTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/FtpTestCommon.toml")
+def ballerinaDist = "${project.rootDir}/target/ballerina-runtime"
+def distributionBinPath = "${ballerinaDist}/bin"
+def testCoverageParam = "--code-coverage --coverage-format=xml --includes=io.ballerina.stdlib.ftp.*:ballerina.*"
+
+// Add new test packages here as they are implemented
+def testPackages = [
+    "ftp-connection-tests",
+    "ftps-connection-tests",
+    "sftp-connection-tests",
+    "ftp-client-api-tests",
+    "ftp-client-behaviour-tests",
+    "ftp-listener-basic-tests",
+    "ftp-listener-advanced-tests",
+    "ftp-listener-behaviour-tests"
+]
+// Timing-sensitive tests (file-age-filter, file-dependency) are excluded from
+// the default CI run because they rely on wall-clock sleeps and are inherently
+// flaky under load.  Run them locally with:
+//   ./gradlew test -PbalTests=ftp-listener-timing-tests
+def timingTestPackages = ["ftp-listener-timing-tests"]
+def testCommonPackage = "ftp-test-commons"
+
+def stripBallerinaExtensionVersion(String extVersion) {
+    if (extVersion.matches(project.ext.timestampedVersionRegex)) {
+        def splitVersion = extVersion.split('-')
+        if (splitVersion.length > 3) {
+            def strippedValues = splitVersion[0..-4]
+            return strippedValues.join('-')
+        } else {
+            return extVersion
+        }
+    } else {
+        return extVersion.replace("${project.ext.snapshotVersion}", "")
+    }
+}
+
+clean {
+    delete "${project.projectDir}/${testCommonPackage}/target"
+    testPackages.each { testPackage ->
+        delete "${project.projectDir}/${testPackage}/target"
+    }
+    timingTestPackages.each { testPackage ->
+        delete "${project.projectDir}/${testPackage}/target"
+    }
+}
+
+task updateTomlVersions {
+    doLast {
+        (testPackages + timingTestPackages).each { testPackage ->
+            def ballerinaTomlFile = new File("${project.projectDir}/${testPackage}/Ballerina.toml")
+            def newBallerinaToml = ballerinaTomlFilePlaceHolder.text.replace("@project.version@", project.version)
+            newBallerinaToml = newBallerinaToml.replace("@toml.version@", tomlVersion)
+            newBallerinaToml = newBallerinaToml.replace("@test.common@", testCommonPackage.replaceAll("-", "_"))
+            newBallerinaToml = newBallerinaToml.replace("@package.name@", testPackage.replaceAll("-", "_"))
+            ballerinaTomlFile.text = newBallerinaToml
+        }
+
+        def ballerinaTomlFile = new File("${project.projectDir}/${testCommonPackage}/Ballerina.toml")
+        def newBallerinaToml = testCommonTomlFilePlaceHolder.text.replace("@project.version@", project.version)
+        newBallerinaToml = newBallerinaToml.replace("@toml.version@", tomlVersion)
+        newBallerinaToml = newBallerinaToml.replace("@package.name@", testCommonPackage.replaceAll("-", "_"))
+        ballerinaTomlFile.text = newBallerinaToml
+    }
+}
+
+def groupParams = ""
+def disableGroups = ""
+def windowsDisableGroups = "--disable-groups disabledOnWindows"
+def debugParams = ""
+def balJavaDebugParam = ""
+def testParams = ""
+def graalvmFlag = ""
+def parallelTestFlag = ""
+def skipTests = false
+
+task deleteDependencyTomlFiles {
+    if (project.hasProperty("deleteDependencies")) {
+        delete "${project.projectDir}/${testCommonPackage}/Dependencies.toml"
+        testPackages.each { testPackage ->
+            delete "${project.projectDir}/${testPackage}/Dependencies.toml"
+        }
+    }
+}
+
+task initializeVariables {
+    if (project.hasProperty("groups")) {
+        groupParams = "--groups ${project.findProperty("groups")}"
+    }
+    if (project.hasProperty("disable")) {
+        disableGroups = "--disable-groups ${project.findProperty("disable")}"
+    }
+    if (project.hasProperty("debug")) {
+        debugParams = "--debug ${project.findProperty("debug")}"
+    }
+    if (project.hasProperty("balJavaDebug")) {
+        balJavaDebugParam = "BAL_JAVA_DEBUG=${project.findProperty("balJavaDebug")}"
+    }
+    if (project.hasProperty('balGraalVMTest')) {
+        graalvmFlag = '--graalvm'
+    }
+    if (project.hasProperty('balParallelTest')) {
+        parallelTestFlag = '--parallel'
+    }
+    if (project.hasProperty('balTests')) {
+        testPackages = project.findProperty('balTests').toString().split(",")
+    }
+    if (project.hasProperty('skipBalTests')) {
+        project.findProperty('skipBalTests').toString().split(",").each { testPackage ->
+            testPackages.remove(testPackage)
+        }
+    }
+
+    gradle.taskGraph.whenReady { graph ->
+        if (graph.hasTask(":ftp-ballerina-tests:test")) {
+            if (!project.hasProperty('balGraalVMTest')) {
+                testParams = "${testCoverageParam}"
+            }
+        } else {
+            skipTests = true
+        }
+    }
+}
+
+// ─── Mock server lifecycle ────────────────────────────────────────────────────
+// Startup scripts and all resource files (keystore, SSH keys, datafiles) live
+// under ballerina-tests/resources/.  The scripts receive "resources" as the
+// resources-dir argument, resolved relative to workingDir (project.projectDir).
+
+def testUtilScript = Os.isFamily(Os.FAMILY_WINDOWS)
+        ? "${project.projectDir}/resources/startJava.bat"
+        : "${project.projectDir}/resources/startJava.sh"
+
+task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
+    dependsOn(":${packageName}-test-utils:build")
+    // Ensure all local Java/Groovy outputs consumed from the project directory
+    // are produced before this daemon startup task executes.
+    dependsOn(jar)
+    executable = testUtilScript
+    workingDir = "${project.projectDir}"
+    standardOutput = new File("${project.buildDir}/mockServerLogs.log")
+}
+
+task waitForMockServers {
+    dependsOn startTestUtilAsDaemon
+    doLast {
+        def host = "127.0.0.1"
+        // FTP ports that must respond with a 220 banner
+        def ftpPorts = [21210, 21212, 21214]
+        // TCP-only ports (SFTP SSH, implicit FTPS — no plaintext 220 banner)
+        def tcpPorts = [21213, 21217]
+
+        def connectTimeoutMs = 500
+        def readTimeoutMs = 500
+        def maxWaitMs = 60_000
+        def pollIntervalMs = 500
+
+        // Returns true if the port is reachable AND the server sends a "220 " FTP banner
+        def isFtpReady = { int port ->
+            java.net.Socket socket = null
+            try {
+                socket = new java.net.Socket()
+                socket.connect(new java.net.InetSocketAddress(host, port as int), connectTimeoutMs)
+                socket.setSoTimeout(readTimeoutMs)
+                def reader = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream()))
+                def line = reader.readLine()
+                try {
+                    if (line != null && line.startsWith("220")) {
+                        def out = new java.io.OutputStreamWriter(socket.getOutputStream())
+                        out.write("QUIT\r\n")
+                        out.flush()
+                    }
+                } catch (Exception ignored) {
+                    // ignore write errors during teardown
+                }
+                return (line != null && line.startsWith("220"))
+            } catch (Exception ignored) {
+                return false
+            } finally {
+                try { socket?.close() } catch (Exception ignored) {}
+            }
+        }
+
+        // Returns true if the port accepts a TCP connection
+        def isTcpPortOpen = { int port ->
+            java.net.Socket socket = null
+            try {
+                socket = new java.net.Socket()
+                socket.connect(new java.net.InetSocketAddress(host, port as int), connectTimeoutMs)
+                return true
+            } catch (Exception ignored) {
+                return false
+            } finally {
+                try { socket?.close() } catch (Exception ignored) {}
+            }
+        }
+
+        def allReady = { ->
+            for (int p : ftpPorts) {
+                if (!isFtpReady(p)) return false
+            }
+            for (int p : tcpPorts) {
+                if (!isTcpPortOpen(p)) return false
+            }
+            return true
+        }
+
+        long start = System.currentTimeMillis()
+        while (System.currentTimeMillis() - start < maxWaitMs) {
+            if (allReady()) {
+                logger.lifecycle("All mock servers ready (FTP: ${ftpPorts}, TCP: ${tcpPorts})")
+                return
+            }
+            sleep(pollIntervalMs)
+        }
+
+        throw new GradleException(
+            "Mock servers were not ready after ${maxWaitMs / 1000}s. " +
+            "Expected FTP 220 on ports ${ftpPorts} and TCP on ports ${tcpPorts}.")
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+task publishTestCommonPackageToLocal {
+    dependsOn(":${packageName}-${packageOrg}:build")
+    dependsOn(updateTomlVersions)
+    doLast {
+        if (!skipTests) {
+            exec {
+                workingDir "${project.projectDir}/${testCommonPackage}"
+                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                    commandLine 'cmd', '/c', "${distributionBinPath}/bal.bat pack && exit %%ERRORLEVEL%%"
+                } else {
+                    commandLine 'sh', '-c', "${distributionBinPath}/bal pack"
+                }
+            }
+            exec {
+                workingDir "${project.projectDir}/${testCommonPackage}"
+                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                    commandLine 'cmd', '/c', "${distributionBinPath}/bal.bat push --repository=local && exit %%ERRORLEVEL%%"
+                } else {
+                    commandLine 'sh', '-c', "${distributionBinPath}/bal push --repository=local"
+                }
+            }
+        }
+    }
+}
+
+task commitTomlFiles {
+    doLast {
+        project.exec {
+            ignoreExitValue true
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "git commit -m \"[Automated] Update the native jar versions\" Ballerina.toml Dependencies.toml"
+            } else {
+                commandLine 'sh', '-c', "git commit -m '[Automated] Update the native jar versions' Ballerina.toml Dependencies.toml"
+            }
+        }
+    }
+}
+
+task ballerinaTest {
+    dependsOn(":${packageName}-${packageOrg}:build")
+    dependsOn(updateTomlVersions)
+    dependsOn(initializeVariables)
+    dependsOn(publishTestCommonPackageToLocal)
+    dependsOn(startTestUtilAsDaemon)
+    dependsOn(waitForMockServers)
+    finalizedBy(commitTomlFiles)
+
+    doLast {
+        testPackages.each { testPackage ->
+            if (!skipTests) {
+                exec {
+                    workingDir "${project.projectDir}/${testPackage}"
+                    environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
+                    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                        commandLine 'cmd', '/c', "${balJavaDebugParam} ${distributionBinPath}/bal.bat test ${graalvmFlag}" +
+                                " ${parallelTestFlag} ${testParams} ${groupParams} ${disableGroups} ${windowsDisableGroups}" +
+                                " ${debugParams} && exit %%ERRORLEVEL%%"
+                    } else {
+                        commandLine 'sh', '-c', "${distributionBinPath}/bal test ${graalvmFlag} ${parallelTestFlag} ${testParams}" +
+                                " ${groupParams} ${disableGroups} ${debugParams}"
+                    }
+                }
+                if (project.hasProperty('balGraalVMTest')) {
+                    exec {
+                        workingDir "${project.projectDir}/${testPackage}"
+                        environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
+                        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                            commandLine 'cmd', '/c', "${distributionBinPath}/bal.bat clean"
+                        } else {
+                            commandLine 'sh', '-c', "${distributionBinPath}/bal clean"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ballerina-platform/module-${packageOrg}-${packageName}")
+            credentials {
+                username = System.getenv("packageUser")
+                password = System.getenv("packagePAT")
+            }
+        }
+    }
+}
+
+test {
+    dependsOn(ballerinaTest)
+}
+
+build.dependsOn ":${packageName}-${packageOrg}:build"
+build.dependsOn ":${packageName}-compiler-plugin:build"
+
+test.dependsOn ":${packageName}-${packageOrg}:build"
+test.dependsOn ":${packageName}-compiler-plugin:build"
+test.dependsOn ":${packageName}-compiler-plugin-tests:test"
