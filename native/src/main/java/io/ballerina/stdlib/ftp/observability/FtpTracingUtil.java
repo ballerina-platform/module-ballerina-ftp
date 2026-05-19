@@ -41,6 +41,9 @@ import java.util.Map;
  */
 public class FtpTracingUtil {
 
+    private FtpTracingUtil() {
+    }
+
     /**
      * Creates strand properties containing an {@link FtpObserverContext} for the given
      * connection coordinates, event type, and file path.
@@ -138,8 +141,5 @@ public class FtpTracingUtil {
             ctx.addTag(FtpObserverContext.TAG_DESTINATION_PATH, destinationPath);
         }
         return ctx;
-    }
-
-    private FtpTracingUtil() {
     }
 }
