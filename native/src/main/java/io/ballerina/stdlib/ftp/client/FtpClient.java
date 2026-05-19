@@ -39,8 +39,6 @@ import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.observability.FtpMetricsUtil;
-import io.ballerina.stdlib.ftp.observability.FtpObserverContext;
-import io.ballerina.stdlib.ftp.observability.FtpTracingUtil;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.FtpAction;
 import io.ballerina.stdlib.ftp.transport.client.connector.contract.VfsClientConnector;
@@ -508,8 +506,6 @@ public class FtpClient {
     public static Object getBytes(Environment env, BObject clientConnector, BString filePath) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_GET, FN_GET_BYTES, null);
-        FtpObserverContext spanCtx = FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
         Object result = FtpRetryHelper.executeWithRetry(
                 clientConnector,
                 () -> {
@@ -531,8 +527,6 @@ public class FtpClient {
     public static Object getText(Environment env, BObject clientConnector, BString filePath) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_GET, FN_GET_TEXT, null);
-        FtpObserverContext spanCtx = FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
         Object result = FtpRetryHelper.executeWithRetry(
                 clientConnector,
                 () -> {
@@ -554,8 +548,6 @@ public class FtpClient {
     public static Object getJson(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_GET, FN_GET_JSON, null);
-        FtpObserverContext spanCtx = FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
         Object result = FtpRetryHelper.executeWithRetry(
                 clientConnector,
@@ -579,8 +571,6 @@ public class FtpClient {
     public static Object getXml(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_GET, FN_GET_XML, null);
-        FtpObserverContext spanCtx = FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
         Object result = FtpRetryHelper.executeWithRetry(
                 clientConnector,
@@ -604,8 +594,6 @@ public class FtpClient {
     public static Object getCsv(Environment env, BObject clientConnector, BString filePath, BTypedesc typeDesc) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_GET, FN_GET_CSV, null);
-        FtpObserverContext spanCtx = FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
         BMap<?, ?> csvFailSafe = (BMap<?, ?>) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_CSV_FAIL_SAFE);
         String fileNamePrefix = deriveFileNamePrefix(filePath);
@@ -642,8 +630,6 @@ public class FtpClient {
 
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_GET, FN_GET_BYTES_AS_STREAM, null);
-        FtpObserverContext spanCtx = FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
         return env.yieldAndRun(() -> {
             recordCircuitBreakerRequestStart(clientConnector);
@@ -677,8 +663,6 @@ public class FtpClient {
 
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_GET, FN_GET_CSV_AS_STREAM, null);
-        FtpObserverContext spanCtx = FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
         return env.yieldAndRun(() -> {
             recordCircuitBreakerRequestStart(clientConnector);
@@ -1035,8 +1019,6 @@ public class FtpClient {
 
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_PUT, functionName, null);
-        FtpObserverContext spanCtx = FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_PUT, path.getValue());
         return env.yieldAndRun(() -> {
             recordCircuitBreakerRequestStart(clientConnector);
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
@@ -1060,8 +1042,6 @@ public class FtpClient {
     public static Object delete(Environment env, BObject clientConnector, BString filePath) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_DELETE, FN_DELETE, null);
-        FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector), getProtocol(clientConnector),
-                FtpMetricsUtil.OPERATION_TYPE_DELETE, filePath.getValue());
         Object result = executeSinglePathAction(env, clientConnector, filePath, FtpAction.DELETE, true,
                 balFuture -> remoteFileSystemBaseMessage -> {
                     FtpClientHelper.executeGenericAction();
@@ -1092,8 +1072,6 @@ public class FtpClient {
     public static Object mkdir(Environment env, BObject clientConnector, BString path) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_MKDIR, FN_MKDIR, null);
-        FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector), getProtocol(clientConnector),
-                FtpMetricsUtil.OPERATION_TYPE_MKDIR, path.getValue());
         Object result = executeSinglePathAction(env, clientConnector, path, FtpAction.MKDIR, true,
                 balFuture -> remoteFileSystemBaseMessage -> {
                     FtpClientHelper.executeGenericAction();
@@ -1108,8 +1086,6 @@ public class FtpClient {
     public static Object rename(Environment env, BObject clientConnector, BString origin, BString destination) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_RENAME, FN_RENAME, null);
-        FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector), getProtocol(clientConnector),
-                FtpMetricsUtil.OPERATION_TYPE_RENAME, origin.getValue(), destination.getValue());
         Object result = executeTwoPathAction(env, clientConnector, origin, destination, FtpAction.RENAME);
         if (result instanceof BError bError) {
             reportClientError(clientConnector, bError);
@@ -1120,8 +1096,6 @@ public class FtpClient {
     public static Object move(Environment env, BObject clientConnector, BString sourcePath, BString destinationPath) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_MOVE, FN_MOVE, null);
-        FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector), getProtocol(clientConnector),
-                FtpMetricsUtil.OPERATION_TYPE_MOVE, sourcePath.getValue(), destinationPath.getValue());
         Object result = executeTwoPathAction(env, clientConnector, sourcePath, destinationPath, FtpAction.RENAME);
         if (result instanceof BError bError) {
             reportClientError(clientConnector, bError);
@@ -1132,8 +1106,6 @@ public class FtpClient {
     public static Object copy(Environment env, BObject clientConnector, BString sourcePath, BString destinationPath) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_COPY, FN_COPY, null);
-        FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector), getProtocol(clientConnector),
-                FtpMetricsUtil.OPERATION_TYPE_COPY, sourcePath.getValue(), destinationPath.getValue());
         Object result = executeTwoPathAction(env, clientConnector, sourcePath, destinationPath, FtpAction.COPY);
         if (result instanceof BError bError) {
             reportClientError(clientConnector, bError);
@@ -1152,8 +1124,6 @@ public class FtpClient {
     public static Object rmdir(Environment env, BObject clientConnector, BString filePath) {
         FtpMetricsUtil.reportFileOperation(getRemoteUrl(clientConnector), getProtocol(clientConnector),
                 FtpMetricsUtil.OPERATION_TYPE_RMDIR, FN_RMDIR, null);
-        FtpTracingUtil.createClientSpanContext(getRemoteUrl(clientConnector), getProtocol(clientConnector),
-                FtpMetricsUtil.OPERATION_TYPE_RMDIR, filePath.getValue());
         Object result = executeSinglePathAction(env, clientConnector, filePath, FtpAction.RMDIR, true,
                 balFuture -> remoteFileSystemBaseMessage -> {
                     FtpClientHelper.executeGenericAction();
