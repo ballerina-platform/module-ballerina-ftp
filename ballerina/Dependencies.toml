@@ -58,7 +58,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "ftp"
-version = "2.19.0"
+version = "2.19.1"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "data.csv"},
