@@ -321,8 +321,9 @@ public class FtpListener implements RemoteFileSystemListener {
         Parameter[] params = methodType.getParameters();
         Object[] args = getMethodArguments(params, watchEventParamValues, caller);
         if (args != null) {
+            String traceEventType = event.getAddedFiles().isEmpty() ? EVENT_TYPE_DELETE : EVENT_TYPE_CHANGE;
             Map<String, Object> strandProperties = FtpTracingUtil.createStrandProperties(
-                    CONTEXT_LISTENER, listenerUrl, listenerProtocol, EVENT_TYPE_CHANGE);
+                    CONTEXT_LISTENER, listenerUrl, listenerProtocol, traceEventType);
             invokeMethodAsync(service, strandProperties, args);
         }
     }
