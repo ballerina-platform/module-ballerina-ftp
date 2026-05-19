@@ -140,9 +140,6 @@ public class FtpContentCallbackHandler {
 
                 if (convertedContent instanceof BError bError) {
                     if (FtpUtil.ErrorType.ContentBindingError.errorType().equals(bError.getType().getName())) {
-                        FtpMetricsUtil.reportError(listenerUrl, listenerProtocol,
-                                FtpMetricsUtil.CONTEXT_LISTENER,
-                                FtpMetricsUtil.ERROR_TYPE_CONTENT_BINDING);
                         routeToOnError(service, holder, bError, callerObject, fileInfo, listenerPath,
                                 methodType.getName());
                     } else {
