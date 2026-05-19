@@ -151,7 +151,7 @@ public class FtpContentCallbackHandler {
                 }
 
                 FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol,
-                        FtpMetricsUtil.EVENT_TYPE_CHANGE);
+                        FtpMetricsUtil.EVENT_TYPE_CHANGE, methodType.getName(), methodType.getName());
 
                 // Prepare method arguments
                 Object[] methodArguments = prepareContentMethodArguments(methodType, convertedContent,

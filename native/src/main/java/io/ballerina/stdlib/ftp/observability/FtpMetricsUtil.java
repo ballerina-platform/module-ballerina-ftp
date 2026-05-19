@@ -24,6 +24,8 @@ import io.ballerina.runtime.observability.metrics.MetricId;
 import io.ballerina.runtime.observability.metrics.MetricRegistry;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 
+import java.net.InetAddress;
+
 /**
  * Utility class for recording FTP connector metrics.
  *
@@ -114,6 +116,17 @@ public class FtpMetricsUtil {
 
     private static final MetricRegistry metricRegistry = DefaultMetricRegistry.getInstance();
 
+    /** Cached hostname of the current instance, resolved once at class load time. */
+    public static final String INSTANCE_URL = resolveInstanceUrl();
+
+    private static String resolveInstanceUrl() {
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (Exception e) {
+            return UNKNOWN;
+        }
+    }
+
     /**
      * Increments the active-connections gauge when a new FTP client or listener is created.
      *
@@ -149,16 +162,26 @@ public class FtpMetricsUtil {
      * File paths are intentionally excluded to avoid unbounded metric cardinality;
      * they are captured instead as tags on the trace span context.
      *
-     * @param url           remote URL
-     * @param protocol      protocol string
-     * @param operationType one of the {@code OPERATION_TYPE_*} constants
+     * @param url               remote URL
+     * @param protocol          protocol string
+     * @param operationType     one of the {@code OPERATION_TYPE_*} constants
+     * @param functionName      the Ballerina client function name (e.g. {@code "getBytes"})
+     * @param entryFunctionName the entry-point Ballerina function name, or {@link #UNKNOWN}
      */
-    public static void reportFileOperation(String url, String protocol, String operationType) {
+    public static void reportFileOperation(String url, String protocol, String operationType,
+                                           String functionName, String entryFunctionName) {
         if (!ObserveUtils.isMetricsEnabled()) {
             return;
         }
         FtpObserverContext observerContext = new FtpObserverContext(CONTEXT_CLIENT, url, protocol);
         observerContext.addTag(FtpObserverContext.TAG_OPERATION_TYPE, operationType);
+        if (functionName != null) {
+            observerContext.addTag(FtpObserverContext.TAG_FUNCTION_NAME, functionName);
+        }
+        if (entryFunctionName != null) {
+            observerContext.addTag(FtpObserverContext.TAG_ENTRY_FUNCTION_NAME, entryFunctionName);
+        }
+        observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, INSTANCE_URL);
         incrementCounter(observerContext, METRIC_FILE_OPERATIONS[0], METRIC_FILE_OPERATIONS[1]);
     }
 
@@ -167,16 +190,26 @@ public class FtpMetricsUtil {
      * File paths are excluded from the counter to avoid unbounded cardinality;
      * they are captured on the trace span context instead.
      *
-     * @param url       remote URL
-     * @param protocol  protocol string
-     * @param eventType {@link #EVENT_TYPE_CHANGE}, {@link #EVENT_TYPE_DELETE}, or {@link #EVENT_TYPE_ERROR}
+     * @param url               remote URL
+     * @param protocol          protocol string
+     * @param eventType         {@link #EVENT_TYPE_CHANGE}, {@link #EVENT_TYPE_DELETE}, or {@link #EVENT_TYPE_ERROR}
+     * @param functionName      the listener resource function name (e.g. {@code "onFileChange"})
+     * @param entryFunctionName the entry-point Ballerina function name, or {@link #UNKNOWN}
      */
-    public static void reportFileEvent(String url, String protocol, String eventType) {
+    public static void reportFileEvent(String url, String protocol, String eventType,
+                                       String functionName, String entryFunctionName) {
         if (!ObserveUtils.isMetricsEnabled()) {
             return;
         }
         FtpObserverContext observerContext = new FtpObserverContext(CONTEXT_LISTENER, url, protocol);
         observerContext.addTag(FtpObserverContext.TAG_EVENT_TYPE, eventType);
+        if (functionName != null) {
+            observerContext.addTag(FtpObserverContext.TAG_FUNCTION_NAME, functionName);
+        }
+        if (entryFunctionName != null) {
+            observerContext.addTag(FtpObserverContext.TAG_ENTRY_FUNCTION_NAME, entryFunctionName);
+        }
+        observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, INSTANCE_URL);
         incrementCounter(observerContext, METRIC_FILE_EVENTS[0], METRIC_FILE_EVENTS[1]);
     }
 

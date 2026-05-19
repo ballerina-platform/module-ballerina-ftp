@@ -262,7 +262,8 @@ public class FtpListener implements RemoteFileSystemListener {
 
         // Call onFileDelete once per deleted file
         for (String deletedFile : deletedFilesList) {
-            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_DELETE);
+            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_DELETE,
+                    ON_FILE_DELETE_REMOTE_FUNCTION, ON_FILE_DELETE_REMOTE_FUNCTION);
             BString deletedFileBString = StringUtils.fromString(deletedFile);
             Object[] args = getOnFileDeleteMethodArguments(params, deletedFileBString, caller);
             if (args != null) {
@@ -282,7 +283,8 @@ public class FtpListener implements RemoteFileSystemListener {
         BString[] deletedFilesBStringArray = new BString[deletedFilesList.size()];
         for (int i = 0; i < deletedFilesList.size(); i++) {
             String deletedFile = deletedFilesList.get(i);
-            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_DELETE);
+            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_DELETE,
+                    ON_FILE_DELETED_REMOTE_FUNCTION, ON_FILE_DELETED_REMOTE_FUNCTION);
             deletedFilesBStringArray[i] = StringUtils.fromString(deletedFile);
         }
 
@@ -305,10 +307,12 @@ public class FtpListener implements RemoteFileSystemListener {
                                               MethodType methodType, BObject caller) {
         // Report a "change" event per added file and a "delete" event per deleted file
         for (int i = 0; i < event.getAddedFiles().size(); i++) {
-            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_CHANGE);
+            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_CHANGE,
+                    ON_FILE_CHANGE_REMOTE_FUNCTION, ON_FILE_CHANGE_REMOTE_FUNCTION);
         }
         for (String deletedFile : event.getDeletedFiles()) {
-            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_DELETE);
+            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_DELETE,
+                    ON_FILE_CHANGE_REMOTE_FUNCTION, ON_FILE_CHANGE_REMOTE_FUNCTION);
         }
 
         Map<String, Object> watchEventParamValues = processWatchEventParamValues(event);
