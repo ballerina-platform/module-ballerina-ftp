@@ -947,8 +947,10 @@ public class FtpListenerHelper {
             if (listener != null) {
                 listener.cleanup();
             }
-            FtpMetricsUtil.reportConnectionClose(listenerUrl, listenerProtocol,
-                    FtpMetricsUtil.CONTEXT_LISTENER);
+            if (ftpConnector != null) {
+                FtpMetricsUtil.reportConnectionClose(listenerUrl, listenerProtocol,
+                        FtpMetricsUtil.CONTEXT_LISTENER);
+            }
         }
         return null;
     }
