@@ -59,6 +59,7 @@ import java.util.Optional;
 
 import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_ERROR_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CSV_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_JSON_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_REMOTE_FUNCTION;
@@ -346,6 +347,8 @@ public class FtpContentCallbackHandler {
                 : FtpMetricsUtil.UNKNOWN;
         FtpMetricsUtil.reportError(listenerUrl, listenerProtocol,
                 FtpMetricsUtil.CONTEXT_LISTENER, errorType);
+        FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol,
+                FtpMetricsUtil.EVENT_TYPE_ERROR, ON_ERROR_REMOTE_FUNCTION, ON_ERROR_REMOTE_FUNCTION);
 
         Map<String, Object> strandProperties = FtpTracingUtil.createStrandProperties(
                 FtpMetricsUtil.CONTEXT_LISTENER, listenerUrl, listenerProtocol,

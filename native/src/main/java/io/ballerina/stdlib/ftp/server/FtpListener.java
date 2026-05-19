@@ -68,9 +68,11 @@ import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
 import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.CONTEXT_LISTENER;
 import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.EVENT_TYPE_CHANGE;
 import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.EVENT_TYPE_DELETE;
+import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.EVENT_TYPE_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVER_EVENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_ADDED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_FILES;
+import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_ERROR_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_DELETE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_DELETED_REMOTE_FUNCTION;
@@ -521,6 +523,8 @@ public class FtpListener implements RemoteFileSystemListener {
         log.error(throwable.getMessage(), throwable);
         FtpMetricsUtil.reportError(listenerUrl, listenerProtocol, CONTEXT_LISTENER,
                 FtpMetricsUtil.toObservabilityErrorType(throwable));
+        FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_ERROR,
+                ON_ERROR_REMOTE_FUNCTION, ON_ERROR_REMOTE_FUNCTION);
     }
 
     @Override
