@@ -726,14 +726,16 @@ public class FtpClient {
         String url = getRemoteUrl(clientConnector);
         String protocol = getProtocol(clientConnector);
         VfsClientConnectorImpl connector = (VfsClientConnectorImpl) clientConnector.getNativeData(VFS_CLIENT_CONNECTOR);
-        if (connector != null) {
-            try {
-                connector.close();
-            } catch (Exception exception) {
-                FtpMetricsUtil.reportError(url, protocol, FtpMetricsUtil.CONTEXT_CLIENT,
-                        FtpMetricsUtil.ERROR_TYPE_CLOSE);
-                return FtpUtil.createError(ON_CLOSE_ERROR + exception.getMessage(), exception, FTP_ERROR);
-            }
+        if (connector == null) {
+            return null;
+        }
+        try {
+            connector.close();
+        } catch (Exception exception) {
+            clientConnector.addNativeData(VFS_CLIENT_CONNECTOR, null);
+            FtpMetricsUtil.reportError(url, protocol, FtpMetricsUtil.CONTEXT_CLIENT,
+                    FtpMetricsUtil.ERROR_TYPE_CLOSE);
+            return FtpUtil.createError(ON_CLOSE_ERROR + exception.getMessage(), exception, FTP_ERROR);
         }
         clientConnector.addNativeData(VFS_CLIENT_CONNECTOR, null);
         FtpMetricsUtil.reportConnectionClose(url, protocol, FtpMetricsUtil.CONTEXT_CLIENT);
