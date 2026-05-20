@@ -667,12 +667,8 @@ public class FtpClient {
                 readInputStream.close();
                 clientObject.addNativeData(READ_INPUT_STREAM, null);
                 clientObject.addNativeData(ENTITY_BYTE_STREAM, null);
-                FtpMetricsUtil.reportConnectionClose(getRemoteUrl(clientObject), getProtocol(clientObject),
-                        FtpMetricsUtil.CONTEXT_CLIENT);
                 return null;
             } catch (IOException e) {
-                FtpMetricsUtil.reportConnectionClose(getRemoteUrl(clientObject), getProtocol(clientObject),
-                        FtpMetricsUtil.CONTEXT_CLIENT);
                 return IOUtils.createError(e);
             }
         } else {
@@ -691,6 +687,7 @@ public class FtpClient {
             connector.close();
         } catch (Exception exception) {
             clientConnector.addNativeData(VFS_CLIENT_CONNECTOR, null);
+            FtpMetricsUtil.reportConnectionClose(url, protocol, FtpMetricsUtil.CONTEXT_CLIENT);
             return FtpUtil.createError(ON_CLOSE_ERROR + exception.getMessage(), exception, FTP_ERROR);
         }
         clientConnector.addNativeData(VFS_CLIENT_CONNECTOR, null);
