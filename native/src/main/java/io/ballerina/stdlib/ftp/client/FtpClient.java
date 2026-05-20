@@ -98,6 +98,7 @@ public class FtpClient {
             "FTP Client is already closed, hence further operations are not allowed";
 
     private static final String ON_CLOSE_ERROR = "Error occurred while closing the FTP client: ";
+    private static final String REMOTE_URL = "remoteUrl";
 
     private FtpClient() {
         // private constructor
@@ -178,15 +179,7 @@ public class FtpClient {
     }
 
     private static String getRemoteUrl(BObject clientConnector) {
-        String host = (String) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_HOST);
-        if (host == null) {
-            return null;
-        }
-        Object portObj = clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_PORT);
-        int port = portObj instanceof Integer ? (Integer) portObj : -1;
-        String protocol = getProtocol(clientConnector);
-        String hostPort = port > 0 ? host + ":" + port : host;
-        return protocol != null ? protocol + "://" + hostPort : hostPort;
+        return (String) clientConnector.getNativeData(REMOTE_URL);
     }
 
     private static String getProtocol(BObject clientConnector) {
@@ -264,12 +257,14 @@ public class FtpClient {
                 authMap.get(FtpConstants.ENDPOINT_CONFIG_USERNAME));
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PASS_KEY,
                 authMap.get(FtpConstants.ENDPOINT_CONFIG_PASS_KEY));
-        clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_HOST,
-                (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_HOST))).getValue());
-        clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PORT,
-                FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
-                        FtpConstants.ENDPOINT_CONFIG_PORT))));
+        String host = (config.getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_HOST))).getValue();
+        int port = FtpUtil.extractPortValue(config.getIntValue(StringUtils.fromString(
+                FtpConstants.ENDPOINT_CONFIG_PORT)));
+        clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_HOST, host);
+        clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PORT, port);
         clientEndpoint.addNativeData(FtpConstants.ENDPOINT_CONFIG_PROTOCOL, protocol);
+        String hostPort = port > 0 ? host + ":" + port : host;
+        clientEndpoint.addNativeData(REMOTE_URL, protocol + "://" + hostPort);
         return null;
     }
 
