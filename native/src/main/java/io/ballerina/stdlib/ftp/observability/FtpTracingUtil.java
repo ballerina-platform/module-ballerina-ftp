@@ -68,8 +68,9 @@ public class FtpTracingUtil {
         }
         FtpObserverContext observerContext = new FtpObserverContext(context, url, protocol);
         observerContext.addTag(FtpObserverContext.TAG_ACTION_TYPE, FtpMetricsUtil.ACTION_TYPE_EVENT);
-        if (FtpMetricsUtil.INSTANCE_URL != null) {
-            observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, FtpMetricsUtil.INSTANCE_URL);
+        String instanceUrl = FtpMetricsUtil.getInstanceUrl();
+        if (instanceUrl != null) {
+            observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, instanceUrl);
         }
         if (eventType != null) {
             observerContext.addTag(FtpObserverContext.TAG_EVENT_TYPE, eventType);
@@ -179,8 +180,9 @@ public class FtpTracingUtil {
         if (destinationPath != null) {
             target.addTag(FtpObserverContext.TAG_DESTINATION_PATH, destinationPath);
         }
-        if (FtpMetricsUtil.INSTANCE_URL != null) {
-            target.addTag(FtpObserverContext.TAG_INSTANCE_URL, FtpMetricsUtil.INSTANCE_URL);
+        String instanceUrl = FtpMetricsUtil.getInstanceUrl();
+        if (instanceUrl != null) {
+            target.addTag(FtpObserverContext.TAG_INSTANCE_URL, instanceUrl);
         }
     }
 

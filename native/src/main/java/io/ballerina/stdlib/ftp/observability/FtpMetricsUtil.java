@@ -113,15 +113,20 @@ public class FtpMetricsUtil {
 
     private static final MetricRegistry metricRegistry = DefaultMetricRegistry.getInstance();
 
-    /** Cached hostname of the current instance, resolved once at class load time. */
-    public static final String INSTANCE_URL = resolveInstanceUrl();
+    private static String instanceUrl;
+    private static boolean instanceUrlResolved;
 
-    private static String resolveInstanceUrl() {
-        try {
-            return InetAddress.getLocalHost().getHostName();
-        } catch (Exception e) {
-            return UNKNOWN;
+    /** Returns the hostname of the current instance, resolved lazily on first use, or {@code null} if unavailable. */
+    public static String getInstanceUrl() {
+        if (!instanceUrlResolved) {
+            try {
+                instanceUrl = InetAddress.getLocalHost().getHostName();
+            } catch (Exception e) {
+                instanceUrl = null;
+            }
+            instanceUrlResolved = true;
         }
+        return instanceUrl;
     }
 
     /**

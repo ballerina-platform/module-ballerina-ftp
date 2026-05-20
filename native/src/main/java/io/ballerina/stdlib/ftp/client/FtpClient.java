@@ -691,7 +691,6 @@ public class FtpClient {
             connector.close();
         } catch (Exception exception) {
             clientConnector.addNativeData(VFS_CLIENT_CONNECTOR, null);
-            FtpMetricsUtil.reportConnectionClose(url, protocol, FtpMetricsUtil.CONTEXT_CLIENT);
             return FtpUtil.createError(ON_CLOSE_ERROR + exception.getMessage(), exception, FTP_ERROR);
         }
         clientConnector.addNativeData(VFS_CLIENT_CONNECTOR, null);
