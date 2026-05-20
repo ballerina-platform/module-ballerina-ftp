@@ -26,17 +26,16 @@ import io.ballerina.runtime.observability.ObserverContext;
  */
 public class FtpObserverContext extends ObserverContext {
 
-    private static final String TAG_CONTEXT = "context";
-    private static final String TAG_REMOTE_URL = "remote_url";
-    private static final String TAG_PROTOCOL = "protocol";
+    static final String TAG_CONTEXT = "context";
+    static final String TAG_REMOTE_URL = "remote_url";
+    static final String TAG_PROTOCOL = "protocol";
 
     static final String TAG_FILE_PATH = "file.path";
     static final String TAG_DESTINATION_PATH = "destination.path";
     static final String TAG_EVENT_TYPE = "event.type";
     static final String TAG_OPERATION_TYPE = "operation.type";
     static final String TAG_ERROR_TYPE = "error_type";
-    static final String TAG_FUNCTION_NAME = "function.name";
-    static final String TAG_ENTRY_FUNCTION_NAME = "entry.function.name";
+    static final String TAG_ACTION_TYPE = "action.type";
     static final String TAG_INSTANCE_URL = "instance.url";
 
     FtpObserverContext(String context) {

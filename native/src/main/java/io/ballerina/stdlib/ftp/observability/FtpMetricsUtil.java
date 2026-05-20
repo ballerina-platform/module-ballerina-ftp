@@ -31,22 +31,13 @@ import java.net.InetAddress;
  *
  * <p>Metrics published:
  * <ul>
- *   <li>{@code ftp_active_connections} (gauge) — active FTP/FTPS/SFTP connections</li>
- *   <li>{@code ftp_file_operations} (counter) — client file operations</li>
- *   <li>{@code ftp_file_events} (counter) — listener file events</li>
- *   <li>{@code ftp_errors} (counter) — errors by type</li>
+ *   <li>{@code ftp_active_connections} (gauge) — number of active FTP/FTPS/SFTP connections</li>
  * </ul>
  */
 public class FtpMetricsUtil {
     private static final String CONNECTOR_NAME = "ftp";
     private static final String[] METRIC_ACTIVE_CONNECTIONS = {
             "active_connections", "Number of active FTP/FTPS/SFTP connections"};
-    private static final String[] METRIC_FILE_OPERATIONS = {
-            "file_operations", "Number of file operations performed"};
-    private static final String[] METRIC_FILE_EVENTS = {
-            "file_events", "Number of file events dispatched by the listener"};
-    private static final String[] METRIC_ERRORS = {
-            "errors", "Number of errors"};
 
     /** Sentinel used when a URL or protocol value is unavailable. */
     public static final String UNKNOWN = "unknown";
@@ -83,6 +74,12 @@ public class FtpMetricsUtil {
 
     /** Operation-type tag value: {@code ftp:Client.rmdir()}. */
     public static final String OPERATION_TYPE_RMDIR = "rmdir";
+
+    /** Action-type tag value for FTP client operations (get, put, delete, etc.). */
+    public static final String ACTION_TYPE_OPERATION = "operation";
+
+    /** Action-type tag value for FTP listener event dispatches (change, delete, error). */
+    public static final String ACTION_TYPE_EVENT = "event";
 
     /** Error-type tag value: connection-level failure. */
     public static final String ERROR_TYPE_CONNECTION = "connection";
@@ -158,82 +155,7 @@ public class FtpMetricsUtil {
     }
 
     /**
-     * Increments the file-operations counter for any client operation.
-     * File paths are intentionally excluded to avoid unbounded metric cardinality;
-     * they are captured instead as tags on the trace span context.
-     *
-     * @param url               remote URL
-     * @param protocol          protocol string
-     * @param operationType     one of the {@code OPERATION_TYPE_*} constants
-     * @param functionName      the Ballerina client function name (e.g. {@code "getBytes"})
-     * @param entryFunctionName the entry-point Ballerina function name, or {@link #UNKNOWN}
-     */
-    public static void reportFileOperation(String url, String protocol, String operationType,
-                                           String functionName, String entryFunctionName) {
-        if (!ObserveUtils.isMetricsEnabled()) {
-            return;
-        }
-        FtpObserverContext observerContext = new FtpObserverContext(CONTEXT_CLIENT, url, protocol);
-        observerContext.addTag(FtpObserverContext.TAG_OPERATION_TYPE, operationType);
-        if (functionName != null) {
-            observerContext.addTag(FtpObserverContext.TAG_FUNCTION_NAME, functionName);
-        }
-        if (entryFunctionName != null) {
-            observerContext.addTag(FtpObserverContext.TAG_ENTRY_FUNCTION_NAME, entryFunctionName);
-        }
-        observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, INSTANCE_URL);
-        incrementCounter(observerContext, METRIC_FILE_OPERATIONS[0], METRIC_FILE_OPERATIONS[1]);
-    }
-
-    /**
-     * Increments the file-events counter when the listener dispatches a resource method.
-     * File paths are excluded from the counter to avoid unbounded cardinality;
-     * they are captured on the trace span context instead.
-     *
-     * @param url               remote URL
-     * @param protocol          protocol string
-     * @param eventType         {@link #EVENT_TYPE_CHANGE}, {@link #EVENT_TYPE_DELETE}, or {@link #EVENT_TYPE_ERROR}
-     * @param functionName      the listener resource function name (e.g. {@code "onFileChange"})
-     * @param entryFunctionName the entry-point Ballerina function name, or {@link #UNKNOWN}
-     */
-    public static void reportFileEvent(String url, String protocol, String eventType,
-                                       String functionName, String entryFunctionName) {
-        if (!ObserveUtils.isMetricsEnabled()) {
-            return;
-        }
-        FtpObserverContext observerContext = new FtpObserverContext(CONTEXT_LISTENER, url, protocol);
-        observerContext.addTag(FtpObserverContext.TAG_EVENT_TYPE, eventType);
-        if (functionName != null) {
-            observerContext.addTag(FtpObserverContext.TAG_FUNCTION_NAME, functionName);
-        }
-        if (entryFunctionName != null) {
-            observerContext.addTag(FtpObserverContext.TAG_ENTRY_FUNCTION_NAME, entryFunctionName);
-        }
-        observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, INSTANCE_URL);
-        incrementCounter(observerContext, METRIC_FILE_EVENTS[0], METRIC_FILE_EVENTS[1]);
-    }
-
-    /**
-     * Increments the errors counter.
-     *
-     * @param url       host:port
-     * @param protocol  protocol string
-     * @param context   client or listener
-     * @param errorType one of the {@code ERROR_TYPE_*} constants
-     */
-    public static void reportError(String url, String protocol, String context, String errorType) {
-        if (!ObserveUtils.isMetricsEnabled()) {
-            return;
-        }
-        FtpObserverContext observerContext = new FtpObserverContext(context, url, protocol);
-        observerContext.addTag(FtpObserverContext.TAG_ERROR_TYPE, errorType);
-        incrementCounter(observerContext, METRIC_ERRORS[0], METRIC_ERRORS[1]);
-    }
-
-    /**
-     * Maps a raw {@link Throwable} (e.g. from {@code RemoteFileSystemListener.onError})
-     * directly to an observability error-type constant, eliminating the need for callers
-     * to pass through {@code FtpUtil.getErrorTypeForException} first.
+     * Maps a raw {@link Throwable} to an observability error-type constant.
      *
      * @param throwable the exception to classify
      * @return the matching {@code ERROR_TYPE_*} string
@@ -262,16 +184,9 @@ public class FtpMetricsUtil {
             case "RetryError" -> ERROR_TYPE_RETRY_EXHAUSTED;
             case "CircuitBreakerOpenError" -> ERROR_TYPE_CIRCUIT_BREAKER_OPEN;
             case "InvalidConfigError" -> ERROR_TYPE_INVALID_CONFIG;
+            case "CloseError" -> ERROR_TYPE_CLOSE;
             default -> UNKNOWN;
         };
-    }
-
-    private static void incrementCounter(FtpObserverContext observerContext, String name, String desc) {
-        if (metricRegistry == null) {
-            return;
-        }
-        metricRegistry.counter(new MetricId(CONNECTOR_NAME + "_" + name, desc, observerContext.getAllTags()))
-                .increment();
     }
 
     private static void incrementGauge(FtpObserverContext observerContext, String name, String desc) {

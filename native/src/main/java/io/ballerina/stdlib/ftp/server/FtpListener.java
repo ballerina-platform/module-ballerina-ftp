@@ -39,7 +39,6 @@ import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
-import io.ballerina.stdlib.ftp.observability.FtpMetricsUtil;
 import io.ballerina.stdlib.ftp.observability.FtpTracingUtil;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
@@ -68,11 +67,9 @@ import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
 import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.CONTEXT_LISTENER;
 import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.EVENT_TYPE_CHANGE;
 import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.EVENT_TYPE_DELETE;
-import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.EVENT_TYPE_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVER_EVENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_ADDED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_FILES;
-import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_ERROR_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CHANGE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_DELETE_REMOTE_FUNCTION;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_DELETED_REMOTE_FUNCTION;
@@ -264,8 +261,6 @@ public class FtpListener implements RemoteFileSystemListener {
 
         // Call onFileDelete once per deleted file
         for (String deletedFile : deletedFilesList) {
-            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_DELETE,
-                    ON_FILE_DELETE_REMOTE_FUNCTION, ON_FILE_DELETE_REMOTE_FUNCTION);
             BString deletedFileBString = StringUtils.fromString(deletedFile);
             Object[] args = getOnFileDeleteMethodArguments(params, deletedFileBString, caller);
             if (args != null) {
@@ -285,8 +280,6 @@ public class FtpListener implements RemoteFileSystemListener {
         BString[] deletedFilesBStringArray = new BString[deletedFilesList.size()];
         for (int i = 0; i < deletedFilesList.size(); i++) {
             String deletedFile = deletedFilesList.get(i);
-            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_DELETE,
-                    ON_FILE_DELETED_REMOTE_FUNCTION, ON_FILE_DELETED_REMOTE_FUNCTION);
             deletedFilesBStringArray[i] = StringUtils.fromString(deletedFile);
         }
 
@@ -307,16 +300,6 @@ public class FtpListener implements RemoteFileSystemListener {
      */
     private void processMetadataOnlyCallbacks(BObject service, RemoteFileSystemEvent event,
                                               MethodType methodType, BObject caller) {
-        // Report a "change" event per added file and a "delete" event per deleted file
-        for (int i = 0; i < event.getAddedFiles().size(); i++) {
-            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_CHANGE,
-                    ON_FILE_CHANGE_REMOTE_FUNCTION, ON_FILE_CHANGE_REMOTE_FUNCTION);
-        }
-        for (String deletedFile : event.getDeletedFiles()) {
-            FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_DELETE,
-                    ON_FILE_CHANGE_REMOTE_FUNCTION, ON_FILE_CHANGE_REMOTE_FUNCTION);
-        }
-
         Map<String, Object> watchEventParamValues = processWatchEventParamValues(event);
         Parameter[] params = methodType.getParameters();
         Object[] args = getMethodArguments(params, watchEventParamValues, caller);
@@ -522,10 +505,6 @@ public class FtpListener implements RemoteFileSystemListener {
     @Override
     public void onError(Throwable throwable) {
         log.error(throwable.getMessage(), throwable);
-        FtpMetricsUtil.reportError(listenerUrl, listenerProtocol, CONTEXT_LISTENER,
-                FtpMetricsUtil.toObservabilityErrorType(throwable));
-        FtpMetricsUtil.reportFileEvent(listenerUrl, listenerProtocol, EVENT_TYPE_ERROR,
-                ON_ERROR_REMOTE_FUNCTION, ON_ERROR_REMOTE_FUNCTION);
     }
 
     @Override
