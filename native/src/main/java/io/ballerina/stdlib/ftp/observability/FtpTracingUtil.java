@@ -38,7 +38,7 @@ import java.util.Map;
  *   <li><b>Caller / client operations</b> — call {@link #sendMetricsData} from
  *       inside a native external method. Ballerina has already created an auto-instrumented span
  *       for the remote-method call; this helper enriches that span with the FTP-specific tags
- *       ({@code action_type}, {@code context}, {@code remote_url}, etc.) so that the resulting
+ *       ({@code action_type}, {@code context}, {@code remote.url}, etc.) so that the resulting
  *       {@code requests_total_value} metric is correctly labelled.</li>
  * </ul>
  */
@@ -94,7 +94,7 @@ public class FtpTracingUtil {
 
     /**
      * Creates strand properties for a listener error dispatch, adding {@code event.type=error}
-     * and an {@code error_type} tag to the embedded observer context.
+     * and an {@code error.type} tag to the embedded observer context.
      *
      * @param context   context tag
      * @param url       host:port
@@ -124,8 +124,8 @@ public class FtpTracingUtil {
      * invoking the external Java implementation. Calling this method from inside the native
      * implementation adds the FTP-specific tags to that span, so that the corresponding
      * {@code requests_total_value} metric carries {@code action_type="operation"},
-     * {@code context="client"}, {@code remote_url}, {@code protocol}, {@code operation.type},
-     * {@code file.path}, and {@code instance.url}.
+     * {@code context="client"}, {@code remote.url}, {@code protocol}, {@code operation.type},
+     * {@code file.path}, and {@code host}.
      *
      * @param env           the current Ballerina environment
      * @param url           remote URL, or {@code null} to omit
@@ -187,7 +187,7 @@ public class FtpTracingUtil {
     }
 
     /**
-     * Adds an {@code error_type} tag to the auto-instrumented span for the currently executing
+     * Adds an {@code error.type} tag to the auto-instrumented span for the currently executing
      * native external method. Call this after an operation returns a {@link BError} to record
      * the error classification on the span.
      *

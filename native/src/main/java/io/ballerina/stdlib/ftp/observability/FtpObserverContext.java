@@ -22,21 +22,21 @@ import io.ballerina.runtime.observability.ObserverContext;
 
 /**
  * Extension of ObserverContext for the FTP connector.
- * Automatically attaches {@code context}, {@code remote_url}, and {@code protocol} tags.
+ * Automatically attaches {@code context}, {@code remote.url}, and {@code protocol} tags.
  */
 public class FtpObserverContext extends ObserverContext {
 
     static final String TAG_CONTEXT = "context";
-    static final String TAG_REMOTE_URL = "remote_url";
+    static final String TAG_REMOTE_URL = "remote.url";
     static final String TAG_PROTOCOL = "protocol";
 
     static final String TAG_FILE_PATH = "file.path";
     static final String TAG_DESTINATION_PATH = "destination.path";
     static final String TAG_EVENT_TYPE = "event.type";
     static final String TAG_OPERATION_TYPE = "operation.type";
-    static final String TAG_ERROR_TYPE = "error_type";
+    static final String TAG_ERROR_TYPE = "error.type";
     static final String TAG_ACTION_TYPE = "action.type";
-    static final String TAG_INSTANCE_URL = "instance.url";
+    static final String TAG_INSTANCE_URL = "host";
 
     FtpObserverContext(String context) {
         addTag(TAG_CONTEXT, context);
