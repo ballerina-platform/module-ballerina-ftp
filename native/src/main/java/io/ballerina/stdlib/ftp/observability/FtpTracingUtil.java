@@ -57,7 +57,7 @@ public class FtpTracingUtil {
      * @param url       host:port of the remote server
      * @param protocol  "ftp", "ftps", or "sftp"
      * @param eventType event type tag value (e.g. {@link FtpMetricsUtil#EVENT_TYPE_CHANGE})
-     * @param filePath  path of the file involved, or {@code null} to omit
+     * @param filePath  path of the file involved
      * @return properties map, or {@code null} if tracing is disabled
      */
     public static Map<String, Object> createStrandProperties(String context, String url, String protocol,
@@ -71,12 +71,8 @@ public class FtpTracingUtil {
         if (instanceUrl != null) {
             observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, instanceUrl);
         }
-        if (eventType != null) {
-            observerContext.addTag(FtpObserverContext.TAG_EVENT_TYPE, eventType);
-        }
-        if (filePath != null) {
-            observerContext.addTag(FtpObserverContext.TAG_FILE_PATH, filePath);
-        }
+        observerContext.addTag(FtpObserverContext.TAG_EVENT_TYPE, eventType);
+        observerContext.addTag(FtpObserverContext.TAG_FILE_PATH, filePath);
         Map<String, Object> properties = new HashMap<>();
         properties.put(ObservabilityConstants.KEY_OBSERVER_CONTEXT, observerContext);
         return properties;
