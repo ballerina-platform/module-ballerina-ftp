@@ -57,7 +57,9 @@ public class FtpTracingUtil {
      * @param url       host:port of the remote server
      * @param protocol  "ftp", "ftps", or "sftp"
      * @param eventType event type tag value (e.g. {@link FtpMetricsUtil#EVENT_TYPE_CHANGE})
-     * @param filePath  path of the file involved
+     * @param filePath  retained for API compatibility; not added to the context — {@code file.path}
+     *                  is excluded from metric labels (unbounded cardinality) and cannot be added
+     *                  span-only here because the span does not exist until the strand starts
      * @return properties map, or {@code null} if observability is disabled
      */
     public static Map<String, Object> createStrandProperties(String context, String url, String protocol,
@@ -72,7 +74,6 @@ public class FtpTracingUtil {
             observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, instanceUrl);
         }
         observerContext.addTag(FtpObserverContext.TAG_EVENT_TYPE, eventType);
-        observerContext.addTag(FtpObserverContext.TAG_FILE_PATH, filePath);
         Map<String, Object> properties = new HashMap<>();
         properties.put(ObservabilityConstants.KEY_OBSERVER_CONTEXT, observerContext);
         return properties;
