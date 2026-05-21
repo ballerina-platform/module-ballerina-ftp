@@ -682,16 +682,16 @@ public class FtpClient {
         if (connector == null) {
             return null;
         }
+        Object error = null;
         try {
             connector.close();
         } catch (Exception exception) {
+            error = FtpUtil.createError(ON_CLOSE_ERROR + exception.getMessage(), exception, FTP_ERROR);
+        } finally {
             clientConnector.addNativeData(VFS_CLIENT_CONNECTOR, null);
             FtpMetricsUtil.reportConnectionClose(url, protocol, FtpMetricsUtil.CONTEXT_CLIENT);
-            return FtpUtil.createError(ON_CLOSE_ERROR + exception.getMessage(), exception, FTP_ERROR);
         }
-        clientConnector.addNativeData(VFS_CLIENT_CONNECTOR, null);
-        FtpMetricsUtil.reportConnectionClose(url, protocol, FtpMetricsUtil.CONTEXT_CLIENT);
-        return null;
+        return error;
     }
 
     /**
@@ -1010,7 +1010,7 @@ public class FtpClient {
 
     public static Object delete(Environment env, BObject clientConnector, BString filePath) {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_DELETE, filePath.getValue());
+                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_ADMIN, filePath.getValue());
         return sendTraces(executeSinglePathAction(env, clientConnector, filePath, FtpAction.DELETE, true,
                 balFuture -> remoteFileSystemBaseMessage -> {
                     FtpClientHelper.executeGenericAction();
@@ -1020,7 +1020,7 @@ public class FtpClient {
 
     public static Object isDirectory(Environment env, BObject clientConnector, BString filePath) {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
+                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_ADMIN, filePath.getValue());
         return sendTraces(executeSinglePathAction(env, clientConnector, filePath, FtpAction.ISDIR, false,
                 balFuture -> remoteFileSystemBaseMessage -> {
                     FtpClientHelper.executeIsDirectoryAction(remoteFileSystemBaseMessage, balFuture);
@@ -1030,7 +1030,7 @@ public class FtpClient {
 
     public static Object list(Environment env, BObject clientConnector, BString filePath) {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
+                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_ADMIN, filePath.getValue());
         return sendTraces(executeSinglePathAction(env, clientConnector, filePath, FtpAction.LIST, false,
                 balFuture -> remoteFileSystemBaseMessage -> {
                     FtpClientHelper.executeListAction(remoteFileSystemBaseMessage, balFuture);
@@ -1040,7 +1040,7 @@ public class FtpClient {
 
     public static Object mkdir(Environment env, BObject clientConnector, BString path) {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_MKDIR, path.getValue());
+                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_ADMIN, path.getValue());
         return sendTraces(executeSinglePathAction(env, clientConnector, path, FtpAction.MKDIR, true,
                 balFuture -> remoteFileSystemBaseMessage -> {
                     FtpClientHelper.executeGenericAction();
@@ -1050,7 +1050,7 @@ public class FtpClient {
 
     public static Object rename(Environment env, BObject clientConnector, BString origin, BString destination) {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_RENAME,
+                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_ADMIN,
                 origin.getValue(), destination.getValue());
         return sendTraces(
                 executeTwoPathAction(env, clientConnector, origin, destination, FtpAction.RENAME),
@@ -1059,7 +1059,7 @@ public class FtpClient {
 
     public static Object move(Environment env, BObject clientConnector, BString sourcePath, BString destinationPath) {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_MOVE,
+                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_ADMIN,
                 sourcePath.getValue(), destinationPath.getValue());
         return sendTraces(
                 executeTwoPathAction(env, clientConnector, sourcePath, destinationPath, FtpAction.RENAME),
@@ -1068,7 +1068,7 @@ public class FtpClient {
 
     public static Object copy(Environment env, BObject clientConnector, BString sourcePath, BString destinationPath) {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_COPY,
+                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_ADMIN,
                 sourcePath.getValue(), destinationPath.getValue());
         return sendTraces(
                 executeTwoPathAction(env, clientConnector, sourcePath, destinationPath, FtpAction.COPY),
@@ -1077,7 +1077,7 @@ public class FtpClient {
 
     public static Object exists(Environment env, BObject clientConnector, BString filePath) {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
+                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_ADMIN, filePath.getValue());
         return sendTraces(executeSinglePathAction(env, clientConnector,
                 filePath, FtpAction.EXISTS, false,
                 balFuture -> remoteFileSystemBaseMessage -> {
@@ -1089,7 +1089,7 @@ public class FtpClient {
 
     public static Object rmdir(Environment env, BObject clientConnector, BString filePath) {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_RMDIR, filePath.getValue());
+                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_ADMIN, filePath.getValue());
         return sendTraces(executeSinglePathAction(env, clientConnector, filePath, FtpAction.RMDIR, true,
                 balFuture -> remoteFileSystemBaseMessage -> {
                     FtpClientHelper.executeGenericAction();
@@ -1099,7 +1099,7 @@ public class FtpClient {
 
     public static Object size(Environment env, BObject clientConnector, BString filePath) {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_GET, filePath.getValue());
+                getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_ADMIN, filePath.getValue());
         return sendTraces(executeSinglePathAction(env, clientConnector, filePath, FtpAction.SIZE, false,
                 balFuture -> remoteFileSystemBaseMessage -> {
                     FtpClientHelper.executeSizeAction(remoteFileSystemBaseMessage, balFuture);

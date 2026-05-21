@@ -56,23 +56,15 @@ public class FtpMetricsUtil {
     /** Event-type tag value: content-binding error dispatched to {@code onError}. */
     public static final String EVENT_TYPE_ERROR = "error";
 
-    /** Operation-type tag value: get file content ({@code ftp:Client.getBytes()} and typed variants). */
+    /** Operation-type tag value: read file content ({@code getBytes}, typed and streaming variants). */
     public static final String OPERATION_TYPE_GET = "get";
 
-    /** Operation-type tag value: put file content ({@code ftp:Client.putBytes()} and typed variants). */
+    /** Operation-type tag value: write file content ({@code putBytes}, typed and streaming variants). */
     public static final String OPERATION_TYPE_PUT = "put";
 
-    /** Operation-type tag value: {@code ftp:Client.delete()}. */
-    public static final String OPERATION_TYPE_DELETE = "delete";
-    public static final String OPERATION_TYPE_RENAME = "rename";
-    public static final String OPERATION_TYPE_MOVE = "move";
-    public static final String OPERATION_TYPE_COPY = "copy";
-
-    /** Operation-type tag value: {@code ftp:Client.mkdir()}. */
-    public static final String OPERATION_TYPE_MKDIR = "mkdir";
-
-    /** Operation-type tag value: {@code ftp:Client.rmdir()}. */
-    public static final String OPERATION_TYPE_RMDIR = "rmdir";
+    /** Operation-type tag value: admin/filesystem operations ({@code delete}, {@code rename}, {@code move},
+     *  {@code copy}, {@code mkdir}, {@code rmdir}, {@code isDirectory}, {@code list}, {@code exists}, {@code size}). */
+    public static final String OPERATION_TYPE_ADMIN = "admin";
 
     /** Action-type tag value for FTP client operations (get, put, delete, etc.). */
     public static final String ACTION_TYPE_OPERATION = "operation";
@@ -129,17 +121,11 @@ public class FtpMetricsUtil {
     }
 
     private static void incrementGauge(FtpObserverContext observerContext, String name, String desc) {
-        if (metricRegistry == null) {
-            return;
-        }
         metricRegistry.gauge(new MetricId(CONNECTOR_NAME + "_" + name, desc, observerContext.getAllTags()))
                 .increment();
     }
 
     private static void decrementGauge(FtpObserverContext observerContext, String name, String desc) {
-        if (metricRegistry == null) {
-            return;
-        }
         metricRegistry.gauge(new MetricId(CONNECTOR_NAME + "_" + name, desc, observerContext.getAllTags()))
                 .decrement();
     }

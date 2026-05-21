@@ -817,26 +817,23 @@ All metrics and trace spans carry tags that identify the connection and operatio
 | `remote.url` | `host:port` of the remote server | Metrics, Traces |
 | `protocol` | `ftp`, `ftps`, `sftp` | Metrics, Traces |
 | `host` | Hostname of the current node | Metrics, Traces |
-| `operation.type` | `get`, `put`, `delete`, `rename`, `move`, `copy`, `mkdir`, `rmdir` | Traces (on `action.type=operation` spans only) |
-| `event.type` | `create`, `delete`, `error` | Traces (on `action.type=event` spans) |
-| `error.type` | `connection`, `authentication`, `file_not_found`, `file_already_exists`, `service_unavailable`, `content_binding`, `retry_exhausted`, `circuit_breaker_open`, `invalid_config`, `close` | Traces (on `event.type=error` spans) |
+| `operation.type` | `get`, `put`, `admin` | Metrics, Traces (on `action.type=operation` spans only) |
+| `event.type` | `create`, `delete`, `error` | Metrics, Traces (on `action.type=event` spans) |
+| `error.type` | `ConnectionError`, `AuthenticationError`, `FileNotFoundError`, `FileAlreadyExistsError`, `ServiceUnavailableError`, `ContentBindingError`, `RetryError`, `CircuitBreakerOpenError`, `InvalidConfigError`, `CloseError` | Metrics, Traces (on `event.type=error` spans) |
 | `file.path` | Source/target file path of the operation | Traces only |
 | `destination.path` | Destination path for two-path operations (`rename`, `move`, `copy`) | Traces only |
 
 `file.path` and `destination.path` are intentionally excluded from metrics to avoid unbounded label cardinality. They are captured on trace spans only.
 
+> **Note:** Prometheus normalizes `.` to `_` in label names (e.g. `action.type` → `action_type`, `operation.type` → `operation_type`). Jaeger and other trace backends preserve the original dotted names. The PromQL examples in §7.3 use the Prometheus-normalized form.
+
 Client operation spans use `context=client` and `action.type=operation`. The `operation.type` tag maps to the client method invoked:
 
 | `operation.type` | Triggered by |
 |---|---|
-| `get` | `getBytes()`, `getText()`, `getJson()`, `getXml()`, `getCsv()`, `getBytesAsStream()`, `getCsvAsStream()`, `isDirectory()`, `list()`, `exists()`, `size()` |
+| `get` | `getBytes()`, `getText()`, `getJson()`, `getXml()`, `getCsv()`, `getBytesAsStream()`, `getCsvAsStream()` |
 | `put` | `putBytes()`, `putText()`, `putJson()`, `putXml()`, `putCsv()`, `putBytesAsStream()`, `putCsvAsStream()` |
-| `delete` | `delete()` |
-| `rename` | `rename()` |
-| `move` | `move()` |
-| `copy` | `copy()` |
-| `mkdir` | `mkdir()` |
-| `rmdir` | `rmdir()` |
+| `admin` | `delete()`, `rename()`, `move()`, `copy()`, `mkdir()`, `rmdir()`, `isDirectory()`, `list()`, `exists()`, `size()` |
 
 For `getBytesAsStream()` and `getCsvAsStream()`, the `error.type` tag is not added to the span when an error occurs inside the async callback because the Ballerina strand is suspended at that point. Operation tags are still applied before the yield.
 
@@ -850,20 +847,20 @@ Listener event spans use `context=listener` and `action.type=event`. The `event.
 
 Transport-level errors (e.g. polling connection failures) do not generate a span or metric entry. Only errors dispatched to the service's `onError` callback are recorded.
 
-When errors are dispatched to `onError`, the span includes both `event.type=error` and an `error.type` tag:
+When errors are dispatched to `onError`, the span includes both `event.type=error` and an `error.type` tag set to the Ballerina error type name:
 
-| `error.type` | Corresponding Ballerina error |
+| `error.type` | Ballerina error |
 |---|---|
-| `connection` | `ftp:ConnectionError` |
-| `authentication` | `ftp:AuthenticationError` |
-| `file_not_found` | `ftp:FileNotFoundError` |
-| `file_already_exists` | `ftp:FileAlreadyExistsError` |
-| `service_unavailable` | `ftp:ServiceUnavailableError` |
-| `content_binding` | `ftp:ContentBindingError` |
-| `retry_exhausted` | `ftp:AllRetryAttemptsFailedError` |
-| `circuit_breaker_open` | `ftp:CircuitBreakerOpenError` |
-| `invalid_config` | `ftp:InvalidConfigError` |
-| `close` | Error while closing a connection |
+| `ConnectionError` | `ftp:ConnectionError` |
+| `AuthenticationError` | `ftp:AuthenticationError` |
+| `FileNotFoundError` | `ftp:FileNotFoundError` |
+| `FileAlreadyExistsError` | `ftp:FileAlreadyExistsError` |
+| `ServiceUnavailableError` | `ftp:ServiceUnavailableError` |
+| `ContentBindingError` | `ftp:ContentBindingError` |
+| `RetryError` | `ftp:RetryError` |
+| `CircuitBreakerOpenError` | `ftp:CircuitBreakerOpenError` |
+| `InvalidConfigError` | `ftp:InvalidConfigError` |
+| `CloseError` | Error while closing a connection |
 
 ### 7.3 Deriving Counts from `requests_total_value`
 
@@ -871,7 +868,7 @@ Since the Ballerina runtime automatically publishes `requests_total_value` for e
 
 ```promql
 # Client file operations by type
-rate(requests_total_value{action_type="operation", operation_type="put", protocol="sftp"}[1m])
+rate(requests_total_value{action_type="operation", operation_type="admin", protocol="sftp"}[1m])
 
 # Listener file events by type
 rate(requests_total_value{action_type="event", event_type="create"}[1m])
