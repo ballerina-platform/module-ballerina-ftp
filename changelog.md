@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - [Add observability support for the FTP client and listener](https://github.com/ballerina-platform/ballerina-library/issues/8790)
+
+## [2.19.0] - 2026-04-27
+
+### Added
+
 - Added `verifyHostName` field (default `true`) to `ftp:SecureSocket` to verify FTPS server certificate CN/SAN against the connect host.
 - [Extend `ftp:SecureSocket.cert` to accept a PEM file path string in addition to `crypto:TrustStore` (parity with `http:SecureSocket`)](https://github.com/wso2/product-integrator/issues/830)
 
