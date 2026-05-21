@@ -335,9 +335,7 @@ public class FtpContentCallbackHandler {
         Optional<PostProcessAction> onErrorAfterError = holder.getAfterErrorAction(onErrorMethod.getName());
         boolean hasOnErrorActions = onErrorAfterProcess.isPresent() || onErrorAfterError.isPresent();
 
-        String errorType = error.getType() != null
-                ? FtpMetricsUtil.toObservabilityErrorType(error.getType().getName())
-                : FtpMetricsUtil.UNKNOWN;
+        String errorType = error.getType() != null ? error.getType().getName() : FtpMetricsUtil.UNKNOWN;
         Map<String, Object> strandProperties = FtpTracingUtil.createErrorStrandProperties(
                 FtpMetricsUtil.CONTEXT_LISTENER, listenerUrl, listenerProtocol,
                 fileInfo.getPath(), errorType);

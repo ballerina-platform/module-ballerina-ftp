@@ -171,8 +171,7 @@ public class FtpClient {
 
     private static Object sendTraces(Object result, Environment env, BObject clientConnector) {
         if (result instanceof BError bError) {
-            String errorType = FtpMetricsUtil.toObservabilityErrorType(
-                    bError.getType() != null ? bError.getType().getName() : null);
+            String errorType = bError.getType() != null ? bError.getType().getName() : FtpMetricsUtil.UNKNOWN;
             FtpTracingUtil.sendErrorMetricsOnCurrentFrame(env, errorType);
         }
         return result;

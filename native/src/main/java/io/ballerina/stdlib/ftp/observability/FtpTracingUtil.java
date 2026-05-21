@@ -56,8 +56,7 @@ public class FtpTracingUtil {
      * @param context   {@link FtpMetricsUtil#CONTEXT_LISTENER}
      * @param url       host:port of the remote server
      * @param protocol  "ftp", "ftps", or "sftp"
-     * @param eventType event type tag value (e.g. {@link FtpMetricsUtil#EVENT_TYPE_CHANGE}),
-     *                  or {@code null} to omit
+     * @param eventType event type tag value (e.g. {@link FtpMetricsUtil#EVENT_TYPE_CHANGE})
      * @param filePath  path of the file involved, or {@code null} to omit
      * @return properties map, or {@code null} if tracing is disabled
      */
@@ -100,7 +99,7 @@ public class FtpTracingUtil {
      * @param url       host:port
      * @param protocol  protocol string
      * @param filePath  path of the file involved, or {@code null}
-     * @param errorType one of the {@code FtpMetricsUtil.ERROR_TYPE_*} constants, or {@code null}
+     * @param errorType Ballerina error type name (e.g. {@code "ConnectionError"}), or {@code null}
      * @return properties map, or {@code null} if tracing is disabled
      */
     public static Map<String, Object> createErrorStrandProperties(String context, String url, String protocol,
@@ -192,7 +191,7 @@ public class FtpTracingUtil {
      * the error classification on the span.
      *
      * @param env       the current Ballerina environment; if {@code null} this is a no-op
-     * @param errorType one of the {@code FtpMetricsUtil.ERROR_TYPE_*} constants
+     * @param errorType Ballerina error type name (e.g. {@code "ConnectionError"})
      */
     public static void sendErrorMetricsOnCurrentFrame(Environment env, String errorType) {
         if (env == null || errorType == null) {

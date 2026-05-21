@@ -22,7 +22,6 @@ import io.ballerina.runtime.observability.ObserveUtils;
 import io.ballerina.runtime.observability.metrics.DefaultMetricRegistry;
 import io.ballerina.runtime.observability.metrics.MetricId;
 import io.ballerina.runtime.observability.metrics.MetricRegistry;
-import io.ballerina.stdlib.ftp.util.FtpUtil;
 
 import java.net.InetAddress;
 
@@ -81,36 +80,6 @@ public class FtpMetricsUtil {
     /** Action-type tag value for FTP listener event dispatches (create, delete, error). */
     public static final String ACTION_TYPE_EVENT = "event";
 
-    /** Error-type tag value: connection-level failure. */
-    public static final String ERROR_TYPE_CONNECTION = "connection";
-
-    /** Error-type tag value: authentication failure. */
-    public static final String ERROR_TYPE_AUTHENTICATION = "authentication";
-
-    /** Error-type tag value: file not found. */
-    public static final String ERROR_TYPE_FILE_NOT_FOUND = "file_not_found";
-
-    /** Error-type tag value: file already exists. */
-    public static final String ERROR_TYPE_FILE_ALREADY_EXISTS = "file_already_exists";
-
-    /** Error-type tag value: remote service unavailable (e.g. circuit-breaker open). */
-    public static final String ERROR_TYPE_SERVICE_UNAVAILABLE = "service_unavailable";
-
-    /** Error-type tag value: content binding / deserialization failure. */
-    public static final String ERROR_TYPE_CONTENT_BINDING = "content_binding";
-
-    /** Error-type tag value: all retry attempts exhausted. */
-    public static final String ERROR_TYPE_RETRY_EXHAUSTED = "retry_exhausted";
-
-    /** Error-type tag value: circuit breaker is open. */
-    public static final String ERROR_TYPE_CIRCUIT_BREAKER_OPEN = "circuit_breaker_open";
-
-    /** Error-type tag value: invalid configuration. */
-    public static final String ERROR_TYPE_INVALID_CONFIG = "invalid_config";
-
-    /** Error-type tag value: error while closing a connection. */
-    public static final String ERROR_TYPE_CLOSE = "close";
-
     private static final MetricRegistry metricRegistry = DefaultMetricRegistry.getInstance();
 
     private static String instanceUrl;
@@ -157,41 +126,6 @@ public class FtpMetricsUtil {
         }
         FtpObserverContext observerContext = new FtpObserverContext(context, url, protocol);
         decrementGauge(observerContext, METRIC_ACTIVE_CONNECTIONS[0], METRIC_ACTIVE_CONNECTIONS[1]);
-    }
-
-    /**
-     * Maps a raw {@link Throwable} to an observability error-type constant.
-     *
-     * @param throwable the exception to classify
-     * @return the matching {@code ERROR_TYPE_*} string
-     */
-    public static String toObservabilityErrorType(Throwable throwable) {
-        return toObservabilityErrorType(FtpUtil.getErrorTypeForException(throwable));
-    }
-
-    /**
-     * Maps a Ballerina FTP error type name to its observability constant.
-     *
-     * @param ballerinaErrorType the {@code error.getType().getName()} value
-     * @return the matching {@code ERROR_TYPE_*} string
-     */
-    public static String toObservabilityErrorType(String ballerinaErrorType) {
-        if (ballerinaErrorType == null) {
-            return UNKNOWN;
-        }
-        return switch (ballerinaErrorType) {
-            case "ConnectionError" -> ERROR_TYPE_CONNECTION;
-            case "AuthenticationError" -> ERROR_TYPE_AUTHENTICATION;
-            case "FileNotFoundError" -> ERROR_TYPE_FILE_NOT_FOUND;
-            case "FileAlreadyExistsError" -> ERROR_TYPE_FILE_ALREADY_EXISTS;
-            case "ServiceUnavailableError" -> ERROR_TYPE_SERVICE_UNAVAILABLE;
-            case "ContentBindingError" -> ERROR_TYPE_CONTENT_BINDING;
-            case "RetryError" -> ERROR_TYPE_RETRY_EXHAUSTED;
-            case "CircuitBreakerOpenError" -> ERROR_TYPE_CIRCUIT_BREAKER_OPEN;
-            case "InvalidConfigError" -> ERROR_TYPE_INVALID_CONFIG;
-            case "CloseError" -> ERROR_TYPE_CLOSE;
-            default -> UNKNOWN;
-        };
     }
 
     private static void incrementGauge(FtpObserverContext observerContext, String name, String desc) {
