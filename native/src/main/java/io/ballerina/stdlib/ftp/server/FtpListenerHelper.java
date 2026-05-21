@@ -36,6 +36,7 @@ import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.observability.FtpMetricsUtil;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
 import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
@@ -132,6 +133,17 @@ public class FtpListenerHelper {
             ftpListener.addNativeData(BASE_PARAMS_KEY, paramMap);
             ftpListener.addNativeData(FTP_LISTENER_KEY, listener);
             ftpListener.addNativeData(FTP_SERVICE_ENDPOINT_CONFIG, serviceEndpointConfig);
+
+            String host = serviceEndpointConfig
+                    .getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_HOST)).getValue();
+            int port = FtpUtil.extractPortValue(serviceEndpointConfig
+                    .getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
+            String protocol = serviceEndpointConfig
+                    .getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL)).getValue();
+            String url = protocol + "://" + host + ":" + port;
+            listener.setListenerUrl(url);
+            listener.setListenerProtocol(protocol);
+
             // No connector created yet - deferred to register()
             return null;
         } catch (FtpInvalidConfigException e) {
@@ -206,6 +218,8 @@ public class FtpListenerHelper {
                             findRootCause(e), Error.errorType());
                 }
             }
+            FtpMetricsUtil.reportNewConnection(listener.getListenerUrl(), listener.getListenerProtocol(),
+                    FtpMetricsUtil.CONTEXT_LISTENER);
         } else {
             // Subsequent service registration - validate consistency
             boolean previousUsesConfig = listener.usesServiceLevelConfig();
@@ -919,6 +933,9 @@ public class FtpListenerHelper {
         FtpListener listener = ftpConnector != null
                 ? ftpConnector.getFtpListener()
                 : (FtpListener) ftpListener.getNativeData(FTP_LISTENER_KEY);
+        // Capture observability data before cleanup clears the listener fields
+        String listenerUrl = listener != null ? listener.getListenerUrl() : null;
+        String listenerProtocol = listener != null ? listener.getListenerProtocol() : null;
         try {
             closeCaller(env, ftpListener);
             if (ftpConnector != null) {
@@ -929,6 +946,10 @@ public class FtpListenerHelper {
         } finally {
             if (listener != null) {
                 listener.cleanup();
+            }
+            if (ftpConnector != null) {
+                FtpMetricsUtil.reportConnectionClose(listenerUrl, listenerProtocol,
+                        FtpMetricsUtil.CONTEXT_LISTENER);
             }
         }
         return null;

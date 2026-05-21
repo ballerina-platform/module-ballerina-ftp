@@ -3,7 +3,7 @@
 _Owners_: @shafreenAnfar @dilanSachi @Bhashinee \
 _Reviewers_: @shafreenAnfar @Bhashinee \
 _Created_: 2020/10/28 \
-_Updated_: 2026/03/10 \
+_Updated_: 2026/05/20 \
 _Edition_: Swan Lake
 
 ## Introduction
@@ -62,6 +62,11 @@ The conforming implementation of the specification is released and included in t
 6. [Errors](#6-errors)
    * 6.1 [Error Hierarchy](#61-error-hierarchy)
    * 6.2 [Error Handling](#62-error-handling)
+7. [Observability](#7-observability)
+   * 7.1 [Metrics](#71-metrics)
+   * 7.2 [Tags](#72-tags)
+   * 7.3 [Deriving Counts from `requests_total_value`](#73-deriving-counts-from-requests_total_value)
+   * 7.4 [Enabling Observability](#74-enabling-observability)
 
 ## 1. Overview
 
@@ -784,3 +789,109 @@ if result is ftp:CircuitBreakerOpenError {
     processBytes(result);
 }
 ```
+
+## 7. Observability
+
+The FTP library provides built-in observability support through metrics and distributed tracing. When observability is enabled in the Ballerina runtime, the FTP client and listener automatically report telemetry data without any additional configuration.
+
+### 7.1 Metrics
+
+The following metric is published directly:
+
+| Metric Name | Type | Description |
+|---|---|---|
+| `ftp_active_connections` | Gauge | Number of active FTP/FTPS/SFTP connections |
+
+File operation counts, event counts, and error counts are derived from the Ballerina framework's built-in `requests_total_value` metric by filtering on the tags published on each span.
+
+The `ftp_active_connections` gauge is incremented when a client or listener is initialized and decremented when it is closed. If an exception occurs during `close()`, the gauge is still decremented — the connection is treated as closed regardless of the close error.
+
+### 7.2 Tags
+
+All metrics and trace spans carry tags that identify the connection and operation:
+
+| Tag | Values | Used In |
+|---|---|---|
+| `context` | `client`, `listener` | Metrics, Traces |
+| `action.type` | `operation`, `event` | Metrics, Traces |
+| `remote.url` | `host:port` of the remote server | Metrics, Traces |
+| `protocol` | `ftp`, `ftps`, `sftp` | Metrics, Traces |
+| `host` | Hostname of the current node | Metrics, Traces |
+| `operation.type` | `get`, `put`, `admin` | Metrics, Traces (on `action.type=operation` spans only) |
+| `event.type` | `create`, `delete`, `error` | Metrics, Traces (on `action.type=event` spans) |
+| `error.type` | `ConnectionError`, `AuthenticationError`, `FileNotFoundError`, `FileAlreadyExistsError`, `ServiceUnavailableError`, `ContentBindingError`, `RetryError`, `CircuitBreakerOpenError`, `InvalidConfigError`, `CloseError` | Metrics, Traces (on `event.type=error` spans) |
+| `file.path` | Source/target file path of the operation | Traces only |
+| `destination.path` | Destination path for two-path operations (`rename`, `move`, `copy`) | Traces only |
+
+`file.path` and `destination.path` are intentionally excluded from metrics to avoid unbounded label cardinality. They are captured on trace spans only.
+
+> **Note:** Prometheus normalizes `.` to `_` in label names (e.g. `action.type` → `action_type`, `operation.type` → `operation_type`). Jaeger and other trace backends preserve the original dotted names. The PromQL examples in §7.3 use the Prometheus-normalized form.
+
+Client operation spans use `context=client` and `action.type=operation`. The `operation.type` tag maps to the client method invoked:
+
+| `operation.type` | Triggered by |
+|---|---|
+| `get` | `getBytes()`, `getText()`, `getJson()`, `getXml()`, `getCsv()`, `getBytesAsStream()`, `getCsvAsStream()` |
+| `put` | `putBytes()`, `putText()`, `putJson()`, `putXml()`, `putCsv()`, `putBytesAsStream()`, `putCsvAsStream()` |
+| `admin` | `delete()`, `rename()`, `move()`, `copy()`, `mkdir()`, `rmdir()`, `isDirectory()`, `list()`, `exists()`, `size()` |
+
+For `getBytesAsStream()` and `getCsvAsStream()`, the `error.type` tag is not added to the span when an error occurs inside the async callback because the Ballerina strand is suspended at that point. Operation tags are still applied before the yield.
+
+Listener event spans use `context=listener` and `action.type=event`. The `event.type` tag identifies the event:
+
+| `event.type` | Triggered by |
+|---|---|
+| `create` | File added or modified; dispatched to format-specific callbacks or `onFileChange` |
+| `delete` | File deleted; dispatched to `onFileDelete` |
+| `error` | Content-binding or deserialization failure; dispatched to `onError` |
+
+Transport-level errors (e.g. polling connection failures) do not generate a span or metric entry. Only errors dispatched to the service's `onError` callback are recorded.
+
+When errors are dispatched to `onError`, the span includes both `event.type=error` and an `error.type` tag set to the Ballerina error type name:
+
+| `error.type` | Ballerina error |
+|---|---|
+| `ConnectionError` | `ftp:ConnectionError` |
+| `AuthenticationError` | `ftp:AuthenticationError` |
+| `FileNotFoundError` | `ftp:FileNotFoundError` |
+| `FileAlreadyExistsError` | `ftp:FileAlreadyExistsError` |
+| `ServiceUnavailableError` | `ftp:ServiceUnavailableError` |
+| `ContentBindingError` | `ftp:ContentBindingError` |
+| `RetryError` | `ftp:RetryError` |
+| `CircuitBreakerOpenError` | `ftp:CircuitBreakerOpenError` |
+| `InvalidConfigError` | `ftp:InvalidConfigError` |
+| `CloseError` | Error while closing a connection |
+
+### 7.3 Deriving Counts from `requests_total_value`
+
+Since the Ballerina runtime automatically publishes `requests_total_value` for each observed span, operation and event counts can be derived using PromQL queries:
+
+```promql
+# Client file operations by type
+rate(requests_total_value{action_type="operation", operation_type="admin", protocol="sftp"}[1m])
+
+# Listener file events by type
+rate(requests_total_value{action_type="event", event_type="create"}[1m])
+
+# Errors by category (dispatched to onError)
+sum by (error_type) (
+  rate(requests_total_value{action_type="event", event_type="error"}[5m])
+)
+
+# All FTP activity on a specific node
+rate(requests_total_value{host="node-1", src_module=~"ballerina/ftp.*"}[1m])
+```
+
+### 7.4 Enabling Observability
+
+Observability must be enabled in the Ballerina runtime configuration. Add the following to `Config.toml`:
+
+```toml
+[ballerina.observe]
+metricsEnabled=true
+metricsReporter="prometheus"
+tracingEnabled=true
+tracingProvider="jaeger"
+```
+
+Refer to the [Ballerina Observability documentation](https://ballerina.io/learn/observe-ballerina-programs/) for details on configuring reporters and exporters.

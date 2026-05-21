@@ -1,0 +1,183 @@
+/*
+ * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com)
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package io.ballerina.stdlib.ftp.observability;
+
+import io.ballerina.runtime.api.Environment;
+import io.ballerina.runtime.observability.ObservabilityConstants;
+import io.ballerina.runtime.observability.ObserveUtils;
+import io.ballerina.runtime.observability.ObserverContext;
+import io.ballerina.runtime.observability.tracer.BSpan;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Utility class for injecting FTP observability context into Ballerina strands and spans.
+ *
+ * <p>Two usage patterns:
+ * <ul>
+ *   <li><b>Listener dispatch</b> — call {@link #createStrandProperties} to build a properties map
+ *       that is embedded in {@code StrandMetadata} when dispatching a service method via
+ *       {@code callMethod}. The runtime picks up the embedded {@link FtpObserverContext} and uses
+ *       it as the span context for the entire service-method execution.</li>
+ *   <li><b>Client operations</b> — call {@link #sendMetricsData} from inside a native external
+ *       method. Ballerina has already created an auto-instrumented span for the remote-method call;
+ *       this helper enriches that span with the FTP-specific tags ({@code action.type},
+ *       {@code context}, {@code remote.url}, etc.) so that the resulting
+ *       {@code requests_total_value} metric is correctly labelled.</li>
+ * </ul>
+ */
+public class FtpTracingUtil {
+
+    private FtpTracingUtil() {
+    }
+
+    /**
+     * Creates strand properties containing an {@link FtpObserverContext} for a listener event
+     * dispatch. Pass the returned map to {@code new StrandMetadata(isConcurrentSafe, props)} when
+     * invoking a service method via {@code callMethod}.
+     *
+     * @param context   {@link FtpMetricsUtil#CONTEXT_LISTENER}
+     * @param url       host:port of the remote server
+     * @param protocol  "ftp", "ftps", or "sftp"
+     * @param eventType event type tag value (e.g. {@link FtpMetricsUtil#EVENT_TYPE_CHANGE})
+     * @param filePath  retained for API compatibility; not added to the context — {@code file.path}
+     *                  is excluded from metric labels (unbounded cardinality) and cannot be added
+     *                  span-only here because the span does not exist until the strand starts
+     * @return properties map, or {@code null} if observability is disabled
+     */
+    public static Map<String, Object> createStrandProperties(String context, String url, String protocol,
+                                                              String eventType, String filePath) {
+        if (!ObserveUtils.isObservabilityEnabled()) {
+            return null;
+        }
+        FtpObserverContext observerContext = new FtpObserverContext(context, url, protocol);
+        observerContext.addTag(FtpObserverContext.TAG_ACTION_TYPE, FtpMetricsUtil.ACTION_TYPE_EVENT);
+        String instanceUrl = FtpMetricsUtil.getInstanceUrl();
+        if (instanceUrl != null) {
+            observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, instanceUrl);
+        }
+        observerContext.addTag(FtpObserverContext.TAG_EVENT_TYPE, eventType);
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ObservabilityConstants.KEY_OBSERVER_CONTEXT, observerContext);
+        return properties;
+    }
+
+    /**
+     * Overload without {@code filePath} for dispatches that have no single source file
+     * (e.g. batch deletions routed to {@code onFileDeleted}).
+     */
+    public static Map<String, Object> createStrandProperties(String context, String url, String protocol,
+                                                              String eventType) {
+        return createStrandProperties(context, url, protocol, eventType, null);
+    }
+
+    /**
+     * Creates strand properties for a listener error dispatch, adding {@code event.type=error}
+     * and an {@code error.type} tag to the embedded observer context.
+     *
+     * @param context   context tag
+     * @param url       host:port
+     * @param protocol  protocol string
+     * @param filePath  path of the file involved, or {@code null}
+     * @param errorType Ballerina error type name (e.g. {@code "ConnectionError"})
+     * @return properties map, or {@code null} if observability is disabled
+     */
+    public static Map<String, Object> createErrorStrandProperties(String context, String url, String protocol,
+                                                                   String filePath, String errorType) {
+        Map<String, Object> props = createStrandProperties(context, url, protocol,
+                FtpMetricsUtil.EVENT_TYPE_ERROR, filePath);
+        if (props != null) {
+            FtpObserverContext ctx = (FtpObserverContext) props.get(ObservabilityConstants.KEY_OBSERVER_CONTEXT);
+            ctx.addTag(FtpObserverContext.TAG_ERROR_TYPE, errorType);
+        }
+        return props;
+    }
+
+    /**
+     * Enriches the auto-instrumented span for the currently executing native external method with
+     * FTP client-operation tags. Metric tags ({@code action.type}, {@code context},
+     * {@code remote.url}, {@code protocol}, {@code operation.type}) are added to the
+     * {@link ObserverContext}; {@code file.path} and {@code destination.path} are span-only and
+     * excluded from metrics to prevent unbounded label cardinality.
+     *
+     * @param env           the current Ballerina environment
+     * @param url           remote URL
+     * @param protocol      protocol string
+     * @param operationType one of the {@code FtpMetricsUtil.OPERATION_TYPE_*} constants
+     * @param filePath      source/target file path
+     */
+    public static void sendMetricsData(Environment env, String url, String protocol,
+                                       String operationType, String filePath) {
+        sendMetricsData(env, url, protocol, operationType, filePath, null);
+    }
+
+    /**
+     * Variant for two-path operations ({@code rename}, {@code move}, {@code copy}), adding
+     * a span-only {@code destination.path} tag.
+     *
+     * @param env             the current Ballerina environment
+     * @param url             remote URL
+     * @param protocol        protocol string
+     * @param operationType   operation type constant
+     * @param filePath        source path
+     * @param destinationPath destination path, or {@code null} for single-path operations
+     */
+    public static void sendMetricsData(Environment env, String url, String protocol,
+                                       String operationType, String filePath,
+                                       String destinationPath) {
+        ObserverContext ctx = ObserveUtils.getObserverContextOfCurrentFrame(env);
+        if (ctx == null) {
+            return;
+        }
+        ctx.addTag(FtpObserverContext.TAG_ACTION_TYPE, FtpMetricsUtil.ACTION_TYPE_OPERATION);
+        ctx.addTag(FtpObserverContext.TAG_CONTEXT, FtpMetricsUtil.CONTEXT_CLIENT);
+        ctx.addTag(FtpObserverContext.TAG_REMOTE_URL, url);
+        ctx.addTag(FtpObserverContext.TAG_PROTOCOL, protocol);
+        ctx.addTag(FtpObserverContext.TAG_OPERATION_TYPE, operationType);
+        String instanceUrl = FtpMetricsUtil.getInstanceUrl();
+        if (instanceUrl != null) {
+            ctx.addTag(FtpObserverContext.TAG_INSTANCE_URL, instanceUrl);
+        }
+        BSpan span = ctx.getSpan();
+        if (span != null) {
+            span.addTag(FtpObserverContext.TAG_FILE_PATH, filePath);
+            if (destinationPath != null) {
+                span.addTag(FtpObserverContext.TAG_DESTINATION_PATH, destinationPath);
+            }
+        }
+    }
+
+    /**
+     * Adds {@code error=true} and {@code error.type} tags to the auto-instrumented span for the
+     * currently executing native external method. Call this after an operation returns a
+     * {@link io.ballerina.runtime.api.values.BError} to record the error on the span.
+     *
+     * @param env       the current Ballerina environment
+     * @param errorType Ballerina error type name (e.g. {@code "ConnectionError"})
+     */
+    public static void sendErrorMetricsOnCurrentFrame(Environment env, String errorType) {
+        ObserverContext ctx = ObserveUtils.getObserverContextOfCurrentFrame(env);
+        if (ctx == null) {
+            return;
+        }
+        ctx.addTag(ObservabilityConstants.TAG_KEY_ERROR, ObservabilityConstants.TAG_TRUE_VALUE);
+        ctx.addTag(FtpObserverContext.TAG_ERROR_TYPE, errorType);
+    }
+}

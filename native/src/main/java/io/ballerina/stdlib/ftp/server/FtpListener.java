@@ -39,6 +39,7 @@ import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.observability.FtpTracingUtil;
 import io.ballerina.stdlib.ftp.transport.listener.RemoteFileSystemListener;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemBaseMessage;
@@ -63,6 +64,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
+import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.CONTEXT_LISTENER;
+import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.EVENT_TYPE_CHANGE;
+import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.EVENT_TYPE_DELETE;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_SERVER_EVENT;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_ADDED_FILES;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_WATCHEVENT_DELETED_FILES;
@@ -90,6 +94,8 @@ public class FtpListener implements RemoteFileSystemListener {
     private FileSystemOptions fileSystemOptions;
     private boolean laxDataBinding;
     private String legacyListenerPath;
+    private String listenerUrl;
+    private String listenerProtocol;
     private BMap<?, ?> csvFailSafe = ValueCreator.createMapValue();
     private boolean retryEnabled = false;
     private long retryCount = 0;
@@ -205,7 +211,8 @@ public class FtpListener implements RemoteFileSystemListener {
                 try {
                     FtpContentCallbackHandler contentHandler = new FtpContentCallbackHandler(
                             runtime, fileSystemManager, fileSystemOptions, laxDataBinding, csvFailSafe,
-                            retryEnabled, retryCount, retryInterval, retryBackoffFactor, retryMaxWaitInterval);
+                            retryEnabled, retryCount, retryInterval, retryBackoffFactor, retryMaxWaitInterval,
+                            listenerUrl, listenerProtocol);
                     contentHandler.processContentCallbacks(env, service, event, holder, caller);
                 } catch (Exception e) {
                     FtpUtil.createError("Error in content callback processing for added files: " + e.getMessage(),
@@ -257,7 +264,9 @@ public class FtpListener implements RemoteFileSystemListener {
             BString deletedFileBString = StringUtils.fromString(deletedFile);
             Object[] args = getOnFileDeleteMethodArguments(params, deletedFileBString, caller);
             if (args != null) {
-                invokeOnFileDeleteAsync(service, args);
+                Map<String, Object> strandProperties = FtpTracingUtil.createStrandProperties(
+                        CONTEXT_LISTENER, listenerUrl, listenerProtocol, EVENT_TYPE_DELETE, deletedFile);
+                invokeOnFileDeleteAsync(service, strandProperties, args);
             }
         }
     }
@@ -270,7 +279,8 @@ public class FtpListener implements RemoteFileSystemListener {
         List<String> deletedFilesList = event.getDeletedFiles();
         BString[] deletedFilesBStringArray = new BString[deletedFilesList.size()];
         for (int i = 0; i < deletedFilesList.size(); i++) {
-            deletedFilesBStringArray[i] = StringUtils.fromString(deletedFilesList.get(i));
+            String deletedFile = deletedFilesList.get(i);
+            deletedFilesBStringArray[i] = StringUtils.fromString(deletedFile);
         }
 
         // Create string array for deleted files
@@ -279,7 +289,9 @@ public class FtpListener implements RemoteFileSystemListener {
         Parameter[] params = methodType.getParameters();
         Object[] args = getOnFileDeletedMethodArguments(params, deletedFilesArray, caller);
         if (args != null) {
-            invokeOnFileDeletedAsync(service, args);
+            Map<String, Object> strandProperties = FtpTracingUtil.createStrandProperties(
+                    CONTEXT_LISTENER, listenerUrl, listenerProtocol, EVENT_TYPE_DELETE);
+            invokeOnFileDeletedAsync(service, strandProperties, args);
         }
     }
 
@@ -292,7 +304,10 @@ public class FtpListener implements RemoteFileSystemListener {
         Parameter[] params = methodType.getParameters();
         Object[] args = getMethodArguments(params, watchEventParamValues, caller);
         if (args != null) {
-            invokeMethodAsync(service, args);
+            String traceEventType = event.getAddedFiles().isEmpty() ? EVENT_TYPE_DELETE : EVENT_TYPE_CHANGE;
+            Map<String, Object> strandProperties = FtpTracingUtil.createStrandProperties(
+                    CONTEXT_LISTENER, listenerUrl, listenerProtocol, traceEventType);
+            invokeMethodAsync(service, strandProperties, args);
         }
     }
 
@@ -334,13 +349,13 @@ public class FtpListener implements RemoteFileSystemListener {
         return null;
     }
 
-    private void invokeOnFileDeleteAsync(BObject service, Object ...args) {
+    private void invokeOnFileDeleteAsync(BObject service, Map<String, Object> strandProperties, Object ...args) {
         Thread.startVirtualThread(() -> {
             try {
                 ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
                 boolean isConcurrentSafe = serviceType.isIsolated() &&
                         serviceType.isIsolated(ON_FILE_DELETE_REMOTE_FUNCTION);
-                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, null);
+                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, strandProperties);
                 Object result = runtime.callMethod(service, ON_FILE_DELETE_REMOTE_FUNCTION, strandMetadata, args);
                 if (result instanceof BError) {
                     ((BError) result).printStackTrace();
@@ -351,13 +366,13 @@ public class FtpListener implements RemoteFileSystemListener {
         });
     }
 
-    private void invokeOnFileDeletedAsync(BObject service, Object ...args) {
+    private void invokeOnFileDeletedAsync(BObject service, Map<String, Object> strandProperties, Object ...args) {
         Thread.startVirtualThread(() -> {
             try {
                 ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
                 boolean isConcurrentSafe = serviceType.isIsolated() &&
                         serviceType.isIsolated(ON_FILE_DELETED_REMOTE_FUNCTION);
-                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, null);
+                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, strandProperties);
                 Object result = runtime.callMethod(service, ON_FILE_DELETED_REMOTE_FUNCTION, strandMetadata, args);
                 if (result instanceof BError) {
                     ((BError) result).printStackTrace();
@@ -368,13 +383,13 @@ public class FtpListener implements RemoteFileSystemListener {
         });
     }
 
-    private void invokeMethodAsync(BObject service, Object ...args) {
+    private void invokeMethodAsync(BObject service, Map<String, Object> strandProperties, Object ...args) {
         Thread.startVirtualThread(() -> {
             try {
                 ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
                 boolean isConcurrentSafe = serviceType.isIsolated() &&
                         serviceType.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION);
-                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, null);
+                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, strandProperties);
                 Object result = runtime.callMethod(service, ON_FILE_CHANGE_REMOTE_FUNCTION, strandMetadata, args);
                 if (result instanceof BError) {
                     ((BError) result).printStackTrace();
@@ -383,7 +398,6 @@ public class FtpListener implements RemoteFileSystemListener {
                 error.printStackTrace();
             }
         });
-
     }
 
     private BMap<BString, Object> getWatchEvent(Parameter parameter, Map<String, Object> parameters) {
@@ -624,6 +638,22 @@ public class FtpListener implements RemoteFileSystemListener {
         this.legacyListenerPath = legacyListenerPath;
     }
 
+    public void setListenerUrl(String listenerUrl) {
+        this.listenerUrl = listenerUrl;
+    }
+
+    public String getListenerUrl() {
+        return listenerUrl;
+    }
+
+    public void setListenerProtocol(String listenerProtocol) {
+        this.listenerProtocol = listenerProtocol;
+    }
+
+    public String getListenerProtocol() {
+        return listenerProtocol;
+    }
+
     void cleanup() {
         serviceContexts.clear();
         usesServiceLevelConfig.set(false);
@@ -632,6 +662,8 @@ public class FtpListener implements RemoteFileSystemListener {
         fileSystemManager = null;
         fileSystemOptions = null;
         legacyListenerPath = null;
+        listenerUrl = null;
+        listenerProtocol = null;
         retryEnabled = false;
         retryCount = 0;
         retryInterval = 0;
