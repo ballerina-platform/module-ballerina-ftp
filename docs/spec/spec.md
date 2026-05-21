@@ -814,12 +814,12 @@ All metrics and trace spans carry tags that identify the connection and operatio
 |---|---|---|
 | `context` | `client`, `listener` | Metrics, Traces |
 | `action.type` | `operation`, `event` | Metrics, Traces |
-| `remote_url` | `host:port` of the remote server | Metrics, Traces |
+| `remote.url` | `host:port` of the remote server | Metrics, Traces |
 | `protocol` | `ftp`, `ftps`, `sftp` | Metrics, Traces |
-| `instance.url` | Hostname of the current node | Metrics, Traces |
+| `host` | Hostname of the current node | Metrics, Traces |
 | `operation.type` | `get`, `put`, `delete`, `rename`, `move`, `copy`, `mkdir`, `rmdir` | Traces (on `action.type=operation` spans only) |
 | `event.type` | `change`, `delete`, `error` | Traces (on `action.type=event` spans) |
-| `error_type` | `connection`, `authentication`, `file_not_found`, `file_already_exists`, `service_unavailable`, `content_binding`, `retry_exhausted`, `circuit_breaker_open`, `invalid_config`, `close` | Traces (on `event.type=error` spans) |
+| `error.type` | `connection`, `authentication`, `file_not_found`, `file_already_exists`, `service_unavailable`, `content_binding`, `retry_exhausted`, `circuit_breaker_open`, `invalid_config`, `close` | Traces (on `event.type=error` spans) |
 | `file.path` | Source/target file path of the operation | Traces only |
 | `destination.path` | Destination path for two-path operations (`rename`, `move`, `copy`) | Traces only |
 
@@ -838,7 +838,7 @@ Client operation spans use `context=client` and `action.type=operation`. The `op
 | `mkdir` | `mkdir()` |
 | `rmdir` | `rmdir()` |
 
-For `getBytesAsStream()` and `getCsvAsStream()`, the `error_type` tag is not added to the span when an error occurs inside the async callback because the Ballerina strand is suspended at that point. Operation tags are still applied before the yield.
+For `getBytesAsStream()` and `getCsvAsStream()`, the `error.type` tag is not added to the span when an error occurs inside the async callback because the Ballerina strand is suspended at that point. Operation tags are still applied before the yield.
 
 Listener event spans use `context=listener` and `action.type=event`. The `event.type` tag identifies the event:
 
@@ -850,9 +850,9 @@ Listener event spans use `context=listener` and `action.type=event`. The `event.
 
 Transport-level errors (e.g. polling connection failures) do not generate a span or metric entry. Only errors dispatched to the service's `onError` callback are recorded.
 
-When errors are dispatched to `onError`, the span includes both `event.type=error` and an `error_type` tag:
+When errors are dispatched to `onError`, the span includes both `event.type=error` and an `error.type` tag:
 
-| `error_type` | Corresponding Ballerina error |
+| `error.type` | Corresponding Ballerina error |
 |---|---|
 | `connection` | `ftp:ConnectionError` |
 | `authentication` | `ftp:AuthenticationError` |
@@ -882,7 +882,7 @@ sum by (error_type) (
 )
 
 # All FTP activity on a specific node
-rate(requests_total_value{instance_url="node-1", src_module=~"ballerina/ftp.*"}[1m])
+rate(requests_total_value{host="node-1", src_module=~"ballerina/ftp.*"}[1m])
 ```
 
 ### 7.4 Enabling Observability
