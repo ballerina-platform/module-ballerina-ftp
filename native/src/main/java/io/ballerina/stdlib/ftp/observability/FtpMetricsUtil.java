@@ -48,8 +48,8 @@ public class FtpMetricsUtil {
     /** Context tag value for FTP listener operations. */
     public static final String CONTEXT_LISTENER = "listener";
 
-    /** Event-type tag value: a file was added or changed. */
-    public static final String EVENT_TYPE_CHANGE = "change";
+    /** Event-type tag value: a file was added or created. */
+    public static final String EVENT_TYPE_CHANGE = "create";
 
     /** Event-type tag value: a file was deleted. */
     public static final String EVENT_TYPE_DELETE = "delete";
@@ -78,7 +78,7 @@ public class FtpMetricsUtil {
     /** Action-type tag value for FTP client operations (get, put, delete, etc.). */
     public static final String ACTION_TYPE_OPERATION = "operation";
 
-    /** Action-type tag value for FTP listener event dispatches (change, delete, error). */
+    /** Action-type tag value for FTP listener event dispatches (create, delete, error). */
     public static final String ACTION_TYPE_EVENT = "event";
 
     /** Error-type tag value: connection-level failure. */

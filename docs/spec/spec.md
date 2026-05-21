@@ -818,7 +818,7 @@ All metrics and trace spans carry tags that identify the connection and operatio
 | `protocol` | `ftp`, `ftps`, `sftp` | Metrics, Traces |
 | `host` | Hostname of the current node | Metrics, Traces |
 | `operation.type` | `get`, `put`, `delete`, `rename`, `move`, `copy`, `mkdir`, `rmdir` | Traces (on `action.type=operation` spans only) |
-| `event.type` | `change`, `delete`, `error` | Traces (on `action.type=event` spans) |
+| `event.type` | `create`, `delete`, `error` | Traces (on `action.type=event` spans) |
 | `error.type` | `connection`, `authentication`, `file_not_found`, `file_already_exists`, `service_unavailable`, `content_binding`, `retry_exhausted`, `circuit_breaker_open`, `invalid_config`, `close` | Traces (on `event.type=error` spans) |
 | `file.path` | Source/target file path of the operation | Traces only |
 | `destination.path` | Destination path for two-path operations (`rename`, `move`, `copy`) | Traces only |
@@ -844,7 +844,7 @@ Listener event spans use `context=listener` and `action.type=event`. The `event.
 
 | `event.type` | Triggered by |
 |---|---|
-| `change` | File added or modified; dispatched to format-specific callbacks or `onFileChange` |
+| `create` | File added or modified; dispatched to format-specific callbacks or `onFileChange` |
 | `delete` | File deleted; dispatched to `onFileDelete` |
 | `error` | Content-binding or deserialization failure; dispatched to `onError` |
 
@@ -874,7 +874,7 @@ Since the Ballerina runtime automatically publishes `requests_total_value` for e
 rate(requests_total_value{action_type="operation", operation_type="put", protocol="sftp"}[1m])
 
 # Listener file events by type
-rate(requests_total_value{action_type="event", event_type="change"}[1m])
+rate(requests_total_value{action_type="event", event_type="create"}[1m])
 
 # Errors by category (dispatched to onError)
 sum by (error_type) (
