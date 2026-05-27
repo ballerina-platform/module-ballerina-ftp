@@ -18,6 +18,7 @@ pluginManagement {
     }
 
     repositories {
+        mavenLocal()
         gradlePluginPortal()
         maven {
             url = 'https://maven.pkg.github.com/ballerina-platform/*'
@@ -30,7 +31,7 @@ pluginManagement {
 }
 
 plugins {
-    id "com.gradle.enterprise" version "3.13.2"
+    id "com.gradle.develocity" version "3.19.2"
 }
 
 rootProject.name = 'ftp'
@@ -51,9 +52,9 @@ project(':ftp-compiler-plugin').projectDir = file('compiler-plugin')
 project(':ftp-compiler-plugin-tests').projectDir = file('compiler-plugin-tests')
 project(':ftp-ballerina-tests').projectDir = file('ballerina-tests')
 
-gradleEnterprise {
+develocity {
     buildScan {
-        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-        termsOfServiceAgree = 'yes'
+        termsOfUseUrl = 'https://gradle.com/terms-of-service'
+        termsOfUseAgree = 'yes'
     }
 }

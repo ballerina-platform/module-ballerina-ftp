@@ -32,4 +32,16 @@
         <Class name="io.ballerina.stdlib.ftp.plugin.FtpOnErrorValidator"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <Match>
+        <Bug pattern="THROWS"/>
+    </Match>
+    <Match>
+        <Bug pattern="AT_OPERATION_SEQUENCE_ON_CONCURRENT_ABSTRACTION"/>
+    </Match>
+    <Match>
+        <Bug pattern="USELESS_STRING"/>
+    </Match>
+    <Match>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+    </Match>
 </FindBugsFilter>
