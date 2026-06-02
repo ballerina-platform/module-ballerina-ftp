@@ -184,6 +184,8 @@ task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
     // Ensure all local Java/Groovy outputs consumed from the project directory
     // are produced before this daemon startup task executes.
     dependsOn(jar)
+    dependsOn(compileTestJava)
+    dependsOn(compileTestGroovy)
     executable = testUtilScript
     workingDir = "${project.projectDir}"
     standardOutput = layout.buildDirectory.file("mockServerLogs.log").get().asFile
