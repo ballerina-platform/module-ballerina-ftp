@@ -186,6 +186,7 @@ task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
     dependsOn(jar)
     dependsOn(compileTestJava)
     dependsOn(compileTestGroovy)
+    dependsOn(processTestResources)
     executable = testUtilScript
     workingDir = "${project.projectDir}"
     standardOutput = layout.buildDirectory.file("mockServerLogs.log").get().asFile
