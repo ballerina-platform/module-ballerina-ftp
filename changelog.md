@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## unreleased
 
+## [2.20.1] 
+
+### Fixed
+
+- [Honor the configured SFTP `proxy.type` (`SOCKS5`/`STREAM`) instead of always using an HTTP proxy](https://github.com/ballerina-platform/ballerina-library/issues/8831)
+
+## [2.20.0] - 2026-05-25
+
 ### Added
 
 - [Add observability support for the FTP client and listener](https://github.com/ballerina-platform/ballerina-library/issues/8790)

@@ -2,7 +2,7 @@
 org = "ballerina_tests"
 name = "ftp_listener_behaviour_tests"
 version = "2.20.1"
-distribution = "2201.14.0-20260527-050400-74f7e6bf"
+distribution = "2201.12.0"
 
 [build-options]
 observabilityIncluded = true

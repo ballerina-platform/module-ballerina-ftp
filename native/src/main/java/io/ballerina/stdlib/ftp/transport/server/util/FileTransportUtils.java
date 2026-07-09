@@ -432,8 +432,30 @@ public final class FileTransportUtils {
                 configBuilder.setProxyHost(opts, proxyHost);
                 configBuilder.setProxyPort(opts, proxyPort);
 
-                // Set proxy type if supported (HTTP/SOCKS)
-                configBuilder.setProxyType(opts, SftpFileSystemConfigBuilder.PROXY_HTTP);
+                // Map the configured proxy type to the corresponding VFS proxy type. Commons VFS
+                // supports HTTP, SOCKS5 and STREAM; anything else falls back to HTTP.
+                SftpFileSystemConfigBuilder.ProxyType vfsProxyType;
+                switch (proxyType) {
+                    case FtpConstants.PROXY_TYPE_SOCKS5:
+                        vfsProxyType = SftpFileSystemConfigBuilder.PROXY_SOCKS5;
+                        break;
+                    case FtpConstants.PROXY_TYPE_STREAM:
+                        vfsProxyType = SftpFileSystemConfigBuilder.PROXY_STREAM;
+                        break;
+                    case FtpConstants.PROXY_TYPE_HTTP:
+                    default:
+                        vfsProxyType = SftpFileSystemConfigBuilder.PROXY_HTTP;
+                        break;
+                }
+                configBuilder.setProxyType(opts, vfsProxyType);
+
+                // STREAM proxy connects through an external command (e.g. an SSH jump host).
+                if (FtpConstants.PROXY_TYPE_STREAM.equals(proxyType)) {
+                    Object proxyCommandObj = options.get(FtpConstants.PROXY_COMMAND);
+                    if (proxyCommandObj != null && !proxyCommandObj.toString().isEmpty()) {
+                        configBuilder.setProxyCommand(opts, proxyCommandObj.toString());
+                    }
+                }
 
                 // Set proxy authentication if provided
                 Object proxyUsernameObj = options.get(FtpConstants.PROXY_USERNAME);
