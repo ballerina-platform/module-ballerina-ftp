@@ -25,7 +25,6 @@ public const int SFTP_PORT = 21213;
 public const int FTPS_EXPLICIT_PORT = 21214;
 public const int SLOW_FTP_PORT = 21215;
 public const int FTPS_IMPLICIT_PORT = 21217;
-public const int SFTP_RSA_SHA2_PORT = 21218;
 public const int FTPS_MISMATCHED_PORT = 21220;
 
 // ─── FTP credentials ──────────────────────────────────────────────────────────
