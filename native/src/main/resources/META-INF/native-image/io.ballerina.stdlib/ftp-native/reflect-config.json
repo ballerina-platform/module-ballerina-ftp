@@ -1,5 +1,23 @@
 [
   {
+    "name": "com.jcraft.jsch.DH25519",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.DH448",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.jcraft.jsch.DHEC256",
     "methods": [
       {
@@ -27,7 +45,61 @@
     ]
   },
   {
+    "name": "com.jcraft.jsch.DHG1",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.jcraft.jsch.DHG14",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.DHG14256",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.DHG15",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.DHG16",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.DHG18",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.DHGEX256",
     "methods": [
       {
         "name": "<init>",
@@ -93,6 +165,15 @@
     ]
   },
   {
+    "name": "com.jcraft.jsch.jce.AES128GCM",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.jcraft.jsch.jce.AES192CBC",
     "methods": [
       {
@@ -129,6 +210,15 @@
     ]
   },
   {
+    "name": "com.jcraft.jsch.jce.AES256GCM",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.jcraft.jsch.jce.DH",
     "methods": [
       {
@@ -147,7 +237,61 @@
     ]
   },
   {
+    "name": "com.jcraft.jsch.jce.HMACMD5",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.jcraft.jsch.jce.HMACSHA1",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.HMACSHA1ETM",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.HMACSHA256",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.HMACSHA256ETM",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.HMACSHA512",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.HMACSHA512ETM",
     "methods": [
       {
         "name": "<init>",
@@ -183,15 +327,6 @@
     ]
   },
   {
-    "name": "com.jcraft.jsch.jce.HMACMD5",
-    "methods": [
-      {
-        "name": "<init>",
-        "parameterTypes": []
-      }
-    ]
-  },
-  {
     "name": "com.jcraft.jsch.jce.SHA256",
     "methods": [
       {
@@ -219,7 +354,43 @@
     ]
   },
   {
-    "name": "com.jcraft.jsch.jce.SignatureECDSA",
+    "name": "com.jcraft.jsch.jce.SignatureDSA",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.SignatureECDSA256",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.SignatureECDSA384",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.SignatureECDSA521",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.SignatureEd25519",
     "methods": [
       {
         "name": "<init>",
@@ -255,7 +426,25 @@
     ]
   },
   {
+    "name": "com.jcraft.jsch.jce.TripleDESCBC",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.jcraft.jsch.jce.TripleDESCTR",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.XDH",
     "methods": [
       {
         "name": "<init>",
