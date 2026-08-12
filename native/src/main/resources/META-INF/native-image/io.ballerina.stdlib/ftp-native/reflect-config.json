@@ -237,6 +237,24 @@
     ]
   },
   {
+    "name": "com.jcraft.jsch.jce.SignatureRSASHA256",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.jcraft.jsch.jce.SignatureRSASHA512",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.jcraft.jsch.jce.TripleDESCTR",
     "methods": [
       {

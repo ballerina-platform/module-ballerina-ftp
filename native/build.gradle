@@ -34,7 +34,7 @@ dependencies {
     implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "${slf4jVersion}"
     implementation group: 'org.apache.commons', name: 'commons-vfs2', version: "${commonsVfsVersion}"
     implementation group: 'commons-net', name: 'commons-net', version: "${commonsNetVersion}"
-    implementation group: 'com.jcraft', name: 'jsch', version: "${jschVersion}"
+    implementation group: 'com.github.mwiede', name: 'jsch', version: "${jschVersion}"
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: "${commonsLang3Version}"
     implementation group: 'commons-io', name: 'commons-io', version: "${commonsIoVersion}"
     implementation group: 'io.ballerina.lib', name: 'data.jsondata-native', version: "${stdlibDataJsonDataVersion}"
