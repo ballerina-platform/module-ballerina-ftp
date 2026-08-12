@@ -1,5 +1,5 @@
 [package]
 org = "ballerina_tests"
 name = "ftp_test_commons"
-version = "2.20.1"
+version = "2.20.2"
 distribution = "2201.12.0"
