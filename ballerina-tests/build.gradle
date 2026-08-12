@@ -190,7 +190,7 @@ task waitForMockServers {
         // FTP ports that must respond with a 220 banner
         def ftpPorts = [21210, 21212, 21214, 21220]
         // TCP-only ports (SFTP SSH, implicit FTPS — no plaintext 220 banner)
-        def tcpPorts = [21213, 21217, 21218]
+        def tcpPorts = [21213, 21217]
 
         def connectTimeoutMs = 500
         def readTimeoutMs = 500
