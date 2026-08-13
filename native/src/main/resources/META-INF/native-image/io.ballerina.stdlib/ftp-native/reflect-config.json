@@ -111,6 +111,15 @@
     "name": "com.jcraft.jsch.JSch"
   },
   {
+    "name": "com.jcraft.jsch.jbcrypt.JBCrypt",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.jcraft.jsch.UserAuthKeyboardInteractive",
     "methods": [
       {
