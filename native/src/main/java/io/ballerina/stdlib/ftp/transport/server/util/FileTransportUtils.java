@@ -18,6 +18,7 @@
 
 package io.ballerina.stdlib.ftp.transport.server.util;
 
+import com.jcraft.jsch.JSch;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.ftps.HostnameVerifyingFtpsConfigHelper;
@@ -61,6 +62,25 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.SCHEME_SFTP;
 public final class FileTransportUtils {
 
     private static final Logger log = LoggerFactory.getLogger(FileTransportUtils.class);
+
+    private static final String JSCH_SERVER_HOST_KEY = "server_host_key";
+    private static final String JSCH_PUBKEY_ACCEPTED_ALGORITHMS = "PubkeyAcceptedAlgorithms";
+    private static final String SSH_RSA = "ssh-rsa";
+
+    static {
+        // The mwiede JSch fork (0.2.x) removed ssh-rsa from default algorithm lists because SHA-1 is weak.
+        // Add a low-priority fallback so that connections to older servers still work,
+        // while modern algorithms remain preferred.
+        addSshRsaFallback(JSCH_SERVER_HOST_KEY);
+        addSshRsaFallback(JSCH_PUBKEY_ACCEPTED_ALGORITHMS);
+    }
+
+    private static void addSshRsaFallback(String configKey) {
+        String algorithms = JSch.getConfig(configKey);
+        if (algorithms != null && !algorithms.contains(SSH_RSA)) {
+            JSch.setConfig(configKey, algorithms + "," + SSH_RSA);
+        }
+    }
 
     private FileTransportUtils() {}
 

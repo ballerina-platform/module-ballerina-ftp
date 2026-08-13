@@ -1,7 +1,7 @@
 [package]
 org = "ballerina"
 name = "ftp"
-version = "2.20.1"
+version = "2.20.2"
 authors = ["Ballerina"]
 keywords = ["FTP", "SFTP", "remote file", "file transfer", "client", "service"]
 repository = "https://github.com/ballerina-platform/module-ballerina-ftp"
@@ -19,10 +19,10 @@ version = "2.10.0"
 path = "./lib/commons-vfs2-2.10.0.jar"
 
 [[platform.java21.dependency]]
-groupId = "com.jcraft"
+groupId = "com.github.mwiede"
 artifactId = "jsch"
-version = "0.1.55"
-path = "./lib/jsch-0.1.55.jar"
+version = "0.2.26"
+path = "./lib/jsch-0.2.26.jar"
 
 [[platform.java21.dependency]]
 groupId = "commons-net"
@@ -46,20 +46,20 @@ path = "./lib/commons-lang3-3.18.0.jar"
 [[platform.java21.dependency]]
 groupId = "io.ballerina.stdlib"
 artifactId = "ftp-native"
-version = "2.20.1"
-path = "../native/build/libs/ftp-native-2.20.1.jar"
+version = "2.20.2"
+path = "../native/build/libs/ftp-native-2.20.2-SNAPSHOT.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib"
 artifactId = "data.jsondata-native"
-version = "1.1.3"
-path = "./lib/data.jsondata-native-1.1.3.jar"
+version = "1.1.4"
+path = "./lib/data.jsondata-native-1.1.4.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib"
 artifactId = "data.xmldata-native"
-version = "1.6.2"
-path = "./lib/data.xmldata-native-1.6.2.jar"
+version = "1.6.3"
+path = "./lib/data.xmldata-native-1.6.3.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib"

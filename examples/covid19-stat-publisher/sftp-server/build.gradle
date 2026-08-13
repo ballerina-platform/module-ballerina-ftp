@@ -17,7 +17,7 @@ dependencies {
     implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "${gradle.ext.slf4jVersion}"
     implementation group: 'commons-net', name: 'commons-net', version: "${gradle.ext.commonsNetVersion}"
     implementation group: 'org.apache.commons', name: 'commons-vfs2', version: "${gradle.ext.commonsVfsVersion}"
-    implementation group: 'com.jcraft', name: 'jsch', version: "${gradle.ext.jschVersion}"
+    implementation group: 'com.github.mwiede', name: 'jsch', version: "${gradle.ext.jschVersion}"
 }
 
 mainClassName = 'SftpServer'

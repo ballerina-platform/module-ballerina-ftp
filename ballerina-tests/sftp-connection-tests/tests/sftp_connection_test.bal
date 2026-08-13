@@ -109,6 +109,44 @@ function testSftpConnectionWithPreferredMethodsPublicKeyFirst() returns error? {
     check sftpClient->close();
 }
 
+@test:Config {
+    groups: ["sftp-connection", "auth", "openssh"]
+}
+function testSftpConnectionWithOpenSshKeyAndPassword() returns error? {
+    ftp:Client sftpClient = check new ({
+        protocol: ftp:SFTP,
+        host: commons:FTP_HOST,
+        port: commons:SFTP_PORT,
+        auth: {
+            credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD},
+            privateKey: {path: commons:SFTP_OPENSSH_KEY_PATH, password: "changeit"}
+        }
+    });
+    ftp:FileInfo[]|ftp:Error result = sftpClient->list("/");
+    test:assertFalse(result is ftp:Error,
+            "Expected successful SFTP connection with OpenSSH format key + password");
+    check sftpClient->close();
+}
+
+@test:Config {
+    groups: ["sftp-connection", "auth", "openssh"]
+}
+function testSftpConnectionWithOpenSshPasswordlessKey() returns error? {
+    ftp:Client sftpClient = check new ({
+        protocol: ftp:SFTP,
+        host: commons:FTP_HOST,
+        port: commons:SFTP_PORT,
+        auth: {
+            credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD},
+            privateKey: {path: commons:SFTP_OPENSSH_PASSWORDLESS_KEY_PATH}
+        }
+    });
+    ftp:FileInfo[]|ftp:Error result = sftpClient->list("/");
+    test:assertFalse(result is ftp:Error,
+            "Expected successful SFTP connection with OpenSSH format passwordless key");
+    check sftpClient->close();
+}
+
 // =============================================================================
 // Connection lifecycle
 // =============================================================================

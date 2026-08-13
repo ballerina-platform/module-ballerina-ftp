@@ -19,7 +19,7 @@ version = "@commons.vfs2.version@"
 path = "./lib/commons-vfs2-@commons.vfs2.version@.jar"
 
 [[platform.java21.dependency]]
-groupId = "com.jcraft"
+groupId = "com.github.mwiede"
 artifactId = "jsch"
 version = "@jsch.version@"
 path = "./lib/jsch-@jsch.version@.jar"

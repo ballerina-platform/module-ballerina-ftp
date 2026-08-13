@@ -58,6 +58,8 @@ public const string TEXT_FILE_PATH = RESOURCES_PATH + "/datafiles/test_text.txt"
 public const string SFTP_PRIVATE_KEY_PATH = RESOURCES_PATH + "/sftp.private.key";
 public const string SFTP_PASSWORDLESS_KEY_PATH = RESOURCES_PATH + "/sftp.passwordless.private.key";
 public const string SFTP_WRONG_KEY_PATH = RESOURCES_PATH + "/sftp.wrong.private.key";
+public const string SFTP_OPENSSH_KEY_PATH = RESOURCES_PATH + "/sftp.openssh.private.key";
+public const string SFTP_OPENSSH_PASSWORDLESS_KEY_PATH = RESOURCES_PATH + "/sftp.openssh.passwordless.private.key";
 
 // ─── FTPS keystore paths ──────────────────────────────────────────────────────
 
