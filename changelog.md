@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## unreleased
 
+## [2.20.2]
+
+### Fixed
+
+- [SFTP connection fails with servers requiring modern RSA algorithms](https://github.com/ballerina-platform/ballerina-library/issues/9032)
+- [Support OpenSSH private key formats](https://github.com/ballerina-platform/ballerina-library/issues/8742)
+
 ## [2.20.1] 
 
 ### Fixed
