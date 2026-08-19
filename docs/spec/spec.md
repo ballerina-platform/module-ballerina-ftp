@@ -21,6 +21,9 @@ The implementation that matches this specification is released with the distribu
 1. [Overview](#1-overview)
 2. [Security](#2-security)
    * 2.1 [Authentication](#21-authentication)
+     * 2.1.1 [Password Authentication](#211-password-authentication)
+     * 2.1.2 [Public Key Authentication](#212-public-key-authentication)
+     * 2.1.3 [Anonymous Authentication](#213-anonymous-authentication)
    * 2.2 [SFTP Authentication Methods](#22-sftp-authentication-methods)
    * 2.3 [SFTP Host Key Verification](#23-sftp-host-key-verification)
    * 2.4 [FTPS Transport Security](#24-ftps-transport-security)
@@ -58,11 +61,11 @@ The library has three parts.
 
 | Part | What it does |
 | --- | --- |
-| `ftp:Client` | Reads, writes, moves, copies, and lists files on a server |
-| `ftp:Listener` | Polls a directory on a server and hands each file that arrives or disappears to a service |
-| `ftp:Caller` | A server connection given to a handler, so it can act on the server while processing a file |
+| `ftp:Client` | Performs file system operations on an FTP, FTPS, or SFTP server |
+| `ftp:Listener` | Polls a directory on a server and triggers on file changes |
+| `ftp:Caller` | Provides server access to an `ftp:Service` handler for file operations |
 
-One connection speaks one protocol, chosen by the `protocol` field.
+A connection is bound to a single protocol, chosen by the `protocol` field.
 
 ```ballerina
 public enum Protocol {
@@ -93,6 +96,10 @@ public type AuthConfiguration record {|
 |};
 ```
 
+`secureSocket` configures TLS and applies to FTPS only; see [Section 2.4](#24-ftps-transport-security). When both `credentials` and `privateKey` are present, `preferredMethods` decides which is offered first.
+
+#### 2.1.1 Password Authentication
+
 `credentials` is a username with an optional password. The password is optional because public key authentication needs the username alone.
 
 ```ballerina
@@ -101,6 +108,8 @@ public type Credentials record {|
     string password?;
 |};
 ```
+
+#### 2.1.2 Public Key Authentication
 
 `privateKey` is an SSH key for SFTP. `password` decrypts the key file when the key is encrypted.
 
@@ -111,7 +120,9 @@ public type PrivateKey record {|
 |};
 ```
 
-`secureSocket` configures TLS and applies to FTPS only; see [Section 2.4](#24-ftps-transport-security). Omitting `auth` entirely connects anonymously.
+#### 2.1.3 Anonymous Authentication
+
+Omitting `auth` entirely connects anonymously.
 
 ### 2.2 SFTP Authentication Methods
 
@@ -221,7 +232,9 @@ ftp:Client ftpsClient = check new ({
 
 ### 3.1 Initializing the Client
 
-Every field has a default, so a client for a local server on the standard port needs no configuration at all.
+The `ftp:Client` is initialized using an `ftp:ClientConfiguration` record. Every field has a default, so a client for a local server on the standard port needs no configuration at all.
+
+The `protocol`, `host`, and `port` identify the server, while `auth` says who connects and `userDirIsRoot` says what its root is. Data binding, timeouts, proxying, transfer mode, compression, host key verification, retry, and the circuit breaker can be configured through the other fields.
 
 ```ballerina
 public type ClientConfiguration record {|
@@ -256,6 +269,10 @@ ftp:Client ftpClient = check new ({
 ```
 
 `close` releases the connection.
+
+```ballerina
+check ftpClient->close();
+```
 
 ### 3.2 Transport Options
 
@@ -316,8 +333,8 @@ public enum ProxyType {
 | --- | --- |
 | `putBytes` | `byte[]` |
 | `putText` | `string` |
-| `putJson` | `json`, or a record |
-| `putXml` | `xml`, or a record |
+| `putJson` | `json` or `record {}` |
+| `putXml` | `xml` or `record {}` |
 | `putCsv` | `string[][]` or `record {}[]` |
 | `putBytesAsStream` | `stream<byte[], error?>` |
 | `putCsvAsStream` | `stream<string[]\|record {}, error?>` |
@@ -333,7 +350,7 @@ public enum FileWriteOption {
 
 A write creates the file when it is not there. `putText` and `putJson` encode as UTF-8.
 
-`putCsv` writes a header row taken from the record field names when the content is a `record {}[]` and the option is not `APPEND`. Appending a record array writes data rows only, so a file built entirely by appends has no header. A `string[][]` never gets a header row; whatever the first row holds is written as-is.
+`putCsv` writes a header row taken from the record field names when the content is a `record {}[]` and the option is not `APPEND`. Appending a `record {}[]` writes data rows only, so a file built entirely by appends has no header. A `string[][]` never gets a header row; whatever the first row holds is written as-is.
 
 The streaming writes take a stream instead of a value in memory, which is what a file too large to hold needs.
 
@@ -355,11 +372,11 @@ check ftpClient->putBytesAsStream("/uploads/data.bin", fileStream);
 | --- | --- |
 | `getBytes` | `byte[]` |
 | `getText` | `string` |
-| `getJson` | the `json` or record type expected at the call site |
-| `getXml` | the `xml` or record type expected at the call site |
-| `getCsv` | `string[][]`, or the `record {}[]` type expected at the call site |
+| `getJson` | `json` or `record {}` |
+| `getXml` | `xml` or `record {}` |
+| `getCsv` | `string[][]` or `record {}[]` |
 | `getBytesAsStream` | `stream<byte[], error?>` |
-| `getCsvAsStream` | a stream of `string[]`, or of the record type expected at the call site |
+| `getCsvAsStream` | a stream of `string[]` or `record {}` |
 
 Reading a path that is not there gives an `ftp:FileNotFoundError`.
 
@@ -660,9 +677,9 @@ A service declares one or more content handlers. The listener reads the file, bi
 | Handler | Content parameter |
 | --- | --- |
 | `onFileText` | `string` |
-| `onFileJson` | `json`, or a record type the JSON content binds to |
-| `onFileXml` | `xml`, or a record type |
-| `onFileCsv` | `string[][]`, a record array type, or a stream of either |
+| `onFileJson` | `json` or `record {}` |
+| `onFileXml` | `xml` or `record {}` |
+| `onFileCsv` | `string[][]`, `record {}[]`, or a stream of either |
 | `onFile` | `byte[]`, or a `stream<byte[], error?>` |
 
 Declaring a stream as the content parameter of `onFileCsv` or `onFile` streams the file instead of holding it in memory.
