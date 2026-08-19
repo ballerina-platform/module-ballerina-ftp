@@ -122,7 +122,9 @@ public type PrivateKey record {|
 
 #### 2.1.3 Anonymous Authentication
 
-Omitting `auth` entirely connects anonymously.
+Omitting `auth` does not skip authentication. The username defaults to `anonymous`, with an empty password on FTP and FTPS and none on SFTP.
+
+On an FTP or FTPS server that permits anonymous login, that is the anonymous connection. **SFTP has no anonymous mode**: the SSH login is attempted as user `anonymous`, and a server that does not know that user rejects it.
 
 ### 2.2 SFTP Authentication Methods
 
@@ -350,6 +352,8 @@ public enum FileWriteOption {
 
 A write creates the file when it is not there. `putText` and `putJson` encode as UTF-8.
 
+`record {}` carries an `anydata` rest field, so the record accepted by `putJson` and `putXml` is wider than the content each one writes. `putJson` serializes whatever it is given with `toJsonString`, and `putXml` returns an `ftp:Error` when `xmldata:toXml` cannot convert the record.
+
 `putCsv` writes a header row taken from the record field names when the content is a `record {}[]` and the option is not `APPEND`. Appending a `record {}[]` writes data rows only, so a file built entirely by appends has no header. A `string[][]` never gets a header row; whatever the first row holds is written as-is.
 
 The streaming writes take a stream instead of a value in memory, which is what a file too large to hold needs.
@@ -376,7 +380,7 @@ check ftpClient->putBytesAsStream("/uploads/data.bin", fileStream);
 | `getXml` | `xml` or `record {}` |
 | `getCsv` | `string[][]` or `record {}[]` |
 | `getBytesAsStream` | `stream<byte[], error?>` |
-| `getCsvAsStream` | a stream of `string[]` or `record {}` |
+| `getCsvAsStream` | `stream<string[]\|record {}, error?>` |
 
 Reading a path that is not there gives an `ftp:FileNotFoundError`.
 
@@ -679,10 +683,10 @@ A service declares one or more content handlers. The listener reads the file, bi
 | `onFileText` | `string` |
 | `onFileJson` | `json` or `record {}` |
 | `onFileXml` | `xml` or `record {}` |
-| `onFileCsv` | `string[][]`, `record {}[]`, or a stream of either |
+| `onFileCsv` | `string[][]`, `record {}[]`, `stream<string[], error?>`, or `stream<record {}, error?>` |
 | `onFile` | `byte[]`, or a `stream<byte[], error?>` |
 
-Declaring a stream as the content parameter of `onFileCsv` or `onFile` streams the file instead of holding it in memory.
+Declaring a stream as the content parameter of `onFileCsv` or `onFile` streams the file instead of holding it in memory. **A handler that declares a stream must consume or close it**, since the file stays open until the stream reaches its end or is closed.
 
 After the content parameter, a handler may declare an `ftp:FileInfo` parameter, then an `ftp:Caller` parameter. Both are optional, but **the order is fixed**: `ftp:FileInfo` second, `ftp:Caller` third. A handler returns `error?` or `ftp:Error?`.
 
@@ -725,7 +729,7 @@ When the handler for an extension is not declared, the file goes to `onFile`. A 
 
 Filtering decides which files the listener picks up at all, and is separate from the routing of [Section 4.4](#44-handler-selection). A file the filters reject reaches no handler.
 
-`fileNamePattern` on `@ftp:ServiceConfig` is a Java regular expression matched against the whole file name. Only files that match are picked up. Without it, every file in the directory is picked up. A `fileNamePattern` on a handler narrows this no further; the service-level pattern has already decided what the poll sees.
+`fileNamePattern` on `@ftp:ServiceConfig` is a Java regular expression matched against the whole file name. Only files that match are picked up. Without it, every file in the directory is picked up. A `fileNamePattern` on a handler narrows this no further; the active service-level pattern, or the deprecated listener-level pattern when no service annotation is used, has already decided what the poll sees.
 
 `fileAgeFilter` skips files by age.
 
