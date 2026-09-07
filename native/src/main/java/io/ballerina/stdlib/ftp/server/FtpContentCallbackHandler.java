@@ -39,6 +39,7 @@ import io.ballerina.stdlib.ftp.ContentByteStreamIteratorUtils;
 import io.ballerina.stdlib.ftp.ContentCsvStreamIteratorUtils;
 import io.ballerina.stdlib.ftp.client.FtpRetryHelper;
 import io.ballerina.stdlib.ftp.observability.FtpMetricsUtil;
+import io.ballerina.stdlib.ftp.observability.FtpObserverContext;
 import io.ballerina.stdlib.ftp.observability.FtpTracingUtil;
 import io.ballerina.stdlib.ftp.transport.message.FileInfo;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
@@ -121,6 +122,7 @@ public class FtpContentCallbackHandler {
         String listenerPath = event.getSourcePath();
 
         for (FileInfo fileInfo : addedFiles) {
+            FtpObserverContext parentCtx = null;
             try {
                 // Route file to appropriate method
                 Optional<MethodType> methodTypeOpt = holder.getMethod(fileInfo);
@@ -128,24 +130,51 @@ public class FtpContentCallbackHandler {
                 if (methodTypeOpt.isEmpty()) {
                     log.warn("No content handler method found for file: {}. Skipping content processing.",
                             fileInfo.getPath());
+                    // Single increment for skipped file: file.stage=found, outcome=skipped
+                    FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                            FtpMetricsUtil.FILE_STAGE_FOUND, FtpMetricsUtil.OUTCOME_SKIPPED,
+                            FtpMetricsUtil.FAILURE_NO_HANDLER_MATCHED, null);
                     continue;
                 }
 
                 String fileUri = fileInfo.getPath();
+                MethodType methodType = methodTypeOpt.get();
+
+                // Create per-file parent span covering the entire lifecycle
+                parentCtx = FtpTracingUtil.createFileLifecycleContext(
+                        listenerUrl, listenerProtocol, fileUri);
+
+                // Stage 1: File found and matched to a handler
+                FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                        FtpMetricsUtil.FILE_STAGE_FOUND, null, null, null);
+
+                // Stage 2: File dispatched — matched to a handler
+                FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                        FtpMetricsUtil.FILE_STAGE_DISPATCHED, null, null, methodType.getName());
 
                 // Convert content based on method signature (retry is handled inside)
-                MethodType methodType = methodTypeOpt.get();
+                long bindingStart = System.nanoTime();
                 Object convertedContent = convertFileContent(env, fileUri, methodType);
+                long bindingDurationMs = (System.nanoTime() - bindingStart) / 1_000_000;
 
                 if (convertedContent instanceof BError bError) {
+                    FtpMetricsUtil.reportDatabindingDuration(listenerUrl, listenerProtocol,
+                            methodType.getName(), FtpMetricsUtil.OUTCOME_FAILURE, bindingDurationMs);
                     if (FtpUtil.ErrorType.ContentBindingError.errorType().equals(bError.getType().getName())) {
+                        // parentCtx ownership transfers to routeToOnError — it finishes the span
                         routeToOnError(service, holder, bError, callerObject, fileInfo, listenerPath,
-                                methodType.getName());
+                                methodType.getName(), parentCtx);
+                        parentCtx = null;
                     } else {
                         bError.printStackTrace();
+                        FtpTracingUtil.finishFileLifecycleSpan(parentCtx);
+                        parentCtx = null;
                     }
                     continue;
                 }
+
+                FtpMetricsUtil.reportDatabindingDuration(listenerUrl, listenerProtocol,
+                        methodType.getName(), FtpMetricsUtil.OUTCOME_SUCCESS, bindingDurationMs);
 
                 // Prepare method arguments
                 Object[] methodArguments = prepareContentMethodArguments(methodType, convertedContent,
@@ -155,17 +184,26 @@ public class FtpContentCallbackHandler {
                 Optional<PostProcessAction> afterProcess = holder.getAfterProcessAction(methodType.getName());
                 Optional<PostProcessAction> afterError = holder.getAfterErrorAction(methodType.getName());
 
-                Map<String, Object> strandProperties = FtpTracingUtil.createStrandProperties(
+                // Stage 3: Create strand properties with file stage=handled, handler name, and file metadata
+                Map<String, Object> strandProperties = FtpTracingUtil.createFileStageStrandProperties(
                         FtpMetricsUtil.CONTEXT_LISTENER, listenerUrl, listenerProtocol,
-                        FtpMetricsUtil.EVENT_TYPE_CHANGE, fileUri);
+                        FtpMetricsUtil.EVENT_TYPE_CHANGE, FtpMetricsUtil.FILE_STAGE_HANDLED,
+                        methodType.getName(), fileInfo.getFileSize(), fileInfo.getLastModifiedTime());
+                FtpTracingUtil.addFileMetadataToStrandProperties(strandProperties,
+                        fileInfo.getFileSize(), fileInfo.getLastModifiedTime(), fileUri);
+                // Wire handled span as a child of the per-file parent span
+                FtpTracingUtil.setParentContext(strandProperties, parentCtx);
 
-                // Invoke method asynchronously with post-processing
+                // parentCtx ownership transfers to invokeContentMethodAsync — it finishes the span
                 invokeContentMethodAsync(service, methodType.getName(), methodArguments,
-                        fileInfo, callerObject, listenerPath, afterProcess, afterError, strandProperties);
+                        fileInfo, callerObject, listenerPath, afterProcess, afterError,
+                        strandProperties, parentCtx);
+                parentCtx = null;
 
             } catch (Exception exception) {
                 FtpUtil.createError("Failed to process file: " + fileInfo.getPath() + " - " + exception.getMessage(),
                         exception, FtpConstants.FTP_ERROR).printStackTrace();
+                FtpTracingUtil.finishFileLifecycleSpan(parentCtx);
                 // Continue processing other files even if one fails
             }
         }
@@ -216,6 +254,9 @@ public class FtpContentCallbackHandler {
             fo = fileSystemManager.resolveFile(fileUri, fileSystemOptions);
             is = fo.getContent().getInputStream();
             byte[] fileContent = FtpContentConverter.convertInputStreamToByteArray(is);
+            // Report bytes transferred for listener content reads
+            FtpMetricsUtil.reportBytesTransferred(listenerUrl, listenerProtocol,
+                    FtpMetricsUtil.CONTEXT_LISTENER, FtpMetricsUtil.OPERATION_TYPE_GET, fileContent.length);
             return switch (methodName) {
                 case ON_FILE_REMOTE_FUNCTION -> convertToBallerinaByteArray(fileContent);
                 case ON_FILE_TEXT_REMOTE_FUNCTION -> convertBytesToString(fileContent);
@@ -317,15 +358,24 @@ public class FtpContentCallbackHandler {
     }
 
     private void routeToOnError(BObject service, FormatMethodsHolder holder, BError error, BObject callerObject,
-                                FileInfo fileInfo, String listenerPath, String contentMethodName) {
+                                FileInfo fileInfo, String listenerPath, String contentMethodName,
+                                FtpObserverContext parentCtx) {
         Optional<MethodType> onErrorMethodOpt = holder.getOnErrorMethod();
         if (onErrorMethodOpt.isEmpty()) {
             // No onError handler — fall back to the content method's afterError so the
             // corrupted source file does not get re-picked on every poll.
             error.printStackTrace();
-            holder.getAfterErrorAction(contentMethodName).ifPresent(action ->
-                    Thread.startVirtualThread(() -> executePostProcessAction(action, fileInfo,
-                            callerObject, listenerPath, ACTION_AFTER_ERROR)));
+            Optional<PostProcessAction> afterErrorAction = holder.getAfterErrorAction(contentMethodName);
+            if (afterErrorAction.isPresent()) {
+                final FtpObserverContext ctx = parentCtx;
+                Thread.startVirtualThread(() -> {
+                    executePostProcessAction(afterErrorAction.get(), fileInfo,
+                            callerObject, listenerPath, ACTION_AFTER_ERROR, contentMethodName, ctx);
+                    FtpTracingUtil.finishFileLifecycleSpan(ctx);
+                });
+            } else {
+                FtpTracingUtil.finishFileLifecycleSpan(parentCtx);
+            }
             return;
         }
 
@@ -339,13 +389,17 @@ public class FtpContentCallbackHandler {
         Map<String, Object> strandProperties = FtpTracingUtil.createErrorStrandProperties(
                 FtpMetricsUtil.CONTEXT_LISTENER, listenerUrl, listenerProtocol,
                 fileInfo.getPath(), errorType);
+        // Tag this as a handled stage with failure outcome and binding error type
+        FtpTracingUtil.addOutcomeToStrandProperties(strandProperties,
+                FtpMetricsUtil.OUTCOME_FAILURE, FtpMetricsUtil.FAILURE_BINDING_FAILED);
+        FtpTracingUtil.setParentContext(strandProperties, parentCtx);
 
         Object[] methodArguments = prepareOnErrorMethodArguments(onErrorMethod, error, callerObject);
         invokeOnErrorMethodAsync(service, onErrorMethod.getName(), methodArguments, fileInfo, callerObject,
                 listenerPath,
                 hasOnErrorActions ? onErrorAfterProcess : Optional.empty(),
                 hasOnErrorActions ? onErrorAfterError : Optional.empty(),
-                strandProperties);
+                strandProperties, parentCtx);
     }
 
     private Object[] prepareOnErrorMethodArguments(MethodType methodType, BError error, BObject callerObject) {
@@ -364,7 +418,8 @@ public class FtpContentCallbackHandler {
                                           FileInfo fileInfo, BObject callerObject, String listenerPath,
                                           Optional<PostProcessAction> afterProcess,
                                           Optional<PostProcessAction> afterError,
-                                          Map<String, Object> strandProperties) {
+                                          Map<String, Object> strandProperties,
+                                          FtpObserverContext parentCtx) {
         Thread.startVirtualThread(() -> {
             boolean isSuccess = false;
             try {
@@ -387,11 +442,12 @@ public class FtpContentCallbackHandler {
 
             if (isSuccess) {
                 afterProcess.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
-                        listenerPath, ACTION_AFTER_PROCESS));
+                        listenerPath, ACTION_AFTER_PROCESS, methodName, parentCtx));
             } else {
                 afterError.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
-                        listenerPath, ACTION_AFTER_ERROR));
+                        listenerPath, ACTION_AFTER_ERROR, methodName, parentCtx));
             }
+            FtpTracingUtil.finishFileLifecycleSpan(parentCtx);
         });
     }
 
@@ -399,62 +455,107 @@ public class FtpContentCallbackHandler {
                                           FileInfo fileInfo, BObject callerObject, String listenerPath,
                                           Optional<PostProcessAction> afterProcess,
                                           Optional<PostProcessAction> afterError,
-                                          Map<String, Object> strandProperties) {
+                                          Map<String, Object> strandProperties,
+                                          FtpObserverContext parentCtx) {
         Thread.startVirtualThread(() -> {
             boolean isSuccess = false;
+            long execStart = System.nanoTime();
             try {
                 ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
                 boolean isConcurrentSafe = serviceType.isIsolated() && serviceType.isIsolated(methodName);
+                // Add outcome=success preemptively; overwritten on failure
+                FtpTracingUtil.addOutcomeToStrandProperties(strandProperties,
+                        FtpMetricsUtil.OUTCOME_SUCCESS, null);
                 StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, strandProperties);
 
                 Object result = ballerinaRuntime.callMethod(service, methodName, strandMetadata, methodArguments);
+                long execDurationMs = (System.nanoTime() - execStart) / 1_000_000;
 
-                if (result instanceof BError) {
-                    ((BError) result).printStackTrace();
+                if (result instanceof BError bError) {
+                    bError.printStackTrace();
+                    String errorType = bError.getType() != null
+                            ? bError.getType().getName() : FtpMetricsUtil.UNKNOWN;
+                    FtpTracingUtil.addOutcomeToStrandProperties(strandProperties,
+                            FtpMetricsUtil.OUTCOME_FAILURE, null);
+                    FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                            FtpMetricsUtil.FILE_STAGE_HANDLED, FtpMetricsUtil.OUTCOME_FAILURE,
+                            errorType, methodName);
+                    FtpMetricsUtil.reportResourceExecutionDuration(listenerUrl, listenerProtocol,
+                            methodName, FtpMetricsUtil.OUTCOME_FAILURE, execDurationMs);
                     // Method returned an error - execute afterError action
                     afterError.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
-                            listenerPath, ACTION_AFTER_ERROR));
+                            listenerPath, ACTION_AFTER_ERROR, methodName, parentCtx));
                 } else {
                     isSuccess = true;
+                    FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                            FtpMetricsUtil.FILE_STAGE_HANDLED, FtpMetricsUtil.OUTCOME_SUCCESS,
+                            null, methodName);
+                    FtpMetricsUtil.reportResourceExecutionDuration(listenerUrl, listenerProtocol,
+                            methodName, FtpMetricsUtil.OUTCOME_SUCCESS, execDurationMs);
                 }
             } catch (BError error) {
+                long execDurationMs = (System.nanoTime() - execStart) / 1_000_000;
                 error.printStackTrace();
+                String errorType = error.getType() != null
+                        ? error.getType().getName() : FtpMetricsUtil.UNKNOWN;
+                FtpTracingUtil.addOutcomeToStrandProperties(strandProperties,
+                        FtpMetricsUtil.OUTCOME_FAILURE, null);
+                FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                        FtpMetricsUtil.FILE_STAGE_HANDLED, FtpMetricsUtil.OUTCOME_FAILURE,
+                        errorType, methodName);
+                FtpMetricsUtil.reportResourceExecutionDuration(listenerUrl, listenerProtocol,
+                        methodName, FtpMetricsUtil.OUTCOME_FAILURE, execDurationMs);
                 // Method threw an error - execute afterError action
                 afterError.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
-                        listenerPath, ACTION_AFTER_ERROR));
+                        listenerPath, ACTION_AFTER_ERROR, methodName, parentCtx));
             } catch (Exception exception) {
+                long execDurationMs = (System.nanoTime() - execStart) / 1_000_000;
                 FtpUtil.createError("Error invoking content method: " + methodName + " - " + exception.getMessage(),
                         exception, FtpConstants.FTP_ERROR).printStackTrace();
+                FtpTracingUtil.addOutcomeToStrandProperties(strandProperties,
+                        FtpMetricsUtil.OUTCOME_FAILURE, null);
+                FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                        FtpMetricsUtil.FILE_STAGE_HANDLED, FtpMetricsUtil.OUTCOME_FAILURE,
+                        exception.getClass().getSimpleName(), methodName);
+                FtpMetricsUtil.reportResourceExecutionDuration(listenerUrl, listenerProtocol,
+                        methodName, FtpMetricsUtil.OUTCOME_FAILURE, execDurationMs);
                 // Method threw an exception - execute afterError action
                 afterError.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
-                        listenerPath, ACTION_AFTER_ERROR));
+                        listenerPath, ACTION_AFTER_ERROR, methodName, parentCtx));
             }
 
             // Execute afterProcess action on success
             if (isSuccess) {
                 afterProcess.ifPresent(action -> executePostProcessAction(action, fileInfo, callerObject,
-                        listenerPath, ACTION_AFTER_PROCESS));
+                        listenerPath, ACTION_AFTER_PROCESS, methodName, parentCtx));
             }
+            FtpTracingUtil.finishFileLifecycleSpan(parentCtx);
         });
     }
 
     private void executePostProcessAction(PostProcessAction action, FileInfo fileInfo, BObject callerObject,
-                                          String listenerPath, String actionContext) {
+                                          String listenerPath, String actionContext, String handlerName,
+                                          FtpObserverContext parentCtx) {
 
         String filePath;
         try {
             filePath = fileInfo.getFileName().getPathDecoded();
         } catch (Exception e) {
-            log.warn("Cannot execute {} action: Failed to retrieve file path from FileInfo: {}", actionContext, 
+            log.warn("Cannot execute {} action: Failed to retrieve file path from FileInfo: {}", actionContext,
             e.getMessage());
             return;
         }
 
+        String cleanupAction = action.isDelete() ? FtpMetricsUtil.CLEANUP_ACTION_DELETE
+                : FtpMetricsUtil.CLEANUP_ACTION_MOVE;
+
         try {
             if (action.isDelete()) {
-                executeDeleteAction(callerObject, filePath, actionContext);
+                executeDeleteAction(callerObject, filePath, listenerPath, actionContext, handlerName,
+                        cleanupAction, parentCtx);
             } else if (action.isMove()) {
-                executeMoveAction(callerObject, filePath, listenerPath, action, actionContext);
+                executeMoveAction(callerObject, filePath, listenerPath, action, actionContext,
+                        handlerName, cleanupAction, parentCtx);
             }
         } catch (Exception e) {
             FtpUtil.createError("Failed to execute " + actionContext + " action on file: " + filePath +
@@ -462,17 +563,33 @@ public class FtpContentCallbackHandler {
         }
     }
 
-    private void executeDeleteAction(BObject callerObject, String filePath, String actionContext) {
+    private void executeDeleteAction(BObject callerObject, String filePath, String listenerPath,
+                                     String actionContext, String handlerName, String cleanupAction,
+                                     FtpObserverContext parentCtx) {
         try {
             BObject clientObj = callerObject.getObjectValue(StringUtils.fromString("client"));
-            StrandMetadata strandMetadata = new StrandMetadata(true, null);
+            Map<String, Object> cleanupProps = FtpTracingUtil.createCleanupStrandProperties(
+                    FtpMetricsUtil.CONTEXT_LISTENER, listenerUrl, listenerProtocol,
+                    cleanupAction, handlerName);
+            FtpTracingUtil.setParentContext(cleanupProps, parentCtx);
+            StrandMetadata strandMetadata = new StrandMetadata(true, cleanupProps);
             Object result = ballerinaRuntime.callMethod(clientObj, "delete", strandMetadata,
                     StringUtils.fromString(filePath));
 
             if (result instanceof BError) {
                 ((BError) result).printStackTrace();
+                FtpTracingUtil.addOutcomeToStrandProperties(cleanupProps,
+                        FtpMetricsUtil.OUTCOME_FAILURE, FtpMetricsUtil.FAILURE_DELETE_FAILED);
+                FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                        FtpMetricsUtil.FILE_STAGE_CLEANED_UP, FtpMetricsUtil.OUTCOME_FAILURE,
+                        FtpMetricsUtil.FAILURE_DELETE_FAILED, handlerName);
             } else {
                 log.debug("Successfully deleted file during {}: {}", actionContext, filePath);
+                FtpTracingUtil.addOutcomeToStrandProperties(cleanupProps,
+                        FtpMetricsUtil.OUTCOME_SUCCESS, null);
+                FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                        FtpMetricsUtil.FILE_STAGE_CLEANED_UP, FtpMetricsUtil.OUTCOME_SUCCESS,
+                        null, handlerName);
             }
         } catch (Exception e) {
             FtpUtil.createError("Exception during delete action (" + actionContext + "): " + filePath +
@@ -480,20 +597,36 @@ public class FtpContentCallbackHandler {
         }
     }
 
-    private void executeMoveAction(BObject callerObject, String filePath, String listenerPath,
-                                   PostProcessAction action, String actionContext) {
+    private void executeMoveAction(BObject callerObject, String filePath,
+                                   String listenerPath, PostProcessAction action,
+                                   String actionContext, String handlerName, String cleanupAction,
+                                   FtpObserverContext parentCtx) {
         try {
             String destinationPath = calculateMoveDestination(filePath, listenerPath, action);
 
             BObject clientObj = callerObject.getObjectValue(StringUtils.fromString("client"));
-            StrandMetadata strandMetadata = new StrandMetadata(true, null);
+            Map<String, Object> cleanupProps = FtpTracingUtil.createCleanupStrandProperties(
+                    FtpMetricsUtil.CONTEXT_LISTENER, listenerUrl, listenerProtocol,
+                    cleanupAction, handlerName);
+            FtpTracingUtil.setParentContext(cleanupProps, parentCtx);
+            StrandMetadata strandMetadata = new StrandMetadata(true, cleanupProps);
             Object result = ballerinaRuntime.callMethod(clientObj, "move", strandMetadata,
                     StringUtils.fromString(filePath), StringUtils.fromString(destinationPath));
 
             if (result instanceof BError) {
                 ((BError) result).printStackTrace();
+                FtpTracingUtil.addOutcomeToStrandProperties(cleanupProps,
+                        FtpMetricsUtil.OUTCOME_FAILURE, FtpMetricsUtil.FAILURE_MOVE_FAILED);
+                FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                        FtpMetricsUtil.FILE_STAGE_CLEANED_UP, FtpMetricsUtil.OUTCOME_FAILURE,
+                        FtpMetricsUtil.FAILURE_MOVE_FAILED, handlerName);
             } else {
                 log.debug("Successfully moved file during {}: {} -> {}", actionContext, filePath, destinationPath);
+                FtpTracingUtil.addOutcomeToStrandProperties(cleanupProps,
+                        FtpMetricsUtil.OUTCOME_SUCCESS, null);
+                FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                        FtpMetricsUtil.FILE_STAGE_CLEANED_UP, FtpMetricsUtil.OUTCOME_SUCCESS,
+                        null, handlerName);
             }
         } catch (Exception e) {
             FtpUtil.createError("Exception during move action (" + actionContext + "): " + filePath +
