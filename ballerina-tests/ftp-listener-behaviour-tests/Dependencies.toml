@@ -50,7 +50,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "ftp"
-version = "2.20.2"
+version = "2.20.3"
 scope = "testOnly"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
@@ -166,7 +166,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "observe"
-version = "1.7.1"
+version = "1.7.2"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
@@ -220,7 +220,7 @@ dependencies = [
 [[package]]
 org = "ballerina_tests"
 name = "ftp_listener_behaviour_tests"
-version = "2.20.2"
+version = "2.20.3"
 dependencies = [
 	{org = "ballerina", name = "ftp"},
 	{org = "ballerina", name = "lang.runtime"},
@@ -236,7 +236,7 @@ modules = [
 [[package]]
 org = "ballerina_tests"
 name = "ftp_test_commons"
-version = "2.20.2"
+version = "2.20.3"
 scope = "testOnly"
 modules = [
 	{org = "ballerina_tests", packageName = "ftp_test_commons", moduleName = "ftp_test_commons"}
