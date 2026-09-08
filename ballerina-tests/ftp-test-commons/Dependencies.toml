@@ -10,7 +10,7 @@ distribution-version = "2201.13.2"
 [[package]]
 org = "ballerina_tests"
 name = "ftp_test_commons"
-version = "2.20.2"
+version = "2.20.3"
 modules = [
 	{org = "ballerina_tests", packageName = "ftp_test_commons", moduleName = "ftp_test_commons"}
 ]
