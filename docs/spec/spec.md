@@ -3,7 +3,7 @@
 _Owners_: @shafreenAnfar @dilanSachi @Bhashinee \
 _Reviewers_: @shafreenAnfar @Bhashinee \
 _Created_: 2020/10/28 \
-_Updated_: 2026/05/20 \
+_Updated_: 2026/09/01 \
 _Edition_: Swan Lake
 
 ## Introduction
@@ -64,9 +64,20 @@ The conforming implementation of the specification is released and included in t
    * 6.2 [Error Handling](#62-error-handling)
 7. [Observability](#7-observability)
    * 7.1 [Metrics](#71-metrics)
+      * 7.1.1 [Gauges](#711-gauges)
+      * 7.1.2 [Explicit Counters](#712-explicit-counters)
+      * 7.1.3 [Derived Counters](#713-derived-counters)
    * 7.2 [Tags](#72-tags)
-   * 7.3 [Deriving Counts from `requests_total_value`](#73-deriving-counts-from-requests_total_value)
-   * 7.4 [Enabling Observability](#74-enabling-observability)
+      * 7.2.1 [Identity Tags](#721-identity-tags)
+      * 7.2.2 [Action Tags](#722-action-tags)
+      * 7.2.3 [Outcome Tags](#723-outcome-tags)
+      * 7.2.4 [File-Scoped Tags (Trace-Only)](#724-file-scoped-tags-trace-only)
+      * 7.2.5 [Client Operation Tag Mapping](#725-client-operation-tag-mapping)
+      * 7.2.6 [Listener Event Tag Mapping](#726-listener-event-tag-mapping)
+      * 7.2.7 [File Lifecycle Stages](#727-file-lifecycle-stages)
+   * 7.3 [Tracing Structure](#73-tracing-structure)
+   * 7.4 [Sample PromQL Queries](#74-sample-promql-queries)
+   * 7.5 [Enabling Observability](#75-enabling-observability)
 
 ## 1. Overview
 
@@ -792,52 +803,137 @@ if result is ftp:CircuitBreakerOpenError {
 
 ## 7. Observability
 
-The FTP library provides built-in observability support through metrics and distributed tracing. When observability is enabled in the Ballerina runtime, the FTP client and listener automatically report telemetry data without any additional configuration.
+The FTP library provides built-in observability support through metrics and distributed tracing, following the unified observability specification for Ballerina file integration libraries. When observability is enabled in the Ballerina runtime, the FTP client and listener automatically report telemetry data without any additional configuration.
+
+The observability model is module-agnostic: the FTP module publishes the same metric names and tag keys as other file integration modules (SMB, S3, etc.). Module-specific values appear only in tag values (e.g. `module=ftp`), never in metric names.
 
 ### 7.1 Metrics
 
-The following metric is published directly:
+#### 7.1.1 Gauges
 
 | Metric Name | Type | Description |
 |---|---|---|
-| `ftp_active_connections` | Gauge | Number of active FTP/FTPS/SFTP connections |
+| `ftp_active_connections` | Gauge | Number of active FTP/FTPS/SFTP client and listener objects. Incremented on init, decremented on close. Retained for backward compatibility. |
 
-File operation counts, event counts, and error counts are derived from the Ballerina framework's built-in `requests_total_value` metric by filtering on the tags published on each span.
+#### 7.1.2 Explicit Counters
 
-The `ftp_active_connections` gauge is incremented when a client or listener is initialized and decremented when it is closed. If an exception occurs during `close()`, the gauge is still decremented — the connection is treated as closed regardless of the close error.
+| Metric Name | Type | Description |
+|---|---|---|
+| `file_bytes_transferred_total` | Counter | Total bytes read or written across operations. A sum of bytes, not a count of spans. |
+| `file_events_total` | Counter | Total file lifecycle and poll events. Distinguishable by `action.type` tag: `poll` for poll cycles, `event` for file lifecycle stages. |
+
+`file_bytes_transferred_total` is incremented for all non-streaming client read operations (`getBytes`, `getText`, `getJson`, `getXml`, `getCsv`), all client write operations (`putBytes`, `putText`, `putJson`, `putXml`, `putCsv`), and listener content reads during file processing. Every increment carries an `operation.type` tag (`get` or `put`) so that total bytes read across both client and listener can be queried uniformly via `file_bytes_transferred_total{operation_type="get"}`.
+
+`file_events_total` is a single counter that tracks both poll cycles (`action.type=poll_cycle`) and all four file lifecycle stages (`action.type=file_event`, `file.stage=found|dispatched|handled|cleaned_up`). Each event produces an independent `+1` to the counter with its respective tags. Poll cycles are derived via `file_events_total{action_type="poll_cycle"}`; file stages via `file_events_total{file_stage="..."}`. This ensures everything is queryable from a single metric name.
+
+For stages that go through `callMethod` (handled, cleaned_up), the framework additionally creates auto-instrumented spans that appear in distributed traces (Jaeger). However, `requests_total_value` is the **runtime's** metric — it counts one increment per span, not per file. A single poll that finds 50 files still produces only one span. Therefore, per-file counts must always come from `file_events_total`, not from `requests_total_value`. The only valid use of `requests_total_value` is for **client operations**, where one method call (e.g. `getBytes()`) equals one span equals one increment.
+
+#### 7.1.3 Duration Gauges
+
+| Metric Name | Type | Description |
+|---|---|---|
+| `file_databinding_duration_seconds` | Gauge (distribution) | Time in seconds to fetch and convert file content into the target type (JSON, XML, CSV, text, bytes, stream). Each invocation records a separate observation into a sliding-window distribution. |
+| `file_resource_execution_duration_seconds` | Gauge (distribution) | Time in seconds to execute the user's resource/handler method. Each invocation records a separate observation into the same sliding-window distribution. |
+
+Both duration gauges are configured with a `StatisticConfig` that tracks p50, p75, p90, p95, and p99 percentiles over a 5-minute sliding window. They carry `handler.name`, `outcome`, `protocol`, and `remote.url` tags.
+
+- **`file_databinding_duration_seconds`** covers the full data binding pipeline: resolving the remote file, reading bytes over the network, and converting to the handler's parameter type (e.g. `json`, `xml`, `csv` record). For streaming handlers, this measures stream creation time only — actual data transfer is lazy.
+- **`file_resource_execution_duration_seconds`** covers the actual elapsed time of the handler method invocation. This includes everything inside the user's handler — FTP operations, HTTP calls, database queries, custom logic, etc.
+
+#### 7.1.4 Querying Metrics
+
+The following table shows the recommended PromQL source for each logical metric:
+
+| Logical Metric | Description | PromQL Source |
+|---|---|---|
+| Poll cycles | Poll cycles completed by a listener | `file_events_total{action_type="poll_cycle"}` |
+| Files found | Files discovered during a poll | `file_events_total{file_stage="found"}` |
+| Files dispatched | Files matched to a handler and handed over | `file_events_total{file_stage="dispatched"}` |
+| Files skipped | Files found but matched no handler | `file_events_total{file_stage="found", outcome="skipped"}` |
+| Files handled | Handler invocations completed | `file_events_total{file_stage="handled"}` |
+| Files cleaned up | Post-processing actions completed (move/delete) | `file_events_total{file_stage="cleaned_up"}` |
+| Handler errors | Errors from any code inside handler (FTP, HTTP, DB, etc.) | `file_events_total{file_stage="handled", outcome="failure"}` |
+| Data binding duration | Time to fetch and convert file content | `file_databinding_duration_seconds` |
+| Resource execution duration | Time to execute the handler method | `file_resource_execution_duration_seconds` |
+| Bytes read (client + listener) | Total bytes read across all get operations | `file_bytes_transferred_total{operation_type="get"}` |
+| Bytes written (client) | Total bytes written across all put operations | `file_bytes_transferred_total{operation_type="put"}` |
+| Client operations | Client-initiated file operations (get, put, manage) | `requests_total_value{action_type="client_operation"}` |
 
 ### 7.2 Tags
 
-All metrics and trace spans carry tags that identify the connection and operation:
+All metrics and trace spans carry tags that identify the connection, operation, and lifecycle stage.
 
-| Tag | Values | Used In |
-|---|---|---|
-| `context` | `client`, `listener` | Metrics, Traces |
-| `action.type` | `operation`, `event` | Metrics, Traces |
-| `remote.url` | `host:port` of the remote server | Metrics, Traces |
-| `protocol` | `ftp`, `ftps`, `sftp` | Metrics, Traces |
-| `host` | Hostname of the current node | Metrics, Traces |
-| `operation.type` | `get`, `put`, `admin` | Metrics, Traces (on `action.type=operation` spans only) |
-| `event.type` | `create`, `delete`, `error` | Metrics, Traces (on `action.type=event` spans) |
-| `error.type` | `ConnectionError`, `AuthenticationError`, `FileNotFoundError`, `FileAlreadyExistsError`, `ServiceUnavailableError`, `ContentBindingError`, `RetryError`, `CircuitBreakerOpenError`, `InvalidConfigError`, `CloseError` | Metrics, Traces (on `event.type=error` spans) |
-| `file.path` | Source/target file path of the operation | Traces only |
-| `destination.path` | Destination path for two-path operations (`rename`, `move`, `copy`) | Traces only |
+> **Note:** Prometheus normalizes `.` to `_` in label names (e.g. `action.type` → `action_type`, `file.stage` → `file_stage`). Jaeger and other trace backends preserve the original dotted names. The PromQL examples in this section use the Prometheus-normalized form.
 
-`file.path` and `destination.path` are intentionally excluded from metrics to avoid unbounded label cardinality. They are captured on trace spans only.
+#### 7.2.1 Identity Tags
 
-> **Note:** Prometheus normalizes `.` to `_` in label names (e.g. `action.type` → `action_type`, `operation.type` → `operation_type`). Jaeger and other trace backends preserve the original dotted names. The PromQL examples in §7.3 use the Prometheus-normalized form.
+| Tag | Values | Metrics | Traces | Notes |
+|---|---|---|---|---|
+| `module` | `ftp` | Yes | Yes | Identifies the Ballerina module. Always `ftp` regardless of wire protocol (FTP, FTPS, SFTP). |
+| `protocol` | `ftp`, `ftps`, `sftp` | Yes | Yes | The wire protocol. |
+| `type` | `client`, `listener` | Yes | Yes | Whether this is a client or listener operation. |
+| `remote.url` | `host:port` | Yes | Yes | The server endpoint. Added on every observer context at construction time, from the connection configuration. Does not include the protocol prefix since `protocol` is a separate tag. |
+| `watched.path` | Monitored directory path (e.g. `/uploads`) | Yes | Yes | Present on listener events and poll cycles. Distinguishes services monitoring different paths on the same server. |
+| `host` | Local hostname | Yes | Yes | Hostname of the current instance. |
 
-Client operation spans use `context=client` and `action.type=operation`. The `operation.type` tag maps to the client method invoked:
+#### 7.2.2 Action Tags
+
+These tags capture the sequence of events during a file's journey. They help map out the lifecycle stages, showing exactly how a file moves through the system.
+
+| Tag | Values | Metrics | Traces | Notes |
+|---|---|---|---|---|
+| `action.type` | `poll_cycle`, `file_event`, `client_operation` | Yes | Yes | `poll_cycle` — Added on each poll cycle completion (`file_events_total` counter). One entry per poll, regardless of how many files are found. Only applicable to poll-based modules. `file_event` — Added on listener file lifecycle events (found, dispatched, handled, cleaned_up, skipped). `client_operation` — Added on client API calls. |
+| `file.stage` | `found`, `dispatched`, `handled`, `cleaned_up` | Yes | Yes | Maps to the four-stage file lifecycle. Present on listener event spans and metrics. `found` — Added when a file is first discovered during a poll cycle. Every discovered file gets this, including files that will be skipped as no relevant handler found for that. `dispatched` — Added when the file is matched to a content handler and handed over for processing. `handled` — Added when the handler invocation completes. `cleaned_up` — Added when a post-processing action completes. Only present when `afterProcess` or `afterError` is configured. |
+| `event.type` | `create`, `delete`, `error` | Yes | Yes | Type of listener event. `create` — File was added or modified. Added on handler invocation spans for content-based callbacks. `delete` — File was deleted. Added on `onFileDelete` handler spans. `error` — Content-binding failure. Added on `onError` handler spans. |
+| `operation.type` | `get`, `put`, `manage` | Yes | Yes | Present on client operation spans (`action.type=client_operation`) and on `file_bytes_transferred_total` for both client and listener. `get` — Added on `getBytes()`, `getText()`, `getJson()`, `getXml()`, `getCsv()`, `getBytesAsStream()`, `getCsvAsStream()`. `put` — Added on `putBytes()`, `putText()`, `putJson()`, `putXml()`, `putCsv()`, `putBytesAsStream()`, `putCsvAsStream()`. `manage` — Added on `delete()`, `rename()`, `move()`, `copy()`, `mkdir()`, `rmdir()`, `isDirectory()`, `list()`, `exists()`, `size()`. |
+| `handler.name` | Handler method name (e.g. `onFileJson`, `onFileCsv`) | Yes | Yes | Identifies which handler processed the file. Added on: `file.stage=dispatched` — when the handler is selected. `file.stage=handled` — when the handler completes. `file.stage=cleaned_up` — to link cleanup back to the handler that triggered it. Not present on `file.stage=found` (handler not yet determined) or skipped files. |
+| `cleanup.action` | `move`, `delete` | Yes | Yes | `move` — When the file was moved to a destination directory. `delete` — When the file was deleted. Added on `file.stage=cleaned_up` events only. |
+
+#### 7.2.3 Outcome Tags
+
+| Tag | Values | Metrics | Traces | Notes |
+|---|---|---|---|---|
+| `outcome` | `success`, `failure`, `skipped` | Yes | Yes | Result of an operation. `skipped` indicates a file found but not matched to any handler. |
+| `error.type` | `ConnectionError`, `AuthenticationError`, `FileNotFoundError`, `ContentBindingError`, `CloseError`, `no_handler_matched`, `binding_failed`, `move_failed`, `delete_failed`, etc. | Yes | Yes | Present when `outcome=failure` or `outcome=skipped`. Set to the Ballerina error type name for handler and client errors (which can be **any** error type — not just FTP errors, e.g. `ClientError` from HTTP, `ApplicationError` from DB). For lifecycle failures, predefined values are used: `no_handler_matched`, `binding_failed`, `move_failed`, `delete_failed`. Set to `none` when not applicable. |
+
+#### 7.2.4 Tag Consistency Rule
+
+Every increment of a given metric must carry the **same set of label keys**. Prometheus treats a series with labels `{a, b}` and a series with labels `{a, b, c}` as two different time series, even under the same metric name. If tags are conditionally absent, queries like `sum by (file_stage)` silently drop or double-count rows.
+
+When a tag is not applicable for a given stage, the sentinel value `"none"` is used instead of omitting the tag. For example, `file_events_total` always carries `outcome`, `error.type`, `handler.name`, and `watched.path` on every increment — set to `"none"` when not applicable:
+
+```
+file_events_total{file_stage="found",   outcome="none",    error_type="none",            handler_name="none"}
+file_events_total{file_stage="handled", outcome="success", error_type="none",            handler_name="onFileJson"}
+file_events_total{file_stage="handled", outcome="failure", error_type="ConnectionError", handler_name="onFileJson"}
+```
+
+This rule applies to all explicit counters and gauges published by the library. All modules sharing the observability vocabulary must use the same sentinel value.
+
+#### 7.2.5 File-Scoped Tags (Trace-Only)
+
+| Tag | Values | Metrics | Traces | Notes |
+|---|---|---|---|---|
+| `file.path` | Full path of the file | No | Yes | Excluded from metrics to avoid cardinality explosion. |
+| `destination.path` | Target path for move/rename/copy | No | Yes | Excluded from metrics. |
+| `file.size` | Size in bytes | No | Yes | Exact file size on the trace span. |
+| `file.modified_time` | Last-modified timestamp | No | Yes | Needed for stable file identity. |
+
+#### 7.2.6 Client Operation Tag Mapping
+
+Client operation spans use `type=client` and `action.type=client_operation`. The `operation.type` tag maps to the client method invoked:
 
 | `operation.type` | Triggered by |
 |---|---|
 | `get` | `getBytes()`, `getText()`, `getJson()`, `getXml()`, `getCsv()`, `getBytesAsStream()`, `getCsvAsStream()` |
 | `put` | `putBytes()`, `putText()`, `putJson()`, `putXml()`, `putCsv()`, `putBytesAsStream()`, `putCsvAsStream()` |
-| `admin` | `delete()`, `rename()`, `move()`, `copy()`, `mkdir()`, `rmdir()`, `isDirectory()`, `list()`, `exists()`, `size()` |
+| `manage` | `delete()`, `rename()`, `move()`, `copy()`, `mkdir()`, `rmdir()`, `isDirectory()`, `list()`, `exists()`, `size()` |
 
-For `getBytesAsStream()` and `getCsvAsStream()`, the `error.type` tag is not added to the span when an error occurs inside the async callback because the Ballerina strand is suspended at that point. Operation tags are still applied before the yield.
+Listener content reads also carry `operation.type=get` on the `file_bytes_transferred_total` counter, since the listener fetches file content from the remote server in the same way as client get operations.
 
-Listener event spans use `context=listener` and `action.type=event`. The `event.type` tag identifies the event:
+#### 7.2.7 Listener Event Tag Mapping
+
+Listener event spans use `type=listener` and `action.type=file_event`. The `event.type` tag identifies the event:
 
 | `event.type` | Triggered by |
 |---|---|
@@ -845,44 +941,115 @@ Listener event spans use `context=listener` and `action.type=event`. The `event.
 | `delete` | File deleted; dispatched to `onFileDelete` |
 | `error` | Content-binding or deserialization failure; dispatched to `onError` |
 
-Transport-level errors (e.g. polling connection failures) do not generate a span or metric entry. Only errors dispatched to the service's `onError` callback are recorded.
+#### 7.2.8 File Lifecycle Stages
 
-When errors are dispatched to `onError`, the span includes both `event.type=error` and an `error.type` tag set to the Ballerina error type name:
+The listener tracks files through a four-stage lifecycle. Each stage publishes an independent `file_events_total` counter increment with its respective tags.
 
-| `error.type` | Ballerina error |
-|---|---|
-| `ConnectionError` | `ftp:ConnectionError` |
-| `AuthenticationError` | `ftp:AuthenticationError` |
-| `FileNotFoundError` | `ftp:FileNotFoundError` |
-| `FileAlreadyExistsError` | `ftp:FileAlreadyExistsError` |
-| `ServiceUnavailableError` | `ftp:ServiceUnavailableError` |
-| `ContentBindingError` | `ftp:ContentBindingError` |
-| `RetryError` | `ftp:RetryError` |
-| `CircuitBreakerOpenError` | `ftp:CircuitBreakerOpenError` |
-| `InvalidConfigError` | `ftp:InvalidConfigError` |
-| `CloseError` | Error while closing a connection |
+1. **Found** (`file.stage=found`) — A file is discovered during a poll cycle. Each discovered file produces exactly one `found` increment. If the file matches a handler, `outcome=none`. If no handler matches, `outcome=skipped` and `error.type=no_handler_matched` — the file goes no further in the lifecycle.
+2. **Dispatched** (`file.stage=dispatched`) — The file is matched to a content handler and handed over for processing. The `handler.name` tag identifies the target handler.
+3. **Handled** (`file.stage=handled`) — The handler invocation has completed. Tagged with `outcome=success` or `outcome=failure`. On failure, `error.type` is set to the Ballerina error type name returned by the handler. This captures errors from **any** code inside the handler — not just FTP operations, but also HTTP calls, database queries, custom logic, etc. Any error that causes the handler to return an error (via `check` or explicit `return error(...)`) is captured.
+4. **Cleaned up** (`file.stage=cleaned_up`) — Post-processing (move or delete) has completed. Tagged with `cleanup.action` (move/delete) and `outcome` (success/failure). If the cleanup fails, `error.type` is set to `move_failed` or `delete_failed`.
 
-### 7.3 Deriving Counts from `requests_total_value`
+### 7.3 Observability Outputs per File
 
-Since the Ballerina runtime automatically publishes `requests_total_value` for each observed span, operation and event counts can be derived using PromQL queries:
+For each file processed by the listener, the library produces three types of observability output:
 
-```promql
-# Client file operations by type
-rate(requests_total_value{action_type="operation", operation_type="admin", protocol="sftp"}[1m])
+1. **Explicit counters** (`file_events_total`) — All four lifecycle stages publish here. These are direct `MetricRegistry.counter().increment()` calls. No span is involved. Every stage is queryable from this single metric name.
 
-# Listener file events by type
-rate(requests_total_value{action_type="event", event_type="create"}[1m])
+2. **Per-file parent span** — A library-created span (`BSpan.start("ftp", "file-lifecycle", false)`) that covers the entire file lifecycle from discovery to cleanup. The `file.path` tag on this span enables searching for a specific file in Jaeger. The `handled` and `cleaned_up` child spans are automatically parented to it via the `ObserverContext.setParent()` mechanism.
 
-# Errors by category (dispatched to onError)
-sum by (error_type) (
-  rate(requests_total_value{action_type="event", event_type="error"}[5m])
-)
+3. **Framework child spans** (Jaeger traces) — The `handled` and `cleaned_up` stages invoke Ballerina methods via `callMethod`, which creates auto-instrumented spans. Because the strand properties contain an `ObserverContext` whose parent has the per-file span set on it, these auto-instrumented spans become **children** of the parent span. This connects the entire file lifecycle into a single trace. Note: these spans also increment the runtime's `requests_total_value`, but that metric counts spans, not files — it must not be used for per-file counting.
 
-# All FTP activity on a specific node
-rate(requests_total_value{host="node-1", src_module=~"ballerina/ftp.*"}[1m])
+The per-file flow:
+
+```
+processContentCallbacks() — for each file:
+  │
+  │  [ftp / file-lifecycle] ─────────────────────────────── parent span (file.path tag)
+  │    │
+  │    ├─ file_events_total{file_stage="found"}            ← counter +1
+  │    │
+  │    ├─ file_events_total{file_stage="dispatched"}        ← counter +1
+  │    │
+  │    ├─ convertFileContent(onFileText) ───────────────────← timed
+  │    │   │
+  │    │   └─ file_databinding_duration_seconds                     ← gauge (seconds, with handler_name + outcome)
+  │    │
+  │    ├─ [onFileText] ────────────────────────────────────── child span (handled)
+  │    │   │
+  │    │   ├─ file_events_total{file_stage="handled"}       ← counter +1 (with outcome + error_type)
+  │    │   └─ file_resource_execution_duration_seconds              ← gauge (seconds, with handler_name + outcome)
+  │    │
+  │    ├─ [delete|move] ───────────────────────────────────── child span (cleaned_up)
+  │    │   │
+  │    │   └─ file_events_total{file_stage="cleaned_up"}    ← counter +1 (with outcome + error_type)
+  │    │
+  │    └─ finishSpan() ──────────────────────────────────── parent span closed
 ```
 
-### 7.4 Enabling Observability
+For a skipped file (no handler matched), no parent span is created:
+
+```
+  └─ file_events_total{file_stage="found", outcome="skipped"}     ← counter +1 (no further stages)
+```
+
+- **Poll cycles** are reported via `file_events_total{action_type="poll_cycle"}` because `poll()` is not auto-instrumented.
+- **Client operations** produce auto-instrumented spans with `action.type=client_operation`, visible in both `requests_total_value` and Jaeger. This is the only case where `requests_total_value` gives correct per-operation counts (one call = one span = one increment).
+
+### 7.4 Sample PromQL Queries
+
+All lifecycle stages can be queried uniformly from `file_events_total`:
+
+```promql
+# ── Poll health ──
+rate(file_events_total{action_type="poll_cycle", outcome="success"}[5m])
+rate(file_events_total{action_type="poll_cycle", outcome="failure"}[5m])
+
+# ── File lifecycle stages (all from file_events_total) ──
+rate(file_events_total{file_stage="found"}[5m])
+rate(file_events_total{file_stage="dispatched"}[5m])
+rate(file_events_total{file_stage="found", outcome="skipped"}[5m])
+rate(file_events_total{file_stage="handled"}[5m])
+rate(file_events_total{file_stage="cleaned_up"}[5m])
+
+# ── Handler outcomes (four-box grid) ──
+rate(file_events_total{file_stage="handled", outcome="success"}[5m])
+rate(file_events_total{file_stage="handled", outcome="failure"}[5m])
+rate(file_events_total{file_stage="cleaned_up", outcome="success"}[5m])
+rate(file_events_total{file_stage="cleaned_up", outcome="failure"}[5m])
+
+# ── Per-handler breakdown ──
+sum by (handler_name) (rate(file_events_total{file_stage="handled"}[5m]))
+
+# ── Handler errors by error type (captures errors from any code — FTP, HTTP, DB, etc.) ──
+sum by (error_type) (rate(file_events_total{file_stage="handled", outcome="failure"}[5m]))
+
+# ── Cleanup errors by type ──
+sum by (error_type) (rate(file_events_total{file_stage="cleaned_up", outcome="failure"}[5m]))
+
+# ── Data binding duration (p99 by handler) ──
+file_databinding_duration_seconds{quantile="0.99"}
+avg by (handler_name) (file_databinding_duration_seconds_mean)
+file_databinding_duration_seconds{handler_name="onFileJson", outcome="success", quantile="0.5"}
+
+# ── Resource execution duration (p99 by handler) ──
+file_resource_execution_duration_seconds{quantile="0.99"}
+avg by (handler_name) (file_resource_execution_duration_seconds_mean)
+file_resource_execution_duration_seconds{handler_name="onFileJson", outcome="success", quantile="0.5"}
+
+# ── Client operations (framework auto-instrumented spans) ──
+rate(requests_total_value{action_type="client_operation", operation_type="get"}[5m])
+rate(requests_total_value{action_type="client_operation", operation_type="put"}[5m])
+rate(requests_total_value{action_type="client_operation", operation_type="manage"}[5m])
+
+# ── Bytes transferred ──
+rate(file_bytes_transferred_total{operation_type="get"}[5m])   # total bytes read (client + listener)
+rate(file_bytes_transferred_total{operation_type="put"}[5m])   # total bytes written (client only)
+rate(file_bytes_transferred_total{type="client"}[5m])          # all client bytes (get + put)
+rate(file_bytes_transferred_total{type="listener"}[5m])        # all listener bytes (get)
+```
+
+### 7.5 Enabling Observability
 
 Observability must be enabled in the Ballerina runtime configuration. Add the following to `Config.toml`:
 
@@ -895,3 +1062,13 @@ tracingProvider="jaeger"
 ```
 
 Refer to the [Ballerina Observability documentation](https://ballerina.io/learn/observe-ballerina-programs/) for details on configuring reporters and exporters.
+
+### 7.6 Observability Safety Rules
+
+Observability must never break file operations. All metric and tracing calls are guarded by the following rules:
+
+1. **Exception isolation.** Every public method in the metrics and tracing utilities wraps its body in `try/catch(Throwable)` and swallows the exception with a debug-level log. A registry error, NPE, or any other observability failure must never propagate to callers. This follows the same pattern as `module-ballerina-sql`.
+
+2. **Early guard.** All metric methods check `ObserveUtils.isMetricsEnabled()` and return immediately when metrics are disabled. Tracing factory methods check `ObserveUtils.isObservabilityEnabled()` and return `null`. This ensures zero overhead when observability is off.
+
+3. **Null-safe returns.** Tracing methods that return strand property maps return `null` on failure — the same value returned when observability is disabled. Callers already handle `null` (the `StrandMetadata` constructor accepts it), so no caller changes are required.
