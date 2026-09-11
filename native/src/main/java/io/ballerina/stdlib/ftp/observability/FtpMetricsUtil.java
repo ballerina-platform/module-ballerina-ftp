@@ -217,7 +217,8 @@ public class FtpMetricsUtil {
         try {
             FtpObserverContext observerContext = new FtpObserverContext(context, url, protocol);
             observerContext.addTag(FtpObserverContext.TAG_OPERATION_TYPE, operationType);
-            metricRegistry.counter(new MetricId(FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_BYTES_TRANSFERRED[0],
+            metricRegistry.counter(new MetricId(
+                    FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_BYTES_TRANSFERRED[0],
                     METRIC_BYTES_TRANSFERRED[1], observerContext.getAllTags())).increment(bytes);
         } catch (Throwable t) {
             log.debug("Failed to report bytes transferred metric", t);
@@ -304,7 +305,8 @@ public class FtpMetricsUtil {
                 observerContext.addTag(FtpObserverContext.TAG_HANDLER_NAME, handlerName);
             }
             observerContext.addTag(FtpObserverContext.TAG_OUTCOME, outcome);
-            metricRegistry.gauge(new MetricId(FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_DATABINDING_DURATION[0],
+            metricRegistry.gauge(new MetricId(
+                    FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_DATABINDING_DURATION[0],
                     METRIC_DATABINDING_DURATION[1], observerContext.getAllTags()),
                     DURATION_STATISTIC_CONFIG).setValue(durationMs / 1000.0);
         } catch (Throwable t) {
@@ -332,7 +334,8 @@ public class FtpMetricsUtil {
                 observerContext.addTag(FtpObserverContext.TAG_HANDLER_NAME, handlerName);
             }
             observerContext.addTag(FtpObserverContext.TAG_OUTCOME, outcome);
-            metricRegistry.gauge(new MetricId(FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_RESOURCE_EXECUTION_DURATION[0],
+            metricRegistry.gauge(new MetricId(
+                    FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_RESOURCE_EXECUTION_DURATION[0],
                     METRIC_RESOURCE_EXECUTION_DURATION[1], observerContext.getAllTags()),
                     DURATION_STATISTIC_CONFIG).setValue(durationMs / 1000.0);
         } catch (Throwable t) {
