@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## unreleased
 
+### Changed
+
+## [2.20.2] - 2026-09-08
+
+- [[#9132] Updated Keywords and Reformat README for Connector Store Discoverability](https://github.com/ballerina-platform/ballerina-library/issues/9132)
+- Add metadata jsons
+
 ## [2.20.2]
 
 ### Fixed
