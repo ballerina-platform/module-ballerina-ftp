@@ -66,18 +66,21 @@ The conforming implementation of the specification is released and included in t
    * 7.1 [Metrics](#71-metrics)
       * 7.1.1 [Gauges](#711-gauges)
       * 7.1.2 [Explicit Counters](#712-explicit-counters)
-      * 7.1.3 [Derived Counters](#713-derived-counters)
+      * 7.1.3 [Duration Gauges](#713-duration-gauges)
+      * 7.1.4 [Querying Metrics](#714-querying-metrics)
    * 7.2 [Tags](#72-tags)
       * 7.2.1 [Identity Tags](#721-identity-tags)
       * 7.2.2 [Action Tags](#722-action-tags)
       * 7.2.3 [Outcome Tags](#723-outcome-tags)
-      * 7.2.4 [File-Scoped Tags (Trace-Only)](#724-file-scoped-tags-trace-only)
-      * 7.2.5 [Client Operation Tag Mapping](#725-client-operation-tag-mapping)
-      * 7.2.6 [Listener Event Tag Mapping](#726-listener-event-tag-mapping)
-      * 7.2.7 [File Lifecycle Stages](#727-file-lifecycle-stages)
-   * 7.3 [Tracing Structure](#73-tracing-structure)
+      * 7.2.4 [Tag Consistency Rule](#724-tag-consistency-rule)
+      * 7.2.5 [File-Scoped Tags (Trace-Only)](#725-file-scoped-tags-trace-only)
+      * 7.2.6 [Client Operation Tag Mapping](#726-client-operation-tag-mapping)
+      * 7.2.7 [Listener Event Tag Mapping](#727-listener-event-tag-mapping)
+      * 7.2.8 [File Lifecycle Stages](#728-file-lifecycle-stages)
+   * 7.3 [Observability Outputs per File](#73-observability-outputs-per-file)
    * 7.4 [Sample PromQL Queries](#74-sample-promql-queries)
    * 7.5 [Enabling Observability](#75-enabling-observability)
+   * 7.6 [Observability Safety Rules](#76-observability-safety-rules)
 
 ## 1. Overview
 
@@ -820,7 +823,7 @@ The observability model is module-agnostic: the FTP module publishes the same me
 | Metric Name | Type | Description |
 |---|---|---|
 | `file_bytes_transferred_total` | Counter | Total bytes read or written across operations. A sum of bytes, not a count of spans. |
-| `file_events_total` | Counter | Total file lifecycle and poll events. Distinguishable by `action.type` tag: `poll` for poll cycles, `event` for file lifecycle stages. |
+| `file_events_total` | Counter | Total file lifecycle and poll events. Distinguishable by `action.type` tag: `poll_cycle` for poll cycles, `file_event` for file lifecycle stages. |
 
 `file_bytes_transferred_total` is incremented for all non-streaming client read operations (`getBytes`, `getText`, `getJson`, `getXml`, `getCsv`), all client write operations (`putBytes`, `putText`, `putJson`, `putXml`, `putCsv`), and listener content reads during file processing. Every increment carries an `operation.type` tag (`get` or `put`) so that total bytes read across both client and listener can be queried uniformly via `file_bytes_transferred_total{operation_type="get"}`.
 
