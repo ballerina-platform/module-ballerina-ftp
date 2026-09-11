@@ -43,6 +43,7 @@ import java.time.Duration;
 public class FtpMetricsUtil {
 
     private static final Logger log = LoggerFactory.getLogger(FtpMetricsUtil.class);
+    private static final String METRIC_NAME_SEPARATOR = "_";
     private static final String CONNECTOR_NAME = "ftp";
     private static final String FILE_CONNECTOR_NAME = "file";
     private static final String[] METRIC_ACTIVE_CONNECTIONS = {
@@ -171,7 +172,7 @@ public class FtpMetricsUtil {
         }
         try {
             FtpObserverContext observerContext = new FtpObserverContext(context, url, protocol);
-            metricRegistry.gauge(new MetricId(CONNECTOR_NAME + "_" + METRIC_ACTIVE_CONNECTIONS[0],
+            metricRegistry.gauge(new MetricId(CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_ACTIVE_CONNECTIONS[0],
                     METRIC_ACTIVE_CONNECTIONS[1], observerContext.getAllTags())).increment();
         } catch (Throwable t) {
             log.debug("Failed to report new connection metric", t);
@@ -192,7 +193,7 @@ public class FtpMetricsUtil {
         }
         try {
             FtpObserverContext observerContext = new FtpObserverContext(context, url, protocol);
-            metricRegistry.gauge(new MetricId(CONNECTOR_NAME + "_" + METRIC_ACTIVE_CONNECTIONS[0],
+            metricRegistry.gauge(new MetricId(CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_ACTIVE_CONNECTIONS[0],
                     METRIC_ACTIVE_CONNECTIONS[1], observerContext.getAllTags())).decrement();
         } catch (Throwable t) {
             log.debug("Failed to report connection close metric", t);
@@ -216,7 +217,7 @@ public class FtpMetricsUtil {
         try {
             FtpObserverContext observerContext = new FtpObserverContext(context, url, protocol);
             observerContext.addTag(FtpObserverContext.TAG_OPERATION_TYPE, operationType);
-            metricRegistry.counter(new MetricId(FILE_CONNECTOR_NAME + "_" + METRIC_BYTES_TRANSFERRED[0],
+            metricRegistry.counter(new MetricId(FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_BYTES_TRANSFERRED[0],
                     METRIC_BYTES_TRANSFERRED[1], observerContext.getAllTags())).increment(bytes);
         } catch (Throwable t) {
             log.debug("Failed to report bytes transferred metric", t);
@@ -250,7 +251,7 @@ public class FtpMetricsUtil {
             observerContext.addTag(FtpObserverContext.TAG_HANDLER_NAME, handlerName != null ? handlerName : NONE);
             String instanceUrl = getInstanceUrl();
             observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, instanceUrl != null ? instanceUrl : NONE);
-            metricRegistry.counter(new MetricId(FILE_CONNECTOR_NAME + "_" + METRIC_FILE_EVENTS[0],
+            metricRegistry.counter(new MetricId(FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_FILE_EVENTS[0],
                     METRIC_FILE_EVENTS[1], observerContext.getAllTags())).increment();
         } catch (Throwable t) {
             log.debug("Failed to report file stage metric", t);
@@ -276,7 +277,7 @@ public class FtpMetricsUtil {
             observerContext.addTag(FtpObserverContext.TAG_WATCHED_PATH, watchedPath != null ? watchedPath : NONE);
             String instanceUrl = getInstanceUrl();
             observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, instanceUrl != null ? instanceUrl : NONE);
-            metricRegistry.counter(new MetricId(FILE_CONNECTOR_NAME + "_" + METRIC_FILE_EVENTS[0],
+            metricRegistry.counter(new MetricId(FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_FILE_EVENTS[0],
                     METRIC_FILE_EVENTS[1], observerContext.getAllTags())).increment();
         } catch (Throwable t) {
             log.debug("Failed to report poll cycle metric", t);
@@ -303,7 +304,7 @@ public class FtpMetricsUtil {
                 observerContext.addTag(FtpObserverContext.TAG_HANDLER_NAME, handlerName);
             }
             observerContext.addTag(FtpObserverContext.TAG_OUTCOME, outcome);
-            metricRegistry.gauge(new MetricId(FILE_CONNECTOR_NAME + "_" + METRIC_DATABINDING_DURATION[0],
+            metricRegistry.gauge(new MetricId(FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_DATABINDING_DURATION[0],
                     METRIC_DATABINDING_DURATION[1], observerContext.getAllTags()),
                     DURATION_STATISTIC_CONFIG).setValue(durationMs / 1000.0);
         } catch (Throwable t) {
@@ -331,7 +332,7 @@ public class FtpMetricsUtil {
                 observerContext.addTag(FtpObserverContext.TAG_HANDLER_NAME, handlerName);
             }
             observerContext.addTag(FtpObserverContext.TAG_OUTCOME, outcome);
-            metricRegistry.gauge(new MetricId(FILE_CONNECTOR_NAME + "_" + METRIC_RESOURCE_EXECUTION_DURATION[0],
+            metricRegistry.gauge(new MetricId(FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_RESOURCE_EXECUTION_DURATION[0],
                     METRIC_RESOURCE_EXECUTION_DURATION[1], observerContext.getAllTags()),
                     DURATION_STATISTIC_CONFIG).setValue(durationMs / 1000.0);
         } catch (Throwable t) {
