@@ -21,6 +21,13 @@ plugins {
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.process.ExecOperations
+
+import javax.inject.Inject
+
+abstract class BallerinaExecHelper {
+    @Inject abstract ExecOperations getExecOperations()
+}
 
 description = 'Ballerina - FTP module Ballerina Tests'
 
@@ -264,11 +271,12 @@ task waitForMockServers {
 // ─────────────────────────────────────────────────────────────────────────────
 
 task publishTestCommonPackageToLocal {
+    def execHelper = project.objects.newInstance(BallerinaExecHelper)
     dependsOn(":${packageName}-${packageOrg}:build")
     dependsOn(updateTomlVersions)
     doLast {
         if (!skipTests) {
-            exec {
+            execHelper.execOperations.exec {
                 workingDir "${project.projectDir}/${testCommonPackage}"
                 if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                     commandLine 'cmd', '/c', "${distributionBinPath}/bal.bat pack && exit %%ERRORLEVEL%%"
@@ -276,7 +284,7 @@ task publishTestCommonPackageToLocal {
                     commandLine 'sh', '-c', "${distributionBinPath}/bal pack"
                 }
             }
-            exec {
+            execHelper.execOperations.exec {
                 workingDir "${project.projectDir}/${testCommonPackage}"
                 if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                     commandLine 'cmd', '/c', "${distributionBinPath}/bal.bat push --repository=local && exit %%ERRORLEVEL%%"
@@ -289,6 +297,7 @@ task publishTestCommonPackageToLocal {
 }
 
 task ballerinaTest {
+    def execHelper = project.objects.newInstance(BallerinaExecHelper)
     dependsOn(":${packageName}-${packageOrg}:build")
     dependsOn(updateTomlVersions)
     dependsOn(initializeVariables)
@@ -299,7 +308,7 @@ task ballerinaTest {
     doLast {
         testPackages.each { testPackage ->
             if (!skipTests) {
-                exec {
+                execHelper.execOperations.exec {
                     workingDir "${project.projectDir}/${testPackage}"
                     environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
                     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -312,7 +321,7 @@ task ballerinaTest {
                     }
                 }
                 if (project.hasProperty('balGraalVMTest')) {
-                    exec {
+                    execHelper.execOperations.exec {
                         workingDir "${project.projectDir}/${testPackage}"
                         environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
                         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -330,7 +339,7 @@ task ballerinaTest {
         // logged so CI operators can still notice real regressions.
         timingTestPackages.each { testPackage ->
             if (!skipTests) {
-                def execResult = exec {
+                def execResult = execHelper.execOperations.exec {
                     workingDir "${project.projectDir}/${testPackage}"
                     ignoreExitValue = true
                     environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
