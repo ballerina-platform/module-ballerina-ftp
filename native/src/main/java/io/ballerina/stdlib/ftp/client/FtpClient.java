@@ -174,12 +174,7 @@ public class FtpClient {
             String errorType = bError.getType() != null ? bError.getType().getName() : FtpMetricsUtil.UNKNOWN;
             FtpTracingUtil.sendErrorMetricsOnCurrentFrame(env, errorType);
         } else {
-            // Tag successful client operations with outcome=success
-            io.ballerina.runtime.observability.ObserverContext ctx =
-                    io.ballerina.runtime.observability.ObserveUtils.getObserverContextOfCurrentFrame(env);
-            if (ctx != null) {
-                ctx.addTag("outcome", FtpMetricsUtil.OUTCOME_SUCCESS);
-            }
+            FtpTracingUtil.sendSuccessMetricsOnCurrentFrame(env);
         }
         return result;
     }

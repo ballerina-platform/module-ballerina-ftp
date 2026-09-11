@@ -440,6 +440,18 @@ public class FtpTracingUtil {
         }
     }
 
+    public static void sendSuccessMetricsOnCurrentFrame(Environment env) {
+        try {
+            ObserverContext ctx = ObserveUtils.getObserverContextOfCurrentFrame(env);
+            if (ctx == null) {
+                return;
+            }
+            ctx.addTag(FtpObserverContext.TAG_OUTCOME, FtpMetricsUtil.OUTCOME_SUCCESS);
+        } catch (Throwable t) {
+            log.debug("Failed to send success metrics on current frame", t);
+        }
+    }
+
     /**
      * Adds file.size and file.modified_time as span-only tags to strand properties.
      * These are trace-only to avoid metric cardinality explosion.
