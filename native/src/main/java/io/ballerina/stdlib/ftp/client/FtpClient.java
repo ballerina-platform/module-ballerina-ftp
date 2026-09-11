@@ -814,13 +814,15 @@ public class FtpClient {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
                 getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_PUT, path.getValue());
         byte[] bytes = inputContent.getBytes();
-        FtpMetricsUtil.reportBytesTransferred(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.CONTEXT_CLIENT,
-                FtpMetricsUtil.OPERATION_TYPE_PUT, bytes.length);
         InputStream stream = new ByteArrayInputStream(bytes);
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
-        return sendTraces(putGenericAction(env, clientConnector, path, options, message),
-                env, clientConnector);
+        Object result = putGenericAction(env, clientConnector, path, options, message);
+        if (!(result instanceof BError)) {
+            FtpMetricsUtil.reportBytesTransferred(getRemoteUrl(clientConnector),
+                    getProtocol(clientConnector), FtpMetricsUtil.CONTEXT_CLIENT,
+                    FtpMetricsUtil.OPERATION_TYPE_PUT, bytes.length);
+        }
+        return sendTraces(result, env, clientConnector);
     }
 
     public static Object putText(Environment env, BObject clientConnector, BString path, BString inputContent,
@@ -828,13 +830,15 @@ public class FtpClient {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
                 getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_PUT, path.getValue());
         byte[] bytes = inputContent.getValue().getBytes(StandardCharsets.UTF_8);
-        FtpMetricsUtil.reportBytesTransferred(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.CONTEXT_CLIENT,
-                FtpMetricsUtil.OPERATION_TYPE_PUT, bytes.length);
         InputStream stream = new ByteArrayInputStream(bytes);
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
-        return sendTraces(putGenericAction(env, clientConnector, path, options, message),
-                env, clientConnector);
+        Object result = putGenericAction(env, clientConnector, path, options, message);
+        if (!(result instanceof BError)) {
+            FtpMetricsUtil.reportBytesTransferred(getRemoteUrl(clientConnector),
+                    getProtocol(clientConnector), FtpMetricsUtil.CONTEXT_CLIENT,
+                    FtpMetricsUtil.OPERATION_TYPE_PUT, bytes.length);
+        }
+        return sendTraces(result, env, clientConnector);
     }
 
     public static Object putJson(Environment env, BObject clientConnector, BString path, BString inputContent,
@@ -842,13 +846,15 @@ public class FtpClient {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
                 getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_PUT, path.getValue());
         byte[] bytes = inputContent.getValue().getBytes(StandardCharsets.UTF_8);
-        FtpMetricsUtil.reportBytesTransferred(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.CONTEXT_CLIENT,
-                FtpMetricsUtil.OPERATION_TYPE_PUT, bytes.length);
         InputStream stream = new ByteArrayInputStream(bytes);
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
-        return sendTraces(putGenericAction(env, clientConnector, path, options, message),
-                env, clientConnector);
+        Object result = putGenericAction(env, clientConnector, path, options, message);
+        if (!(result instanceof BError)) {
+            FtpMetricsUtil.reportBytesTransferred(getRemoteUrl(clientConnector),
+                    getProtocol(clientConnector), FtpMetricsUtil.CONTEXT_CLIENT,
+                    FtpMetricsUtil.OPERATION_TYPE_PUT, bytes.length);
+        }
+        return sendTraces(result, env, clientConnector);
     }
 
     public static Object putXml(Environment env, BObject clientConnector, BString path, BXml inputContent,
@@ -856,13 +862,15 @@ public class FtpClient {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
                 getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_PUT, path.getValue());
         byte[] bytes = inputContent.toString().getBytes(StandardCharsets.UTF_8);
-        FtpMetricsUtil.reportBytesTransferred(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.CONTEXT_CLIENT,
-                FtpMetricsUtil.OPERATION_TYPE_PUT, bytes.length);
         InputStream stream = new ByteArrayInputStream(bytes);
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
-        return sendTraces(putGenericAction(env, clientConnector, path, options, message),
-                env, clientConnector);
+        Object result = putGenericAction(env, clientConnector, path, options, message);
+        if (!(result instanceof BError)) {
+            FtpMetricsUtil.reportBytesTransferred(getRemoteUrl(clientConnector),
+                    getProtocol(clientConnector), FtpMetricsUtil.CONTEXT_CLIENT,
+                    FtpMetricsUtil.OPERATION_TYPE_PUT, bytes.length);
+        }
+        return sendTraces(result, env, clientConnector);
     }
 
     public static Object putCsv(Environment env, BObject clientConnector, BString path, BArray inputContent,
@@ -872,13 +880,15 @@ public class FtpClient {
         boolean addHeader = !options.getValue().equals(FtpConstants.WRITE_OPTION_APPEND);
         String convertToCsv = CSVUtils.convertToCsv(inputContent, addHeader);
         byte[] bytes = convertToCsv.getBytes(StandardCharsets.UTF_8);
-        FtpMetricsUtil.reportBytesTransferred(getRemoteUrl(clientConnector),
-                getProtocol(clientConnector), FtpMetricsUtil.CONTEXT_CLIENT,
-                FtpMetricsUtil.OPERATION_TYPE_PUT, bytes.length);
         InputStream stream = new ByteArrayInputStream(bytes);
         RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
-        return sendTraces(putGenericAction(env, clientConnector, path, options, message),
-                env, clientConnector);
+        Object result = putGenericAction(env, clientConnector, path, options, message);
+        if (!(result instanceof BError)) {
+            FtpMetricsUtil.reportBytesTransferred(getRemoteUrl(clientConnector),
+                    getProtocol(clientConnector), FtpMetricsUtil.CONTEXT_CLIENT,
+                    FtpMetricsUtil.OPERATION_TYPE_PUT, bytes.length);
+        }
+        return sendTraces(result, env, clientConnector);
     }
 
     public static Object putBytesAsStream(Environment env, BObject clientConnector, BString path, BStream inputContent,

@@ -268,6 +268,8 @@ public class FtpListener implements RemoteFileSystemListener {
                 Map<String, Object> strandProperties = FtpTracingUtil.createFileStageStrandProperties(
                         CONTEXT_LISTENER, listenerUrl, listenerProtocol, EVENT_TYPE_DELETE,
                         FtpMetricsUtil.FILE_STAGE_HANDLED, methodType.getName(), -1, -1);
+                FtpTracingUtil.addFileMetadataToStrandProperties(
+                        strandProperties, -1, -1, deletedFile);
                 invokeOnFileDeleteAsync(service, strandProperties, args);
             }
         }

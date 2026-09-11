@@ -274,8 +274,11 @@ public class FtpMetricsUtil {
         try {
             FtpObserverContext observerContext = new FtpObserverContext(CONTEXT_LISTENER, url, protocol);
             observerContext.addTag(FtpObserverContext.TAG_ACTION_TYPE, ACTION_TYPE_POLL);
-            observerContext.addTag(FtpObserverContext.TAG_OUTCOME, outcome != null ? outcome : NONE);
+            observerContext.addTag(FtpObserverContext.TAG_FILE_STAGE, NONE);
             observerContext.addTag(FtpObserverContext.TAG_WATCHED_PATH, watchedPath != null ? watchedPath : NONE);
+            observerContext.addTag(FtpObserverContext.TAG_OUTCOME, outcome != null ? outcome : NONE);
+            observerContext.addTag(FtpObserverContext.TAG_ERROR_TYPE, NONE);
+            observerContext.addTag(FtpObserverContext.TAG_HANDLER_NAME, NONE);
             String instanceUrl = getInstanceUrl();
             observerContext.addTag(FtpObserverContext.TAG_INSTANCE_URL, instanceUrl != null ? instanceUrl : NONE);
             metricRegistry.counter(new MetricId(FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_FILE_EVENTS[0],

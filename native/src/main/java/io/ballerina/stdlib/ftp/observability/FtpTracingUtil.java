@@ -446,6 +446,7 @@ public class FtpTracingUtil {
             if (ctx == null) {
                 return;
             }
+            ctx.addTag(FtpObserverContext.TAG_ERROR_TYPE, FtpMetricsUtil.NONE);
             ctx.addTag(FtpObserverContext.TAG_OUTCOME, FtpMetricsUtil.OUTCOME_SUCCESS);
         } catch (Throwable t) {
             log.debug("Failed to send success metrics on current frame", t);

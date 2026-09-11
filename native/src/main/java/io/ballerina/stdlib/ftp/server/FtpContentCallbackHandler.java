@@ -154,7 +154,15 @@ public class FtpContentCallbackHandler {
 
                 // Convert content based on method signature (retry is handled inside)
                 long bindingStart = System.nanoTime();
-                Object convertedContent = convertFileContent(env, fileUri, methodType);
+                Object convertedContent;
+                try {
+                    convertedContent = convertFileContent(env, fileUri, methodType);
+                } catch (Exception e) {
+                    long bindingDurationMs = (System.nanoTime() - bindingStart) / 1_000_000;
+                    FtpMetricsUtil.reportDatabindingDuration(listenerUrl, listenerProtocol,
+                            methodType.getName(), FtpMetricsUtil.OUTCOME_FAILURE, bindingDurationMs);
+                    throw e;
+                }
                 long bindingDurationMs = (System.nanoTime() - bindingStart) / 1_000_000;
 
                 if (convertedContent instanceof BError bError) {
@@ -566,9 +574,10 @@ public class FtpContentCallbackHandler {
     private void executeDeleteAction(BObject callerObject, String filePath, String listenerPath,
                                      String actionContext, String handlerName, String cleanupAction,
                                      FtpObserverContext parentCtx) {
+        Map<String, Object> cleanupProps = null;
         try {
             BObject clientObj = callerObject.getObjectValue(StringUtils.fromString("client"));
-            Map<String, Object> cleanupProps = FtpTracingUtil.createCleanupStrandProperties(
+            cleanupProps = FtpTracingUtil.createCleanupStrandProperties(
                     FtpMetricsUtil.CONTEXT_LISTENER, listenerUrl, listenerProtocol,
                     cleanupAction, handlerName);
             FtpTracingUtil.setParentContext(cleanupProps, parentCtx);
@@ -592,6 +601,11 @@ public class FtpContentCallbackHandler {
                         null, handlerName);
             }
         } catch (Exception e) {
+            FtpTracingUtil.addOutcomeToStrandProperties(cleanupProps,
+                    FtpMetricsUtil.OUTCOME_FAILURE, FtpMetricsUtil.FAILURE_DELETE_FAILED);
+            FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                    FtpMetricsUtil.FILE_STAGE_CLEANED_UP, FtpMetricsUtil.OUTCOME_FAILURE,
+                    FtpMetricsUtil.FAILURE_DELETE_FAILED, handlerName);
             FtpUtil.createError("Exception during delete action (" + actionContext + "): " + filePath +
                     " - " + e.getMessage(), e, FtpConstants.FTP_ERROR).printStackTrace();
         }
@@ -601,11 +615,12 @@ public class FtpContentCallbackHandler {
                                    String listenerPath, PostProcessAction action,
                                    String actionContext, String handlerName, String cleanupAction,
                                    FtpObserverContext parentCtx) {
+        Map<String, Object> cleanupProps = null;
         try {
             String destinationPath = calculateMoveDestination(filePath, listenerPath, action);
 
             BObject clientObj = callerObject.getObjectValue(StringUtils.fromString("client"));
-            Map<String, Object> cleanupProps = FtpTracingUtil.createCleanupStrandProperties(
+            cleanupProps = FtpTracingUtil.createCleanupStrandProperties(
                     FtpMetricsUtil.CONTEXT_LISTENER, listenerUrl, listenerProtocol,
                     cleanupAction, handlerName);
             FtpTracingUtil.setParentContext(cleanupProps, parentCtx);
@@ -629,6 +644,11 @@ public class FtpContentCallbackHandler {
                         null, handlerName);
             }
         } catch (Exception e) {
+            FtpTracingUtil.addOutcomeToStrandProperties(cleanupProps,
+                    FtpMetricsUtil.OUTCOME_FAILURE, FtpMetricsUtil.FAILURE_MOVE_FAILED);
+            FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                    FtpMetricsUtil.FILE_STAGE_CLEANED_UP, FtpMetricsUtil.OUTCOME_FAILURE,
+                    FtpMetricsUtil.FAILURE_MOVE_FAILED, handlerName);
             FtpUtil.createError("Exception during move action (" + actionContext + "): " + filePath +
                     " - " + e.getMessage(), e, FtpConstants.FTP_ERROR).printStackTrace();
         }
