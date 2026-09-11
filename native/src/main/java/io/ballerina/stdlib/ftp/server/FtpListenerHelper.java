@@ -140,7 +140,7 @@ public class FtpListenerHelper {
                     .getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
             String protocol = serviceEndpointConfig
                     .getStringValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PROTOCOL)).getValue();
-            String url = protocol + "://" + host + ":" + port;
+            String url = host + ":" + port;
             listener.setListenerUrl(url);
             listener.setListenerProtocol(protocol);
 
@@ -833,16 +833,22 @@ public class FtpListenerHelper {
         }
     }
 
-    public static Object poll(BObject ftpListener) {
+    public static Object poll(Environment env, BObject ftpListener) {
         RemoteFileSystemServerConnector connector = (RemoteFileSystemServerConnector) ftpListener.
                 getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
         if (connector == null) {
             return FtpUtil.createError("FTP listener is not initialized. Attach a service before polling.",
                     null, Error.errorType());
         }
+        FtpListener listener = connector.getFtpListener();
+        String listenerUrl = listener != null ? listener.getListenerUrl() : null;
+        String listenerProtocol = listener != null ? listener.getListenerProtocol() : null;
+
         try {
             connector.poll();
+            FtpMetricsUtil.reportPollCycle(listenerUrl, listenerProtocol, null, FtpMetricsUtil.OUTCOME_SUCCESS);
         } catch (RemoteFileSystemConnectorException e) {
+            FtpMetricsUtil.reportPollCycle(listenerUrl, listenerProtocol, null, FtpMetricsUtil.OUTCOME_FAILURE);
             return FtpUtil.createError("Error during the poll operation: " + e.getMessage(),
                     findRootCause(e), Error.errorType());
         }
