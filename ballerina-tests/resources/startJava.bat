@@ -1,1 +1,1 @@
-java -jar ../../test-utils/build/libs/ftp-test-utils.jar .
+java -jar ../../test-utils/build/libs/ftp-test-utils.jar "%CD%"
