@@ -173,8 +173,8 @@ task initializeVariables {
 
 // ─── Mock server lifecycle ────────────────────────────────────────────────────
 // Startup scripts and all resource files (keystore, SSH keys, datafiles) live
-// under ballerina-tests/resources/.  The scripts receive "resources" as the
-// resources-dir argument, resolved relative to workingDir (project.projectDir).
+// under ballerina-tests/resources/.  The scripts receive "." as the resources-dir
+// argument, resolved relative to workingDir (ballerina-tests/resources).
 
 def testUtilScript = Os.isFamily(Os.FAMILY_WINDOWS)
         ? "${project.projectDir}/resources/startJava.bat"
@@ -182,15 +182,12 @@ def testUtilScript = Os.isFamily(Os.FAMILY_WINDOWS)
 
 task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
     dependsOn(":${packageName}-test-utils:build")
-    // Ensure all local Java/Groovy outputs consumed from the project directory
-    // are produced before this daemon startup task executes.
-    dependsOn(jar)
-    // workingDir is the whole project directory, which overlaps compileTestJava's
-    // output dirs under build/. No real data dependency exists, so mustRunAfter
-    // (ordering only) satisfies Gradle 9's implicit-dependency validation.
-    mustRunAfter(compileTestJava)
     executable = testUtilScript
-    workingDir = "${project.projectDir}"
+    // ExecFork annotates workingDir as @InputDirectory, so its whole tree is a
+    // declared task input. It must stay off build/, otherwise every task writing
+    // there is an undeclared producer of this task's inputs and Gradle 9 fails
+    // validation. resources/ holds only static fixtures and is the real input.
+    workingDir = "${project.projectDir}/resources"
     standardOutput = new File("${project.buildDir}/mockServerLogs.log")
 }
 
