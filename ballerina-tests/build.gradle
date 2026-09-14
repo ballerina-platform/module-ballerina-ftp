@@ -173,8 +173,10 @@ task initializeVariables {
 
 // ─── Mock server lifecycle ────────────────────────────────────────────────────
 // Startup scripts and all resource files (keystore, SSH keys, datafiles) live
-// under ballerina-tests/resources/.  The scripts receive "." as the resources-dir
-// argument, resolved relative to workingDir (ballerina-tests/resources).
+// under ballerina-tests/resources/, which is also the scripts' workingDir. They
+// pass it on as an absolute path ($PWD / %CD%): sshd's RootedFileSystem compares
+// the SFTP root against resolved paths, and a "." component never normalises
+// away, so a relative argument breaks every SFTP path containment check.
 
 def testUtilScript = Os.isFamily(Os.FAMILY_WINDOWS)
         ? "${project.projectDir}/resources/startJava.bat"
