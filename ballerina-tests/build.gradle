@@ -185,6 +185,10 @@ task startTestUtilAsDaemon(type: com.github.psxpaul.task.ExecFork) {
     // Ensure all local Java/Groovy outputs consumed from the project directory
     // are produced before this daemon startup task executes.
     dependsOn(jar)
+    // workingDir is the whole project directory, which overlaps compileTestJava's
+    // output dirs under build/. No real data dependency exists, so mustRunAfter
+    // (ordering only) satisfies Gradle 9's implicit-dependency validation.
+    mustRunAfter(compileTestJava)
     executable = testUtilScript
     workingDir = "${project.projectDir}"
     standardOutput = new File("${project.buildDir}/mockServerLogs.log")
