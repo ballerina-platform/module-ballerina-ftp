@@ -64,7 +64,7 @@ public class FtpTracingUtil {
      * @return context with parent span, or {@code null} if observability is disabled
      */
     public static FtpObserverContext createFileLifecycleContext(String url, String protocol, String filePath) {
-        if (!ObserveUtils.isObservabilityEnabled()) {
+        if (!ObserveUtils.isTracingEnabled()) {
             return null;
         }
         try {

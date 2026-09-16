@@ -37,6 +37,7 @@ import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.observability.FtpMetricsUtil;
+import io.ballerina.stdlib.ftp.observability.FtpTracingUtil;
 import io.ballerina.stdlib.ftp.transport.RemoteFileSystemConnectorFactory;
 import io.ballerina.stdlib.ftp.transport.impl.RemoteFileSystemConnectorFactoryImpl;
 import io.ballerina.stdlib.ftp.transport.server.FileDependencyCondition;
@@ -843,12 +844,18 @@ public class FtpListenerHelper {
         FtpListener listener = connector.getFtpListener();
         String listenerUrl = listener != null ? listener.getListenerUrl() : null;
         String listenerProtocol = listener != null ? listener.getListenerProtocol() : null;
+        String watchedPath = listener != null ? listener.getLegacyListenerPath() : null;
 
+        FtpTracingUtil.sendPollMetricsData(env, listenerUrl, listenerProtocol);
         try {
             connector.poll();
-            FtpMetricsUtil.reportPollCycle(listenerUrl, listenerProtocol, null, FtpMetricsUtil.OUTCOME_SUCCESS);
+            FtpMetricsUtil.reportPollCycle(listenerUrl, listenerProtocol, watchedPath,
+                    FtpMetricsUtil.OUTCOME_SUCCESS);
+            FtpTracingUtil.sendPollOutcome(env, FtpMetricsUtil.OUTCOME_SUCCESS);
         } catch (RemoteFileSystemConnectorException e) {
-            FtpMetricsUtil.reportPollCycle(listenerUrl, listenerProtocol, null, FtpMetricsUtil.OUTCOME_FAILURE);
+            FtpMetricsUtil.reportPollCycle(listenerUrl, listenerProtocol, watchedPath,
+                    FtpMetricsUtil.OUTCOME_FAILURE);
+            FtpTracingUtil.sendPollOutcome(env, FtpMetricsUtil.OUTCOME_FAILURE);
             return FtpUtil.createError("Error during the poll operation: " + e.getMessage(),
                     findRootCause(e), Error.errorType());
         }

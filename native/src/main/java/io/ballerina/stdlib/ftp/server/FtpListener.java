@@ -270,7 +270,8 @@ public class FtpListener implements RemoteFileSystemListener {
                         FtpMetricsUtil.FILE_STAGE_HANDLED, methodType.getName(), -1, -1);
                 FtpTracingUtil.addFileMetadataToStrandProperties(
                         strandProperties, -1, -1, deletedFile);
-                invokeOnFileDeleteAsync(service, strandProperties, args);
+                invokeOnFileDeleteAsync(service, strandProperties,
+                        event.getSourcePath(), methodType.getName(), args);
             }
         }
     }
@@ -296,7 +297,8 @@ public class FtpListener implements RemoteFileSystemListener {
             Map<String, Object> strandProperties = FtpTracingUtil.createFileStageStrandProperties(
                     CONTEXT_LISTENER, listenerUrl, listenerProtocol, EVENT_TYPE_DELETE,
                     FtpMetricsUtil.FILE_STAGE_HANDLED, methodType.getName(), -1, -1);
-            invokeOnFileDeletedAsync(service, strandProperties, args);
+            invokeOnFileDeletedAsync(service, strandProperties,
+                    event.getSourcePath(), methodType.getName(), args);
         }
     }
 
@@ -313,7 +315,8 @@ public class FtpListener implements RemoteFileSystemListener {
             Map<String, Object> strandProperties = FtpTracingUtil.createFileStageStrandProperties(
                     CONTEXT_LISTENER, listenerUrl, listenerProtocol, traceEventType,
                     FtpMetricsUtil.FILE_STAGE_HANDLED, methodType.getName(), -1, -1);
-            invokeMethodAsync(service, strandProperties, args);
+            invokeMethodAsync(service, strandProperties,
+                    event.getSourcePath(), methodType.getName(), args);
         }
     }
 
@@ -355,55 +358,60 @@ public class FtpListener implements RemoteFileSystemListener {
         return null;
     }
 
-    private void invokeOnFileDeleteAsync(BObject service, Map<String, Object> strandProperties, Object ...args) {
+    private void invokeOnFileDeleteAsync(BObject service, Map<String, Object> strandProperties,
+                                          String listenerPath, String methodName, Object ...args) {
+        invokeRemoteMethodAsync(service, ON_FILE_DELETE_REMOTE_FUNCTION, strandProperties,
+                listenerPath, methodName, args);
+    }
+
+    private void invokeOnFileDeletedAsync(BObject service, Map<String, Object> strandProperties,
+                                           String listenerPath, String methodName, Object ...args) {
+        invokeRemoteMethodAsync(service, ON_FILE_DELETED_REMOTE_FUNCTION, strandProperties,
+                listenerPath, methodName, args);
+    }
+
+    private void invokeMethodAsync(BObject service, Map<String, Object> strandProperties,
+                                    String listenerPath, String methodName, Object ...args) {
+        invokeRemoteMethodAsync(service, ON_FILE_CHANGE_REMOTE_FUNCTION, strandProperties,
+                listenerPath, methodName, args);
+    }
+
+    private void invokeRemoteMethodAsync(BObject service, String remoteFunction,
+                                          Map<String, Object> strandProperties,
+                                          String listenerPath, String methodName, Object ...args) {
         Thread.startVirtualThread(() -> {
             try {
                 ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
                 boolean isConcurrentSafe = serviceType.isIsolated() &&
-                        serviceType.isIsolated(ON_FILE_DELETE_REMOTE_FUNCTION);
+                        serviceType.isIsolated(remoteFunction);
                 StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, strandProperties);
-                Object result = runtime.callMethod(service, ON_FILE_DELETE_REMOTE_FUNCTION, strandMetadata, args);
-                if (result instanceof BError) {
-                    ((BError) result).printStackTrace();
+                Object result = runtime.callMethod(service, remoteFunction, strandMetadata, args);
+                if (result instanceof BError bError) {
+                    bError.printStackTrace();
+                    reportHandlerOutcome(strandProperties, listenerPath, methodName, bError);
+                } else {
+                    FtpTracingUtil.addOutcomeToStrandProperties(strandProperties,
+                            FtpMetricsUtil.OUTCOME_SUCCESS, null);
+                    FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                            FtpMetricsUtil.FILE_STAGE_HANDLED, FtpMetricsUtil.OUTCOME_SUCCESS,
+                            null, methodName);
                 }
             } catch (BError error) {
                 error.printStackTrace();
+                reportHandlerOutcome(strandProperties, listenerPath, methodName, error);
             }
         });
     }
 
-    private void invokeOnFileDeletedAsync(BObject service, Map<String, Object> strandProperties, Object ...args) {
-        Thread.startVirtualThread(() -> {
-            try {
-                ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
-                boolean isConcurrentSafe = serviceType.isIsolated() &&
-                        serviceType.isIsolated(ON_FILE_DELETED_REMOTE_FUNCTION);
-                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, strandProperties);
-                Object result = runtime.callMethod(service, ON_FILE_DELETED_REMOTE_FUNCTION, strandMetadata, args);
-                if (result instanceof BError) {
-                    ((BError) result).printStackTrace();
-                }
-            } catch (BError error) {
-                error.printStackTrace();
-            }
-        });
-    }
-
-    private void invokeMethodAsync(BObject service, Map<String, Object> strandProperties, Object ...args) {
-        Thread.startVirtualThread(() -> {
-            try {
-                ObjectType serviceType = (ObjectType) TypeUtils.getReferredType(TypeUtils.getType(service));
-                boolean isConcurrentSafe = serviceType.isIsolated() &&
-                        serviceType.isIsolated(ON_FILE_CHANGE_REMOTE_FUNCTION);
-                StrandMetadata strandMetadata = new StrandMetadata(isConcurrentSafe, strandProperties);
-                Object result = runtime.callMethod(service, ON_FILE_CHANGE_REMOTE_FUNCTION, strandMetadata, args);
-                if (result instanceof BError) {
-                    ((BError) result).printStackTrace();
-                }
-            } catch (BError error) {
-                error.printStackTrace();
-            }
-        });
+    private void reportHandlerOutcome(Map<String, Object> strandProperties, String listenerPath,
+                                       String methodName, BError error) {
+        String errorType = error.getType() != null
+                ? error.getType().getName() : FtpMetricsUtil.UNKNOWN;
+        FtpTracingUtil.addOutcomeToStrandProperties(strandProperties,
+                FtpMetricsUtil.OUTCOME_FAILURE, errorType);
+        FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
+                FtpMetricsUtil.FILE_STAGE_HANDLED, FtpMetricsUtil.OUTCOME_FAILURE,
+                errorType, methodName);
     }
 
     private BMap<BString, Object> getWatchEvent(Parameter parameter, Map<String, Object> parameters) {
@@ -642,6 +650,10 @@ public class FtpListener implements RemoteFileSystemListener {
 
     public void setLegacyListenerPath(String legacyListenerPath) {
         this.legacyListenerPath = legacyListenerPath;
+    }
+
+    public String getLegacyListenerPath() {
+        return legacyListenerPath;
     }
 
     public void setListenerUrl(String listenerUrl) {

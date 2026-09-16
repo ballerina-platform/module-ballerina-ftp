@@ -295,10 +295,10 @@ public class FtpMetricsUtil {
      * @param protocol     "ftp", "ftps", or "sftp"
      * @param handlerName  handler method name (e.g. "onFileJson")
      * @param outcome      {@link #OUTCOME_SUCCESS} or {@link #OUTCOME_FAILURE}
-     * @param durationMs   duration in milliseconds (converted to seconds before recording)
+     * @param durationSecs duration in seconds
      */
     public static void reportDatabindingDuration(String url, String protocol, String handlerName,
-                                                  String outcome, long durationMs) {
+                                                  String outcome, double durationSecs) {
         if (!ObserveUtils.isMetricsEnabled()) {
             return;
         }
@@ -311,7 +311,7 @@ public class FtpMetricsUtil {
             metricRegistry.gauge(new MetricId(
                     FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_DATABINDING_DURATION[0],
                     METRIC_DATABINDING_DURATION[1], observerContext.getAllTags()),
-                    DURATION_STATISTIC_CONFIG).setValue(durationMs / 1000.0);
+                    DURATION_STATISTIC_CONFIG).setValue(durationSecs);
         } catch (Throwable t) {
             log.debug("Failed to report databinding duration metric", t);
         }
@@ -324,10 +324,10 @@ public class FtpMetricsUtil {
      * @param protocol     "ftp", "ftps", or "sftp"
      * @param handlerName  handler method name (e.g. "onFileJson")
      * @param outcome      {@link #OUTCOME_SUCCESS} or {@link #OUTCOME_FAILURE}
-     * @param durationMs   duration in milliseconds (converted to seconds before recording)
+     * @param durationSecs duration in seconds
      */
     public static void reportResourceExecutionDuration(String url, String protocol, String handlerName,
-                                                        String outcome, long durationMs) {
+                                                        String outcome, double durationSecs) {
         if (!ObserveUtils.isMetricsEnabled()) {
             return;
         }
@@ -340,7 +340,7 @@ public class FtpMetricsUtil {
             metricRegistry.gauge(new MetricId(
                     FILE_CONNECTOR_NAME + METRIC_NAME_SEPARATOR + METRIC_RESOURCE_EXECUTION_DURATION[0],
                     METRIC_RESOURCE_EXECUTION_DURATION[1], observerContext.getAllTags()),
-                    DURATION_STATISTIC_CONFIG).setValue(durationMs / 1000.0);
+                    DURATION_STATISTIC_CONFIG).setValue(durationSecs);
         } catch (Throwable t) {
             log.debug("Failed to report resource execution duration metric", t);
         }
