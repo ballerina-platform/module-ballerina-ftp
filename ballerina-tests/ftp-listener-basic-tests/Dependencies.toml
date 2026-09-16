@@ -220,7 +220,7 @@ dependencies = [
 [[package]]
 org = "ballerina_tests"
 name = "ftp_listener_basic_tests"
-version = "2.20.3"
+version = "2.21.0"
 dependencies = [
 	{org = "ballerina", name = "ftp"},
 	{org = "ballerina", name = "io"},
@@ -236,7 +236,7 @@ modules = [
 [[package]]
 org = "ballerina_tests"
 name = "ftp_test_commons"
-version = "2.20.3"
+version = "2.21.0"
 scope = "testOnly"
 modules = [
 	{org = "ballerina_tests", packageName = "ftp_test_commons", moduleName = "ftp_test_commons"}
