@@ -5,9 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## unreleased
 
+### Added
+
+## [2.21.0] - 2026-09-16
+
+### Added
+- [Apply the standard observability support for the FTP Library](https://github.com/ballerina-platform/module-ballerina-ftp/pull/1588)
+
 ### Fixed
 - Fix the trigger metadata icons failing to render by removing the license header placed before the XML declaration
-- [Apply the standard observability support for the FTP Library](https://github.com/ballerina-platform/module-ballerina-ftp/pull/1588)
 
 ## [2.20.2] - 2026-09-08
 
