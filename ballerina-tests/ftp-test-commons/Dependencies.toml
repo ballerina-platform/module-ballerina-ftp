@@ -5,12 +5,12 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.13.2"
+distribution-version = "2201.14.0-20260916-095600-2ad98357"
 
 [[package]]
 org = "ballerina_tests"
 name = "ftp_test_commons"
-version = "2.21.0"
+version = "2.22.0"
 modules = [
 	{org = "ballerina_tests", packageName = "ftp_test_commons", moduleName = "ftp_test_commons"}
 ]
