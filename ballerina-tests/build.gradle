@@ -396,3 +396,9 @@ build.dependsOn ":${packageName}-compiler-plugin:build"
 test.dependsOn ":${packageName}-${packageOrg}:build"
 test.dependsOn ":${packageName}-compiler-plugin:build"
 test.dependsOn ":${packageName}-compiler-plugin-tests:test"
+
+// The timestamped-master and release pipelines invoke `gradlew publish`, which
+// never reaches the root `build` task. Without this the whole Ballerina test
+// suite is silently skipped on those builds.
+publishToMavenLocal.dependsOn build
+publish.dependsOn build
