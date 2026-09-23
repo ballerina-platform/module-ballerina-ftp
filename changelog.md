@@ -5,6 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## unreleased
 
+### Added
+- Upgrade to Swanlake U14 with stable release of csvdata
+
+## [2.21.0] - 2026-09-16
+
+### Added
+- [Apply the standard observability support for the FTP Library](https://github.com/ballerina-platform/module-ballerina-ftp/pull/1588)
+
+### Fixed
+- Fix the trigger metadata icons failing to render by removing the license header placed before the XML declaration
+
+## [2.20.2] - 2026-09-08
+
+- [[#9132] Updated Keywords and Reformat README for Connector Store Discoverability](https://github.com/ballerina-platform/ballerina-library/issues/9132)
+- Add metadata jsons
+
 ## [2.20.2]
 
 ### Fixed

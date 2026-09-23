@@ -105,7 +105,16 @@ release {
     }
 }
 
-task build {
-    dependsOn('ftp-ballerina:build')
-    dependsOn('ftp-ballerina-tests:test')
+if (tasks.names.contains('build')) {
+    tasks.named('build') {
+        dependsOn('ftp-ballerina:build')
+        dependsOn('ftp-ballerina-tests:test')
+
+    }
+} else {
+    tasks.register('build') {
+        dependsOn('ftp-ballerina:build')
+        dependsOn('ftp-ballerina-tests:test')
+
+    }
 }

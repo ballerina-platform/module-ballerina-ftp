@@ -26,7 +26,7 @@ import io.ballerina.runtime.observability.ObserverContext;
  */
 public class FtpObserverContext extends ObserverContext {
 
-    static final String TAG_CONTEXT = "context";
+    static final String TAG_CONTEXT = "type";
     static final String TAG_REMOTE_URL = "remote.url";
     static final String TAG_PROTOCOL = "protocol";
 
@@ -38,8 +38,19 @@ public class FtpObserverContext extends ObserverContext {
     static final String TAG_ACTION_TYPE = "action.type";
     static final String TAG_INSTANCE_URL = "host";
 
+    // New tags from the unified observability spec
+    static final String TAG_MODULE = "module";
+    static final String TAG_FILE_STAGE = "file.stage";
+    static final String TAG_HANDLER_NAME = "handler.name";
+    static final String TAG_CLEANUP_ACTION = "cleanup.action";
+    static final String TAG_OUTCOME = "outcome";
+    static final String TAG_FILE_SIZE = "file.size";
+    static final String TAG_FILE_MODIFIED_TIME = "file.modified_time";
+    static final String TAG_WATCHED_PATH = "watched.path";
+
     FtpObserverContext(String context) {
         addTag(TAG_CONTEXT, context);
+        addTag(TAG_MODULE, FtpMetricsUtil.MODULE_FTP);
     }
 
     public FtpObserverContext(String context, String remoteUrl, String protocol) {

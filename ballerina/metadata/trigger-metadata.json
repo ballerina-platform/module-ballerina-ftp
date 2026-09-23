@@ -1,0 +1,341 @@
+{
+  "version": "v1.0",
+
+  "listeners": [
+    {
+      "id": "$listener",
+      "doc": "Polls the watched directory on its configured interval and dispatches each detected file to the attached service.",
+      "type": { "name": "Listener" },
+      "services": ["$service"],
+      "multipleServicesAllowed": true
+    }
+  ],
+
+  "serviceTypes": [
+    {
+      "id": "$service",
+      "doc": "Consumes files found in the watched directory, dispatching each to the handler matching its content type.",
+      "type": { "name": "Service" },
+      "concrete": false,
+      "multipleListenersAllowed": true,
+      "annotations": ["$serviceConfig"],
+      "handlers": {
+        "backedByConcreteType": false,
+        "options": [
+          {
+            "id": "$service.onFileCsv",
+            "name": "onFileCsv",
+            "kind": "remote",
+            "doc": "Invoked for each .csv file in the watched directory, or any file matching the pattern set on @ftp:FunctionConfig. Declaring a stream parameter reads the file in chunks instead of loading it into memory. Falls through to onFile when not declared.",
+            "presence": "optional",
+            "annotations": ["$functionConfig"],
+            "params": [
+              {
+                "id": "$service.onFileCsv.content",
+                "name": "content",
+                "doc": "The parsed rows, as batched or streamed string rows or records; the field names of a record row come from the header row. Binding is strict.",
+                "type": [
+                  { "shape": "array", "elementType": { "shape": "array", "elementType": { "name": "string", "builtin": true } } },
+                  { "shape": "array", "elementType": { "name": "record {}", "builtin": true } },
+                  {
+                    "shape": "stream",
+                    "elementType": { "shape": "array", "elementType": { "name": "string", "builtin": true } },
+                    "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+                  },
+                  {
+                    "shape": "stream",
+                    "elementType": { "name": "record {}", "builtin": true },
+                    "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+                  }
+                ],
+                "presence": "required",
+                "dataBinding": {
+                  "typedescs": [
+                    {
+                      "constraint": { "shape": "array", "elementType": { "name": "string", "builtin": true } },
+                      "shapes": [
+                        { "form": "array", "element": "bare" },
+                        { "form": "stream", "element": "bare", "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
+                      ]
+                    },
+                    {
+                      "constraint": { "name": "record {}", "builtin": true },
+                      "shapes": [
+                        { "form": "array", "element": "bare" },
+                        { "form": "stream", "element": "bare", "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "$service.onFileCsv.fileInfo",
+                "name": "fileInfo",
+                "doc": "The file's name, path, size, and timestamps.",
+                "type": { "name": "FileInfo" },
+                "presence": "optional"
+              },
+              {
+                "id": "$service.onFileCsv.caller",
+                "name": "caller",
+                "doc": "The FTP connection, for reading or writing other files while this one is being processed.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": { "id": "$service.onFileCsv.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
+          },
+          {
+            "id": "$service.onFileJson",
+            "name": "onFileJson",
+            "kind": "remote",
+            "doc": "Invoked for each .json file in the watched directory, or any file matching the pattern set on @ftp:FunctionConfig. Falls through to onFile when not declared.",
+            "presence": "optional",
+            "annotations": ["$functionConfig"],
+            "params": [
+              {
+                "id": "$service.onFileJson.content",
+                "name": "content",
+                "doc": "The parsed content, bind a record type to project it. Binding is strict: the content must match the target type exactly.",
+                "type": { "name": "json", "builtin": true },
+                "presence": "required",
+                "dataBinding": {
+                  "typedescs": [
+                    { "constraint": { "name": "json", "builtin": true }, "shapes": [{ "form": "bare" }] },
+                    { "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }
+                  ]
+                }
+              },
+              {
+                "id": "$service.onFileJson.fileInfo",
+                "name": "fileInfo",
+                "doc": "The file's name, path, size, and timestamps.",
+                "type": { "name": "FileInfo" },
+                "presence": "optional"
+              },
+              {
+                "id": "$service.onFileJson.caller",
+                "name": "caller",
+                "doc": "The FTP connection, for reading or writing other files while this one is being processed.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": { "id": "$service.onFileJson.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
+          },
+          {
+            "id": "$service.onFileXml",
+            "name": "onFileXml",
+            "kind": "remote",
+            "doc": "Invoked for each .xml file in the watched directory, or any file matching the pattern set on @ftp:FunctionConfig. Falls through to onFile when not declared.",
+            "presence": "optional",
+            "annotations": ["$functionConfig"],
+            "params": [
+              {
+                "id": "$service.onFileXml.content",
+                "name": "content",
+                "doc": "The parsed content, bind a record type to project it from the document. Binding is strict.",
+                "type": { "name": "xml", "builtin": true },
+                "presence": "required",
+                "dataBinding": {
+                  "typedescs": [
+                    { "constraint": { "name": "xml", "builtin": true }, "shapes": [{ "form": "bare" }] },
+                    { "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }
+                  ]
+                }
+              },
+              {
+                "id": "$service.onFileXml.fileInfo",
+                "name": "fileInfo",
+                "doc": "The file's name, path, size, and timestamps.",
+                "type": { "name": "FileInfo" },
+                "presence": "optional"
+              },
+              {
+                "id": "$service.onFileXml.caller",
+                "name": "caller",
+                "doc": "The FTP connection, for reading or writing other files while this one is being processed.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": { "id": "$service.onFileXml.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
+          },
+          {
+            "id": "$service.onFileText",
+            "name": "onFileText",
+            "kind": "remote",
+            "doc": "Invoked for each plain-text file in the watched directory, or any file matching the pattern set on @ftp:FunctionConfig. Falls through to onFile when not declared.",
+            "presence": "optional",
+            "annotations": ["$functionConfig"],
+            "params": [
+              {
+                "id": "$service.onFileText.content",
+                "name": "content",
+                "doc": "The file's text content, decoded as UTF-8.",
+                "type": { "name": "string", "builtin": true },
+                "presence": "required"
+              },
+              {
+                "id": "$service.onFileText.fileInfo",
+                "name": "fileInfo",
+                "doc": "The file's name, path, size, and timestamps.",
+                "type": { "name": "FileInfo" },
+                "presence": "optional"
+              },
+              {
+                "id": "$service.onFileText.caller",
+                "name": "caller",
+                "doc": "The FTP connection, for reading or writing other files while this one is being processed.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": { "id": "$service.onFileText.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
+          },
+          {
+            "id": "$service.onFile",
+            "name": "onFile",
+            "kind": "remote",
+            "doc": "Invoked for any file no typed handler matched, and as the fallback when no typed handler is declared. Content arrives as raw bytes.",
+            "presence": "optional",
+            "annotations": ["$functionConfig"],
+            "params": [
+              {
+                "id": "$service.onFile.content",
+                "name": "content",
+                "doc": "The file's bytes. Declare the stream form to read large files in chunks rather than loading them into memory.",
+                "type": [
+                  { "shape": "array", "elementType": { "name": "byte", "builtin": true } },
+                  {
+                    "shape": "stream",
+                    "elementType": { "shape": "array", "elementType": { "name": "byte", "builtin": true } },
+                    "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+                  }
+                ],
+                "presence": "required"
+              },
+              {
+                "id": "$service.onFile.fileInfo",
+                "name": "fileInfo",
+                "doc": "The file's name, path, size, and timestamps.",
+                "type": { "name": "FileInfo" },
+                "presence": "optional"
+              },
+              {
+                "id": "$service.onFile.caller",
+                "name": "caller",
+                "doc": "The FTP connection, for reading or writing other files while this one is being processed.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": { "id": "$service.onFile.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
+          },
+          {
+            "id": "$service.onFileDelete",
+            "name": "onFileDelete",
+            "kind": "remote",
+            "doc": "Invoked when a file disappears from the watched directory. There is no content or file metadata, because the file is already gone.",
+            "presence": "optional",
+            "annotations": ["$functionConfig"],
+            "params": [
+              {
+                "id": "$service.onFileDelete.deletedFile",
+                "name": "deletedFile",
+                "doc": "Path of the file that was deleted.",
+                "type": { "name": "string", "builtin": true },
+                "presence": "required"
+              },
+              {
+                "id": "$service.onFileDelete.caller",
+                "name": "caller",
+                "doc": "The FTP connection, for acting on the server in response to the deletion.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": {
+              "id": "$service.onFileDelete.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
+          },
+          {
+            "id": "$service.onFileChange",
+            "name": "onFileChange",
+            "kind": "remote",
+            "doc": "Invoked once per poll with the complete set of files added and deleted since the previous poll.",
+            "deprecated": "Superseded by the typed content handlers. onFileChange only reports which files changed, leaving the read and the parse to the handler, whereas onFileText, onFileJson, onFileXml, onFileCsv and onFile deliver the file body already bound to a declared type.",
+            "presence": "optional",
+            "annotations": ["$functionConfig"],
+            "params": [
+              {
+                "id": "$service.onFileChange.watchEvent",
+                "name": "watchEvent",
+                "doc": "The files added and deleted in this poll.",
+                "type": { "name": "WatchEvent" },
+                "presence": "required"
+              },
+              {
+                "id": "$service.onFileChange.caller",
+                "name": "caller",
+                "doc": "The FTP connection, for acting on the server in response to the changes.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": {
+              "id": "$service.onFileChange.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
+          },
+          {
+            "id": "$service.onError",
+            "name": "onError",
+            "kind": "remote",
+            "doc": "Invoked when the listener fails to poll, read, or bind a file, and when a handler itself returns an error. Without it, failures are logged and polling continues.",
+            "presence": "optional",
+            "annotations": ["$functionConfig"],
+            "params": [
+              {
+                "id": "$service.onError.err",
+                "name": "err",
+                "doc": "The failure that interrupted processing.",
+                "type": { "name": "Error" },
+                "presence": "required"
+              },
+              {
+                "id": "$service.onError.caller",
+                "name": "caller",
+                "doc": "The FTP connection, for acting on the server while handling the failure.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": { "id": "$service.onError.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
+          }
+        ]
+      },
+      "rules": [
+        {
+          "id": "$atLeastOneFileHandler",
+          "rule": "structure.atLeastOne",
+          "message": "An FTP service must declare at least one file handler. onError alone never receives a file, so the service would do nothing.",
+          "subjects": [
+            { "kind": "handler", "id": "$service.onFileCsv" },
+            { "kind": "handler", "id": "$service.onFileJson" },
+            { "kind": "handler", "id": "$service.onFileXml" },
+            { "kind": "handler", "id": "$service.onFileText" },
+            { "kind": "handler", "id": "$service.onFile" },
+            { "kind": "handler", "id": "$service.onFileDelete" }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "annotations": [
+    { "id": "$serviceConfig", "type": { "name": "ServiceConfig" }, "attachPoint": "service", "presence": "required" },
+    { "id": "$functionConfig", "type": { "name": "FunctionConfig" }, "attachPoint": "function", "presence": "optional" }
+  ]
+}

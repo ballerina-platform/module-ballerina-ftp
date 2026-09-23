@@ -4,9 +4,6 @@ name = "@package.name@"
 version = "@toml.version@"
 distribution = "2201.12.0"
 
-[build-options]
-observabilityIncluded = true
-
 [[dependency]]
 org = "ballerina"
 name = "ftp"
