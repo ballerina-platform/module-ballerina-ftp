@@ -48,7 +48,7 @@ path = "./lib/commons-lang3-3.18.0.jar"
 groupId = "io.ballerina.stdlib"
 artifactId = "ftp-native"
 version = "2.22.0"
-path = "../native/build/libs/ftp-native-2.22.0-SNAPSHOT.jar"
+path = "../native/build/libs/ftp-native-2.22.0.jar"
 
 [[platform.java25.dependency]]
 groupId = "io.ballerina.lib"
@@ -59,11 +59,11 @@ path = "./lib/data.jsondata-native-1.1.4.jar"
 [[platform.java25.dependency]]
 groupId = "io.ballerina.lib"
 artifactId = "data.xmldata-native"
-version = "1.7.0-20261008-095900-ad9bcca"
-path = "./lib/data.xmldata-native-1.7.0-20261008-095900-ad9bcca.jar"
+version = "1.7.0"
+path = "./lib/data.xmldata-native-1.7.0.jar"
 
 [[platform.java25.dependency]]
 groupId = "io.ballerina.lib"
 artifactId = "data.csv-native"
-version = "1.0.0-20261008-100100-65c4622"
-path = "./lib/data.csv-native-1.0.0-20261008-100100-65c4622.jar"
+version = "1.0.0"
+path = "./lib/data.csv-native-1.0.0.jar"
