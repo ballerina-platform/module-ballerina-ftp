@@ -3,10 +3,15 @@ This file contains all the notable changes done to the Ballerina Email package t
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## unreleased
+## [Unreleased]
+
+## [2.22.0] - 2026-10-08
 
 ### Added
 - Upgrade to Swanlake U14 with stable release of csvdata
+
+### Changed
+- Update the Java platform to 25
 
 ## [2.21.0] - 2026-09-16
 
