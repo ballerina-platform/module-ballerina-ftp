@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - Upgrade to Swan Lake Update 14 and Java 25 with the stable release of `data.csv`
 
+### Changed
+- Update the Java platform to 25
+
 ## [2.21.0] - 2026-09-16
 
 ### Added
