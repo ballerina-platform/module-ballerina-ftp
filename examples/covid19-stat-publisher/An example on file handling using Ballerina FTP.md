@@ -85,7 +85,7 @@ INFO: Started the SFTP server
 
 ### Starting the Processor
 
-Navigate to the [`examples/covid19-stat-publisher/processor`](./processor) directory, and execute the command below.
+Navigate to the [`examples/covid19-stat-publisher/processor`](./processor) directory, create a `Config.toml` file with the `sftpUsername`, `sftpPassword` (the credentials the SFTP server is started with), and `privateKeyPassword` (the password of the private key in `resources/keys`) values, and execute the command below.
 ```shell
 $ bal run
 ```
