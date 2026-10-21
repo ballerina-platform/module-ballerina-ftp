@@ -321,6 +321,11 @@ public type ProxyConfiguration record {|
     string command?;
 |};
 
+public type ProxyCredentials record {|
+    string username;
+    string password;
+|};
+
 public enum ProxyType {
     HTTP,
     SOCKS5,
@@ -586,7 +591,7 @@ ftp:Client ftpClient = check new ({
 
 ### 4.1 Initializing the Listener
 
-The listener configuration is the client configuration plus polling, coordination, and the deprecated monitoring fields.
+The listener configuration has the client's connection fields, except `circuitBreaker`, plus polling, coordination, and the deprecated monitoring fields.
 
 ```ballerina
 public type ListenerConfiguration record {|
