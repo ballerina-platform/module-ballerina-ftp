@@ -19,11 +19,15 @@ import ballerina/io;
 import ballerina/log;
 import ballerinax/rabbitmq;
 
+configurable string sftpUsername = ?;
+configurable string sftpPassword = ?;
+configurable string privateKeyPassword = ?;
+
 ftp:AuthConfiguration authConfig = {
-    credentials: {username: "wso2", password: "wso2123"},
+    credentials: {username: sftpUsername, password: sftpPassword},
     privateKey: {
         path: "../resources/keys/sftp.private.key",
-        password: "changeit"
+        password: privateKeyPassword
     }
 };
 

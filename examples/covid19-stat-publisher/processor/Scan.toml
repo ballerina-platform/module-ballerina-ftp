@@ -1,0 +1,6 @@
+# ballerina:14 matches identifier names containing "auth" (the `authConfig` variable and the
+# `auth = authConfig` named argument of the ftp:Listener, which is public API). All actual
+# credential values (sftpUsername, sftpPassword, privateKeyPassword) are configurable with no
+# default, so no secret is assigned a fixed value. False positive.
+[rule]
+exclude = ["ballerina:14"]

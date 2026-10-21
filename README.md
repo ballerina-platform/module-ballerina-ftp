@@ -2,14 +2,22 @@
 
   [![Build](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/build-timestamped-master.yml/badge.svg)](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/build-timestamped-master.yml)
   [![codecov](https://codecov.io/gh/ballerina-platform/module-ballerina-ftp/branch/master/graph/badge.svg)](https://codecov.io/gh/ballerina-platform/module-ballerina-ftp)
-  [![Trivy](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/trivy-scan.yml/badge.svg)](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/trivy-scan.yml)
+  [![Security Scan](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/security-scan.yml/badge.svg)](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/security-scan.yml)
   [![GraalVM Check](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/build-with-bal-test-graalvm.yml/badge.svg)](https://github.com/ballerina-platform/module-ballerina-ftp/actions/workflows/build-with-bal-test-graalvm.yml)
   [![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/module-ballerina-ftp.svg?label=Last%20Commit)](https://github.com/ballerina-platform/module-ballerina-ftp/commits/master)
   [![Github issues](https://img.shields.io/github/issues/ballerina-platform/ballerina-standard-library/module/ftp.svg?label=Open%20Issues)](https://github.com/ballerina-platform/ballerina-standard-library/labels/module%2Fftp)
 
 ## Overview
 
+Read, write, and manage files on remote servers over FTP, SFTP, and FTPS (FTP over SSL/TLS), and act on files as they are added or deleted.
+
 This module provides an FTP/SFTP client and an FTP/SFTP server listener implementation to facilitate an FTP/SFTP connection connected to a remote location. Additionally, it supports FTPS (FTP over SSL/TLS) to facilitate secure file transfers.
+
+### Key Features
+
+- FTP/SFTP client for remote file operations
+- FTP/SFTP server listener for reacting to file events
+- FTPS (FTP over SSL/TLS) support for secure transfers
 
 ### FTP client
 

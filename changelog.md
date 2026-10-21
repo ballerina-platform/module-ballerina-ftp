@@ -1,14 +1,18 @@
 # Change Log
-This file contains all the notable changes done to the Ballerina Email package through the releases.
+This file contains all the notable changes done to the Ballerina FTP package through the releases.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
+
+### Changed
+
+- [[#2804] Shorten the module summary so it is not truncated in the WSO2 Integrator connector view](https://github.com/wso2/product-integrator/issues/2804)
 
 ## [2.22.0] - 2026-10-08
 
-### Added
-- Upgrade to Swanlake U14 with stable release of csvdata
+### Changed
+- Upgrade to Swan Lake Update 14 and Java 25 with the stable release of `data.csv`
 
 ### Changed
 - Update the Java platform to 25
@@ -21,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - Fix the trigger metadata icons failing to render by removing the license header placed before the XML declaration
 
-## [2.20.2] - 2026-09-08
+## [2.20.3] - 2026-09-08
 
 - [[#9132] Updated Keywords and Reformat README for Connector Store Discoverability](https://github.com/ballerina-platform/ballerina-library/issues/9132)
 - Add metadata jsons
