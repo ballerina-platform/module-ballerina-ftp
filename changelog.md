@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - [[#2804] Shorten the module summary so it is not truncated in the WSO2 Integrator connector view](https://github.com/wso2/product-integrator/issues/2804)
 
+### Fixed
+
+- [Read the FTP reply code from the server reply, not from an IP address or port in the error message](https://github.com/ballerina-platform/ballerina-library/issues/9383)
+- [Count a socket read timeout as a connection failure in the circuit breaker](https://github.com/ballerina-platform/ballerina-library/issues/9430)
+- [Retry only connection failures and transient server errors](https://github.com/ballerina-platform/ballerina-library/issues/9465)
+
 ## [2.22.0] - 2026-10-08
 
 ### Changed

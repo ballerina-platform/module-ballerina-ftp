@@ -140,14 +140,8 @@ public class FtpClient {
         }
 
         if (result instanceof BError bError) {
-            // Pass the original cause to preserve exception type for categorization
-            Throwable cause = bError.getCause();
-            if (cause != null) {
-                cb.recordOutcome(cause);
-            } else {
-                // Fallback to wrapping message if no cause available
-                cb.recordOutcome(new RuntimeException(bError.getMessage()));
-            }
+            // The categorizer walks the cause chain, so the error itself carries every message to match.
+            cb.recordOutcome(bError);
         } else {
             cb.recordOutcome(null);
         }

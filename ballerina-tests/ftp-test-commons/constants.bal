@@ -26,6 +26,8 @@ public const int FTPS_EXPLICIT_PORT = 21214;
 public const int SLOW_FTP_PORT = 21215;
 public const int FTPS_IMPLICIT_PORT = 21217;
 public const int FTPS_MISMATCHED_PORT = 21220;
+public const int BUSY_FTP_PORT = 21221;
+public const int HUNG_FTP_PORT = 21222;
 
 // ─── FTP credentials ──────────────────────────────────────────────────────────
 

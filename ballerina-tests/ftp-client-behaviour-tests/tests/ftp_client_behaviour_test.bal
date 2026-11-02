@@ -491,40 +491,39 @@ function testCircuitBreaker_HalfOpenTrialSuccessCloses() returns error? {
 }
 function testCircuitBreaker_RetryInteraction() returns error? {
     // Each retry attempt is counted as an individual request by the circuit breaker.
-    // count=3 → 1 initial + 3 retries = 4 attempts per call.
-    // requestVolumeThreshold=8 → circuit trips after 2 full retry cycles (8 attempts).
+    // count=1 → 1 initial + 1 retry = 2 attempts per call against a server that times out.
+    // requestVolumeThreshold=4 → circuit trips after 2 full retry cycles (4 attempts).
     ftp:Client c = check new ({
         protocol: ftp:FTP,
         host: commons:FTP_HOST,
-        port: commons:AUTH_FTP_PORT,
+        port: commons:HUNG_FTP_PORT,
         auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
-        retryConfig: {count: 3, interval: 0.5, backOffFactor: 1.0, maxWaitInterval: 2.0},
+        socketConfig: {ftpSocketTimeout: 1, ftpDataTimeout: 1},
+        retryConfig: {count: 1, interval: 0.1, backOffFactor: 1.0, maxWaitInterval: 1.0},
         circuitBreaker: {
-            rollingWindow: {requestVolumeThreshold: 8, timeWindow: 60, bucketSize: 10},
+            rollingWindow: {requestVolumeThreshold: 4, timeWindow: 60, bucketSize: 10},
             failureThreshold: 0.5,
             resetTime: 30,
-            failureCategories: [ftp:ALL_ERRORS]
+            failureCategories: [ftp:CONNECTION_ERROR]
         }
     });
 
-    string absent = "/non/existent/beh-retry-cb.txt";
+    string path = commons:HOME_IN + "/beh-retry-cb.txt";
 
-    // First call: 4 attempts, all fail → AllRetryAttemptsFailedError.
-    ftp:Error|byte[] r1 = c->getBytes(absent);
+    // First call: 2 attempts, both time out → AllRetryAttemptsFailedError.
+    ftp:Error|byte[] r1 = c->getBytes(path);
     test:assertTrue(r1 is ftp:AllRetryAttemptsFailedError,
         "First call should fail after all retries");
 
-    // Second call: 4 more attempts → circuit now has 8 failures total and trips.
-    ftp:Error|byte[] r2 = c->getBytes(absent);
+    // Second call: 2 more attempts → circuit now has 4 failures total and trips.
+    ftp:Error|byte[] r2 = c->getBytes(path);
     test:assertTrue(r2 is ftp:AllRetryAttemptsFailedError,
         "Second call should fail after all retries");
 
     // Third call: circuit is OPEN — rejected immediately without retrying.
-    ftp:Error|byte[] r3 = c->getBytes(absent);
+    ftp:Error|byte[] r3 = c->getBytes(path);
     test:assertTrue(r3 is ftp:CircuitBreakerOpenError,
         "Third call should be rejected by the open circuit breaker");
-
-    check c->close();
 }
 
 // =============================================================================
@@ -702,4 +701,68 @@ function testCircuitBreaker_SelectiveCategory_AuthCategory_DoesNotTripOnFileErro
         "Circuit should remain CLOSED: file errors are not auth errors");
 
     check c->close();
+}
+
+// =============================================================================
+// Error classification, retry, and circuit breaker against faulty servers
+// =============================================================================
+
+@test:Config {
+    groups: ["ftp-client-behaviour", "error-classification"]
+}
+function testLoginRejectedWith421IsServiceUnavailable() {
+    ftp:Client|ftp:Error result = new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:BUSY_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}}
+    });
+    test:assertTrue(result is ftp:ServiceUnavailableError,
+        "A 421 reply from a server on 127.0.0.1 should be a ServiceUnavailableError");
+}
+
+@test:Config {
+    groups: ["ftp-client-behaviour", "retry"]
+}
+function testRetry_FileNotFoundIsNotRetried() {
+    string|ftp:Error result = retryClient->getText(commons:HOME_IN + "/beh-no-such-file-not-retried.txt");
+    test:assertTrue(result is ftp:FileNotFoundError, "A missing file should be returned at once, unwrapped");
+}
+
+@test:Config {
+    groups: ["ftp-client-behaviour", "retry"]
+}
+function testRetry_ReadTimeoutIsRetried() returns error? {
+    ftp:Client c = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:HUNG_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        socketConfig: {ftpSocketTimeout: 1, ftpDataTimeout: 1},
+        retryConfig: {count: 1, interval: 0.1}
+    });
+    string|ftp:Error result = c->getText(commons:HOME_IN + "/a.txt");
+    test:assertTrue(result is ftp:AllRetryAttemptsFailedError, "A read timeout should be retried");
+}
+
+@test:Config {
+    groups: ["ftp-client-behaviour", "circuit-breaker"]
+}
+function testCircuitBreaker_ReadTimeoutIsConnectionError() returns error? {
+    ftp:Client c = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:HUNG_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        socketConfig: {ftpSocketTimeout: 1, ftpDataTimeout: 1},
+        circuitBreaker: {
+            rollingWindow: {requestVolumeThreshold: 1, timeWindow: 60, bucketSize: 10},
+            failureThreshold: 0.0,
+            failureCategories: [ftp:CONNECTION_ERROR]
+        }
+    });
+    string|ftp:Error first = c->getText(commons:HOME_IN + "/a.txt");
+    test:assertTrue(first is ftp:Error, "The read should time out");
+    boolean|ftp:Error second = c->exists(commons:HOME_IN + "/a.txt");
+    test:assertTrue(second is ftp:CircuitBreakerOpenError, "A read timeout should open a CONNECTION_ERROR circuit");
 }
