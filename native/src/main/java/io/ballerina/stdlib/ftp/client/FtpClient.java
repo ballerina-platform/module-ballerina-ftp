@@ -617,7 +617,8 @@ public class FtpClient {
             FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
                     remoteFileSystemBaseMessage ->
                             FtpClientHelper.executeStreamingAction(remoteFileSystemBaseMessage,
-                                    balFuture, TypeCreator.createArrayType(PredefinedTypes.TYPE_BYTE), laxDataBinding));
+                                    balFuture, TypeCreator.createArrayType(PredefinedTypes.TYPE_BYTE), laxDataBinding,
+                                    null, null));
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.GET, filePath.getValue(), null);
             return recordCircuitBreakerOutcome(clientConnector, getResult(balFuture));
@@ -642,13 +643,16 @@ public class FtpClient {
         }
 
         boolean laxDataBinding = (boolean) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_LAX_DATABINDING);
+        BMap<?, ?> csvFailSafe = (BMap<?, ?>) clientConnector.getNativeData(FtpConstants.ENDPOINT_CONFIG_CSV_FAIL_SAFE);
+        String fileNamePrefix = deriveFileNamePrefix(filePath);
         Object result = env.yieldAndRun(() -> {
             recordCircuitBreakerRequestStart(clientConnector);
             CompletableFuture<Object> balFuture = new CompletableFuture<>();
             FtpClientListener connectorListener = new FtpClientListener(balFuture, false,
                     remoteFileSystemBaseMessage ->
                             FtpClientHelper.executeStreamingAction(remoteFileSystemBaseMessage,
-                                    balFuture, typeDesc.getDescribingType(), laxDataBinding));
+                                    balFuture, typeDesc.getDescribingType(), laxDataBinding, csvFailSafe,
+                                    fileNamePrefix));
             connector.addListener(connectorListener);
             connector.send(null, FtpAction.GET, filePath.getValue(), null);
             return recordCircuitBreakerOutcome(clientConnector, getResult(balFuture));

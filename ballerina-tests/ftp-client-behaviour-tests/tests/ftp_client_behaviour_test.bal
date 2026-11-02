@@ -703,3 +703,34 @@ function testCircuitBreaker_SelectiveCategory_AuthCategory_DoesNotTripOnFileErro
 
     check c->close();
 }
+
+type FailSafeRow record {|
+    string orderId;
+    string product;
+    int quantity;
+|};
+
+@test:Config {
+    groups: ["ftp-client-behaviour", "csv-fail-safe"]
+}
+function testGetCsvAsStream_CsvFailSafeSkipsBadRow() returns error? {
+    ftp:Client c = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        csvFailSafe: {}
+    });
+    string path = commons:HOME_IN + "/beh-csv-failsafe-stream.csv";
+    check c->putText(path, "orderId,product,quantity\nA,x,1\nB,y,notanint\nC,z,3\n");
+
+    stream<FailSafeRow, error?> rows = check c->getCsvAsStream(path);
+    string[] ids = [];
+    check rows.forEach(function(FailSafeRow r) {
+        ids.push(r.orderId);
+    });
+
+    check c->delete(path);
+    check c->close();
+    test:assertEquals(ids, ["A", "C"], "The row that cannot be bound should be skipped");
+}

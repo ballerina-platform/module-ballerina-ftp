@@ -39,6 +39,7 @@ import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemBaseMessage;
 import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemMessage;
 import io.ballerina.stdlib.ftp.util.BufferHolder;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
+import io.ballerina.stdlib.ftp.util.FtpContentConverter;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.io.channels.base.Channel;
 import org.apache.commons.vfs2.FileSystemException;
@@ -106,17 +107,19 @@ class FtpClientHelper {
 
     static boolean executeStreamingAction(RemoteFileSystemBaseMessage remoteFileSystemBaseMessage,
                                           CompletableFuture<Object> balFuture, Type streamValueType,
-                                          boolean laxDataBinding) {
+                                          boolean laxDataBinding, BMap<?, ?> csvFailSafe, String fileNamePrefix) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             final InputStream in = ((RemoteFileSystemMessage) remoteFileSystemBaseMessage).getInputStream();
-            Object streamEntry = createStreamWithContent(in, streamValueType, laxDataBinding);
+            Object streamEntry = createStreamWithContent(in, streamValueType, laxDataBinding, csvFailSafe,
+                    fileNamePrefix);
             balFuture.complete(streamEntry);
         }
         return true;
     }
 
     private static Object createStreamWithContent(InputStream content, Type streamValueType,
-                                                  boolean laxDataBinding) {
+                                                  boolean laxDataBinding, BMap<?, ?> csvFailSafe,
+                                                  String fileNamePrefix) {
         try {
             if (streamValueType.getTag() == TypeTags.ARRAY_TAG) {
                 Type arrayElementType = ((ArrayType) streamValueType).getElementType();
@@ -124,10 +127,10 @@ class FtpClientHelper {
                     return ContentByteStreamIteratorUtils.createStream(content, streamValueType, laxDataBinding, null);
                 }
                 return ContentCsvStreamIteratorUtils.createRecordStream(content, streamValueType,
-                        laxDataBinding, null);
+                        FtpContentConverter.createCsvParseOptions(laxDataBinding, csvFailSafe, fileNamePrefix), null);
             }
             return ContentCsvStreamIteratorUtils.createRecordStream(content, streamValueType,
-                    laxDataBinding, null);
+                    FtpContentConverter.createCsvParseOptions(laxDataBinding, csvFailSafe, fileNamePrefix), null);
         } catch (Exception e) {
             return FtpUtil.createError(FtpConstants.ERR_CREATE_STREAM, e, FTP_ERROR);
         }

@@ -32,14 +32,13 @@ class ContentCsvStream {
     private stream<record {}|anydata[], csv:Error?> csvStream;
 
     public isolated function init(typedesc<record {}|anydata[]> targetType,
-            stream<byte[], error?>? byteStream = (), boolean laxDataBinding = false,
+            stream<byte[], error?>? byteStream = (), csv:ParseOptions options = {},
             string? filePath = ()) returns error? {
         self.filePath = filePath;
         if byteStream is () {
             self.isClosed = true;
             return error Error("Input stream is not available for file " + (filePath ?: ""));
         }
-        csv:ParseOptions options = createCsvParseOptions(laxDataBinding);
         stream<record {}|anydata[], error?>|csv:Error parsed = csv:parseToStream(byteStream, options, targetType);
         if parsed is csv:Error {
             self.isClosed = true;

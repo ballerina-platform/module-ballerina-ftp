@@ -974,3 +974,57 @@ function testFunctionConfig_CorruptCsv_OnErrorWithoutActions_FileStaysInSource()
 
     check contentFtpClient->delete(remotePath);
 }
+
+// csvFailSafe skips a row that cannot be bound when the handler takes a stream
+type FailSafeOrder record {|
+    string orderId;
+    string product;
+    int quantity;
+|};
+
+const CSV_FAILSAFE_STREAM_DIR = "/home/in/adv-csv-failsafe-stream";
+string[] csvFailSafeStreamIds = [];
+boolean csvFailSafeStreamDone = false;
+
+@test:Config {
+    groups: ["ftp-listener-advanced", "content"]
+}
+function testOnFileCsv_StreamWithCsvFailSafeSkipsBadRow() returns error? {
+    csvFailSafeStreamIds = [];
+    csvFailSafeStreamDone = false;
+    check contentFtpClient->mkdir(CSV_FAILSAFE_STREAM_DIR);
+
+    ftp:Service svc = @ftp:ServiceConfig {path: CSV_FAILSAFE_STREAM_DIR}
+    service object {
+        remote function onFileCsv(stream<FailSafeOrder, error?> content) returns error? {
+            check content.forEach(function(FailSafeOrder o) {
+                csvFailSafeStreamIds.push(o.orderId);
+            });
+            csvFailSafeStreamDone = true;
+        }
+    };
+
+    ftp:Listener l = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        pollingInterval: 1,
+        csvFailSafe: {}
+    });
+    check l.attach(svc);
+    check l.'start();
+    runtime:registerListener(l);
+
+    string path = CSV_FAILSAFE_STREAM_DIR + "/orders.csv";
+    check contentFtpClient->putText(path, "orderId,product,quantity\nA,x,1\nB,y,notanint\nC,z,3\n");
+    boolean done = waitUntil(function() returns boolean { return csvFailSafeStreamDone; }, 15);
+
+    runtime:deregisterListener(l);
+    check l.gracefulStop();
+    check contentFtpClient->delete(path);
+    check contentFtpClient->rmdir(CSV_FAILSAFE_STREAM_DIR);
+
+    test:assertTrue(done, "The handler should read the whole stream");
+    test:assertEquals(csvFailSafeStreamIds, ["A", "C"], "The row that cannot be bound should be skipped");
+}

@@ -205,8 +205,8 @@ public final class FtpContentConverter {
      *
      * @return BMap containing parse options
      */
-    private static BMap<BString, Object> createCsvParseOptions(boolean laxDataBinding,
-                                                               BMap<?, ?> csvFailSafeConfigs, String fileNamePrefix) {
+    public static BMap<BString, Object> createCsvParseOptions(boolean laxDataBinding,
+                                                              BMap<?, ?> csvFailSafeConfigs, String fileNamePrefix) {
         BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
                 io.ballerina.lib.data.csvdata.utils.ModuleUtils.getModule(), "ParseOptions");
         if (csvFailSafeConfigs != null) {
