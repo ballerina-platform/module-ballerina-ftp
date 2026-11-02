@@ -200,7 +200,7 @@ public class FtpListenerHelper {
                 } catch (FtpInvalidConfigException e) {
                     return FtpUtil.createError(e.getMessage(), findRootCause(e), InvalidConfigError.errorType());
                 } catch (RemoteFileSystemConnectorException e) {
-                    return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
+                    return FtpUtil.createError(e);
                 }
             } else {
                 // First service has no @ServiceConfig - create legacy single-path connector
@@ -272,7 +272,7 @@ public class FtpListenerHelper {
                 } catch (FtpInvalidConfigException e) {
                     return FtpUtil.createError(e.getMessage(), findRootCause(e), InvalidConfigError.errorType());
                 } catch (RemoteFileSystemConnectorException e) {
-                    return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
+                    return FtpUtil.createError(e);
                 }
             }
         }

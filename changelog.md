@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - [[#2804] Shorten the module summary so it is not truncated in the WSO2 Integrator connector view](https://github.com/wso2/product-integrator/issues/2804)
+- [Fail with an `ftp:InvalidConfigError` when the `sftpSshKnownHosts` file is missing or cannot be loaded, instead of turning host key verification off](https://github.com/ballerina-platform/ballerina-library/issues/9421)
 
 ## [2.22.0] - 2026-10-08
 

@@ -20,6 +20,7 @@ package io.ballerina.stdlib.ftp.transport.server.util;
 
 import com.jcraft.jsch.JSch;
 import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
+import io.ballerina.stdlib.ftp.exception.FtpKnownHostsException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
 import io.ballerina.stdlib.ftp.transport.ftps.HostnameVerifyingFtpsConfigHelper;
 import io.ballerina.stdlib.ftp.util.ExcludeCoverageFromGeneratedReport;
@@ -425,16 +426,16 @@ public final class FileTransportUtils {
             String knownHostsPath = knownHostsObj.toString();
             String expandedPath = expandTildePath(knownHostsPath);
             File knownHostsFile = new File(expandedPath);
-            if (knownHostsFile.exists()) {
-                try {
-                    configBuilder.setKnownHosts(opts, knownHostsFile);
-                    configBuilder.setStrictHostKeyChecking(opts, "yes");
-                    log.debug("SFTP known_hosts configured from: {}", expandedPath);
-                } catch (FileSystemException e) {
-                    log.warn("Failed to set known_hosts file '{}': {}", expandedPath, e.getMessage());
-                }
-            } else {
-                log.warn("SFTP known_hosts file not found at: {}", expandedPath);
+            if (!knownHostsFile.isFile()) {
+                throw new FtpKnownHostsException("SFTP known_hosts file not found at: " + expandedPath);
+            }
+            try {
+                configBuilder.setKnownHosts(opts, knownHostsFile);
+                configBuilder.setStrictHostKeyChecking(opts, "yes");
+                log.debug("SFTP known_hosts configured from: {}", expandedPath);
+            } catch (FileSystemException e) {
+                throw new FtpKnownHostsException(
+                        "Failed to set SFTP known_hosts file '" + expandedPath + "': " + e.getMessage(), e);
             }
         }
 
