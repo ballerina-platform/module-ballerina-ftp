@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - [[#2804] Shorten the module summary so it is not truncated in the WSO2 Integrator connector view](https://github.com/wso2/product-integrator/issues/2804)
 
+### Fixed
+
+- [Report a deleted file once, however many polls listed it](https://github.com/ballerina-platform/ballerina-library/issues/9288)
+- [Report deletions when the watched directory becomes empty](https://github.com/ballerina-platform/ballerina-library/issues/9380)
+
 ## [2.22.0] - 2026-10-08
 
 ### Changed
