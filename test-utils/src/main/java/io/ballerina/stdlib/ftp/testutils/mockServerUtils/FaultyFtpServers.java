@@ -47,7 +47,7 @@ public final class FaultyFtpServers {
     /**
      * Starts a server that answers every login with 421 Too many connections.
      */
-    public static void startBusyServer() throws InterruptedException {
+    public static void startBusyServer() {
         busyServer = newServer(BUSY_FTP_PORT);
         busyServer.setCommandHandler(CommandNames.USER, new StaticReplyCommandHandler(421, "Too many connections"));
         start(busyServer, "busy");
@@ -56,7 +56,7 @@ public final class FaultyFtpServers {
     /**
      * Starts a server that accepts a login and then never replies to PASV or EPSV.
      */
-    public static void startHungServer() throws InterruptedException {
+    public static void startHungServer() {
         hungServer = newServer(HUNG_FTP_PORT);
         hungServer.setCommandHandler(CommandNames.PASV, (command, session) -> { });
         hungServer.setCommandHandler(CommandNames.EPSV, (command, session) -> { });
@@ -82,11 +82,16 @@ public final class FaultyFtpServers {
         return server;
     }
 
-    private static void start(FakeFtpServer server, String name) throws InterruptedException {
+    private static void start(FakeFtpServer server, String name) {
         server.start();
         int attempts = 0;
         while (!server.isStarted() && attempts < 10) {
-            TimeUnit.MILLISECONDS.sleep(500);
+            try {
+                TimeUnit.MILLISECONDS.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while starting the " + name + " mock FTP server", e);
+            }
             attempts++;
         }
         logger.info("Started {} mock FTP server", name);
