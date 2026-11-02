@@ -190,7 +190,7 @@ function testCircuitBreaker_InvalidFailureThresholdHigh() {
         auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
         circuitBreaker: {failureThreshold: 1.5, resetTime: 30}
     });
-    test:assertTrue(result is ftp:Error, "Client creation should fail when failureThreshold > 1.0");
+    test:assertTrue(result is ftp:InvalidConfigError, "Client creation should fail when failureThreshold > 1.0");
     if result is ftp:Error {
         test:assertTrue(result.message().includes("failureThreshold"),
             "Error message should mention failureThreshold");
@@ -208,7 +208,7 @@ function testCircuitBreaker_InvalidFailureThresholdLow() {
         auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
         circuitBreaker: {failureThreshold: -0.1, resetTime: 30}
     });
-    test:assertTrue(result is ftp:Error, "Client creation should fail when failureThreshold < 0.0");
+    test:assertTrue(result is ftp:InvalidConfigError, "Client creation should fail when failureThreshold < 0.0");
     if result is ftp:Error {
         test:assertTrue(result.message().includes("failureThreshold"),
             "Error message should mention failureThreshold");
@@ -226,7 +226,7 @@ function testCircuitBreaker_BucketSizeExceedsTimeWindow() {
         auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
         circuitBreaker: {rollingWindow: {timeWindow: 30, bucketSize: 60}}
     });
-    test:assertTrue(result is ftp:Error, "Client creation should fail when bucketSize > timeWindow");
+    test:assertTrue(result is ftp:InvalidConfigError, "Client creation should fail when bucketSize > timeWindow");
     if result is ftp:Error {
         test:assertTrue(result.message().includes("timeWindow") || result.message().includes("bucketSize"),
             "Error message should mention timeWindow or bucketSize");
@@ -246,7 +246,7 @@ function testCircuitBreaker_InvalidRequestVolumeThreshold() {
             rollingWindow: {requestVolumeThreshold: 0, timeWindow: 60, bucketSize: 10}
         }
     });
-    test:assertTrue(result is ftp:Error, "Client creation should fail when requestVolumeThreshold <= 0");
+    test:assertTrue(result is ftp:InvalidConfigError, "Client creation should fail when requestVolumeThreshold <= 0");
     if result is ftp:Error {
         test:assertTrue(result.message().includes("requestVolumeThreshold"),
             "Error message should mention requestVolumeThreshold");
@@ -267,7 +267,7 @@ function testCircuitBreaker_InvalidResetTime() {
             resetTime: 0
         }
     });
-    test:assertTrue(result is ftp:Error, "Client creation should fail when resetTime <= 0");
+    test:assertTrue(result is ftp:InvalidConfigError, "Client creation should fail when resetTime <= 0");
     if result is ftp:Error {
         test:assertTrue(result.message().includes("resetTime"),
             "Error message should mention resetTime");
@@ -290,7 +290,7 @@ function testCircuitBreaker_EmptyFailureCategories() {
             failureCategories: []
         }
     });
-    test:assertTrue(result is ftp:Error, "Client creation should fail when failureCategories is empty");
+    test:assertTrue(result is ftp:InvalidConfigError, "Client creation should fail when failureCategories is empty");
     if result is ftp:Error {
         test:assertTrue(result.message().includes("failureCategories"),
             "Error message should mention failureCategories");
@@ -310,7 +310,7 @@ function testCircuitBreaker_TimeWindowNotDivisibleByBucketSize() {
             rollingWindow: {requestVolumeThreshold: 1, timeWindow: 60, bucketSize: 11}
         }
     });
-    test:assertTrue(result is ftp:Error, "Client creation should fail when timeWindow is not divisible by bucketSize");
+    test:assertTrue(result is ftp:InvalidConfigError, "Client creation should fail when timeWindow is not divisible by bucketSize");
     if result is ftp:Error {
         test:assertTrue(result.message().includes("timeWindow") || result.message().includes("bucketSize"),
             "Error message should mention timeWindow or bucketSize");
@@ -701,5 +701,46 @@ function testCircuitBreaker_SelectiveCategory_AuthCategory_DoesNotTripOnFileErro
     test:assertFalse(r2 is ftp:CircuitBreakerOpenError,
         "Circuit should remain CLOSED: file errors are not auth errors");
 
+    check c->close();
+}
+
+@test:Config {
+    groups: ["ftp-client-behaviour", "circuit-breaker"]
+}
+function testCircuitBreaker_InvalidConfigRejectedBeforeConnecting() {
+    // Nothing listens on port 1, so an error from connecting would not be an InvalidConfigError.
+    ftp:Client|ftp:Error result = new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: 1,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        circuitBreaker: {rollingWindow: {timeWindow: 60, bucketSize: 7}}
+    });
+    test:assertTrue(result is ftp:InvalidConfigError,
+        "An invalid circuit breaker configuration should be rejected before connecting");
+}
+
+@test:Config {
+    groups: ["ftp-client-behaviour", "circuit-breaker"]
+}
+function testCircuitBreaker_FailureEndingInLaterBucketIsCounted() returns error? {
+    ftp:Client c = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        circuitBreaker: {
+            rollingWindow: {requestVolumeThreshold: 2, timeWindow: 10, bucketSize: 0.001},
+            failureThreshold: 0.4,
+            resetTime: 1,
+            failureCategories: [ftp:ALL_ERRORS]
+        }
+    });
+    check c->putText(commons:HOME_IN + "/beh-cb-bucket.txt", "here");
+    string|ftp:Error first = c->getText(commons:HOME_IN + "/beh-cb-bucket-missing.txt");
+    test:assertTrue(first is ftp:FileNotFoundError);
+    boolean|ftp:Error second = c->exists(commons:HOME_IN + "/beh-cb-bucket.txt");
+    test:assertTrue(second is ftp:CircuitBreakerOpenError,
+        "One failure in two requests should open a circuit with a 0.4 threshold");
     check c->close();
 }

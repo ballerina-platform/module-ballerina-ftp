@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - [[#2804] Shorten the module summary so it is not truncated in the WSO2 Integrator connector view](https://github.com/wso2/product-integrator/issues/2804)
 
+### Fixed
+
+- [Count a circuit breaker failure whose request ends in a later bucket](https://github.com/ballerina-platform/ballerina-library/issues/9423)
+- [Return an `ftp:InvalidConfigError` for an invalid circuit breaker configuration, before connecting](https://github.com/ballerina-platform/ballerina-library/issues/9466)
+
 ## [2.22.0] - 2026-10-08
 
 ### Changed

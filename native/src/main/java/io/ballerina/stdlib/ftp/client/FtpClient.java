@@ -383,17 +383,15 @@ public class FtpClient {
         ftpConfig.put(FtpConstants.URI, url);
         clientEndpoint.addNativeData(FtpConstants.PROPERTY_MAP, ftpConfig);
 
+        Object circuitBreakerError = initializeCircuitBreaker(clientEndpoint, config);
+        if (circuitBreakerError != null) {
+            return circuitBreakerError;
+        }
+
         RemoteFileSystemConnectorFactory fileSystemConnectorFactory = new RemoteFileSystemConnectorFactoryImpl();
         try {
             VfsClientConnector connector = fileSystemConnectorFactory.createVfsClientConnector(ftpConfig);
             clientEndpoint.addNativeData(VFS_CLIENT_CONNECTOR, connector);
-
-            // Initialize circuit breaker if configured
-            Object circuitBreakerError = initializeCircuitBreaker(clientEndpoint, config);
-            if (circuitBreakerError != null) {
-                return circuitBreakerError;
-            }
-
             return null;
         } catch (RemoteFileSystemConnectorException e) {
             String errorType = FtpUtil.getErrorTypeForException(e);
@@ -415,7 +413,7 @@ public class FtpClient {
             log.debug("Circuit breaker initialized for FTP client");
             return null;
         } catch (BallerinaFtpException e) {
-            return FtpUtil.createError(e.getMessage(), Error.errorType());
+            return FtpUtil.createError(e.getMessage(), InvalidConfigError.errorType());
         }
     }
 
