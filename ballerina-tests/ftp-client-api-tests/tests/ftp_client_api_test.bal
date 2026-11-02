@@ -774,6 +774,14 @@ function testExists_existingAndMissing() returns error? {
 @test:Config {
     groups: ["ftp-client-api", "file-ops"]
 }
+function testSizeAboveIntRange() returns error? {
+    int sz = check ftpClient->size("/home/large/big.bin");
+    test:assertEquals(sz, 3221225472, "size() should return the full size of a 3 GiB file");
+}
+
+@test:Config {
+    groups: ["ftp-client-api", "file-ops"]
+}
 function testSize() returns error? {
     string payload = "twelve chars"; // exactly 12 bytes in UTF-8
     check ftpClient->putText(P_SIZE_TEST, payload);
