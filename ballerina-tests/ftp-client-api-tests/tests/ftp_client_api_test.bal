@@ -1043,6 +1043,32 @@ function testPut_CompressedUpload_StoresZipFile() returns error? {
     check ftpClient->delete(P_PUT_COMPRESSED_ZIP);
 }
 
+@test:Config {
+    groups: ["ftp-client-api", "put"]
+}
+function testPut_CompressedUpload_NameWithoutExtension() returns error? {
+    check ftpClient->put("/home/in/api-compressed-noext", "compress me", compressionType = ftp:ZIP);
+
+    boolean exists = check ftpClient->exists("/home/in/api-compressed-noext.zip");
+    test:assertTrue(exists, "A file name without an extension should get .zip appended");
+
+    check ftpClient->delete("/home/in/api-compressed-noext.zip");
+}
+
+@test:Config {
+    groups: ["ftp-client-api", "put"]
+}
+function testPut_CompressedUpload_DotInDirectoryName() returns error? {
+    check ftpClient->mkdir("/home/in/api-v1.2");
+    check ftpClient->put("/home/in/api-v1.2/report", "compress me", compressionType = ftp:ZIP);
+
+    boolean exists = check ftpClient->exists("/home/in/api-v1.2/report.zip");
+    test:assertTrue(exists, "The archive should be named from the file name, not the directory name");
+
+    check ftpClient->delete("/home/in/api-v1.2/report.zip");
+    check ftpClient->rmdir("/home/in/api-v1.2");
+}
+
 // Returns true when 'result' is an ftp:Error whose message equals 'expected'.
 isolated function isClosedError(any|error result, string expected) returns boolean {
     if result is ftp:Error {
