@@ -2,5 +2,8 @@
 # `auth = authConfig` named argument of the ftp:Listener, which is public API). All actual
 # credential values (sftpUsername, sftpPassword, privateKeyPassword) are configurable with no
 # default, so no secret is assigned a fixed value. False positive.
+# TODO: replace this rule exclusion with a targeted scan suppression (with a reason) once `bal scan` supports it
+# (planned for v0.13.0), and fix the false positives on the scan tool side: a secret-named identifier should only be
+# reported when it is assigned a fixed value.
 [rule]
 exclude = ["ballerina:14"]
