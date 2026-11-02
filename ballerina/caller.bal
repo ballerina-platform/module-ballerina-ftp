@@ -277,7 +277,7 @@ public isolated client class Caller {
         return self.'client->mkdir(path);
     }
 
-    # Deletes an empty directory in an FTP server.
+    # Deletes a directory and everything inside it, recursively.
     # ```ballerina
     # ftp:Error? response = caller->rmdir(path);
     # ```
