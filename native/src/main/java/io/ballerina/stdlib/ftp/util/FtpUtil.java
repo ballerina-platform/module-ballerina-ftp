@@ -893,6 +893,14 @@ public class FtpUtil {
         }
     }
 
+    public static BError validatePort(long port) {
+        if (port < 1 || port > MAX_PORT) {
+            return createError("port must be between 1 and " + MAX_PORT + ", but was " + port + ".",
+                    ErrorType.InvalidConfigError.errorType());
+        }
+        return null;
+    }
+
     public static BError validateRetryConfig(long count, double interval, double backOffFactor,
                                              double maxWaitInterval) {
         if (count <= 0) {

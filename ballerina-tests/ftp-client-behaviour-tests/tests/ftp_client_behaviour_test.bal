@@ -703,3 +703,18 @@ function testCircuitBreaker_SelectiveCategory_AuthCategory_DoesNotTripOnFileErro
 
     check c->close();
 }
+
+@test:Config {
+    groups: ["ftp-client-behaviour", "config"]
+}
+function testClient_PortOutOfRangeRejected() {
+    foreach int port in [0, -1, 65536] {
+        ftp:Client|ftp:Error result = new ({
+            protocol: ftp:FTP,
+            host: commons:FTP_HOST,
+            port: port,
+            auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}}
+        });
+        test:assertTrue(result is ftp:InvalidConfigError, "Port " + port.toString() + " should be rejected");
+    }
+}
