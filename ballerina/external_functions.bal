@@ -122,7 +122,7 @@ isolated function register(Listener listenerEndpoint, Service ftpService) return
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
 } external;
 
-isolated function deregister(Listener listenerEndpoint, Service ftpService) returns Error? = @java:Method {
+isolated function deregister(Listener listenerEndpoint, Service ftpService) returns boolean|Error = @java:Method {
     name: "deregister",
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
 } external;

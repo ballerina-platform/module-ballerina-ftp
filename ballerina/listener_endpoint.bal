@@ -79,12 +79,10 @@ public isolated class Listener {
     # + name - Optional name for the service
     # + return - `()` or else an `error` upon failure to attach the service
     public isolated function attach(Service ftpService, string[]|string? name = ()) returns error? {
-        if name is string? {
-            return self.register(ftpService, name);
-        }
+        return register(self, ftpService);
     }
 
-    # Stops the FTP listener and detaches the service.
+    # Detaches the service from the listener. The other services keep polling.
     # ```ballerina
     # error? response = listener.detach(service1);
     # ```
@@ -92,8 +90,10 @@ public isolated class Listener {
     # + ftpService - Service to be detached from the listener
     # + return - `()` or else an `error` upon failure to detach the service
     public isolated function detach(Service ftpService) returns error? {
-        check self.stop();
-        return deregister(self, ftpService);
+        boolean noServicesLeft = check deregister(self, ftpService);
+        if noServicesLeft {
+            check self.stop();
+        }
     }
 
     # Stops the FTP listener immediately.

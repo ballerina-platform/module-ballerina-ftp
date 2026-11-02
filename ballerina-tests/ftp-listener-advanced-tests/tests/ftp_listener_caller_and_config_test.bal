@@ -826,3 +826,101 @@ function testServiceConfig_RecordDefaults() {
     test:assertEquals(minimal.fileDependencyConditions.length(), 0,
         "fileDependencyConditions should default to empty array");
 }
+
+// detach removes one service; the other keeps polling
+const SC_DETACH_KEEP = "/home/in/adv-sc-detach-keep";
+const SC_DETACH_GONE = "/home/in/adv-sc-detach-gone";
+int scDetachKeepCount = 0;
+int scDetachGoneCount = 0;
+
+@test:Config {
+    groups: ["ftp-listener-advanced", "service-config"]
+}
+function testServiceConfig_DetachOneServiceKeepsOthersPolling() returns error? {
+    scDetachKeepCount = 0;
+    scDetachGoneCount = 0;
+    check callerFtpClient->mkdir(SC_DETACH_KEEP);
+    check callerFtpClient->mkdir(SC_DETACH_GONE);
+
+    ftp:Service keep = @ftp:ServiceConfig {path: SC_DETACH_KEEP}
+    service object {
+        remote function onFileText(string content, ftp:FileInfo fileInfo) returns error? {
+            scDetachKeepCount += 1;
+        }
+    };
+    ftp:Service gone = @ftp:ServiceConfig {path: SC_DETACH_GONE}
+    service object {
+        remote function onFileText(string content, ftp:FileInfo fileInfo) returns error? {
+            scDetachGoneCount += 1;
+        }
+    };
+
+    ftp:Listener l = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        pollingInterval: 1
+    });
+    check l.attach(keep);
+    check l.attach(gone);
+    check l.'start();
+    runtime:registerListener(l);
+
+    check l.detach(gone);
+    check callerFtpClient->putText(SC_DETACH_KEEP + "/kept.txt", "k");
+    check callerFtpClient->putText(SC_DETACH_GONE + "/dropped.txt", "d");
+
+    boolean received = waitUntilCallerCond(function() returns boolean { return scDetachKeepCount > 0; }, 10);
+    runtime:sleep(2);
+
+    runtime:deregisterListener(l);
+    check l.gracefulStop();
+    check callerFtpClient->delete(SC_DETACH_KEEP + "/kept.txt");
+    check callerFtpClient->delete(SC_DETACH_GONE + "/dropped.txt");
+    check callerFtpClient->rmdir(SC_DETACH_KEEP);
+    check callerFtpClient->rmdir(SC_DETACH_GONE);
+
+    test:assertTrue(received, "The service still attached should keep receiving files");
+    test:assertEquals(scDetachGoneCount, 0, "The detached service should receive no files");
+}
+
+// attach accepts a string[] name
+const SC_ARRAY_NAME = "/home/in/adv-sc-array-name";
+boolean scArrayNameReceived = false;
+
+@test:Config {
+    groups: ["ftp-listener-advanced", "service-config"]
+}
+function testServiceConfig_AttachWithStringArrayName() returns error? {
+    scArrayNameReceived = false;
+    check callerFtpClient->mkdir(SC_ARRAY_NAME);
+
+    ftp:Service svc = @ftp:ServiceConfig {path: SC_ARRAY_NAME}
+    service object {
+        remote function onFileText(string content, ftp:FileInfo fileInfo) returns error? {
+            scArrayNameReceived = true;
+        }
+    };
+
+    ftp:Listener l = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        pollingInterval: 1
+    });
+    check l.attach(svc, ["array", "name"]);
+    check l.'start();
+    runtime:registerListener(l);
+
+    check callerFtpClient->putText(SC_ARRAY_NAME + "/a.txt", "a");
+    boolean received = waitUntilCallerCond(function() returns boolean { return scArrayNameReceived; }, 10);
+
+    runtime:deregisterListener(l);
+    check l.gracefulStop();
+    check callerFtpClient->delete(SC_ARRAY_NAME + "/a.txt");
+    check callerFtpClient->rmdir(SC_ARRAY_NAME);
+
+    test:assertTrue(received, "A service attached with a string[] name should receive files");
+}
