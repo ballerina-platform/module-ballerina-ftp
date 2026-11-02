@@ -680,3 +680,18 @@ function testImmediateStop_NoEventsAfterStop() returns error? {
 
     check ftpClient->delete(remotePath);
 }
+
+@test:Config {
+    groups: ["ftp-listener-basic", "config"]
+}
+function testListener_PortOutOfRangeRejected() {
+    foreach int port in [0, -1, 65536] {
+        ftp:Listener|ftp:Error result = new ({
+            protocol: ftp:FTP,
+            host: commons:FTP_HOST,
+            port: port,
+            auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}}
+        });
+        test:assertTrue(result is ftp:InvalidConfigError, "Port " + port.toString() + " should be rejected");
+    }
+}

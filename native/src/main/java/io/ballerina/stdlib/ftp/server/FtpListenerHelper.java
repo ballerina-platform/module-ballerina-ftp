@@ -101,6 +101,11 @@ public class FtpListenerHelper {
      * @param serviceEndpointConfig FTP server endpoint configuration
      */
     public static Object init(Environment env, BObject ftpListener, BMap<BString, Object> serviceEndpointConfig) {
+        BError portError = FtpUtil.validatePort(
+                serviceEndpointConfig.getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
+        if (portError != null) {
+            return portError;
+        }
         try {
             Map<String, Object> paramMap = getServerConnectorParamMap(serviceEndpointConfig);
             final FtpListener listener = new FtpListener(env);

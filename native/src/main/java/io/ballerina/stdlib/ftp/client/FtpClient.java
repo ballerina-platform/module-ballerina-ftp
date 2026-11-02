@@ -188,6 +188,11 @@ public class FtpClient {
     }
 
     public static Object initClientEndpoint(BObject clientEndpoint, BMap<Object, Object> config) {
+        BError portError = FtpUtil.validatePort(
+                config.getIntValue(StringUtils.fromString(FtpConstants.ENDPOINT_CONFIG_PORT)));
+        if (portError != null) {
+            return portError;
+        }
         String protocol = extractProtocol(config);
         BError basicConfigError = configureClientEndpointBasic(clientEndpoint, config, protocol);
         if (basicConfigError != null) {
