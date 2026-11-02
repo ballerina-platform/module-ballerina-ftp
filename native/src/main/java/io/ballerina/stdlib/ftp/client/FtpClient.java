@@ -896,7 +896,7 @@ public class FtpClient {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
                 getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_PUT, path.getValue());
         try {
-            InputStream stream = createInputStreamFromIterator(env, inputContent.getIteratorObj());
+            InputStream stream = createInputStreamFromIterator(env, inputContent.getIteratorObj(), false);
             RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
             return sendTraces(putGenericAction(env, clientConnector, path, options, message),
                     env, clientConnector);
@@ -910,7 +910,8 @@ public class FtpClient {
         FtpTracingUtil.sendMetricsData(env, getRemoteUrl(clientConnector),
                 getProtocol(clientConnector), FtpMetricsUtil.OPERATION_TYPE_PUT, path.getValue());
         try {
-            InputStream stream = createInputStreamFromIterator(env, inputContent.getIteratorObj());
+            InputStream stream = createInputStreamFromIterator(env, inputContent.getIteratorObj(),
+                    !options.getValue().equals(FtpConstants.WRITE_OPTION_APPEND));
             RemoteFileSystemMessage message = new RemoteFileSystemMessage(stream);
             return sendTraces(putGenericAction(env, clientConnector, path, options, message),
                     env, clientConnector);
@@ -922,8 +923,9 @@ public class FtpClient {
     /**
      * Creates an InputStream from a Ballerina iterator using SequenceInputStream.
      */
-    private static InputStream createInputStreamFromIterator(Environment environment, BObject iterator) {
-        IteratorToInputStream streamIterator = new IteratorToInputStream(environment, iterator);
+    private static InputStream createInputStreamFromIterator(Environment environment, BObject iterator,
+                                                             boolean addHeader) {
+        IteratorToInputStream streamIterator = new IteratorToInputStream(environment, iterator, addHeader);
         return new SequenceInputStream(asEnumeration(streamIterator));
     }
 
@@ -953,11 +955,12 @@ public class FtpClient {
         private final BObject iterator;
         private InputStream nextStream;
         private boolean hasChecked;
-        private boolean isFirstRow = true;
+        private boolean isFirstRow;
 
-        IteratorToInputStream(Environment env, BObject iterator) {
+        IteratorToInputStream(Environment env, BObject iterator, boolean addHeader) {
             this.env = env;
             this.iterator = iterator;
+            this.isFirstRow = addHeader;
         }
 
         @Override
