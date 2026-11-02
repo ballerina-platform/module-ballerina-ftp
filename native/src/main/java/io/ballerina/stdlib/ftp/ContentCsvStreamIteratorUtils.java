@@ -32,7 +32,6 @@ import org.apache.commons.vfs2.FileObject;
 
 import java.io.InputStream;
 
-import static io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils.maskUrlPassword;
 
 /**
  * Iterator utilities for streaming CSV content over an InputStream.
@@ -71,7 +70,7 @@ public class ContentCsvStreamIteratorUtils {
         if (fileObject == null) {
             return null;
         }
-        String filePath = maskUrlPassword(fileObject.getName().getURI());
+        String filePath = fileObject.getName().getPath();
         return filePath != null ? StringUtils.fromString(filePath) : null;
     }
 

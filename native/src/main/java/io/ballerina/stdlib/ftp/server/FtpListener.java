@@ -63,6 +63,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils.maskUrlPassword;
 import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
 import static io.ballerina.stdlib.ftp.observability.FtpMetricsUtil.CONTEXT_LISTENER;
@@ -476,7 +477,7 @@ public class FtpListener implements RemoteFileSystemListener {
         for (int i = 0; i < addedFileList.size(); i++) {
             FileInfo info = addedFileList.get(i);
             Map<String, Object> fileInfoParams = new HashMap<>();
-            fileInfoParams.put("path", info.getPath());
+            fileInfoParams.put("path", maskUrlPassword(info.getPath()));
             fileInfoParams.put("size", info.getFileSize());
             fileInfoParams.put("lastModifiedTimestamp", info.getLastModifiedTime());
             fileInfoParams.put("name", info.getFileName().getBaseName());
@@ -485,7 +486,7 @@ public class FtpListener implements RemoteFileSystemListener {
             try {
                 fileInfoParams.put("pathDecoded", info.getFileName().getPathDecoded());
             } catch (FileSystemException e) {
-                fileInfoParams.put("pathDecoded", info.getPath());
+                fileInfoParams.put("pathDecoded", info.getFileName().getPath());
             }
             fileInfoParams.put("extension", info.getFileName().getExtension());
             fileInfoParams.put("publicURIString", info.getPublicURIString());
@@ -498,8 +499,8 @@ public class FtpListener implements RemoteFileSystemListener {
             fileInfoParams.put("isWritable", info.isWritable());
             fileInfoParams.put("depth", info.getFileName().getDepth());
             fileInfoParams.put("scheme", info.getFileName().getScheme());
-            fileInfoParams.put("uri", info.getUrl().getPath());
-            fileInfoParams.put("rootURI", info.getFileName().getRootURI());
+            fileInfoParams.put("uri", maskUrlPassword(info.getFileName().getURI()));
+            fileInfoParams.put("rootURI", maskUrlPassword(info.getFileName().getRootURI()));
             fileInfoParams.put("friendlyURI", info.getFileName().getFriendlyURI());
 
             addedFilesParamsList.add(fileInfoParams);

@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils.maskUrlPassword;
 import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CSV_REMOTE_FUNCTION;
@@ -129,7 +130,7 @@ public class FtpContentCallbackHandler {
 
                 if (methodTypeOpt.isEmpty()) {
                     log.warn("No content handler method found for file: {}. Skipping content processing.",
-                            fileInfo.getPath());
+                            fileInfo.getFileName().getPath());
                     // Single increment for skipped file: file.stage=found, outcome=skipped
                     FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
                             FtpMetricsUtil.FILE_STAGE_FOUND, FtpMetricsUtil.OUTCOME_SKIPPED,
@@ -137,12 +138,14 @@ public class FtpContentCallbackHandler {
                     continue;
                 }
 
+                // The URI carries the credentials and is used only to read the file.
                 String fileUri = fileInfo.getPath();
+                String filePath = fileInfo.getFileName().getPath();
                 MethodType methodType = methodTypeOpt.get();
 
                 // Create per-file parent span covering the entire lifecycle
                 parentCtx = FtpTracingUtil.createFileLifecycleContext(
-                        listenerUrl, listenerProtocol, fileUri);
+                        listenerUrl, listenerProtocol, filePath);
 
                 // Stage 1: File found and matched to a handler
                 FtpMetricsUtil.reportFileStage(listenerUrl, listenerProtocol, listenerPath,
@@ -183,7 +186,7 @@ public class FtpContentCallbackHandler {
                         FtpMetricsUtil.EVENT_TYPE_CHANGE, FtpMetricsUtil.FILE_STAGE_HANDLED,
                         methodType.getName(), fileInfo.getFileSize(), fileInfo.getLastModifiedTime());
                 FtpTracingUtil.addFileMetadataToStrandProperties(strandProperties,
-                        fileInfo.getFileSize(), fileInfo.getLastModifiedTime(), fileUri);
+                        fileInfo.getFileSize(), fileInfo.getLastModifiedTime(), filePath);
                 // Wire handled span as a child of the per-file parent span
                 FtpTracingUtil.setParentContext(strandProperties, parentCtx);
 
@@ -194,7 +197,8 @@ public class FtpContentCallbackHandler {
                 parentCtx = null;
 
             } catch (Exception exception) {
-                FtpUtil.createError("Failed to process file: " + fileInfo.getPath() + " - " + exception.getMessage(),
+                FtpUtil.createError("Failed to process file: " + fileInfo.getFileName().getPath() + " - "
+                                + exception.getMessage(),
                         exception, FtpConstants.FTP_ERROR).printStackTrace();
                 FtpTracingUtil.finishFileLifecycleSpan(parentCtx);
                 // Continue processing other files even if one fails
@@ -264,6 +268,7 @@ public class FtpContentCallbackHandler {
         InputStream is = null;
         try {
             fo = fileSystemManager.resolveFile(fileUri, fileSystemOptions);
+            String filePath = fo.getName().getPath();
             is = fo.getContent().getInputStream();
             byte[] fileContent = FtpContentConverter.convertInputStreamToByteArray(is);
             // Report bytes transferred for listener content reads
@@ -273,13 +278,13 @@ public class FtpContentCallbackHandler {
                 case ON_FILE_REMOTE_FUNCTION -> convertToBallerinaByteArray(fileContent);
                 case ON_FILE_TEXT_REMOTE_FUNCTION -> convertBytesToString(fileContent);
                 case ON_FILE_JSON_REMOTE_FUNCTION -> convertBytesToJson(fileContent, firstParamType,
-                        laxDataBinding, fileUri);
+                        laxDataBinding, filePath);
                 case ON_FILE_XML_REMOTE_FUNCTION -> convertBytesToXml(fileContent, firstParamType,
-                        laxDataBinding, fileUri);
+                        laxDataBinding, filePath);
                 case ON_FILE_CSV_REMOTE_FUNCTION -> {
                     String fileNamePrefix = deriveFileNamePrefix(fo);
                     yield convertBytesToCsv(environment, fileContent, firstParamType,
-                            laxDataBinding, csvFailSafe, fileNamePrefix, fileUri);
+                            laxDataBinding, csvFailSafe, fileNamePrefix, filePath);
                 }
                 default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
             };
@@ -333,7 +338,7 @@ public class FtpContentCallbackHandler {
 
     private BMap<BString, Object> createFileInfoRecord(FileInfo fileInfo) {
         Map<String, Object> fileInfoParams = new HashMap<>();
-        fileInfoParams.put("path", fileInfo.getPath());
+        fileInfoParams.put("path", maskUrlPassword(fileInfo.getPath()));
         fileInfoParams.put("size", fileInfo.getFileSize());
         fileInfoParams.put("lastModifiedTimestamp", fileInfo.getLastModifiedTime());
         fileInfoParams.put("name", fileInfo.getFileName().getBaseName());
@@ -343,7 +348,7 @@ public class FtpContentCallbackHandler {
         try {
             fileInfoParams.put("pathDecoded", fileInfo.getFileName().getPathDecoded());
         } catch (Exception e) {
-            fileInfoParams.put("pathDecoded", fileInfo.getPath());
+            fileInfoParams.put("pathDecoded", fileInfo.getFileName().getPath());
         }
 
         fileInfoParams.put("extension", fileInfo.getFileName().getExtension());
@@ -357,8 +362,8 @@ public class FtpContentCallbackHandler {
         fileInfoParams.put("isWritable", fileInfo.isWritable());
         fileInfoParams.put("depth", fileInfo.getFileName().getDepth());
         fileInfoParams.put("scheme", fileInfo.getFileName().getScheme());
-        fileInfoParams.put("uri", fileInfo.getUrl().getPath());
-        fileInfoParams.put("rootURI", fileInfo.getFileName().getRootURI());
+        fileInfoParams.put("uri", maskUrlPassword(fileInfo.getFileName().getURI()));
+        fileInfoParams.put("rootURI", maskUrlPassword(fileInfo.getFileName().getRootURI()));
         fileInfoParams.put("friendlyURI", fileInfo.getFileName().getFriendlyURI());
 
         return ValueCreator.createRecordValue(
@@ -400,7 +405,7 @@ public class FtpContentCallbackHandler {
         String errorType = error.getType() != null ? error.getType().getName() : FtpMetricsUtil.UNKNOWN;
         Map<String, Object> strandProperties = FtpTracingUtil.createErrorStrandProperties(
                 FtpMetricsUtil.CONTEXT_LISTENER, listenerUrl, listenerProtocol,
-                fileInfo.getPath(), errorType);
+                fileInfo.getFileName().getPath(), errorType);
         // Tag with failure outcome; preserve the real error.type from createErrorStrandProperties
         FtpTracingUtil.addOutcomeToStrandProperties(strandProperties,
                 FtpMetricsUtil.OUTCOME_FAILURE, null);

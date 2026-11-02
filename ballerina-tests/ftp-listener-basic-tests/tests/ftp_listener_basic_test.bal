@@ -444,13 +444,8 @@ function testFileInfo_AllFields() returns error? {
         int port = commons:ANON_FTP_PORT;
         string user = commons:ANON_USERNAME;
 
-        // path, uri and rootURI embed credentials via Apache VFS. Assert
-        // structurally (scheme/host/port/path components) rather than with
-        // full equality so a future masking fix for these fields would not
-        // break the test, and so the suite does not hard-code the raw password.
-        test:assertTrue(fi.path.startsWith(string `ftp://${user}:`) &&
-                fi.path.endsWith(string `@${host}:${port}/home/in/test1.txt`),
-            "FileInfo.path should start with ftp://${user}: and end with the remote path; got: " + fi.path);
+        test:assertEquals(fi.path, string `ftp://${user}:***@${host}:${port}/home/in/test1.txt`,
+            "FileInfo.path should mask the password");
         test:assertEquals(fi.size, 12, "FileInfo.size should be 12 bytes");
         test:assertTrue(fi.lastModifiedTimestamp > 0, "FileInfo.lastModifiedTimestamp should be positive");
         test:assertEquals(fi.name, "test1.txt", "FileInfo.name mismatch");
@@ -470,12 +465,10 @@ function testFileInfo_AllFields() returns error? {
         test:assertEquals(fi.isWritable, true, "FileInfo.isWritable should be true");
         test:assertEquals(fi.depth, 4, "FileInfo.depth should be 4");
         test:assertEquals(fi.scheme, "ftp", "FileInfo.scheme should be 'ftp'");
-        test:assertTrue(fi.uri.startsWith(string `//${user}:`) &&
-                fi.uri.endsWith(string `@${host}:${port}/home/in/test1.txt`),
-            "FileInfo.uri should start with //${user}: and end with the remote path; got: " + fi.uri);
-        test:assertTrue(fi.rootURI.startsWith(string `ftp://${user}:`) &&
-                fi.rootURI.endsWith(string `@${host}:${port}/`),
-            "FileInfo.rootURI should start with ftp://${user}: and end with host:port/; got: " + fi.rootURI);
+        test:assertEquals(fi.uri, string `ftp://${user}:***@${host}:${port}/home/in/test1.txt`,
+            "FileInfo.uri should mask the password");
+        test:assertEquals(fi.rootURI, string `ftp://${user}:***@${host}:${port}/`,
+            "FileInfo.rootURI should mask the password");
         test:assertEquals(fi.friendlyURI,
             string `ftp://${user}:***@${host}:${port}/home/in/test1.txt`,
             "FileInfo.friendlyURI mismatch");

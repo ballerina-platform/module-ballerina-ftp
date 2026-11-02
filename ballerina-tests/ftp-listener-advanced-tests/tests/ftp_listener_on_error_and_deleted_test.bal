@@ -116,7 +116,8 @@ function testOnError_Basic() returns error? {
 
     test:assertTrue(received, "onError should be invoked when binding fails");
     test:assertTrue(lastBindingError is ftp:ContentBindingError, "Error should be ContentBindingError");
-    test:assertTrue(lastErrorFilePath.endsWith(".json"), "Error filePath should reference the .json file");
+    test:assertEquals(lastErrorFilePath, ON_ERROR_DIR + "/onerr-basic.json",
+        "Error filePath should be the server path, with no credentials");
 
     check errorDeleteFtpClient->delete(ON_ERROR_DIR + "/onerr-basic.json");
 }
@@ -569,7 +570,9 @@ function testOnFileDelete_DirectoryBecomesEmpty() returns error? {
     check errorDeleteFtpClient->rmdir(ON_DELETED_EMPTY_DIR);
 
     test:assertTrue(received, "onFileDelete should fire when the watched directory becomes empty");
-    test:assertTrue(onDeleteEmptyDirPaths[0].endsWith("/only.txt"));
+    test:assertEquals(onDeleteEmptyDirPaths[0],
+        string `ftp://${commons:FTP_USERNAME}:***@${commons:FTP_HOST}:${commons:AUTH_FTP_PORT}${p}`,
+        "onFileDelete should get the file URI with the password masked");
 }
 
 // A deletion is reported when another file arrives in the same poll

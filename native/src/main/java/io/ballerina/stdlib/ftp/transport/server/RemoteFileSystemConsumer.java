@@ -191,7 +191,7 @@ public class RemoteFileSystemConsumer {
                     while (it.hasNext()) {
                         String fileName = it.next();
                         if (!current.contains(fileName)) {
-                            deleted.add(fileName);
+                            deleted.add(FileTransportUtils.maskUrlPassword(fileName));
                             it.remove();
                         }
                     }

@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - [Report a deleted file once, however many polls listed it](https://github.com/ballerina-platform/ballerina-library/issues/9288)
 - [Report deletions when the watched directory becomes empty](https://github.com/ballerina-platform/ballerina-library/issues/9380)
+- [Mask the password in the file URI given to `onFileDelete` and `onFileDeleted`](https://github.com/ballerina-platform/ballerina-library/issues/9286)
+- [Mask the password in `FileInfo` and in `ContentBindingError` file paths](https://github.com/ballerina-platform/ballerina-library/issues/9381)
 
 ## [2.22.0] - 2026-10-08
 

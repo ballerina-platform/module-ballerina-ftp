@@ -59,6 +59,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import static io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils.maskUrlPassword;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ARRAY_SIZE;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.BYTE_STREAM_CLOSE_FUNC;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.BYTE_STREAM_NEXT_FUNC;
@@ -209,8 +210,8 @@ class FtpClientHelper {
                 fileInfoParams.put("isWritable", fileInfo.isWritable());
                 fileInfoParams.put("depth", fileInfo.getFileName().getDepth());
                 fileInfoParams.put("scheme", fileInfo.getFileName().getScheme());
-                fileInfoParams.put("uri", fileInfo.getFileName().getURI());
-                fileInfoParams.put("rootURI", fileInfo.getFileName().getRootURI());
+                fileInfoParams.put("uri", maskUrlPassword(fileInfo.getFileName().getURI()));
+                fileInfoParams.put("rootURI", maskUrlPassword(fileInfo.getFileName().getRootURI()));
                 fileInfoParams.put("friendlyURI", fileInfo.getFileName().getFriendlyURI());
                 try {
                     fileInfoParams.put("pathDecoded", fileInfo.getFileName().getPathDecoded());
