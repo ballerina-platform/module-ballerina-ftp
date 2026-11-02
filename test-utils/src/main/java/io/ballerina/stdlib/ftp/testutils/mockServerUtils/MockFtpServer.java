@@ -57,6 +57,7 @@ public final class MockFtpServer {
     public static final int FTPS_EXPLICIT_PORT = 21214;
     public static final int FTPS_IMPLICIT_PORT = 21217;
     public static final int FTPS_MISMATCHED_PORT = 21220;
+    public static final long LARGE_FILE_SIZE = 3221225472L;
 
     private static final Logger logger = LoggerFactory.getLogger("ballerina");
     private static FakeFtpServer anonFtpServer;
@@ -118,6 +119,14 @@ public final class MockFtpServer {
         fileSystem.add(new FileEntry("/home/in/test2.txt", content1));
         fileSystem.add(new FileEntry("/home/in/test3.txt", content1));
         fileSystem.add(new FileEntry("/home/in/test4.txt", content2));
+        // Reports a 3 GiB size without holding the content, for size tests above the int range
+        fileSystem.add(new DirectoryEntry("/home/large"));
+        fileSystem.add(new FileEntry("/home/large/big.bin") {
+            @Override
+            public long getSize() {
+                return LARGE_FILE_SIZE;
+            }
+        });
 
         // ftp-listener-advanced-tests: content methods & post-processing
         fileSystem.add(new DirectoryEntry("/home/in/adv-content"));

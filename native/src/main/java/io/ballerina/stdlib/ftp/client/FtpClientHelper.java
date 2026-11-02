@@ -232,7 +232,7 @@ class FtpClientHelper {
                                      CompletableFuture<Object> balFuture) {
         if (remoteFileSystemBaseMessage instanceof RemoteFileSystemMessage) {
             RemoteFileSystemMessage message = (RemoteFileSystemMessage) remoteFileSystemBaseMessage;
-            balFuture.complete((int) message.getSize());
+            balFuture.complete(message.getSize());
         }
         return true;
     }
