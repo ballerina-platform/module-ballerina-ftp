@@ -36,6 +36,9 @@ import io.ballerina.stdlib.ftp.exception.BallerinaFtpException;
 import io.ballerina.stdlib.ftp.exception.ErrorTypeProvider;
 import io.ballerina.stdlib.ftp.exception.FtpInvalidConfigException;
 import io.ballerina.stdlib.ftp.exception.RemoteFileSystemConnectorException;
+import io.ballerina.stdlib.ftp.transport.message.FileInfo;
+import org.apache.commons.vfs2.FileName;
+import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -565,6 +568,53 @@ public class FtpUtil {
                     Integer.MAX_VALUE, Integer.MAX_VALUE);
             return Integer.MAX_VALUE;
         }
+    }
+
+    /**
+     * Gives the path of a file as it is on the server, falling back to the escaped path if it cannot be decoded.
+     *
+     * @param fileName the VFS file name
+     * @return the path to pass to client and caller operations
+     */
+    public static String decodedPath(FileName fileName) {
+        try {
+            return fileName.getPathDecoded();
+        } catch (FileSystemException e) {
+            return fileName.getPath();
+        }
+    }
+
+    /**
+     * Gives the field values of a {@code ftp:FileInfo} record. The password is masked in every URI.
+     *
+     * @param info the file information
+     * @return the record fields, by name
+     */
+    public static Map<String, Object> createFileInfoParams(FileInfo info) {
+        FileName name = info.getFileName();
+        Map<String, Object> params = new HashMap<>();
+        params.put("path", maskUrlPassword(info.getPath()));
+        params.put("size", info.getFileSize());
+        params.put("lastModifiedTimestamp", info.getLastModifiedTime());
+        params.put("name", name.getBaseName());
+        params.put("isFolder", info.isFolder());
+        params.put("isFile", info.isFile());
+        params.put("pathDecoded", decodedPath(name));
+        params.put("extension", name.getExtension());
+        params.put("publicURIString", info.getPublicURIString());
+        params.put("fileType", info.getFileType().getName());
+        params.put("isAttached", info.isAttached());
+        params.put("isContentOpen", info.isContentOpen());
+        params.put("isExecutable", info.isExecutable());
+        params.put("isHidden", info.isHidden());
+        params.put("isReadable", info.isReadable());
+        params.put("isWritable", info.isWritable());
+        params.put("depth", name.getDepth());
+        params.put("scheme", name.getScheme());
+        params.put("uri", maskUrlPassword(name.getURI()));
+        params.put("rootURI", maskUrlPassword(name.getRootURI()));
+        params.put("friendlyURI", name.getFriendlyURI());
+        return params;
     }
 
     /**

@@ -53,12 +53,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static io.ballerina.stdlib.ftp.transport.server.util.FileTransportUtils.maskUrlPassword;
 import static io.ballerina.runtime.api.types.TypeTags.OBJECT_TYPE_TAG;
 import static io.ballerina.runtime.api.types.TypeTags.RECORD_TYPE_TAG;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.ON_FILE_CSV_REMOTE_FUNCTION;
@@ -140,7 +138,7 @@ public class FtpContentCallbackHandler {
 
                 // The URI carries the credentials and is used only to read the file.
                 String fileUri = fileInfo.getPath();
-                String filePath = fileInfo.getFileName().getPath();
+                String filePath = FtpUtil.decodedPath(fileInfo.getFileName());
                 MethodType methodType = methodTypeOpt.get();
 
                 // Create per-file parent span covering the entire lifecycle
@@ -268,7 +266,7 @@ public class FtpContentCallbackHandler {
         InputStream is = null;
         try {
             fo = fileSystemManager.resolveFile(fileUri, fileSystemOptions);
-            String filePath = fo.getName().getPath();
+            String filePath = FtpUtil.decodedPath(fo.getName());
             is = fo.getContent().getInputStream();
             byte[] fileContent = FtpContentConverter.convertInputStreamToByteArray(is);
             // Report bytes transferred for listener content reads
@@ -337,34 +335,7 @@ public class FtpContentCallbackHandler {
     }
 
     private BMap<BString, Object> createFileInfoRecord(FileInfo fileInfo) {
-        Map<String, Object> fileInfoParams = new HashMap<>();
-        fileInfoParams.put("path", maskUrlPassword(fileInfo.getPath()));
-        fileInfoParams.put("size", fileInfo.getFileSize());
-        fileInfoParams.put("lastModifiedTimestamp", fileInfo.getLastModifiedTime());
-        fileInfoParams.put("name", fileInfo.getFileName().getBaseName());
-        fileInfoParams.put("isFolder", fileInfo.isFolder());
-        fileInfoParams.put("isFile", fileInfo.isFile());
-
-        try {
-            fileInfoParams.put("pathDecoded", fileInfo.getFileName().getPathDecoded());
-        } catch (Exception e) {
-            fileInfoParams.put("pathDecoded", fileInfo.getFileName().getPath());
-        }
-
-        fileInfoParams.put("extension", fileInfo.getFileName().getExtension());
-        fileInfoParams.put("publicURIString", fileInfo.getPublicURIString());
-        fileInfoParams.put("fileType", fileInfo.getFileType().getName());
-        fileInfoParams.put("isAttached", fileInfo.isAttached());
-        fileInfoParams.put("isContentOpen", fileInfo.isContentOpen());
-        fileInfoParams.put("isExecutable", fileInfo.isExecutable());
-        fileInfoParams.put("isHidden", fileInfo.isHidden());
-        fileInfoParams.put("isReadable", fileInfo.isReadable());
-        fileInfoParams.put("isWritable", fileInfo.isWritable());
-        fileInfoParams.put("depth", fileInfo.getFileName().getDepth());
-        fileInfoParams.put("scheme", fileInfo.getFileName().getScheme());
-        fileInfoParams.put("uri", maskUrlPassword(fileInfo.getFileName().getURI()));
-        fileInfoParams.put("rootURI", maskUrlPassword(fileInfo.getFileName().getRootURI()));
-        fileInfoParams.put("friendlyURI", fileInfo.getFileName().getFriendlyURI());
+        Map<String, Object> fileInfoParams = FtpUtil.createFileInfoParams(fileInfo);
 
         return ValueCreator.createRecordValue(
                 new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,

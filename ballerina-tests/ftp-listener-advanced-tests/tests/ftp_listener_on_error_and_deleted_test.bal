@@ -612,3 +612,39 @@ function testOnFileDelete_AddedInSamePoll() returns error? {
     test:assertTrue(received, "onFileDelete should fire when a file is replaced by another in one poll");
     test:assertTrue(onDeleteSwapPaths[0].endsWith("/del-swap-a.deleted8"));
 }
+
+// ContentBindingError.filePath is the actual server path, so a name containing '%' stays usable by the caller
+string lastPercentErrorFilePath = "";
+
+@test:Config {
+    groups: ["ftp-listener-advanced", "on-error"],
+    dependsOn: [testOnError_Basic]
+}
+function testOnError_FilePathKeepsPercentInName() returns error? {
+    lastPercentErrorFilePath = "";
+    // The mock server seeds this file; a client upload would decode %41 in the name.
+    string path = ON_ERROR_DIR + "/onerr-pct%41.json";
+
+    ftp:Service svc = service object {
+        remote function onFileJson(StrictPerson content) returns error? {}
+
+        remote function onError(ftp:Error err) returns error? {
+            if err is ftp:ContentBindingError {
+                lastPercentErrorFilePath = err.detail().filePath ?: "";
+            }
+        }
+    };
+
+    ftp:Listener l = check new (errDelListenerConfig(ON_ERROR_DIR, "onerr-pct.*\\.json"));
+    check l.attach(svc);
+    check l.'start();
+    runtime:registerListener(l);
+
+    boolean received = waitUntilBool(function() returns boolean { return lastPercentErrorFilePath != ""; }, 30);
+
+    runtime:deregisterListener(l);
+    check l.gracefulStop();
+
+    test:assertTrue(received, "onError should be invoked when binding fails");
+    test:assertEquals(lastPercentErrorFilePath, path, "filePath should be the server path as it is stored");
+}
