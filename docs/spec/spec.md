@@ -622,7 +622,7 @@ public type ListenerConfiguration record {|
 |};
 ```
 
-`pollingInterval` is the number of seconds between polls. On each cycle the listener polls the watched directory of every attached service, and reports every file that passes the filters, whether or not an earlier cycle reported it. A file is therefore picked up on every poll until it is moved or deleted, which is what the post-processing actions of [Section 4.6](#46-post-processing-actions) are for. A path present in the previous cycle and gone from this one is a deleted file.
+`pollingInterval` is the number of seconds between polls. On each cycle the listener polls the watched directory of every attached service, and reports every file that passes the filters, even if an earlier cycle reported it. A file is therefore picked up on every poll until it is moved or deleted, which is what the post-processing actions of [Section 4.6](#46-post-processing-actions) are for. A path present in the previous cycle and gone from this one is a deleted file.
 
 The four monitoring fields — `path`, `fileNamePattern`, `fileAgeFilter`, and `fileDependencyConditions` — are deprecated at this level. They belong on `@ftp:ServiceConfig`, which is what [Section 4.2](#42-service) covers.
 
@@ -639,7 +639,7 @@ listener ftp:Listener ftpListener = check new ({
 });
 ```
 
-`start`, `attach`, `detach`, `gracefulStop`, and `immediateStop` return a plain `error?`. `attach` connects to the server and validates the service's configuration, so a duplicate path, a bad regular expression, an inconsistent age filter, or an empty `moveTo` fails at `attach`, with an `ftp:InvalidConfigError`. The `name` argument of `attach`, a `string` or `string[]`, does not affect how files are dispatched. `detach` removes one service; the others on the listener keep polling.
+`start`, `attach`, `detach`, `gracefulStop`, and `immediateStop` return a plain `error?`. `attach` connects to the server and validates the service's configuration, so a duplicate path, a bad regular expression, an inconsistent age filter in `@ftp:ServiceConfig`, or an empty `moveTo` fails at `attach`, with an `ftp:InvalidConfigError`. The deprecated listener-level `fileAgeFilter` is validated when the listener is created. The `name` argument of `attach`, a `string` or `string[]`, does not affect how files are dispatched. `detach` removes one service; the others on the listener keep polling.
 
 ### 4.2 Service
 
@@ -752,7 +752,7 @@ public enum AgeCalculationMode {
 }
 ```
 
-Both bounds are in seconds and inclusive, and either may be set alone. `minAge` is what keeps a file still being written by an upstream process from being picked up half-finished. `ageCalculationMode` chooses the timestamp the age is measured from; `CREATION_TIME` needs a server that reports one. A negative bound, or a `minAge` above `maxAge`, fails at `attach` with an `ftp:InvalidConfigError`.
+Both bounds are in seconds and inclusive, and either may be set alone. `minAge` is what keeps a file still being written by an upstream process from being picked up half-finished. `ageCalculationMode` chooses the timestamp the age is measured from; `CREATION_TIME` needs a server that reports one. A negative bound, or a `minAge` above `maxAge`, fails with an `ftp:InvalidConfigError`: at `attach` for `@ftp:ServiceConfig`, and when the listener is created for the deprecated listener-level `fileAgeFilter`.
 
 `fileDependencyConditions` holds a file back until the files it belongs with have arrived too.
 
