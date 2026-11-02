@@ -66,6 +66,7 @@ public class RemoteFileSystemConsumer {
     private final Set<String> processed = new LinkedHashSet<>();
     private Set<String> current;
     private List<FileInfo> addedFileInfo;
+    private boolean listingIncomplete;
 
     // Advanced file selection fields
     private double minAge = -1; // in seconds, -1 means disabled
@@ -169,6 +170,7 @@ public class RemoteFileSystemConsumer {
             if (isFileExists && isFileReadable) {
                 current = new HashSet<>();
                 addedFileInfo = new ArrayList<>();
+                listingIncomplete = false;
                 FileObject[] children;
                 try {
                     children = listeningDir.getChildren();
@@ -183,12 +185,15 @@ public class RemoteFileSystemConsumer {
                     handleDirectory(children);
                 }
                 List<String> deleted = new ArrayList<>();
-                final Iterator<String> it = processed.iterator();
-                while (it.hasNext()) {
-                    String fileName = it.next();
-                    if (!current.contains(fileName)) {
-                        deleted.add(fileName);
-                        it.remove();
+                // A folder that could not be listed leaves its files out of current, so they would look deleted.
+                if (!listingIncomplete) {
+                    final Iterator<String> it = processed.iterator();
+                    while (it.hasNext()) {
+                        String fileName = it.next();
+                        if (!current.contains(fileName)) {
+                            deleted.add(fileName);
+                            it.remove();
+                        }
                     }
                 }
                 try {
@@ -278,6 +283,7 @@ public class RemoteFileSystemConsumer {
                     try {
                         childFileObject = child.getChildren();
                     } catch (FileSystemException ignored) {
+                        listingIncomplete = true;
                         logDebugErrorWhileGetChildrenInDirHandler(ignored);
                     }
                     if (childFileObject == null || childFileObject.length == 0) {
