@@ -640,3 +640,39 @@ function testSftpListener_DetectsNewFile() returns error? {
     test:assertTrue(received,
             "SFTP listener (with privateKey auth) should detect a newly uploaded file");
 }
+
+@test:Config {
+    groups: ["sftp-connection", "host-key"]
+}
+function testSftpClient_MissingKnownHostsFileRejected() {
+    ftp:Client|ftp:Error result = new ({
+        protocol: ftp:SFTP,
+        host: commons:FTP_HOST,
+        port: commons:SFTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        sftpSshKnownHosts: "/no/such/known_hosts"
+    });
+    test:assertTrue(result is ftp:InvalidConfigError,
+        "A missing known_hosts file should fail client initialization, not disable host key checking");
+}
+
+@test:Config {
+    groups: ["sftp-connection", "host-key"]
+}
+function testSftpListener_MissingKnownHostsFileRejected() returns error? {
+    ftp:Listener l = check new ({
+        protocol: ftp:SFTP,
+        host: commons:FTP_HOST,
+        port: commons:SFTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        sftpSshKnownHosts: "/no/such/known_hosts",
+        pollingInterval: 1
+    });
+    ftp:Service svc = @ftp:ServiceConfig {path: "/in"}
+    service object {
+        remote function onFileText(string content) {}
+    };
+    error? result = l.attach(svc);
+    test:assertTrue(result is ftp:InvalidConfigError,
+        "A missing known_hosts file should fail attach, not disable host key checking");
+}

@@ -158,7 +158,7 @@ ftp:Client sftpClient = check new ({
 
 ### 2.3 SFTP Host Key Verification
 
-**Host key verification is off unless `sftpSshKnownHosts` names an existing file.** With such a file, strict host key checking is enabled against it, and a server whose key is not listed is refused. Without it — the default — the server key is accepted unseen, and a man-in-the-middle is not detected.
+**Host key verification is off unless `sftpSshKnownHosts` is set.** When it is set, strict host key checking is enabled against that file, and a server whose key is not listed is refused. Without it — the default — the server key is accepted unseen, and a man-in-the-middle is not detected.
 
 ```ballerina
 ftp:Client sftpClient = check new ({
@@ -170,7 +170,7 @@ ftp:Client sftpClient = check new ({
 });
 ```
 
-A `~` at the start of the path is expanded to the home directory of the user running the program. **A path that does not exist is a warning in the log, not an error.** The connection then proceeds with verification off, so a typo in this path silently removes the protection it was added for.
+A `~` at the start of the path is expanded to the home directory of the user running the program. A path that does not exist, or a file that cannot be loaded, fails client initialization or `attach` with an `ftp:InvalidConfigError`, so a typo never turns verification off.
 
 ### 2.4 FTPS Transport Security
 
