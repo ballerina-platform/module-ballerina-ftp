@@ -162,8 +162,7 @@ public final class FailureCategorizer {
 
         // Connection errors - network/connectivity issues
         if (lower.contains("connection refused") ||
-                lower.contains("connection timed out") ||
-                lower.contains("connect timed out") ||
+                lower.contains("timed out") ||
                 lower.contains("network is unreachable") ||
                 lower.contains("no route to host") ||
                 lower.contains("host is unreachable") ||

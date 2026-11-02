@@ -38,6 +38,8 @@ public final class StartServer {
             MockFtpServer.startFtpsServerExplicit(args[0]);
             MockFtpServer.startFtpsServerImplicit(args[0]);
             MockFtpServer.startFtpsServerMismatched(args[0], MockFtpServer.FTPS_MISMATCHED_PORT);
+            FaultyFtpServers.startBusyServer();
+            FaultyFtpServers.startHungServer();
         } catch (Exception ex) {
             logger.error(ex.getMessage());
             System.exit(1);

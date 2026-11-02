@@ -20,6 +20,8 @@ package io.ballerina.stdlib.ftp.client;
 
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BObject;
+import io.ballerina.stdlib.ftp.client.circuitbreaker.FailureCategorizer;
+import io.ballerina.stdlib.ftp.client.circuitbreaker.FailureCategory;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import org.slf4j.Logger;
@@ -53,9 +55,8 @@ public final class FtpRetryHelper {
             return result;
         }
 
-        // Circuit breaker open error should fail fast without retries
         BError initialError = (BError) result;
-        if (isCircuitBreakerOpenError(initialError)) {
+        if (!isRetryable(initialError)) {
             return initialError;
         }
 
@@ -108,9 +109,7 @@ public final class FtpRetryHelper {
             }
 
             lastError = (BError) result;
-
-            // Circuit breaker open error should fail fast without further retries
-            if (isCircuitBreakerOpenError(lastError)) {
+            if (!isRetryable(lastError)) {
                 return lastError;
             }
         }
@@ -122,9 +121,22 @@ public final class FtpRetryHelper {
                 " retry attempts: " + lastError.getMessage(), lastError, AllRetryAttemptsFailedError.errorType());
     }
 
-    private static boolean isCircuitBreakerOpenError(BError error) {
+    static boolean isRetryable(BError error) {
         String typeName = error.getType().getName();
-        return FtpConstants.CIRCUIT_BREAKER_OPEN_ERROR.equals(typeName);
+        if (FtpUtil.ErrorType.ServiceUnavailableError.errorType().equals(typeName)) {
+            return true;
+        }
+        if (!FtpUtil.ErrorType.ConnectionError.errorType().equals(typeName)
+                && !FtpUtil.ErrorType.Error.errorType().equals(typeName)) {
+            // CircuitBreakerOpenError, FileNotFoundError, ContentBindingError, and the other specific types
+            // fail the same way on every attempt.
+            return false;
+        }
+        FailureCategory category = FailureCategorizer.categorize(error);
+        if (category == FailureCategory.CONNECTION_ERROR || category == FailureCategory.TRANSIENT_ERROR) {
+            return true;
+        }
+        return category == null && FtpUtil.ErrorType.ConnectionError.errorType().equals(typeName);
     }
 
     private static double getWaitTime(double backOffFactor, double maxWaitTime, double interval) {
@@ -152,7 +164,7 @@ public final class FtpRetryHelper {
             return result;
         }
 
-        if (!retryEnabled) {
+        if (!retryEnabled || !isRetryable(lastError)) {
             return result;
         }
         double currentInterval = interval;
@@ -191,6 +203,9 @@ public final class FtpRetryHelper {
             }
 
             lastError = (BError) result;
+            if (!isRetryable(lastError)) {
+                return lastError;
+            }
         }
 
         log.debug("Operation '{}' failed after {} retry attempts for path '{}'",

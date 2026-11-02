@@ -50,9 +50,10 @@ import java.util.regex.Pattern;
  */
 public final class FtpErrorCodeAnalyzer {
 
-    // Pattern to match FTP response codes (3-digit numbers typically at start of message or after specific text)
-    // Matches patterns like "421 Service not available", "response code: 550", etc.
-    private static final Pattern FTP_CODE_PATTERN = Pattern.compile("\\b([1-5]\\d{2})\\b");
+    // A 4xx or 5xx reply code standing alone, as in "421 Too many connections" or "response 550 received".
+    // A number that is part of an IP address, a port, or a path, such as 127 in 127.0.0.1, is not a reply code.
+    private static final Pattern FTP_CODE_PATTERN = Pattern.compile("(?<![\\w.:/-])([45]\\d{2})(?![\\w:/-]|\\.\\d)");
+    private static final Pattern URI_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9+.-]*://\\S*");
 
     // Service unavailable codes (transient - suitable for retry)
     public static final int SERVICE_NOT_AVAILABLE = 421;
@@ -74,7 +75,7 @@ public final class FtpErrorCodeAnalyzer {
     }
 
     /**
-     * Extracts the first FTP response code found in an error message.
+     * Extracts the first FTP error reply code (4xx or 5xx) found in an error message.
      *
      * @param errorMessage the error message to analyze
      * @return Optional containing the FTP code if found, empty otherwise
@@ -84,13 +85,9 @@ public final class FtpErrorCodeAnalyzer {
             return Optional.empty();
         }
 
-        Matcher matcher = FTP_CODE_PATTERN.matcher(errorMessage);
-        while (matcher.find()) {
-            int code = Integer.parseInt(matcher.group(1));
-            // Validate it's a reasonable FTP code (100-599)
-            if (code >= 100 && code <= 599) {
-                return Optional.of(code);
-            }
+        Matcher matcher = FTP_CODE_PATTERN.matcher(URI_PATTERN.matcher(errorMessage).replaceAll(" "));
+        if (matcher.find()) {
+            return Optional.of(Integer.parseInt(matcher.group(1)));
         }
         return Optional.empty();
     }
