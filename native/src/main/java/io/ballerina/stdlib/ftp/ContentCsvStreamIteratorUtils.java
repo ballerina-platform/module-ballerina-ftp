@@ -24,6 +24,7 @@ import io.ballerina.runtime.api.types.StreamType;
 import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BError;
+import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BStream;
 import io.ballerina.runtime.api.values.BString;
@@ -44,15 +45,15 @@ public class ContentCsvStreamIteratorUtils {
         // private constructor
     }
 
-    public static Object createRecordStream(InputStream content, Type streamValueType, boolean laxDataBinding,
-                                            FileObject fileObject) {
+    public static Object createRecordStream(InputStream content, Type streamValueType,
+                                            BMap<BString, Object> parseOptions, FileObject fileObject) {
         BStream byteStream = content != null ? createByteStream(content, fileObject) : null;
         BString filePath = resolveFilePath(fileObject);
         BObject contentCsvStreamObject;
         try {
             contentCsvStreamObject = ValueCreator.createObjectValue(
                     ModuleUtils.getModule(), "ContentCsvStream",
-                    ValueCreator.createTypedescValue(streamValueType), byteStream, laxDataBinding, filePath
+                    ValueCreator.createTypedescValue(streamValueType), byteStream, parseOptions, filePath
             );
         } catch (BError bError) {
             return bError;

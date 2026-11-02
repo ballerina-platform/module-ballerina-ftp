@@ -241,7 +241,8 @@ public class FtpContentCallbackHandler {
                     case ON_FILE_REMOTE_FUNCTION -> ContentByteStreamIteratorUtils.createStream(
                             inputStream, constrainedType, laxDataBinding, fileObject);
                     case ON_FILE_CSV_REMOTE_FUNCTION -> ContentCsvStreamIteratorUtils.createRecordStream(
-                            inputStream, constrainedType, laxDataBinding, fileObject);
+                            inputStream, constrainedType, FtpContentConverter.createCsvParseOptions(laxDataBinding,
+                                    csvFailSafe, deriveFileNamePrefix(fileObject)), fileObject);
                     default -> throw new IllegalArgumentException("Unknown content method: " + methodName);
                 };
             } catch (Exception e) {

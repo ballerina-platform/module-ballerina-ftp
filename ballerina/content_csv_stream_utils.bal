@@ -14,21 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/data.csv;
-
-isolated function createCsvParseOptions(boolean laxDataBinding) returns csv:ParseOptions {
-    csv:ParseOptions options = {};
-    if laxDataBinding {
-        options.allowDataProjection = {
-            nilAsOptionalField: true,
-            absentAsNilableType: true
-        };
-    } else {
-        options.allowDataProjection = false;
-    }
-    return options;
-}
-
 isolated function createContentBindingError(string message, error? cause, string? filePath)
         returns ContentBindingError {
     if filePath is string {
