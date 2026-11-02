@@ -351,6 +351,22 @@ function testPutCsvAsStream_records() returns error? {
     test:assertEquals(got, records, "putCsvAsStream record mismatch");
 }
 
+@test:Config {
+    groups: ["ftp-client-api", "put", "typed"]
+}
+function testPutCsvAsStream_recordsAppendHasNoHeader() returns error? {
+    string path = "/home/in/api-csv-stream-append.csv";
+    Row[] first = [{name: "Eve", age: 35}];
+    Row[] more = [{name: "Frank", age: 40}];
+    check ftpClient->putCsv(path, first);
+    check ftpClient->putCsvAsStream(path, more.toStream(), ftp:APPEND);
+
+    string text = check ftpClient->getText(path);
+    string[] lines = re `\r?\n`.split(text.trim());
+    test:assertEquals(lines.length(), 3, "Appending a record stream should not write a second header: " + text);
+    check ftpClient->delete(path);
+}
+
 // =============================================================================
 // putBytesAsStream — large content spanning multiple internal buffers
 // =============================================================================
