@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - [[#2804] Shorten the module summary so it is not truncated in the WSO2 Integrator connector view](https://github.com/wso2/product-integrator/issues/2804)
 
+### Fixed
+
+- [Name the archive uploaded by `put` with `ZIP` compression from the file name only](https://github.com/ballerina-platform/ballerina-library/issues/9382)
+
 ## [2.22.0] - 2026-10-08
 
 ### Changed

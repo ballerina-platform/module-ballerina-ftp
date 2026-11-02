@@ -606,8 +606,11 @@ public class FtpUtil {
         return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     }
 
-    public static String getCompressedFileName(String fileName) {
-        return fileName.substring(0, fileName.lastIndexOf('.')).concat(".zip");
+    public static String getCompressedFileName(String filePath) {
+        int nameStart = filePath.lastIndexOf('/') + 1;
+        int extensionStart = filePath.lastIndexOf('.');
+        String base = extensionStart > nameStart ? filePath.substring(0, extensionStart) : filePath;
+        return base + ".zip";
     }
 
     public static Optional<MethodType> getOnFileChangeMethod(BObject service) {
