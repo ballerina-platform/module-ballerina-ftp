@@ -158,6 +158,11 @@ public final class MockFtpServer {
         fileSystem.add(new DirectoryEntry("/home/in/beh-dep-all"));
         fileSystem.add(new DirectoryEntry("/home/in/beh-dep-any"));
         fileSystem.add(new DirectoryEntry("/home/in/beh-dep-exact"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-dep-literal"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-dep-badname"));
+        fileSystem.add(new DirectoryEntry("/home/in/beh-dep-optional"));
+        // Seeded here because a client path containing '[' may not reach the server unchanged
+        fileSystem.add(new FileEntry("/home/in/beh-dep-badname/a[.txt", "a"));
 
         // ftp-listener-behaviour-tests: VFS configs / polling / compression
         fileSystem.add(new DirectoryEntry("/home/in/beh-vfs"));

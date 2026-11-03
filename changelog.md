@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - [[#2804] Shorten the module summary so it is not truncated in the WSO2 Integrator connector view](https://github.com/wso2/product-integrator/issues/2804)
 
+### Fixed
+
+- [Match text captured by `targetPattern` literally in `fileDependencyConditions.requiredFiles`](https://github.com/ballerina-platform/ballerina-library/issues/9475)
+- [Keep polling when an optional capture group in `fileDependencyConditions.targetPattern` does not match](https://github.com/ballerina-platform/ballerina-library/issues/9483)
+
 ## [2.22.0] - 2026-10-08
 
 ### Changed

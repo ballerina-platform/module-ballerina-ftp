@@ -37,11 +37,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -412,14 +412,8 @@ public class RemoteFileSystemConsumer {
                 continue;
             }
 
-            // Extract capture groups for substitution
-            Map<String, String> captureGroups = new HashMap<>();
-            for (int i = 0; i <= matcher.groupCount(); i++) {
-                captureGroups.put("$" + i, matcher.group(i));
-            }
-
             // Check required files based on matching mode
-            if (!checkRequiredFiles(condition, captureGroups)) {
+            if (!checkRequiredFiles(condition, matcher)) {
                 return false;
             }
         }
@@ -430,23 +424,18 @@ public class RemoteFileSystemConsumer {
     /**
      * Check if required files exist based on the matching mode.
      *
-     * @param condition     The dependency condition
-     * @param captureGroups Map of capture groups from the target pattern match
+     * @param condition The dependency condition
+     * @param target    The match of the target pattern against the file name
      * @return true if required files exist according to matching mode
      */
     private boolean checkRequiredFiles(FileDependencyCondition condition,
-                                       Map<String, String> captureGroups) throws FileSystemException {
+                                       MatchResult target) throws FileSystemException {
         List<String> requiredPatterns = condition.getRequiredFiles();
         String matchingMode = condition.getMatchingMode();
 
-        // Substitute capture groups in required file patterns
         List<String> resolvedPatterns = new ArrayList<>();
         for (String pattern : requiredPatterns) {
-            String resolved = pattern;
-            for (Map.Entry<String, String> entry : captureGroups.entrySet()) {
-                resolved = resolved.replace(entry.getKey(), entry.getValue());
-            }
-            resolvedPatterns.add(resolved);
+            resolvedPatterns.add(resolveRequiredPattern(pattern, target));
         }
 
         // Get all files in the listening directory (shallow, non-recursive)
@@ -498,6 +487,42 @@ public class RemoteFileSystemConsumer {
             }
             return matchCount == condition.getRequiredFileCount();
         }
+    }
+
+    private static String resolveRequiredPattern(String pattern, MatchResult target) {
+        StringBuilder resolved = new StringBuilder();
+        int i = 0;
+        while (i < pattern.length()) {
+            char c = pattern.charAt(i);
+            int digitStart = i + 1;
+            if (c != '$' || digitStart >= pattern.length() || !Character.isDigit(pattern.charAt(digitStart))) {
+                resolved.append(c);
+                i++;
+                continue;
+            }
+            int group = pattern.charAt(digitStart) - '0';
+            if (group > target.groupCount()) {
+                // A reference to a group that does not exist stays as written
+                resolved.append(c);
+                i++;
+                continue;
+            }
+            // Further digits extend the group number while it still names a group, as in Matcher.appendReplacement
+            int end = digitStart + 1;
+            while (end < pattern.length() && Character.isDigit(pattern.charAt(end))) {
+                int next = group * 10 + (pattern.charAt(end) - '0');
+                if (next > target.groupCount()) {
+                    break;
+                }
+                group = next;
+                end++;
+            }
+            // The captured text is part of a file name, so it is matched literally
+            String value = target.group(group);
+            resolved.append(Pattern.quote(value == null ? "" : value));
+            i = end;
+        }
+        return resolved.toString();
     }
 
     @ExcludeCoverageFromGeneratedReport

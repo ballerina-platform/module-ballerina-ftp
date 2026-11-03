@@ -3,7 +3,7 @@
 _Owners_: @shafreenAnfar @dilanSachi @Bhashinee \
 _Reviewers_: @shafreenAnfar @Bhashinee \
 _Created_: 2020/10/28 \
-_Updated_: 2026/11/02 \
+_Updated_: 2026/11/03 \
 _Edition_: Swan Lake
 
 ## Introduction
@@ -771,7 +771,7 @@ public enum DependencyMatchingMode {
 }
 ```
 
-A file whose name matches `targetPattern` is picked up only once `requiredFiles` are present. `ALL` needs every required pattern matched, `ANY` needs one, and `EXACT_COUNT` needs exactly `requiredFileCount` of them. A capture group of `targetPattern` may be referenced in a required pattern as `$1`, `$2`, and so on, which is what ties a data file to its own marker rather than to any marker.
+A file whose name matches `targetPattern` is picked up only once `requiredFiles` are present. `ALL` needs every required pattern matched, `ANY` needs one, and `EXACT_COUNT` needs exactly `requiredFileCount` of them. A capture group of `targetPattern` may be referenced in a required pattern as `$1`, `$2`, and so on, which is what ties a data file to its own marker rather than to any marker. The captured text is matched literally, so a `.` in the file name matches only a `.`.
 
 ```ballerina
 @ftp:ServiceConfig {

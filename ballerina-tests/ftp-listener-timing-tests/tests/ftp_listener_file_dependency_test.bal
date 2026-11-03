@@ -23,6 +23,9 @@ import ballerina_tests/ftp_test_commons as commons;
 const string DEP_ALL_DIR = "/home/in/beh-dep-all";
 const string DEP_ANY_DIR = "/home/in/beh-dep-any";
 const string DEP_EXACT_DIR = "/home/in/beh-dep-exact";
+const string DEP_LITERAL_DIR = "/home/in/beh-dep-literal";
+const string DEP_BADNAME_DIR = "/home/in/beh-dep-badname";
+const string DEP_OPTIONAL_DIR = "/home/in/beh-dep-optional";
 
 // ─── Shared client ────────────────────────────────────────────────────────────
 
@@ -458,4 +461,180 @@ function testFileDependency_ExactCount_BlockedUntilCountMet() returns error? {
     deleteIfExistsDep(depFtpClient, xmlPath);
     deleteIfExistsDep(depFtpClient, dep1Path);
     deleteIfExistsDep(depFtpClient, dep2Path);
+}
+
+// ─── TEST: Captured text is matched literally in requiredFiles ────────────────
+
+isolated boolean depLiteralDelivered = false;
+
+@test:Config {
+    groups: ["ftp-listener-behaviour", "file-dependency"]
+}
+function testFileDependency_CaptureMatchedLiterally() returns error? {
+    lock { depLiteralDelivered = false; }
+
+    string targetPath = DEP_LITERAL_DIR + "/1.2.txt";
+    string lookalikePath = DEP_LITERAL_DIR + "/1x2.marker";
+    string markerPath = DEP_LITERAL_DIR + "/1.2.marker";
+
+    ftp:Service depService = @ftp:ServiceConfig {
+        path: DEP_LITERAL_DIR,
+        fileNamePattern: ".*\\.txt",
+        fileDependencyConditions: [
+            {targetPattern: "(.+)\\.txt", requiredFiles: ["$1\\.marker"], matchingMode: ftp:ALL}
+        ]
+    }
+    service object {
+        remote function onFileChange(ftp:WatchEvent & readonly event) {
+            foreach ftp:FileInfo fi in event.addedFiles {
+                if fi.name == "1.2.txt" {
+                    lock { depLiteralDelivered = true; }
+                }
+            }
+        }
+    };
+
+    ftp:Listener depListener = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        pollingInterval: 2
+    });
+    check depListener.attach(depService);
+    check depListener.'start();
+    runtime:registerListener(depListener);
+
+    // The '.' captured from 1.2.txt must not match the 'x' in 1x2.marker
+    check depFtpClient->put(lookalikePath, "marker".toBytes());
+    check depFtpClient->put(targetPath, "data".toBytes());
+    runtime:sleep(4);
+    boolean earlyDelivered;
+    lock { earlyDelivered = depLiteralDelivered; }
+
+    check depFtpClient->put(markerPath, "marker".toBytes());
+    boolean delivered = waitUntilDep(function() returns boolean {
+        lock { return depLiteralDelivered; }
+    }, 15);
+
+    runtime:deregisterListener(depListener);
+    check depListener.gracefulStop();
+    deleteIfExistsDep(depFtpClient, targetPath);
+    deleteIfExistsDep(depFtpClient, lookalikePath);
+    deleteIfExistsDep(depFtpClient, markerPath);
+
+    test:assertFalse(earlyDelivered, "1x2.marker should not release 1.2.txt");
+    test:assertTrue(delivered, "1.2.marker should release 1.2.txt");
+}
+
+// ─── TEST: A file name with regex characters does not block other files ──────
+
+isolated boolean depBadNameOtherDelivered = false;
+
+@test:Config {
+    groups: ["ftp-listener-behaviour", "file-dependency"]
+}
+function testFileDependency_RegexCharactersInNameDoNotBlockOthers() returns error? {
+    lock { depBadNameOtherDelivered = false; }
+
+    // The mock server seeds a[.txt in this folder
+    string otherPath = DEP_BADNAME_DIR + "/b.txt";
+    string otherMarkerPath = DEP_BADNAME_DIR + "/b.marker";
+
+    ftp:Service depService = @ftp:ServiceConfig {
+        path: DEP_BADNAME_DIR,
+        fileNamePattern: ".*\\.txt",
+        fileDependencyConditions: [
+            {targetPattern: "(.+)\\.txt", requiredFiles: ["$1\\.marker"], matchingMode: ftp:ALL}
+        ]
+    }
+    service object {
+        remote function onFileChange(ftp:WatchEvent & readonly event) {
+            foreach ftp:FileInfo fi in event.addedFiles {
+                if fi.name == "b.txt" {
+                    lock { depBadNameOtherDelivered = true; }
+                }
+            }
+        }
+    };
+
+    ftp:Listener depListener = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        pollingInterval: 2
+    });
+    check depListener.attach(depService);
+    check depListener.'start();
+    runtime:registerListener(depListener);
+
+    check depFtpClient->put(otherMarkerPath, "marker".toBytes());
+    check depFtpClient->put(otherPath, "data".toBytes());
+    boolean delivered = waitUntilDep(function() returns boolean {
+        lock { return depBadNameOtherDelivered; }
+    }, 15);
+
+    runtime:deregisterListener(depListener);
+    check depListener.gracefulStop();
+    deleteIfExistsDep(depFtpClient, otherPath);
+    deleteIfExistsDep(depFtpClient, otherMarkerPath);
+
+    test:assertTrue(delivered, "b.txt should be delivered although a[.txt is in the same folder");
+}
+
+// ─── TEST: An optional group that does not match does not stop the poll ──────
+
+isolated boolean depOptionalDelivered = false;
+
+@test:Config {
+    groups: ["ftp-listener-behaviour", "file-dependency"]
+}
+function testFileDependency_UnmatchedOptionalGroup() returns error? {
+    lock { depOptionalDelivered = false; }
+
+    string targetPath = DEP_OPTIONAL_DIR + "/order_1.csv";
+    string markerPath = DEP_OPTIONAL_DIR + "/order_1.marker";
+
+    // order_1.csv has no "_final", so group 2 does not take part in the match
+    ftp:Service depService = @ftp:ServiceConfig {
+        path: DEP_OPTIONAL_DIR,
+        fileNamePattern: "order_.*\\.csv",
+        fileDependencyConditions: [
+            {targetPattern: "order_(\\d+)(_final)?\\.csv", requiredFiles: ["order_$1\\.marker"]}
+        ]
+    }
+    service object {
+        remote function onFileChange(ftp:WatchEvent & readonly event) {
+            foreach ftp:FileInfo fi in event.addedFiles {
+                if fi.name == "order_1.csv" {
+                    lock { depOptionalDelivered = true; }
+                }
+            }
+        }
+    };
+
+    ftp:Listener depListener = check new ({
+        protocol: ftp:FTP,
+        host: commons:FTP_HOST,
+        port: commons:AUTH_FTP_PORT,
+        auth: {credentials: {username: commons:FTP_USERNAME, password: commons:FTP_PASSWORD}},
+        pollingInterval: 2
+    });
+    check depListener.attach(depService);
+    check depListener.'start();
+    runtime:registerListener(depListener);
+
+    check depFtpClient->put(markerPath, "marker".toBytes());
+    check depFtpClient->put(targetPath, "data".toBytes());
+    boolean delivered = waitUntilDep(function() returns boolean {
+        lock { return depOptionalDelivered; }
+    }, 15);
+
+    runtime:deregisterListener(depListener);
+    check depListener.gracefulStop();
+    deleteIfExistsDep(depFtpClient, targetPath);
+    deleteIfExistsDep(depFtpClient, markerPath);
+
+    test:assertTrue(delivered, "order_1.csv should be delivered when the optional group does not match");
 }
