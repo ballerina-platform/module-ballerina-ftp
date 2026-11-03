@@ -498,3 +498,114 @@ function testOnFileDelete_HandlerReturnsError() returns error? {
 
     test:assertTrue(received, "onFileDelete handler should be invoked even when it returns an error");
 }
+
+// A file seen over several polls is reported deleted once
+int onDeleteOnceCount = 0;
+
+@test:Config {
+    groups: ["ftp-listener-advanced", "on-file-deleted"],
+    dependsOn: [testOnFileDelete_HandlerReturnsError]
+}
+function testOnFileDelete_ReportedOncePerFile() returns error? {
+    onDeleteOnceCount = 0;
+
+    ftp:Service svc = service object {
+        remote function onFileDelete(string deletedFile) returns error? {
+            onDeleteOnceCount += 1;
+        }
+    };
+
+    ftp:Listener l = check new (errDelListenerConfig(ON_DELETED_DIR, "(.*)\\.deleted7", 1));
+    check l.attach(svc);
+    check l.'start();
+    runtime:registerListener(l);
+
+    string p = ON_DELETED_DIR + "/del-once.deleted7";
+    check errorDeleteFtpClient->putText(p, "x");
+    // Let the file be listed in several polls before deleting it.
+    runtime:sleep(4);
+    check errorDeleteFtpClient->delete(p);
+    boolean received = waitUntilBool(function() returns boolean { return onDeleteOnceCount >= 1; }, 10);
+    runtime:sleep(3);
+
+    runtime:deregisterListener(l);
+    check l.gracefulStop();
+
+    test:assertTrue(received, "onFileDelete should fire for the deleted file");
+    test:assertEquals(onDeleteOnceCount, 1, "onFileDelete should fire once per deleted file");
+}
+
+// Deleting the last file in the watched directory is reported
+const ON_DELETED_EMPTY_DIR = "/home/in/adv-deleted-empty";
+string[] onDeleteEmptyDirPaths = [];
+
+@test:Config {
+    groups: ["ftp-listener-advanced", "on-file-deleted"],
+    dependsOn: [testOnFileDelete_ReportedOncePerFile]
+}
+function testOnFileDelete_DirectoryBecomesEmpty() returns error? {
+    onDeleteEmptyDirPaths = [];
+    check errorDeleteFtpClient->mkdir(ON_DELETED_EMPTY_DIR);
+    string p = ON_DELETED_EMPTY_DIR + "/only.txt";
+    check errorDeleteFtpClient->putText(p, "x");
+
+    ftp:Service svc = service object {
+        remote function onFileDelete(string deletedFile) returns error? {
+            onDeleteEmptyDirPaths.push(deletedFile);
+        }
+    };
+
+    ftp:Listener l = check new (errDelListenerConfig(ON_DELETED_EMPTY_DIR, ".*", 1));
+    check l.attach(svc);
+    check l.'start();
+    runtime:registerListener(l);
+
+    runtime:sleep(2);
+    check errorDeleteFtpClient->delete(p);
+    boolean received = waitUntilBool(function() returns boolean { return onDeleteEmptyDirPaths.length() > 0; }, 10);
+
+    runtime:deregisterListener(l);
+    check l.gracefulStop();
+    check errorDeleteFtpClient->rmdir(ON_DELETED_EMPTY_DIR);
+
+    test:assertTrue(received, "onFileDelete should fire when the watched directory becomes empty");
+    test:assertTrue(onDeleteEmptyDirPaths[0].endsWith("/only.txt"));
+}
+
+// A deletion is reported when another file arrives in the same poll
+string[] onDeleteSwapPaths = [];
+
+@test:Config {
+    groups: ["ftp-listener-advanced", "on-file-deleted"],
+    dependsOn: [testOnFileDelete_DirectoryBecomesEmpty]
+}
+function testOnFileDelete_AddedInSamePoll() returns error? {
+    onDeleteSwapPaths = [];
+    string first = ON_DELETED_DIR + "/del-swap-a.deleted8";
+    string second = ON_DELETED_DIR + "/del-swap-b.deleted8";
+    check errorDeleteFtpClient->putText(first, "x");
+
+    ftp:Service svc = service object {
+        remote function onFileDelete(string deletedFile) returns error? {
+            onDeleteSwapPaths.push(deletedFile);
+        }
+    };
+
+    ftp:Listener l = check new (errDelListenerConfig(ON_DELETED_DIR, "(.*)\\.deleted8", 3));
+    check l.attach(svc);
+    check l.'start();
+    runtime:registerListener(l);
+
+    runtime:sleep(4);
+    // Same number of files before and after the next poll.
+    check errorDeleteFtpClient->delete(first);
+    check errorDeleteFtpClient->putText(second, "y");
+    boolean received = waitUntilBool(function() returns boolean { return onDeleteSwapPaths.length() > 0; }, 10);
+
+    runtime:deregisterListener(l);
+    check l.gracefulStop();
+    check errorDeleteFtpClient->delete(second);
+
+    test:assertTrue(received, "onFileDelete should fire when a file is replaced by another in one poll");
+    test:assertTrue(onDeleteSwapPaths[0].endsWith("/del-swap-a.deleted8"));
+}

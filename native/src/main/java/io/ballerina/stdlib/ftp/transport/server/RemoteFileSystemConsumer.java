@@ -38,10 +38,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,9 +63,10 @@ public class RemoteFileSystemConsumer {
     private FileSystemManager fileSystemManager;
     private FileSystemOptions fileSystemOptions;
 
-    private List<String> processed = new ArrayList<>();
-    private List<String> current;
+    private final Set<String> processed = new LinkedHashSet<>();
+    private Set<String> current;
     private List<FileInfo> addedFileInfo;
+    private boolean listingIncomplete;
 
     // Advanced file selection fields
     private double minAge = -1; // in seconds, -1 means disabled
@@ -164,40 +168,41 @@ public class RemoteFileSystemConsumer {
             isFileExists = listeningDir.exists();
             isFileReadable = listeningDir.isReadable();
             if (isFileExists && isFileReadable) {
-                current = new ArrayList<>();
+                current = new HashSet<>();
                 addedFileInfo = new ArrayList<>();
-                FileObject[] children = null;
+                listingIncomplete = false;
+                FileObject[] children;
                 try {
                     children = listeningDir.getChildren();
-                } catch (FileSystemException ignored) {
-                    logDebugErrorWhileGetChildrenFromDirListener(ignored);
+                } catch (FileSystemException e) {
+                    // Without a listing, every tracked file would look deleted, so skip this cycle.
+                    logDebugErrorWhileGetChildrenFromDirListener(e);
+                    return;
                 }
-                if (children == null || children.length == 0) {
+                if (children.length == 0) {
                     logDebugNoChildrenFromDirWhileConsuming();
                 } else {
                     handleDirectory(children);
-                    List<String> deleted = new ArrayList<>();
-                    if (processed.size() != current.size()) {
-                        final Iterator<String> it = processed.iterator();
-                        while (it.hasNext()) {
-                            String fileName = it.next();
-                            if (!current.contains(fileName)) {
-                                // File got delete between previous and this scan.
-                                deleted.add(fileName);
-                                // Remove from processed list.
-                                it.remove();
-                            }
+                }
+                List<String> deleted = new ArrayList<>();
+                // A folder that could not be listed leaves its files out of current, so they would look deleted.
+                if (!listingIncomplete) {
+                    final Iterator<String> it = processed.iterator();
+                    while (it.hasNext()) {
+                        String fileName = it.next();
+                        if (!current.contains(fileName)) {
+                            deleted.add(fileName);
+                            it.remove();
                         }
                     }
-                    try {
-                        if (addedFileInfo.size() > 0 || deleted.size() > 0) {
-                            RemoteFileSystemEvent message = new RemoteFileSystemEvent(addedFileInfo, deleted);
-                            remoteFileSystemListener.onMessage(message);
-                        }
-                    } catch (Exception e) {
-                        remoteFileSystemListener.onError(e);
+                }
+                try {
+                    if (!addedFileInfo.isEmpty() || !deleted.isEmpty()) {
+                        RemoteFileSystemEvent message = new RemoteFileSystemEvent(addedFileInfo, deleted);
+                        remoteFileSystemListener.onMessage(message);
                     }
-
+                } catch (Exception e) {
+                    remoteFileSystemListener.onError(e);
                 }
             } else {
                 String errorMsg = String.format("Unable to access or read file or directory :  %s. Reason: %s",
@@ -278,6 +283,7 @@ public class RemoteFileSystemConsumer {
                     try {
                         childFileObject = child.getChildren();
                     } catch (FileSystemException ignored) {
+                        listingIncomplete = true;
                         logDebugErrorWhileGetChildrenInDirHandler(ignored);
                     }
                     if (childFileObject == null || childFileObject.length == 0) {
