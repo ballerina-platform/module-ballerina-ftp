@@ -172,10 +172,15 @@ public class CircuitHealth {
      * Records a failed request in the current bucket.
      */
     public void recordFailure() {
+        // The request was counted in the bucket current when it started; a slow request can end in a later one.
+        prepareRollingWindow();
         int bucketId = getCurrentBucketId();
         buckets[bucketId].incrementFailureCount();
+        lastUsedBucketId = bucketId;
         lastRequestSuccess = false;
         lastErrorTime = Instant.now();
+        // Anchors the window to the request's end, so the failure of a request longer than the window survives.
+        lastRequestTime = lastErrorTime;
     }
 
     public boolean isLastRequestSuccess() {
