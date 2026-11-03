@@ -179,6 +179,8 @@ public class CircuitHealth {
         lastUsedBucketId = bucketId;
         lastRequestSuccess = false;
         lastErrorTime = Instant.now();
+        // Anchors the window to the request's end, so the failure of a request longer than the window survives.
+        lastRequestTime = lastErrorTime;
     }
 
     public boolean isLastRequestSuccess() {
