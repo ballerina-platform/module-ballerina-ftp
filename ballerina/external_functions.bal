@@ -127,6 +127,11 @@ isolated function deregister(Listener listenerEndpoint, Service ftpService) retu
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
 } external;
 
+isolated function hasAttachedServices(Listener listenerEndpoint) returns boolean = @java:Method {
+    name: "hasAttachedServices",
+    'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
+} external;
+
 isolated function cleanup(Listener listenerEndpoint) returns Error? = @java:Method {
     'class: "io.ballerina.stdlib.ftp.server.FtpListenerHelper"
 } external;

@@ -879,6 +879,12 @@ public class FtpListenerHelper {
         return !listener.getServiceContexts().iterator().hasNext();
     }
 
+    public static boolean hasAttachedServices(BObject ftpListener) {
+        Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+        return serverConnectorObject instanceof RemoteFileSystemServerConnector serverConnector
+                && serverConnector.getFtpListener().getServiceContexts().iterator().hasNext();
+    }
+
     private static ServiceContext findServiceContext(FtpListener listener, BObject service) {
         for (ServiceContext candidate : listener.getServiceContexts()) {
             if (candidate.getService() == service) {

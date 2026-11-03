@@ -90,10 +90,21 @@ public isolated class Listener {
     # + ftpService - Service to be detached from the listener
     # + return - `()` or else an `error` upon failure to detach the service
     public isolated function detach(Service ftpService) returns error? {
-        boolean noServicesLeft = check deregister(self, ftpService);
-        if noServicesLeft {
-            check self.stop();
+        boolean|Error noServicesLeft = deregister(self, ftpService);
+        if noServicesLeft is boolean {
+            if noServicesLeft {
+                check self.stop();
+            }
+            return;
         }
+        // The service is already removed, so the listener still has to stop when it was the last one.
+        if !hasAttachedServices(self) {
+            error? stopError = self.stop();
+            if stopError is error {
+                log:printError("Error while stopping the listener after detaching the last service", 'error = stopError);
+            }
+        }
+        return noServicesLeft;
     }
 
     # Stops the FTP listener immediately.
