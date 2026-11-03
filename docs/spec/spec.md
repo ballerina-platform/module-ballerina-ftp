@@ -3,7 +3,7 @@
 _Owners_: @shafreenAnfar @dilanSachi @Bhashinee \
 _Reviewers_: @shafreenAnfar @Bhashinee \
 _Created_: 2020/10/28 \
-_Updated_: 2026/11/02 \
+_Updated_: 2026/11/03 \
 _Edition_: Swan Lake
 
 ## Introduction
@@ -530,7 +530,7 @@ ftp:Client ftpClient = check new ({
 
 ### 3.8 Circuit Breaker
 
-`circuitBreaker` stops a client from queueing work against a server that is failing. Failures are counted over a rolling window, and once the ratio of failures crosses `failureThreshold`, the circuit opens and every operation returns an `ftp:CircuitBreakerOpenError` at once, without touching the server. It covers every client operation, not only reads.
+`circuitBreaker` stops a client from queueing work against a server that is failing. Failures are counted over a rolling window, and once the ratio of failures crosses `failureThreshold`, the circuit opens and every operation returns an `ftp:CircuitBreakerOpenError` at once, without touching the server. It covers every client operation, not only reads, except the deprecated `get`, `put`, and `append`.
 
 The circuit has three states.
 
