@@ -862,23 +862,59 @@ public class FtpListenerHelper {
         return null;
     }
 
-    public static Object deregister(BObject ftpListener, BObject service) {
-        try {
-            Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
-            if (serverConnectorObject instanceof RemoteFileSystemServerConnector) {
-                RemoteFileSystemServerConnector serverConnector
-                        = (RemoteFileSystemServerConnector) serverConnectorObject;
-                Object stopError = serverConnector.stop();
-                if (stopError instanceof BError) {
-                    return stopError;
-                }
+    public static Object deregister(Environment env, BObject ftpListener, BObject service) {
+        Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+        if (!(serverConnectorObject instanceof RemoteFileSystemServerConnector serverConnector)) {
+            return true;
+        }
+        FtpListener listener = serverConnector.getFtpListener();
+        ServiceContext context = findServiceContext(listener, service);
+        if (context != null) {
+            listener.removeServiceContext(context);
+            Object releaseError = releaseServiceResources(env, serverConnector, context);
+            if (releaseError != null) {
+                return releaseError;
             }
-        } catch (RemoteFileSystemConnectorException e) {
-            return FtpUtil.createError(e.getMessage(), findRootCause(e), Error.errorType());
-        } finally {
-            ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
+        }
+        return !listener.getServiceContexts().iterator().hasNext();
+    }
+
+    public static boolean hasAttachedServices(BObject ftpListener) {
+        Object serverConnectorObject = ftpListener.getNativeData(FtpConstants.FTP_SERVER_CONNECTOR);
+        return serverConnectorObject instanceof RemoteFileSystemServerConnector serverConnector
+                && serverConnector.getFtpListener().getServiceContexts().iterator().hasNext();
+    }
+
+    private static ServiceContext findServiceContext(FtpListener listener, BObject service) {
+        for (ServiceContext candidate : listener.getServiceContexts()) {
+            if (candidate.getService() == service) {
+                return candidate;
+            }
         }
         return null;
+    }
+
+    private static Object releaseServiceResources(Environment env, RemoteFileSystemServerConnector connector,
+                                                  ServiceContext context) {
+        ServiceConfiguration config = context.getConfiguration();
+        if (config == null) {
+            return null;
+        }
+        Object firstError = null;
+        if (connector instanceof MultiPathServerConnector multiPathConnector) {
+            Object closeError = multiPathConnector.removePathConsumer(config.getPath());
+            if (closeError instanceof BError) {
+                firstError = closeError;
+            }
+        }
+        // A service with @ftp:ServiceConfig owns its caller; a shared caller is closed when the listener stops.
+        if (context.getCaller() != null) {
+            Object closeError = closeCallerClient(env, context.getCaller());
+            if (firstError == null) {
+                firstError = closeError;
+            }
+        }
+        return firstError;
     }
 
     private static BObject createCaller(BMap<BString, Object> serviceEndpointConfig) {
@@ -960,6 +996,7 @@ public class FtpListenerHelper {
             if (listener != null) {
                 listener.cleanup();
             }
+            ftpListener.addNativeData(FtpConstants.FTP_SERVER_CONNECTOR, null);
             if (ftpConnector != null) {
                 FtpMetricsUtil.reportConnectionClose(listenerUrl, listenerProtocol,
                         FtpMetricsUtil.CONTEXT_LISTENER);

@@ -222,6 +222,17 @@ public class MultiPathServerConnector implements RemoteFileSystemServerConnector
     }
 
     /**
+     * Stops polling the given path and closes its consumer.
+     *
+     * @param path The path to stop polling
+     * @return An error from closing the consumer, or null
+     */
+    public Object removePathConsumer(String path) {
+        RemoteFileSystemConsumer consumer = pathConsumers.remove(path);
+        return consumer == null ? null : consumer.close();
+    }
+
+    /**
      * Checks if a consumer exists for the given path.
      *
      * @param path The path to check
