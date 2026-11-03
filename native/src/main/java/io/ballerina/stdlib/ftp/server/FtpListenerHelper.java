@@ -868,33 +868,47 @@ public class FtpListenerHelper {
             return true;
         }
         FtpListener listener = serverConnector.getFtpListener();
-        ServiceContext context = null;
-        for (ServiceContext candidate : listener.getServiceContexts()) {
-            if (candidate.getService() == service) {
-                context = candidate;
-                break;
-            }
-        }
+        ServiceContext context = findServiceContext(listener, service);
         if (context != null) {
             listener.removeServiceContext(context);
-            ServiceConfiguration config = context.getConfiguration();
-            if (config != null) {
-                if (serverConnector instanceof MultiPathServerConnector multiPathConnector) {
-                    Object closeError = multiPathConnector.removePathConsumer(config.getPath());
-                    if (closeError instanceof BError) {
-                        return closeError;
-                    }
-                }
-                // A service with @ftp:ServiceConfig owns its caller; a shared caller is closed when the listener stops.
-                if (context.getCaller() != null) {
-                    Object closeError = closeCallerClient(env, context.getCaller());
-                    if (closeError != null) {
-                        return closeError;
-                    }
-                }
+            Object releaseError = releaseServiceResources(env, serverConnector, context);
+            if (releaseError != null) {
+                return releaseError;
             }
         }
         return !listener.getServiceContexts().iterator().hasNext();
+    }
+
+    private static ServiceContext findServiceContext(FtpListener listener, BObject service) {
+        for (ServiceContext candidate : listener.getServiceContexts()) {
+            if (candidate.getService() == service) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private static Object releaseServiceResources(Environment env, RemoteFileSystemServerConnector connector,
+                                                  ServiceContext context) {
+        ServiceConfiguration config = context.getConfiguration();
+        if (config == null) {
+            return null;
+        }
+        Object firstError = null;
+        if (connector instanceof MultiPathServerConnector multiPathConnector) {
+            Object closeError = multiPathConnector.removePathConsumer(config.getPath());
+            if (closeError instanceof BError) {
+                firstError = closeError;
+            }
+        }
+        // A service with @ftp:ServiceConfig owns its caller; a shared caller is closed when the listener stops.
+        if (context.getCaller() != null) {
+            Object closeError = closeCallerClient(env, context.getCaller());
+            if (firstError == null) {
+                firstError = closeError;
+            }
+        }
+        return firstError;
     }
 
     private static BObject createCaller(BMap<BString, Object> serviceEndpointConfig) {
