@@ -131,6 +131,8 @@ public final class MockFtpServer {
 
         // ftp-listener-advanced-tests: onError
         fileSystem.add(new DirectoryEntry("/home/in/adv-onerror"));
+        // Seeded here because a client path with %XX is decoded before it reaches the server
+        fileSystem.add(new FileEntry("/home/in/adv-onerror/onerr-pct%41.json", "{\"name\": \"John\", \"age\": 30}"));
 
         // ftp-listener-advanced-tests: onFileDeleted
         fileSystem.add(new DirectoryEntry("/home/in/adv-deleted"));

@@ -41,7 +41,6 @@ import io.ballerina.stdlib.ftp.util.BufferHolder;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
 import io.ballerina.stdlib.io.channels.base.Channel;
-import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +54,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -68,7 +66,6 @@ import static io.ballerina.stdlib.ftp.util.FtpConstants.FTP_ERROR;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.READ_INPUT_STREAM;
 import static io.ballerina.stdlib.ftp.util.FtpConstants.STREAM_ENTRY_RECORD;
 import static io.ballerina.stdlib.ftp.util.FtpUtil.getFtpPackage;
-
 
 /**
  * Contains helper methods to invoke FTP actions.
@@ -190,33 +187,7 @@ class FtpClientHelper {
 
             int i = 0;
             for (Map.Entry<String, FileInfo> entry : childrenInfo.entrySet()) {
-                Map<String, Object> fileInfoParams = new HashMap<>();
-                FileInfo fileInfo = entry.getValue();
-                fileInfoParams.put("path", fileInfo.getPath());
-                fileInfoParams.put("size", fileInfo.getFileSize());
-                fileInfoParams.put("lastModifiedTimestamp", fileInfo.getLastModifiedTime());
-                fileInfoParams.put("name", fileInfo.getBaseName());
-                fileInfoParams.put("isFolder", fileInfo.isFolder());
-                fileInfoParams.put("isFile", fileInfo.isFile());
-                fileInfoParams.put("extension", fileInfo.getFileName().getExtension());
-                fileInfoParams.put("publicURIString", fileInfo.getPublicURIString());
-                fileInfoParams.put("fileType", fileInfo.getFileType().getName());
-                fileInfoParams.put("isAttached", fileInfo.isAttached());
-                fileInfoParams.put("isContentOpen", fileInfo.isContentOpen());
-                fileInfoParams.put("isExecutable", fileInfo.isExecutable());
-                fileInfoParams.put("isHidden", fileInfo.isHidden());
-                fileInfoParams.put("isReadable", fileInfo.isReadable());
-                fileInfoParams.put("isWritable", fileInfo.isWritable());
-                fileInfoParams.put("depth", fileInfo.getFileName().getDepth());
-                fileInfoParams.put("scheme", fileInfo.getFileName().getScheme());
-                fileInfoParams.put("uri", fileInfo.getFileName().getURI());
-                fileInfoParams.put("rootURI", fileInfo.getFileName().getRootURI());
-                fileInfoParams.put("friendlyURI", fileInfo.getFileName().getFriendlyURI());
-                try {
-                    fileInfoParams.put("pathDecoded", fileInfo.getFileName().getPathDecoded());
-                } catch (FileSystemException e) {
-                    log.error("Error while evaluating the pathDecoded value.", e);
-                }
+                Map<String, Object> fileInfoParams = FtpUtil.createFileInfoParams(entry.getValue());
 
                 final BMap<BString, Object> ballerinaFileInfo = ValueCreator.createRecordValue(
                         new Module(FtpConstants.FTP_ORG_NAME, FtpConstants.FTP_MODULE_NAME,

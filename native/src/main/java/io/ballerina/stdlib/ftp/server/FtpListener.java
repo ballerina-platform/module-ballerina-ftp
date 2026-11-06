@@ -48,7 +48,6 @@ import io.ballerina.stdlib.ftp.transport.message.RemoteFileSystemEvent;
 import io.ballerina.stdlib.ftp.transport.server.connector.contract.RemoteFileSystemServerConnector;
 import io.ballerina.stdlib.ftp.util.FtpConstants;
 import io.ballerina.stdlib.ftp.util.FtpUtil;
-import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.slf4j.Logger;
@@ -473,36 +472,8 @@ public class FtpListener implements RemoteFileSystemListener {
         List<String> deletedFileList = fileSystemEvent.getDeletedFiles();
 
         List<Map<String, Object>> addedFilesParamsList = new ArrayList<>();
-        for (int i = 0; i < addedFileList.size(); i++) {
-            FileInfo info = addedFileList.get(i);
-            Map<String, Object> fileInfoParams = new HashMap<>();
-            fileInfoParams.put("path", info.getPath());
-            fileInfoParams.put("size", info.getFileSize());
-            fileInfoParams.put("lastModifiedTimestamp", info.getLastModifiedTime());
-            fileInfoParams.put("name", info.getFileName().getBaseName());
-            fileInfoParams.put("isFolder", info.isFolder());
-            fileInfoParams.put("isFile", info.isFile());
-            try {
-                fileInfoParams.put("pathDecoded", info.getFileName().getPathDecoded());
-            } catch (FileSystemException e) {
-                fileInfoParams.put("pathDecoded", info.getPath());
-            }
-            fileInfoParams.put("extension", info.getFileName().getExtension());
-            fileInfoParams.put("publicURIString", info.getPublicURIString());
-            fileInfoParams.put("fileType", info.getFileType().getName());
-            fileInfoParams.put("isAttached", info.isAttached());
-            fileInfoParams.put("isContentOpen", info.isContentOpen());
-            fileInfoParams.put("isExecutable", info.isExecutable());
-            fileInfoParams.put("isHidden", info.isHidden());
-            fileInfoParams.put("isReadable", info.isReadable());
-            fileInfoParams.put("isWritable", info.isWritable());
-            fileInfoParams.put("depth", info.getFileName().getDepth());
-            fileInfoParams.put("scheme", info.getFileName().getScheme());
-            fileInfoParams.put("uri", info.getUrl().getPath());
-            fileInfoParams.put("rootURI", info.getFileName().getRootURI());
-            fileInfoParams.put("friendlyURI", info.getFileName().getFriendlyURI());
-
-            addedFilesParamsList.add(fileInfoParams);
+        for (FileInfo info : addedFileList) {
+            addedFilesParamsList.add(FtpUtil.createFileInfoParams(info));
         }
 
         BString[] deletedFilesBstringArray = new BString[deletedFileList.size()];

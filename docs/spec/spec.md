@@ -475,7 +475,7 @@ public type FileInfo record {|
 |};
 ```
 
-`lastModifiedTimestamp` is UNIX epoch time. `extension` carries no leading dot.
+`lastModifiedTimestamp` is UNIX epoch time. `extension` carries no leading dot. `path` is the path of the entry from the server root with a `%` in a name escaped as `%25`, and `pathDecoded` is the actual path, which is the form the client operations take. The two differ only for names that contain `%`. In the `FileInfo` the listener gives its handlers, `path` is the file's URI instead, with the password masked, so use `pathDecoded` to act on the file. `uri`, `rootURI`, `publicURIString`, and `friendlyURI` are URIs with the password masked.
 
 | Method | Behaviour |
 | --- | --- |
@@ -701,7 +701,7 @@ remote function onFileJson(Config content, ftp:FileInfo fileInfo, ftp:Caller cal
 }
 ```
 
-`onFileDelete` gets the path of a file that has gone from the watched directory since the previous poll, and may declare an optional `ftp:Caller` second parameter.
+`onFileDelete` gets the URI, with the password masked, of a file that has gone from the watched directory since the previous poll, and may declare an optional `ftp:Caller` second parameter.
 
 ```ballerina
 remote function onFileDelete(string deletedFile, ftp:Caller caller) returns error? {
@@ -709,7 +709,7 @@ remote function onFileDelete(string deletedFile, ftp:Caller caller) returns erro
 }
 ```
 
-`onFileDeleted` is its predecessor, taking a `string[]` of paths rather than one path. It is deprecated in favour of `onFileDelete`, and declaring both is a compile error.
+`onFileDeleted` is its predecessor, taking a `string[]` of those URIs rather than one. It is deprecated in favour of `onFileDelete`, and declaring both is a compile error.
 
 A file with no handler for it is left alone, and the poll that found it logs a warning.
 
